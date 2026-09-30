@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.ReferenceGenome
+===========================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: ReferenceGenome
+   :show-inheritance:
+   :members:

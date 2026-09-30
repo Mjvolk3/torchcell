@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.RNASeqExpressionExperimentReference
+===============================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: RNASeqExpressionExperimentReference
+   :show-inheritance:
+   :members:

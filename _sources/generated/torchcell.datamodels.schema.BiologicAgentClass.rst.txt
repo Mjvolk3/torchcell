@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.BiologicAgentClass
+==============================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: BiologicAgentClass
+   :show-inheritance:
+   :members:

@@ -1,0 +1,1126 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.metabolism.media &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/metabolism/media.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.metabolism.media</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.metabolism.media</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/metabolism/media.py</span>
+<span class="c1"># [[torchcell.metabolism.media]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/metabolism/media.py</span>
+<span class="sa">r</span><span class="sd">"""Map an ontology ``Media`` object onto genome-scale-model exchange bounds.</span>
+
+<span class="sd">This is the cobra adapter that ``[[torchcell.datamodels.media-components]]`` promises:</span>
+<span class="sd">``Media`` records the wet-lab truth (real ingredients at real concentrations) and every</span>
+<span class="sd">model convention (uptake magnitudes, exchange-reaction ids, the closed-by-default</span>
+<span class="sd">convention) lives HERE, never in the data ontology.</span>
+
+<span class="sd">Why the layer is written as a pure function of a GEM</span>
+<span class="sd">----------------------------------------------------</span>
+<span class="sd">A media layer that hardcodes ``r_1714`` is a yeast-GEM script, not a media layer: the</span>
+<span class="sd">same recipe has to land on iIsor850, iMM904, or a Yarrowia model without an edit. So the</span>
+<span class="sd">only inputs are (1) an ontology ``Media`` and (2) a ``cobra.Model``, and every exchange</span>
+<span class="sd">reaction is FOUND by resolving the component's chemical identity against the identifiers</span>
+<span class="sd">the model itself carries (``chebi`` / ``kegg.compound`` / ``metanetx.chemical`` /</span>
+<span class="sd">``bigg.metabolite`` annotations) or against the metabolite's name. Nothing in the</span>
+<span class="sd">resolution path knows what organism it is looking at, and the recipes below are lists of</span>
+<span class="sd">chemicals rather than lists of reaction ids.</span>
+
+<span class="sd">Two consequences of that choice are load-bearing:</span>
+
+<span class="sd">- The name channel needs a chemical normalizer (``L-aspartic acid`` in a recipe vs</span>
+<span class="sd">  ``L-aspartate`` in the model; ``thiamine hydrochloride`` vs ``thiamine``). Those</span>
+<span class="sd">  rules are chemistry, they hold for any model, and they are listed explicitly in</span>
+<span class="sd">  ``_NAME_SYNONYMS`` / ``_DISSOCIATION`` so a reader can audit every one.</span>
+<span class="sd">- A salt is not one exchange. ``ammonium sulfate`` is an ammonium exchange AND a</span>
+<span class="sd">  sulfate exchange, so a component resolves to a LIST of exchanges.</span>
+
+<span class="sd">Coverage is a record, never a silent drop</span>
+<span class="sd">-----------------------------------------</span>
+<span class="sd">Every component of the input medium comes back in ``MediaBounds.resolutions`` with one</span>
+<span class="sd">of three outcomes: ``resolved`` (it became exchange bounds), ``excluded_by_role`` (agar,</span>
+<span class="sd">G418, peptone: the model has no way to represent it and we say so), or ``unresolved``</span>
+<span class="sd">(we tried and failed, with the reason and the candidate names we tried recorded). A</span>
+<span class="sd">component can never vanish between the ontology object and the bound vector.</span>
+
+<span class="sd">The Suthers uptake magnitudes, and where our old code disagreed with the source</span>
+<span class="sd">------------------------------------------------------------------------------</span>
+<span class="sd">Suthers et al. 2020 (``suthersGenomescaleMetabolicReconstruction2020``, Metab Eng</span>
+<span class="sd">Commun 11, e00148, doi 10.1016/j.mec.2020.e00148), sec. 2.5 "Modeling simulations":</span>
+
+<span class="sd">    "During initial testing ... the carbon substrate uptake rate was set to a value 3.3</span>
+<span class="sd">    mmol gDW-1 hr-1; we chose this value as a rough estimate for glucose uptake ... and</span>
+<span class="sd">    arbitrarily applied it to each carbon substrate. ... For growth predictions involving</span>
+<span class="sd">    rich media, supplementary compound uptake rates were set to 0.165 mmol gDW-1 hr-1</span>
+<span class="sd">    (i.e., 5% of default substrate uptake rate of 3.3 mmol gDW-1 hr-1). ... The undefined</span>
+<span class="sd">    composition of yeast extract in Yeast-Peptone-Dextrose (YPD) media was assumed to be</span>
+<span class="sd">    that of YNB media plus 20 amino acids and D-glucose. ... Glucose uptake rate was set</span>
+<span class="sd">    to 10.0 mmol gDW-1 hr-1 during OptKnock simulations."</span>
+
+<span class="sd">The supplement rate is a FIXED ABSOLUTE 0.165 mmol/gDW/h anchored to the DEFAULT 3.3</span>
+<span class="sd">carbon uptake. It is not 5% of whatever glucose bound the caller happens to set: the</span>
+<span class="sd">paper's own OptKnock runs raise glucose to 10.0 and leave supplements at 0.165.</span>
+
+<span class="sd">``experiments/007-kuzmin-tm/scripts/setup_media_conditions.py`` (lines 71 and 124) and</span>
+<span class="sd">the iBioFoundry ``media_setup.py`` it was ported from both compute</span>
+<span class="sd">``supplement_rate = glucose_rate * 0.05``, which at their ``glucose_rate=10.0`` gives</span>
+<span class="sd">0.5, i.e. **3.03x the sourced value**. ``torchcell/datamodels/media.py`` repeats the</span>
+<span class="sd">"5% of glucose" phrasing in prose. FOLLOW THE SOURCE: ``UptakePolicy.supplement_uptake``</span>
+<span class="sd">is the absolute 0.165 and does not move when ``carbon_uptake`` moves. Constant-ratio</span>
+<span class="sd">rescaling remains a defensible modeling choice, but it is a choice of ours, not a</span>
+<span class="sd">sourced value, so it is not the default here.</span>
+
+<span class="sd">``carbon_uptake`` defaults to 3.3 for the same reason: it is the value the 0.165 is</span>
+<span class="sd">defined against, so the default policy is internally coherent with its own source. A</span>
+<span class="sd">caller doing OptKnock-style work sets ``carbon_uptake=10.0`` and the supplement rate</span>
+<span class="sd">correctly stays put.</span>
+
+<span class="sd">Naming discipline: YPD is approximated, and the name says so</span>
+<span class="sd">-----------------------------------------------------------</span>
+<span class="sd">Real YPD contains peptone-derived peptides and yeast-extract lipids that a GEM has no</span>
+<span class="sd">way to represent. The recipe below is therefore named ``YPD_APPROX`` and its medium is</span>
+<span class="sd">labeled "YPD-approx (YNB + 20 amino acids; peptone NOT modeled)", carrying the Suthers</span>
+<span class="sd">substitution quote. Peptone is never modeled, by us or by Suthers. The bound vector of</span>
+<span class="sd">``YPD_APPROX`` is numerically identical to SC minus its two nucleobases, but it asserts</span>
+<span class="sd">something different, so it gets its own name and its own provenance string.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Literal</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">SC</span> <span class="k">as</span> <span class="n">_ONTOLOGY_SC</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">SGA_DM_SELECTION</span> <span class="k">as</span> <span class="n">_ONTOLOGY_SGA_DM</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">SGA_TM_SELECTION</span> <span class="k">as</span> <span class="n">_ONTOLOGY_SGA_TM</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">YNB</span> <span class="k">as</span> <span class="n">_ONTOLOGY_YNB</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.pydant</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelStrict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Compound</span><span class="p">,</span>
+    <span class="n">Concentration</span><span class="p">,</span>
+    <span class="n">ConcentrationUnit</span><span class="p">,</span>
+    <span class="n">Media</span><span class="p">,</span>
+    <span class="n">MediaComponent</span><span class="p">,</span>
+    <span class="n">MediaComponentRole</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>  <span class="c1"># pragma: no cover - typing only, keeps cobra out of import time</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">cobra</span>
+
+<span class="n">FLUX_UNIT</span> <span class="o">=</span> <span class="s2">"mmol/gDW/h"</span>
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Uptake policy. Model convention, sourced to Suthers 2020 sec. 2.5 (see module</span>
+<span class="c1"># docstring for the verbatim quote and for where our older code diverged).</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+
+<span class="c1">#: Citation anchor repeated into every bound's ``source`` string so a bound vector is</span>
+<span class="c1">#: self-describing once serialized to JSON.</span>
+<span class="n">SUTHERS_2020</span> <span class="o">=</span> <span class="s2">"suthersGenomescaleMetabolicReconstruction2020"</span>
+
+
+<div class="viewcode-block" id="UptakePolicy">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.media.UptakePolicy.html#torchcell.metabolism.media.UptakePolicy">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">UptakePolicy</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Magnitudes assigned to an uptake bound, by the component's functional role.</span>
+
+<span class="sd">    Three tiers, because a GEM medium only ever distinguishes three things: the growth-</span>
+<span class="sd">    limiting carbon source, a supplement that is present but not the limiting substrate,</span>
+<span class="sd">    and a species assumed to be in excess (water, oxygen, bulk salts).</span>
+
+<span class="sd">    ``supplement_uptake`` is deliberately independent of ``carbon_uptake``: Suthers'</span>
+<span class="sd">    0.165 is an absolute rate anchored to the DEFAULT 3.3 carbon uptake, and their own</span>
+<span class="sd">    OptKnock runs raise carbon to 10.0 without touching it.</span>
+<span class="sd">    """</span>
+
+    <span class="n">carbon_uptake</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">3.3</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"uptake magnitude for the carbon source, mmol/gDW/h; Suthers' "</span>
+        <span class="s2">"default substrate rate, the value the 0.165 supplement rate is 5</span><span class="si">% o</span><span class="s2">f"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">supplement_uptake</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">0.165</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"uptake magnitude for amino acids / vitamins / nucleobases, "</span>
+        <span class="s2">"mmol/gDW/h; Suthers' ABSOLUTE rich-media supplement rate, NOT 5</span><span class="si">% o</span><span class="s2">f "</span>
+        <span class="s2">"whatever carbon_uptake is set to"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">unlimited_uptake</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">1000.0</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"uptake magnitude for species assumed in excess (water, oxygen, "</span>
+        <span class="s2">"bulk salts, trace metals); the conventional cobra 'open' bound"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">organic_nitrogen_uptake</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">0.165</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"uptake magnitude for a nitrogen source that is itself an amino "</span>
+        <span class="s2">"acid (monosodium glutamate in the SGA selection media), mmol/gDW/h; the "</span>
+        <span class="s2">"supplement rate, because an open (1000) bound would make it the carbon "</span>
+        <span class="s2">"source (measured on yeast-GEM 9.0.2: growth 9.8/h on 299 mmol/gDW/h of "</span>
+        <span class="s2">"glutamate); 0.165 also equals the SD/MSG molar ratio of MSG to glucose "</span>
+        <span class="s2">"(1 g/L over 20 g/L, 0.053) scaled to the 3.3 glucose uptake (0.176)"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="UptakePolicy.source_for">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.media.UptakePolicy.html#torchcell.metabolism.media.UptakePolicy.source_for">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">source_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role</span><span class="p">:</span> <span class="n">MediaComponentRole</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Provenance string recorded on every bound this policy produces."""</span>
+        <span class="k">if</span> <span class="n">role</span> <span class="ow">in</span> <span class="n">_CARBON_ROLES</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">SUTHERS_2020</span><span class="si">}</span><span class="s2"> sec2.5 default carbon substrate uptake "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">carbon_uptake</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">FLUX_UNIT</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">role</span> <span class="ow">in</span> <span class="n">_SUPPLEMENT_ROLES</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">SUTHERS_2020</span><span class="si">}</span><span class="s2"> sec2.5 supplementary compound uptake "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">supplement_uptake</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">FLUX_UNIT</span><span class="si">}</span><span class="s2"> (absolute; 5% of the default "</span>
+                <span class="s2">"3.3 carbon uptake, not rescaled with carbon_uptake)"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">role</span> <span class="ow">is</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">nitrogen_source</span> <span class="ow">and</span> <span class="n">_is_organic_nitrogen</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"torchcell convention: amino-acid nitrogen source bounded at the "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">SUTHERS_2020</span><span class="si">}</span><span class="s2"> supplement rate </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">organic_nitrogen_uptake</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">FLUX_UNIT</span><span class="si">}</span><span class="s2">, not opened, so it cannot become the carbon source"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"cobra convention: species assumed in excess, opened to "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">unlimited_uptake</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">FLUX_UNIT</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="UptakePolicy.bound_for">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.media.UptakePolicy.html#torchcell.metabolism.media.UptakePolicy.bound_for">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">bound_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role</span><span class="p">:</span> <span class="n">MediaComponentRole</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Uptake magnitude (positive) for a component in this functional role."""</span>
+        <span class="k">if</span> <span class="n">role</span> <span class="ow">in</span> <span class="n">_CARBON_ROLES</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">carbon_uptake</span>
+        <span class="k">if</span> <span class="n">role</span> <span class="ow">in</span> <span class="n">_SUPPLEMENT_ROLES</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">supplement_uptake</span>
+        <span class="k">if</span> <span class="n">role</span> <span class="ow">is</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">nitrogen_source</span> <span class="ow">and</span> <span class="n">_is_organic_nitrogen</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">organic_nitrogen_uptake</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">unlimited_uptake</span></div>
+</div>
+
+
+
+<span class="c1">#: Nitrogen sources that carry carbon. Ammonium and nitrate are pure nitrogen and are</span>
+<span class="c1">#: opened like any species in excess; an amino acid used as the nitrogen source is</span>
+<span class="c1">#: also a carbon substrate, and opening it swaps the medium's carbon source silently.</span>
+<span class="n">_ORGANIC_NITROGEN_SOURCES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"monosodium l-glutamate"</span><span class="p">,</span>
+        <span class="s2">"monosodium glutamate"</span><span class="p">,</span>
+        <span class="s2">"l-glutamic acid"</span><span class="p">,</span>
+        <span class="s2">"l-glutamate"</span><span class="p">,</span>
+        <span class="s2">"l-glutamine"</span><span class="p">,</span>
+        <span class="s2">"l-proline"</span><span class="p">,</span>
+        <span class="s2">"urea"</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_organic_nitrogen</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_normalize</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_ORGANIC_NITROGEN_SOURCES</span>
+
+
+<span class="n">_CARBON_ROLES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">carbon_source</span><span class="p">})</span>
+<span class="n">_SUPPLEMENT_ROLES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">amino_acid</span><span class="p">,</span>
+        <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">vitamin</span><span class="p">,</span>
+        <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">nucleobase</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+<span class="c1">#: Roles a constraint-based model structurally cannot represent. Agar is a gel matrix,</span>
+<span class="c1">#: not a nutrient; a selection agent acts through a genotype x medium mechanism the GEM</span>
+<span class="c1">#: has no genes for; peptone and yeast extract are undefined digests. These are reported</span>
+<span class="c1">#: as ``excluded_by_role`` rather than left to fail name resolution, so that "the model</span>
+<span class="c1">#: cannot represent this" is distinguishable from "we could not find it".</span>
+<span class="n">_NOT_MODELED_ROLES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">gelling_agent</span><span class="p">,</span>
+        <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">selection_agent</span><span class="p">,</span>
+        <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">complex_ingredient</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Chemical name normalization. Every rule here is chemistry, not yeast: an</span>
+<span class="c1"># ontology recipe names the bottle on the bench ("thiamine hydrochloride") while a</span>
+<span class="c1"># GEM names the species in solution ("thiamine"), and that gap is the same on any</span>
+<span class="c1"># model. Kept as explicit tables so each mapping is auditable.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+
+<span class="c1">#: Salt / hydrate / stereo qualifiers that a GEM never carries on the species name.</span>
+<span class="n">_SALT_QUALIFIERS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"hydrochloride"</span><span class="p">,</span>
+    <span class="s2">"hydrate"</span><span class="p">,</span>
+    <span class="s2">"monohydrate"</span><span class="p">,</span>
+    <span class="s2">"dihydrate"</span><span class="p">,</span>
+    <span class="s2">"anhydrous"</span><span class="p">,</span>
+    <span class="s2">"sodium salt"</span><span class="p">,</span>
+    <span class="s2">"potassium salt"</span><span class="p">,</span>
+    <span class="s2">"calcium salt"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: Bench name -&gt; species name. Trivial synonyms only; each is a naming difference for</span>
+<span class="c1">#: the SAME chemical, never a substitution of one chemical for another.</span>
+<span class="n">_NAME_SYNONYMS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"niacin"</span><span class="p">:</span> <span class="s2">"nicotinate"</span><span class="p">,</span>
+    <span class="s2">"nicotinic acid"</span><span class="p">:</span> <span class="s2">"nicotinate"</span><span class="p">,</span>
+    <span class="s2">"vitamin b3"</span><span class="p">:</span> <span class="s2">"nicotinate"</span><span class="p">,</span>
+    <span class="c1"># the vitamin is the (R) enantiomer; the bench sells its calcium salt</span>
+    <span class="s2">"calcium pantothenate"</span><span class="p">:</span> <span class="s2">"(r)-pantothenate"</span><span class="p">,</span>
+    <span class="s2">"pantothenate"</span><span class="p">:</span> <span class="s2">"(r)-pantothenate"</span><span class="p">,</span>
+    <span class="s2">"pantothenic acid"</span><span class="p">:</span> <span class="s2">"(r)-pantothenate"</span><span class="p">,</span>
+    <span class="c1"># British spelling, as several reconstructions carry it</span>
+    <span class="s2">"sulfate"</span><span class="p">:</span> <span class="s2">"sulphate"</span><span class="p">,</span>
+    <span class="s2">"sulfite"</span><span class="p">:</span> <span class="s2">"sulphite"</span><span class="p">,</span>
+    <span class="s2">"vitamin b1"</span><span class="p">:</span> <span class="s2">"thiamine"</span><span class="p">,</span>
+    <span class="s2">"vitamin b2"</span><span class="p">:</span> <span class="s2">"riboflavin"</span><span class="p">,</span>
+    <span class="s2">"vitamin b6"</span><span class="p">:</span> <span class="s2">"pyridoxine"</span><span class="p">,</span>
+    <span class="s2">"vitamin h"</span><span class="p">:</span> <span class="s2">"biotin"</span><span class="p">,</span>
+    <span class="s2">"para-aminobenzoic acid"</span><span class="p">:</span> <span class="s2">"4-aminobenzoate"</span><span class="p">,</span>
+    <span class="s2">"p-aminobenzoic acid"</span><span class="p">:</span> <span class="s2">"4-aminobenzoate"</span><span class="p">,</span>
+    <span class="s2">"paba"</span><span class="p">:</span> <span class="s2">"4-aminobenzoate"</span><span class="p">,</span>
+    <span class="s2">"inositol"</span><span class="p">:</span> <span class="s2">"myo-inositol"</span><span class="p">,</span>
+    <span class="s2">"dextrose"</span><span class="p">:</span> <span class="s2">"d-glucose"</span><span class="p">,</span>
+    <span class="s2">"glucose"</span><span class="p">:</span> <span class="s2">"d-glucose"</span><span class="p">,</span>
+    <span class="c1"># the natural enantiomer is the D-sugar; a bench recipe drops the prefix</span>
+    <span class="s2">"fructose"</span><span class="p">:</span> <span class="s2">"d-fructose"</span><span class="p">,</span>
+    <span class="s2">"galactose"</span><span class="p">:</span> <span class="s2">"d-galactose"</span><span class="p">,</span>
+    <span class="s2">"mannose"</span><span class="p">:</span> <span class="s2">"d-mannose"</span><span class="p">,</span>
+    <span class="s2">"xylose"</span><span class="p">:</span> <span class="s2">"d-xylose"</span><span class="p">,</span>
+    <span class="c1"># sorbitol is D-glucitol, the name a GEM stores</span>
+    <span class="s2">"sorbitol"</span><span class="p">:</span> <span class="s2">"d-glucitol"</span><span class="p">,</span>
+    <span class="s2">"d-sorbitol"</span><span class="p">:</span> <span class="s2">"d-glucitol"</span><span class="p">,</span>
+    <span class="c1"># the physiological lactate is the (S) (= L) enantiomer</span>
+    <span class="s2">"lactate"</span><span class="p">:</span> <span class="s2">"(s)-lactate"</span><span class="p">,</span>
+    <span class="s2">"lactic acid"</span><span class="p">:</span> <span class="s2">"(s)-lactate"</span><span class="p">,</span>
+    <span class="s2">"l-lactate"</span><span class="p">:</span> <span class="s2">"(s)-lactate"</span><span class="p">,</span>
+    <span class="s2">"l-lactic acid"</span><span class="p">:</span> <span class="s2">"(s)-lactate"</span><span class="p">,</span>
+    <span class="s2">"water"</span><span class="p">:</span> <span class="s2">"h2o"</span><span class="p">,</span>
+    <span class="s2">"proton"</span><span class="p">:</span> <span class="s2">"h+"</span><span class="p">,</span>
+    <span class="s2">"hydrogen ion"</span><span class="p">:</span> <span class="s2">"h+"</span><span class="p">,</span>
+    <span class="s2">"dioxygen"</span><span class="p">:</span> <span class="s2">"oxygen"</span><span class="p">,</span>
+    <span class="s2">"o2"</span><span class="p">:</span> <span class="s2">"oxygen"</span><span class="p">,</span>
+    <span class="s2">"ferrous iron"</span><span class="p">:</span> <span class="s2">"iron(2+)"</span><span class="p">,</span>
+    <span class="s2">"iron(ii)"</span><span class="p">:</span> <span class="s2">"iron(2+)"</span><span class="p">,</span>
+    <span class="s2">"copper(2+)"</span><span class="p">:</span> <span class="s2">"cu2(+)"</span><span class="p">,</span>
+    <span class="s2">"manganese(2+)"</span><span class="p">:</span> <span class="s2">"mn(2+)"</span><span class="p">,</span>
+    <span class="s2">"zinc(2+)"</span><span class="p">:</span> <span class="s2">"zn(2+)"</span><span class="p">,</span>
+    <span class="s2">"magnesium(2+)"</span><span class="p">:</span> <span class="s2">"mg(2+)"</span><span class="p">,</span>
+    <span class="s2">"calcium(2+)"</span><span class="p">:</span> <span class="s2">"ca(2+)"</span><span class="p">,</span>
+    <span class="s2">"ammonium ion"</span><span class="p">:</span> <span class="s2">"ammonium"</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1">#: Salts that dissociate into more than one transportable ion. A component naming one of</span>
+<span class="c1">#: these resolves to SEVERAL exchanges, which is why a resolution holds a list.</span>
+<span class="n">_DISSOCIATION</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"ammonium sulfate"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"ammonium"</span><span class="p">,</span> <span class="s2">"sulfate"</span><span class="p">),</span>
+    <span class="s2">"monosodium l-glutamate"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"sodium"</span><span class="p">,</span> <span class="s2">"l-glutamate"</span><span class="p">),</span>
+    <span class="s2">"monosodium glutamate"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"sodium"</span><span class="p">,</span> <span class="s2">"l-glutamate"</span><span class="p">),</span>
+    <span class="s2">"potassium phosphate"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"potassium"</span><span class="p">,</span> <span class="s2">"phosphate"</span><span class="p">),</span>
+    <span class="c1"># Smith 2006's fatty-acid plates buffer with a KH2PO4 / K2HPO4 pair; the bench</span>
+    <span class="c1"># name carries "buffer", the ions are the same two.</span>
+    <span class="s2">"potassium phosphate buffer"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"potassium"</span><span class="p">,</span> <span class="s2">"phosphate"</span><span class="p">),</span>
+    <span class="s2">"magnesium sulfate"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"mg(2+)"</span><span class="p">,</span> <span class="s2">"sulfate"</span><span class="p">),</span>
+    <span class="s2">"sodium chloride"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"sodium"</span><span class="p">,</span> <span class="s2">"chloride"</span><span class="p">),</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_normalize</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Lowercase, collapse whitespace, drop punctuation a model never carries."""</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"’"</span><span class="p">,</span> <span class="s2">"'"</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\s+"</span><span class="p">,</span> <span class="s2">" "</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">text</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_candidate_names</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Chemical-naming variants to try against a model's metabolite names, in order.</span>
+
+<span class="sd">    Order matters: the most literal form is tried first so a model that does carry the</span>
+<span class="sd">    bench name wins before any rewrite is applied. Each later candidate encodes one</span>
+<span class="sd">    chemistry rule (drop the salt form, conjugate acid -&gt; conjugate base, D/L prefix</span>
+<span class="sd">    convention), and every rule generalizes across models.</span>
+<span class="sd">    """</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="n">_normalize</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">base</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">_NAME_SYNONYMS</span><span class="p">:</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_NAME_SYNONYMS</span><span class="p">[</span><span class="n">base</span><span class="p">])</span>
+
+    <span class="n">stripped</span> <span class="o">=</span> <span class="n">base</span>
+    <span class="k">for</span> <span class="n">qualifier</span> <span class="ow">in</span> <span class="n">_SALT_QUALIFIERS</span><span class="p">:</span>
+        <span class="n">stripped</span> <span class="o">=</span> <span class="n">stripped</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">qualifier</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">stripped</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\s+"</span><span class="p">,</span> <span class="s2">" "</span><span class="p">,</span> <span class="n">stripped</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">stripped</span> <span class="ow">and</span> <span class="n">stripped</span> <span class="o">!=</span> <span class="n">base</span><span class="p">:</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stripped</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">stripped</span> <span class="ow">in</span> <span class="n">_NAME_SYNONYMS</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_NAME_SYNONYMS</span><span class="p">[</span><span class="n">stripped</span><span class="p">])</span>
+
+    <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">out</span><span class="p">):</span>
+        <span class="c1"># conjugate acid -&gt; conjugate base, the form a GEM stores at physiological pH</span>
+        <span class="k">if</span> <span class="n">candidate</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"ic acid"</span><span class="p">):</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidate</span><span class="p">[:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="s2">"ic acid"</span><span class="p">)]</span> <span class="o">+</span> <span class="s2">"ate"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">candidate</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">" acid"</span><span class="p">):</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidate</span><span class="p">[:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="s2">" acid"</span><span class="p">)]</span> <span class="o">+</span> <span class="s2">"ate"</span><span class="p">)</span>
+        <span class="c1"># amino acids: recipes write "glycine", models often write "L-glycine"</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">candidate</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">"l-"</span><span class="p">,</span> <span class="s2">"d-"</span><span class="p">)):</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"l-"</span> <span class="o">+</span> <span class="n">candidate</span><span class="p">)</span>
+
+    <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">ordered</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">candidate</span> <span class="ow">and</span> <span class="n">candidate</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+            <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
+            <span class="n">ordered</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ordered</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Records</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+
+<span class="c1">#: Identifier namespaces a model may annotate its metabolites with. Ordered by how</span>
+<span class="c1">#: specific the identifier is, so the most chemically precise channel wins.</span>
+<span class="n">ANNOTATION_KEYS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"chebi"</span><span class="p">,</span>
+    <span class="s2">"kegg.compound"</span><span class="p">,</span>
+    <span class="s2">"metanetx.chemical"</span><span class="p">,</span>
+    <span class="s2">"bigg.metabolite"</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="ExchangeBound">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.media.ExchangeBound.html#torchcell.metabolism.media.ExchangeBound">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExchangeBound</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One exchange reaction opened to an uptake magnitude, with its provenance.</span>
+
+<span class="sd">    ``uptake_bound`` is a POSITIVE magnitude in ``unit``; applying it sets the exchange's</span>
+<span class="sd">    ``lower_bound`` to its negation (cobra's sign convention for uptake). Keeping the</span>
+<span class="sd">    stored value positive means a serialized bound vector reads as a medium composition</span>
+<span class="sd">    rather than as a pile of negative numbers.</span>
+<span class="sd">    """</span>
+
+    <span class="n">exchange_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"exchange reaction id in the target model"</span><span class="p">)</span>
+    <span class="n">metabolite_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"extracellular metabolite id"</span><span class="p">)</span>
+    <span class="n">metabolite_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"metabolite name as the model carries it"</span><span class="p">)</span>
+    <span class="n">uptake_bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"positive uptake magnitude"</span><span class="p">)</span>
+    <span class="n">unit</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"mmol/gDW/h"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">"mmol/gDW/h"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"flux unit; a bound is a RATE, never the recipe's concentration"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"why this magnitude, citation-anchored"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ComponentResolution">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.media.ComponentResolution.html#torchcell.metabolism.media.ComponentResolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ComponentResolution</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""What became of one ontology component on the way to a bound vector.</span>
+
+<span class="sd">    Exactly one of the three outcomes, recorded for EVERY component of the input medium.</span>
+<span class="sd">    """</span>
+
+    <span class="n">component_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">role</span><span class="p">:</span> <span class="n">MediaComponentRole</span>
+    <span class="n">outcome</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"resolved"</span><span class="p">,</span> <span class="s2">"excluded_by_role"</span><span class="p">,</span> <span class="s2">"unresolved"</span><span class="p">]</span>
+    <span class="n">exchange_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">match_channel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"how it matched: 'annotation:&lt;namespace&gt;' or 'name:&lt;candidate&gt;'"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"why it was excluded or could not be resolved"</span>
+    <span class="p">)</span>
+    <span class="n">candidates_tried</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"normalized name candidates tried; the audit trail of a failure"</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="MediaBounds">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.media.MediaBounds.html#torchcell.metabolism.media.MediaBounds">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MediaBounds</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A medium expressed as exchange bounds for one specific model.</span>
+
+<span class="sd">    Pure data: it holds no reference to the ``cobra.Model`` it was built against, only</span>
+<span class="sd">    that model's id, so it serializes to JSON and can be diffed against another medium.</span>
+<span class="sd">    """</span>
+
+    <span class="n">media_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">model_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">policy</span><span class="p">:</span> <span class="n">UptakePolicy</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ExchangeBound</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"exchange reaction id -&gt; bound"</span>
+    <span class="p">)</span>
+    <span class="n">resolutions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComponentResolution</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">n_components</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Components in the ontology object that produced this vector."""</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolutions</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">n_resolved</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Components that became at least one exchange bound."""</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolutions</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">outcome</span> <span class="o">==</span> <span class="s2">"resolved"</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">unresolved_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Components we tried and failed to place on an exchange reaction."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">component_name</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolutions</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">outcome</span> <span class="o">==</span> <span class="s2">"unresolved"</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">excluded_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Components a constraint-based model structurally cannot represent."""</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">r</span><span class="o">.</span><span class="n">component_name</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolutions</span>
+            <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">outcome</span> <span class="o">==</span> <span class="s2">"excluded_by_role"</span>
+        <span class="p">]</span>
+
+<div class="viewcode-block" id="MediaBounds.apply">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.media.MediaBounds.html#torchcell.metabolism.media.MediaBounds.apply">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">cobra</span><span class="o">.</span><span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Close every exchange on ``model``, then open exactly this medium.</span>
+
+<span class="sd">        Mutates the model, so callers use cobra's ``with model:`` context to scope it.</span>
+<span class="sd">        Closing first is what makes a medium a statement about the whole boundary rather</span>
+<span class="sd">        than an additive patch on whatever the model shipped with.</span>
+<span class="sd">        """</span>
+        <span class="k">for</span> <span class="n">reaction</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">exchanges</span><span class="p">:</span>
+            <span class="n">reaction</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">bound</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">reactions</span><span class="o">.</span><span class="n">get_by_id</span><span class="p">(</span>
+                <span class="n">bound</span><span class="o">.</span><span class="n">exchange_id</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">=</span> <span class="o">-</span><span class="n">bound</span><span class="o">.</span><span class="n">uptake_bound</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MediaBoundsDiff">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.media.MediaBoundsDiff.html#torchcell.metabolism.media.MediaBoundsDiff">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MediaBoundsDiff</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Exchange-level difference between two bound vectors on the same model."""</span>
+
+    <span class="n">left</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">right</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">only_in_left</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">only_in_right</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">differing</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">n_differences</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Exchanges whose uptake bound is not identical across the two media."""</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">only_in_left</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">only_in_right</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">differing</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Resolution</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+
+
+<div class="viewcode-block" id="ExchangeIndex">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.media.ExchangeIndex.html#torchcell.metabolism.media.ExchangeIndex">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExchangeIndex</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Lookup tables built once from a model's exchange reactions.</span>
+
+<span class="sd">    Built from what the MODEL declares (its annotations and its metabolite names), which</span>
+<span class="sd">    is what keeps the mapping organism-agnostic: no yeast reaction id appears anywhere in</span>
+<span class="sd">    this module, and the same index construction runs on any cobra model.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">by_annotation</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"'&lt;namespace&gt;:&lt;id&gt;' -&gt; exchange reaction id"</span>
+    <span class="p">)</span>
+    <span class="n">by_name</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"normalized metabolite name -&gt; exchange id"</span>
+    <span class="p">)</span>
+    <span class="n">metabolite_of</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"exchange id -&gt; (metabolite id, name)"</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="build_exchange_index">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.media.build_exchange_index.html#torchcell.metabolism.media.build_exchange_index">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_exchange_index</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">cobra</span><span class="o">.</span><span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExchangeIndex</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Index a model's exchange reactions by annotation identifier and by name.</span>
+
+<span class="sd">    An exchange with more than one metabolite is skipped: it is not a boundary reaction</span>
+<span class="sd">    for a single species, so no medium component can name it unambiguously.</span>
+<span class="sd">    """</span>
+    <span class="n">by_annotation</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">by_name</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">metabolite_of</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">reaction</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">exchanges</span><span class="p">:</span>
+        <span class="n">metabolites</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">reaction</span><span class="o">.</span><span class="n">metabolites</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">metabolites</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">metabolite</span> <span class="o">=</span> <span class="n">metabolites</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">metabolite_of</span><span class="p">[</span><span class="n">reaction</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">metabolite</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">metabolite</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">namespace</span> <span class="ow">in</span> <span class="n">ANNOTATION_KEYS</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">metabolite</span><span class="o">.</span><span class="n">annotation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">namespace</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">namespace</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">_normalize</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">))</span><span class="si">}</span><span class="s2">"</span>
+                <span class="n">by_annotation</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">reaction</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+
+        <span class="n">by_name</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">_normalize</span><span class="p">(</span><span class="n">metabolite</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="n">reaction</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ExchangeIndex</span><span class="p">(</span>
+        <span class="n">model_id</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+        <span class="n">by_annotation</span><span class="o">=</span><span class="n">by_annotation</span><span class="p">,</span>
+        <span class="n">by_name</span><span class="o">=</span><span class="n">by_name</span><span class="p">,</span>
+        <span class="n">metabolite_of</span><span class="o">=</span><span class="n">metabolite_of</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_annotation_keys_for</span><span class="p">(</span><span class="n">compound</span><span class="p">:</span> <span class="n">Compound</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Identifier lookups a compound's own cross-references support.</span>
+
+<span class="sd">    ``Compound.chebi_id`` is the join key the media design note names. Every entry a</span>
+<span class="sd">    compound carries is tried before any name matching, because an identifier is exact</span>
+<span class="sd">    and a name is a guess dressed as a fact.</span>
+<span class="sd">    """</span>
+    <span class="n">keys</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">compound</span><span class="o">.</span><span class="n">chebi_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">keys</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">"chebi"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"chebi:</span><span class="si">{</span><span class="n">_normalize</span><span class="p">(</span><span class="n">compound</span><span class="o">.</span><span class="n">chebi_id</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">))</span>
+        <span class="c1"># a model may store the bare numeric form rather than the CURIE</span>
+        <span class="n">keys</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">"chebi"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"chebi:</span><span class="si">{</span><span class="n">_normalize</span><span class="p">(</span><span class="n">compound</span><span class="o">.</span><span class="n">chebi_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">':'</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">keys</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_one_name</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="n">ExchangeIndex</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Best exchange for a chemical name: (exchange id, channel, candidates tried)."""</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="n">_candidate_names</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+        <span class="n">exchange_id</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">by_name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">exchange_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">exchange_id</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"name:</span><span class="si">{</span><span class="n">candidate</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">candidates</span>
+    <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="n">candidates</span>
+
+
+<div class="viewcode-block" id="resolve_component">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.media.resolve_component.html#torchcell.metabolism.media.resolve_component">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_component</span><span class="p">(</span>
+    <span class="n">component</span><span class="p">:</span> <span class="n">MediaComponent</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="n">ExchangeIndex</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentResolution</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Place one ontology component on zero or more exchange reactions.</span>
+
+<span class="sd">    Order is annotation first, then dissociation into ions, then chemical name. A</span>
+<span class="sd">    component whose role the model structurally cannot represent short-circuits to</span>
+<span class="sd">    ``excluded_by_role`` before any lookup, so a failure to find agar is never reported</span>
+<span class="sd">    as a resolution failure.</span>
+<span class="sd">    """</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">component</span><span class="o">.</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span>
+    <span class="k">if</span> <span class="n">component</span><span class="o">.</span><span class="n">role</span> <span class="ow">in</span> <span class="n">_NOT_MODELED_ROLES</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ComponentResolution</span><span class="p">(</span>
+            <span class="n">component_name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">role</span><span class="o">=</span><span class="n">component</span><span class="o">.</span><span class="n">role</span><span class="p">,</span>
+            <span class="n">outcome</span><span class="o">=</span><span class="s2">"excluded_by_role"</span><span class="p">,</span>
+            <span class="n">reason</span><span class="o">=</span><span class="sa">f</span><span class="s2">"role '</span><span class="si">{</span><span class="n">component</span><span class="o">.</span><span class="n">role</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">' has no constraint-based "</span>
+            <span class="s2">"representation (gel matrix, genotype-dependent selection agent, or "</span>
+            <span class="s2">"undefined biological digest)"</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">namespace</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">_annotation_keys_for</span><span class="p">(</span><span class="n">component</span><span class="o">.</span><span class="n">compound</span><span class="p">):</span>
+        <span class="n">exchange_id</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">by_annotation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">exchange_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ComponentResolution</span><span class="p">(</span>
+                <span class="n">component_name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">role</span><span class="o">=</span><span class="n">component</span><span class="o">.</span><span class="n">role</span><span class="p">,</span>
+                <span class="n">outcome</span><span class="o">=</span><span class="s2">"resolved"</span><span class="p">,</span>
+                <span class="n">exchange_ids</span><span class="o">=</span><span class="p">[</span><span class="n">exchange_id</span><span class="p">],</span>
+                <span class="n">match_channel</span><span class="o">=</span><span class="sa">f</span><span class="s2">"annotation:</span><span class="si">{</span><span class="n">namespace</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="n">normalized</span> <span class="o">=</span> <span class="n">_normalize</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">normalized</span> <span class="ow">in</span> <span class="n">_DISSOCIATION</span><span class="p">:</span>
+        <span class="n">exchange_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">tried</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ion</span> <span class="ow">in</span> <span class="n">_DISSOCIATION</span><span class="p">[</span><span class="n">normalized</span><span class="p">]:</span>
+            <span class="n">exchange_id</span><span class="p">,</span> <span class="n">_channel</span><span class="p">,</span> <span class="n">candidates</span> <span class="o">=</span> <span class="n">_resolve_one_name</span><span class="p">(</span><span class="n">ion</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+            <span class="n">tried</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">exchange_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">exchange_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">exchange_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">exchange_ids</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ComponentResolution</span><span class="p">(</span>
+                <span class="n">component_name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">role</span><span class="o">=</span><span class="n">component</span><span class="o">.</span><span class="n">role</span><span class="p">,</span>
+                <span class="n">outcome</span><span class="o">=</span><span class="s2">"resolved"</span><span class="p">,</span>
+                <span class="n">exchange_ids</span><span class="o">=</span><span class="n">exchange_ids</span><span class="p">,</span>
+                <span class="n">match_channel</span><span class="o">=</span><span class="sa">f</span><span class="s2">"name:dissociation(</span><span class="si">{</span><span class="n">normalized</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
+                <span class="n">candidates_tried</span><span class="o">=</span><span class="n">tried</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ComponentResolution</span><span class="p">(</span>
+            <span class="n">component_name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">role</span><span class="o">=</span><span class="n">component</span><span class="o">.</span><span class="n">role</span><span class="p">,</span>
+            <span class="n">outcome</span><span class="o">=</span><span class="s2">"unresolved"</span><span class="p">,</span>
+            <span class="n">reason</span><span class="o">=</span><span class="s2">"salt dissociates but no ion matched a model exchange"</span><span class="p">,</span>
+            <span class="n">candidates_tried</span><span class="o">=</span><span class="n">tried</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">exchange_id</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">candidates</span> <span class="o">=</span> <span class="n">_resolve_one_name</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">exchange_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ComponentResolution</span><span class="p">(</span>
+            <span class="n">component_name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">role</span><span class="o">=</span><span class="n">component</span><span class="o">.</span><span class="n">role</span><span class="p">,</span>
+            <span class="n">outcome</span><span class="o">=</span><span class="s2">"resolved"</span><span class="p">,</span>
+            <span class="n">exchange_ids</span><span class="o">=</span><span class="p">[</span><span class="n">exchange_id</span><span class="p">],</span>
+            <span class="n">match_channel</span><span class="o">=</span><span class="n">channel</span><span class="p">,</span>
+            <span class="n">candidates_tried</span><span class="o">=</span><span class="n">candidates</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ComponentResolution</span><span class="p">(</span>
+        <span class="n">component_name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+        <span class="n">role</span><span class="o">=</span><span class="n">component</span><span class="o">.</span><span class="n">role</span><span class="p">,</span>
+        <span class="n">outcome</span><span class="o">=</span><span class="s2">"unresolved"</span><span class="p">,</span>
+        <span class="n">reason</span><span class="o">=</span><span class="s2">"no model exchange matched by annotation or by any chemical name variant"</span>
+        <span class="o">+</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"; component identity is '</span><span class="si">{</span><span class="n">component</span><span class="o">.</span><span class="n">definition</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">' so it names a "</span>
+            <span class="s2">"mixture rather than a single species"</span>
+            <span class="k">if</span> <span class="n">component</span><span class="o">.</span><span class="n">definition</span><span class="o">.</span><span class="n">value</span> <span class="o">!=</span> <span class="s2">"defined"</span>
+            <span class="k">else</span> <span class="s2">""</span>
+        <span class="p">),</span>
+        <span class="n">candidates_tried</span><span class="o">=</span><span class="n">candidates</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="media_to_bounds">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.media.media_to_bounds.html#torchcell.metabolism.media.media_to_bounds">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">media_to_bounds</span><span class="p">(</span>
+    <span class="n">media</span><span class="p">:</span> <span class="n">Media</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">cobra</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span>
+    <span class="n">policy</span><span class="p">:</span> <span class="n">UptakePolicy</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">index</span><span class="p">:</span> <span class="n">ExchangeIndex</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MediaBounds</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Map an ontology ``Media`` onto exchange bounds for ``model``.</span>
+
+<span class="sd">    Pure: reads the model's structure and annotations, mutates nothing. When two</span>
+<span class="sd">    components land on the same exchange (a shared ion), the LARGER uptake wins, because</span>
+<span class="sd">    the medium contains both sources and availability is additive rather than limiting.</span>
+<span class="sd">    """</span>
+    <span class="n">resolved_policy</span> <span class="o">=</span> <span class="n">policy</span> <span class="k">if</span> <span class="n">policy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">UptakePolicy</span><span class="p">()</span>
+    <span class="n">resolved_index</span> <span class="o">=</span> <span class="n">index</span> <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">build_exchange_index</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+    <span class="n">bounds</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ExchangeBound</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">resolutions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComponentResolution</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">media</span><span class="o">.</span><span class="n">components</span><span class="p">:</span>
+        <span class="n">resolution</span> <span class="o">=</span> <span class="n">resolve_component</span><span class="p">(</span><span class="n">component</span><span class="p">,</span> <span class="n">resolved_index</span><span class="p">)</span>
+        <span class="n">resolutions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">resolution</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resolution</span><span class="o">.</span><span class="n">outcome</span> <span class="o">!=</span> <span class="s2">"resolved"</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">magnitude</span> <span class="o">=</span> <span class="n">resolved_policy</span><span class="o">.</span><span class="n">bound_for</span><span class="p">(</span><span class="n">component</span><span class="o">.</span><span class="n">role</span><span class="p">,</span> <span class="n">component</span><span class="o">.</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">resolved_policy</span><span class="o">.</span><span class="n">source_for</span><span class="p">(</span><span class="n">component</span><span class="o">.</span><span class="n">role</span><span class="p">,</span> <span class="n">component</span><span class="o">.</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">exchange_id</span> <span class="ow">in</span> <span class="n">resolution</span><span class="o">.</span><span class="n">exchange_ids</span><span class="p">:</span>
+            <span class="n">metabolite_id</span><span class="p">,</span> <span class="n">metabolite_name</span> <span class="o">=</span> <span class="n">resolved_index</span><span class="o">.</span><span class="n">metabolite_of</span><span class="p">[</span><span class="n">exchange_id</span><span class="p">]</span>
+            <span class="n">existing</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">exchange_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">existing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">existing</span><span class="o">.</span><span class="n">uptake_bound</span> <span class="o">&gt;=</span> <span class="n">magnitude</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">bounds</span><span class="p">[</span><span class="n">exchange_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">ExchangeBound</span><span class="p">(</span>
+                <span class="n">exchange_id</span><span class="o">=</span><span class="n">exchange_id</span><span class="p">,</span>
+                <span class="n">metabolite_id</span><span class="o">=</span><span class="n">metabolite_id</span><span class="p">,</span>
+                <span class="n">metabolite_name</span><span class="o">=</span><span class="n">metabolite_name</span><span class="p">,</span>
+                <span class="n">uptake_bound</span><span class="o">=</span><span class="n">magnitude</span><span class="p">,</span>
+                <span class="n">source</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2"> [component: </span><span class="si">{</span><span class="n">component</span><span class="o">.</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">]"</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">MediaBounds</span><span class="p">(</span>
+        <span class="n">media_name</span><span class="o">=</span><span class="n">media</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="n">model_id</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+        <span class="n">policy</span><span class="o">=</span><span class="n">resolved_policy</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+        <span class="n">resolutions</span><span class="o">=</span><span class="n">resolutions</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="diff_bounds">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.media.diff_bounds.html#torchcell.metabolism.media.diff_bounds">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">diff_bounds</span><span class="p">(</span><span class="n">left</span><span class="p">:</span> <span class="n">MediaBounds</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">MediaBounds</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MediaBoundsDiff</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Exchange-level difference between two bound vectors."""</span>
+    <span class="n">left_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">left</span><span class="o">.</span><span class="n">bounds</span><span class="p">)</span>
+    <span class="n">right_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">right</span><span class="o">.</span><span class="n">bounds</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">MediaBoundsDiff</span><span class="p">(</span>
+        <span class="n">left</span><span class="o">=</span><span class="n">left</span><span class="o">.</span><span class="n">media_name</span><span class="p">,</span>
+        <span class="n">right</span><span class="o">=</span><span class="n">right</span><span class="o">.</span><span class="n">media_name</span><span class="p">,</span>
+        <span class="n">only_in_left</span><span class="o">=</span><span class="p">{</span>
+            <span class="n">i</span><span class="p">:</span> <span class="n">left</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">uptake_bound</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">left_ids</span> <span class="o">-</span> <span class="n">right_ids</span><span class="p">)</span>
+        <span class="p">},</span>
+        <span class="n">only_in_right</span><span class="o">=</span><span class="p">{</span>
+            <span class="n">i</span><span class="p">:</span> <span class="n">right</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">uptake_bound</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">right_ids</span> <span class="o">-</span> <span class="n">left_ids</span><span class="p">)</span>
+        <span class="p">},</span>
+        <span class="n">differing</span><span class="o">=</span><span class="p">{</span>
+            <span class="n">i</span><span class="p">:</span> <span class="p">(</span><span class="n">left</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">uptake_bound</span><span class="p">,</span> <span class="n">right</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">uptake_bound</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">left_ids</span> <span class="o">&amp;</span> <span class="n">right_ids</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">left</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">uptake_bound</span> <span class="o">!=</span> <span class="n">right</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">uptake_bound</span>
+        <span class="p">},</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># The four recipes our datasets need, as ontology ``Media`` objects.</span>
+<span class="c1">#</span>
+<span class="c1"># They are ``Media``, not bound dicts, so the audit exercises the real ontology -&gt;</span>
+<span class="c1"># bounds path rather than a shortcut, and so a recipe can be compared field by field</span>
+<span class="c1"># against what a dataset loader emits.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_component</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">role</span><span class="p">:</span> <span class="n">MediaComponentRole</span><span class="p">,</span>
+    <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">concentration</span><span class="p">:</span> <span class="n">Concentration</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MediaComponent</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A name-only defined component, matching the ontology library's discipline.</span>
+
+<span class="sd">    ChEBI / InChIKey cross-refs stay empty exactly as in</span>
+<span class="sd">    ``torchcell/datamodels/media.py``: they are filled by a sourced resolver pass and</span>
+<span class="sd">    never guessed here. The consequence is measured by the audit -- with the join key</span>
+<span class="sd">    empty, resolution falls to the name channel on every component.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">MediaComponent</span><span class="p">(</span>
+        <span class="n">compound</span><span class="o">=</span><span class="n">Compound</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">),</span> <span class="n">role</span><span class="o">=</span><span class="n">role</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span> <span class="n">concentration</span><span class="o">=</span><span class="n">concentration</span>
+    <span class="p">)</span>
+
+
+<span class="c1">#: Species a wet-lab recipe never lists but a GEM cannot grow without: the solvent, the</span>
+<span class="c1">#: atmosphere, the protons, and the salt/trace-metal content that the ontology hides</span>
+<span class="c1">#: inside a ``composition_deferred`` "yeast nitrogen base" line. Declaring them here is</span>
+<span class="c1">#: the honest place for them: they are model requirements, not bench ingredients, and</span>
+<span class="c1">#: they are named as chemicals so the resolver finds them on any annotated model.</span>
+<span class="n">MINERAL_BASE</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MediaComponent</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">_component</span><span class="p">(</span><span class="s2">"water"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">other</span><span class="p">,</span> <span class="s2">"solvent; never a recipe line"</span><span class="p">),</span>
+    <span class="n">_component</span><span class="p">(</span>
+        <span class="s2">"oxygen"</span><span class="p">,</span>
+        <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">other</span><span class="p">,</span>
+        <span class="s2">"aerobic culture; the Media schema "</span>
+        <span class="s2">"has no aeration field, so this is a modeling assumption, not a record"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">_component</span><span class="p">(</span><span class="s2">"H+"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">buffer</span><span class="p">,</span> <span class="s2">"proton exchange, cobra convention"</span><span class="p">),</span>
+    <span class="n">_component</span><span class="p">(</span>
+        <span class="s2">"phosphate"</span><span class="p">,</span>
+        <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">bulk_salt</span><span class="p">,</span>
+        <span class="s2">"YNB salt, composition_deferred in the ontology"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">_component</span><span class="p">(</span>
+        <span class="s2">"sulfate"</span><span class="p">,</span>
+        <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">bulk_salt</span><span class="p">,</span>
+        <span class="s2">"YNB salt, composition_deferred in the ontology"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">_component</span><span class="p">(</span><span class="s2">"sodium"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">bulk_salt</span><span class="p">,</span> <span class="s2">"YNB salt"</span><span class="p">),</span>
+    <span class="n">_component</span><span class="p">(</span><span class="s2">"potassium"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">bulk_salt</span><span class="p">,</span> <span class="s2">"YNB salt"</span><span class="p">),</span>
+    <span class="n">_component</span><span class="p">(</span><span class="s2">"chloride"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">bulk_salt</span><span class="p">,</span> <span class="s2">"YNB salt"</span><span class="p">),</span>
+    <span class="n">_component</span><span class="p">(</span><span class="s2">"iron(2+)"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">trace_element</span><span class="p">,</span> <span class="s2">"YNB trace metal"</span><span class="p">),</span>
+    <span class="n">_component</span><span class="p">(</span><span class="s2">"copper(2+)"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">trace_element</span><span class="p">,</span> <span class="s2">"YNB trace metal"</span><span class="p">),</span>
+    <span class="n">_component</span><span class="p">(</span><span class="s2">"manganese(2+)"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">trace_element</span><span class="p">,</span> <span class="s2">"YNB trace metal"</span><span class="p">),</span>
+    <span class="n">_component</span><span class="p">(</span><span class="s2">"zinc(2+)"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">trace_element</span><span class="p">,</span> <span class="s2">"YNB trace metal"</span><span class="p">),</span>
+    <span class="n">_component</span><span class="p">(</span><span class="s2">"magnesium(2+)"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">trace_element</span><span class="p">,</span> <span class="s2">"YNB trace metal"</span><span class="p">),</span>
+    <span class="n">_component</span><span class="p">(</span><span class="s2">"calcium(2+)"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">trace_element</span><span class="p">,</span> <span class="s2">"YNB trace metal"</span><span class="p">),</span>
+<span class="p">]</span>
+
+<span class="n">_GLUCOSE</span> <span class="o">=</span> <span class="n">_component</span><span class="p">(</span>
+    <span class="s2">"D-glucose"</span><span class="p">,</span>
+    <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">carbon_source</span><span class="p">,</span>
+    <span class="s2">"2% w/v at the bench; the bound comes from the uptake policy, not this number, "</span>
+    <span class="s2">"because a concentration is not a flux"</span><span class="p">,</span>
+    <span class="n">Concentration</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">percent_w_v</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="n">_AMMONIUM_SULFATE</span> <span class="o">=</span> <span class="n">_component</span><span class="p">(</span>
+    <span class="s2">"ammonium sulfate"</span><span class="p">,</span>
+    <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">nitrogen_source</span><span class="p">,</span>
+    <span class="s2">"5 g/L; dissociates to ammonium + sulfate"</span><span class="p">,</span>
+    <span class="n">Concentration</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">g_per_l</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="c1">#: The nine YNB vitamins, taken from the ontology library rather than re-listed, so the</span>
+<span class="c1">#: recipe and the data ontology cannot drift apart.</span>
+<span class="n">_YNB_VITAMINS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MediaComponent</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">_ONTOLOGY_YNB</span><span class="o">.</span><span class="n">components</span><span class="p">)</span>
+
+<span class="c1">#: The twenty amino acids, taken from the ontology SC definition for the same reason.</span>
+<span class="n">_SC_AMINO_ACIDS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MediaComponent</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">_ONTOLOGY_SC</span><span class="o">.</span><span class="n">components</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">role</span> <span class="ow">is</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">amino_acid</span>
+<span class="p">]</span>
+
+<span class="n">_URACIL</span> <span class="o">=</span> <span class="n">_component</span><span class="p">(</span>
+    <span class="s2">"uracil"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">nucleobase</span><span class="p">,</span> <span class="s2">"SC nucleobase supplement"</span>
+<span class="p">)</span>
+<span class="n">_ADENINE</span> <span class="o">=</span> <span class="n">_component</span><span class="p">(</span>
+    <span class="s2">"adenine"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">nucleobase</span><span class="p">,</span> <span class="s2">"SC nucleobase supplement"</span>
+<span class="p">)</span>
+
+<span class="n">_SUTHERS_YPD_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"The undefined composition of yeast extract in Yeast-Peptone-Dextrose (YPD) media "</span>
+    <span class="s2">"was assumed to be that of YNB media plus 20 amino acids and D-glucose."</span>
+<span class="p">)</span>
+
+<span class="n">SM_FBA</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"SM (synthetic minimal): YNB vitamins + ammonium sulfate + D-glucose"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"SD"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span><span class="o">*</span><span class="n">MINERAL_BASE</span><span class="p">,</span> <span class="n">_GLUCOSE</span><span class="p">,</span> <span class="n">_AMMONIUM_SULFATE</span><span class="p">,</span> <span class="o">*</span><span class="n">_YNB_VITAMINS</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""Mulleder's SM: defined minimal medium, no amino acids, no nucleobases.</span>
+
+<span class="sd">Modeling decision, stated rather than sourced: SM is read as YNB + glucose + ammonium</span>
+<span class="sd">with NO amino-acid supplement. Suthers gives no SM recipe; the composition is the</span>
+<span class="sd">standard Difco YNB formulation already cited in ``torchcell/datamodels/media.py``.</span>
+<span class="sd">"""</span>
+
+<span class="n">SC_FBA</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"SC (synthetic complete): SM + 20 amino acids + uracil + adenine"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"SC"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span><span class="o">*</span><span class="n">SM_FBA</span><span class="o">.</span><span class="n">components</span><span class="p">,</span> <span class="o">*</span><span class="n">_SC_AMINO_ACIDS</span><span class="p">,</span> <span class="n">_URACIL</span><span class="p">,</span> <span class="n">_ADENINE</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""Cachera betaxanthin's medium.</span>
+
+<span class="sd">The SC composition is NOT in Suthers, which uses SC throughout its Fig. 4 without ever</span>
+<span class="sd">listing it. The recipe is the standard Difco/Sigma SC formulation cited in</span>
+<span class="sd">``torchcell/datamodels/media.py``; only the uptake magnitudes are Suthers'.</span>
+<span class="sd">"""</span>
+
+<span class="n">SC_URA_FBA</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"SC-Ura (synthetic complete minus uracil): SM + 20 amino acids + adenine"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"SC"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">SC_FBA</span><span class="o">.</span><span class="n">components</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s2">"uracil"</span><span class="p">],</span>
+    <span class="n">dropouts</span><span class="o">=</span><span class="p">[</span><span class="n">Compound</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"uracil"</span><span class="p">)],</span>
+<span class="p">)</span>
+<span class="sd">"""Ozaydin beta-carotene's medium: SC with uracil withheld to select the URA3 plasmid."""</span>
+
+<span class="n">YPD_APPROX_FBA</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"YPD-approx (YNB + 20 amino acids; peptone NOT modeled)"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"YPD_approx"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span><span class="o">*</span><span class="n">SM_FBA</span><span class="o">.</span><span class="n">components</span><span class="p">,</span> <span class="o">*</span><span class="n">_SC_AMINO_ACIDS</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""Ohya morphology's medium, APPROXIMATED, and the name says which.</span>
+
+<span class="sd">Real YPD is ``is_synthetic=False``: peptone-derived peptides and yeast-extract lipids</span>
+<span class="sd">have no representation in a GEM. This object is ``is_synthetic=True`` because it is not</span>
+<span class="sd">YPD, it is the defined stand-in Suthers substitutes for it:</span>
+
+<span class="sd">    "The undefined composition of yeast extract in Yeast-Peptone-Dextrose (YPD) media</span>
+<span class="sd">    was assumed to be that of YNB media plus 20 amino acids and D-glucose."</span>
+
+<span class="sd">Peptone is never modeled, by us or by Suthers. The bound vector is identical to SC minus</span>
+<span class="sd">its two nucleobases; the separate name exists because the two objects assert different</span>
+<span class="sd">things about the bench.</span>
+<span class="sd">"""</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sga_selection_fba</span><span class="p">(</span><span class="n">ontology</span><span class="p">:</span> <span class="n">Media</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Media</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Expand an ontology SGA selection medium into a resolvable FBA recipe.</span>
+
+<span class="sd">    The ontology records the bench recipe (Tong &amp; Boone 2006 #16): two of its components</span>
+<span class="sd">    name mixtures a resolver cannot place on one exchange, ``yeast nitrogen base``</span>
+<span class="sd">    (``composition_deferred``) and the ``SC amino-acid supplement powder`` (one defined</span>
+<span class="sd">    line whose per-ingredient grams sit in its provenance quote). Each is expanded here</span>
+<span class="sd">    into the same species lists the SM and SC recipes use, with the medium's dropouts</span>
+<span class="sd">    removed from the supplement, so the expansion cannot drift from the ontology. Every</span>
+<span class="sd">    other component (glucose, monosodium glutamate, agar, the four selection agents) is</span>
+<span class="sd">    carried through unchanged, so agar and the selection agents come back as</span>
+<span class="sd">    ``excluded_by_role`` in the resolution record rather than disappearing.</span>
+
+<span class="sd">    Two modeling statements, neither in the source: leucine is supplemented at 10 g per</span>
+<span class="sd">    55.2 g of powder against 2 g for the other amino acids, and the policy gives every</span>
+<span class="sd">    supplement the same 0.165 uptake; and monosodium glutamate, the nitrogen source, is</span>
+<span class="sd">    bounded at that same supplement rate (``UptakePolicy.organic_nitrogen_uptake``).</span>
+<span class="sd">    """</span>
+    <span class="n">dropouts</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">ontology</span><span class="o">.</span><span class="n">dropouts</span><span class="p">}</span>
+    <span class="n">supplement</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">_SC_AMINO_ACIDS</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dropouts</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">nucleobase</span> <span class="ow">in</span> <span class="p">(</span><span class="n">_ADENINE</span><span class="p">,</span> <span class="n">_URACIL</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">nucleobase</span><span class="o">.</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dropouts</span><span class="p">:</span>
+            <span class="n">supplement</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nucleobase</span><span class="p">)</span>
+    <span class="n">expanded</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MediaComponent</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">MINERAL_BASE</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">ontology</span><span class="o">.</span><span class="n">components</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">component</span><span class="o">.</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"yeast nitrogen base"</span><span class="p">):</span>
+            <span class="n">expanded</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_YNB_VITAMINS</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"SC amino-acid supplement powder"</span><span class="p">):</span>
+            <span class="n">expanded</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">supplement</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">expanded</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">component</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Media</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">ontology</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">" [FBA expansion]"</span><span class="p">,</span>
+        <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+        <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">base_medium</span><span class="o">=</span><span class="n">ontology</span><span class="o">.</span><span class="n">base_medium</span><span class="p">,</span>
+        <span class="n">components</span><span class="o">=</span><span class="n">expanded</span><span class="p">,</span>
+        <span class="n">dropouts</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">ontology</span><span class="o">.</span><span class="n">dropouts</span><span class="p">),</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">ontology</span><span class="o">.</span><span class="n">provenance</span><span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="n">SGA_DM_SELECTION_FBA</span> <span class="o">=</span> <span class="n">_sga_selection_fba</span><span class="p">(</span><span class="n">_ONTOLOGY_SGA_DM</span><span class="p">)</span>
+<span class="sd">"""Costanzo 2016 digenic SGA scoring medium, SD/MSG -His/Arg/Lys, as exchange bounds."""</span>
+
+<span class="n">SGA_TM_SELECTION_FBA</span> <span class="o">=</span> <span class="n">_sga_selection_fba</span><span class="p">(</span><span class="n">_ONTOLOGY_SGA_TM</span><span class="p">)</span>
+<span class="sd">"""Kuzmin 2018 / 2020 trigenic SGA scoring medium, SD/MSG -His/Arg/Lys/Ura, as bounds."""</span>
+
+<span class="c1">#: The media our datasets actually need, keyed by the medium NAME the dataset loaders</span>
+<span class="c1">#: emit, so an audit can join a loader's ``Media`` to the recipe it should use.</span>
+<span class="n">FBA_MEDIA</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Media</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"SM"</span><span class="p">:</span> <span class="n">SM_FBA</span><span class="p">,</span>
+    <span class="s2">"SC"</span><span class="p">:</span> <span class="n">SC_FBA</span><span class="p">,</span>
+    <span class="s2">"SC-URA"</span><span class="p">:</span> <span class="n">SC_URA_FBA</span><span class="p">,</span>
+    <span class="s2">"YPD"</span><span class="p">:</span> <span class="n">YPD_APPROX_FBA</span><span class="p">,</span>
+    <span class="s2">"SGA_DM"</span><span class="p">:</span> <span class="n">SGA_DM_SELECTION_FBA</span><span class="p">,</span>
+    <span class="s2">"SGA_TM"</span><span class="p">:</span> <span class="n">SGA_TM_SELECTION_FBA</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

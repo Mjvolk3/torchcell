@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.GeneEssentialityPhenotype
+=====================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: GeneEssentialityPhenotype
+   :show-inheritance:
+   :members:

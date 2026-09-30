@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.BarcodedKanMxDeletionPerturbation
+=============================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: BarcodedKanMxDeletionPerturbation
+   :show-inheritance:
+   :members:

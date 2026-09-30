@@ -1,0 +1,8 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.KgEvent
+================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autoclass:: KgEvent
+   :show-inheritance:
+   :members:

@@ -1,0 +1,591 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.provenance.schema_deps &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/provenance/schema_deps.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.provenance.schema_deps</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.provenance.schema_deps</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/provenance/schema_deps.py</span>
+<span class="c1"># [[torchcell.provenance.schema_deps]]</span>
+<span class="sd">"""AST-level schema-dependency analysis for torchcell datasets.</span>
+
+<span class="sd">This module answers two questions from LOCAL source only -- no git SHAs, no network,</span>
+<span class="sd">no central database:</span>
+
+<span class="sd">    closure(loader)      which schema symbols does a dataset loader transitively depend on?</span>
+<span class="sd">    fingerprint(symbol)  a content hash of a symbol's *contract* (field shape + validators),</span>
+<span class="sd">                         deliberately excluding docstrings, comments, plain methods, field</span>
+<span class="sd">                         descriptions, and field ORDER.</span>
+
+<span class="sd">Because a fingerprint hashes the contract and not the source text, it is machine- and</span>
+<span class="sd">commit-independent: the fingerprint computed on one machine equals the fingerprint computed</span>
+<span class="sd">on another whenever the contract is the same. That is what lets a build manifest written on</span>
+<span class="sd">machine A be checked against machine B's *local* schema (see ``build_manifest.py``): staleness</span>
+<span class="sd">is judged by ``fingerprint_now(local schema) != fingerprint_stored``, computed entirely from</span>
+<span class="sd">local git state.</span>
+
+<span class="sd">The "schema surface" is the set of modules that define record-contract classes. In torchcell</span>
+<span class="sd">that is ``schema.py`` (the record classes) plus ``pydant.py`` (the ``ModelStrict`` base every</span>
+<span class="sd">record inherits). ``media.py`` / ``calmorph_labels.py`` export constant INSTANCES, not new</span>
+<span class="sd">record types, so they are not part of the class-contract surface.</span>
+
+<span class="sd">Two orthogonal scoping levers keep the rebuild signal tight (see the module tests):</span>
+<span class="sd">  1. closure   -- a loader depends only on the symbols reachable from its imports, so a change</span>
+<span class="sd">                  to a symbol outside its closure never flags it.</span>
+<span class="sd">  2. fingerprint -- a benign edit (docstring, method, field description, field reorder) leaves</span>
+<span class="sd">                  the contract fingerprint unchanged, so it flags nobody even for a universal</span>
+<span class="sd">                  symbol like ``Media`` that sits under every record.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">ast</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"FieldSpec"</span><span class="p">,</span>
+    <span class="s2">"ContractSpec"</span><span class="p">,</span>
+    <span class="s2">"contract_spec"</span><span class="p">,</span>
+    <span class="s2">"fingerprint"</span><span class="p">,</span>
+    <span class="s2">"spec_fingerprint"</span><span class="p">,</span>
+    <span class="s2">"SchemaSurface"</span><span class="p">,</span>
+    <span class="s2">"load_surface"</span><span class="p">,</span>
+    <span class="s2">"load_surface_from_sources"</span><span class="p">,</span>
+    <span class="s2">"default_surface_modules"</span><span class="p">,</span>
+    <span class="s2">"load_default_surface"</span><span class="p">,</span>
+    <span class="s2">"forward_closure"</span><span class="p">,</span>
+    <span class="s2">"loader_schema_deps"</span><span class="p">,</span>
+    <span class="s2">"loader_closure"</span><span class="p">,</span>
+    <span class="s2">"loader_schema_deps_from_source"</span><span class="p">,</span>
+    <span class="s2">"loader_closure_from_source"</span><span class="p">,</span>
+    <span class="s2">"symbol_dependents"</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="c1"># Field(...) keyword arguments that are documentation only: changing them must NOT change a</span>
+<span class="c1"># symbol's contract fingerprint (they do not affect validation or serialization).</span>
+<span class="n">_DOC_FIELD_KWARGS</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span><span class="s2">"description"</span><span class="p">,</span> <span class="s2">"title"</span><span class="p">,</span> <span class="s2">"examples"</span><span class="p">,</span> <span class="s2">"json_schema_extra"</span><span class="p">,</span> <span class="s2">"deprecated"</span><span class="p">}</span>
+<span class="p">)</span>
+
+<span class="c1"># Decorators that mark a method as part of the record contract (validation/serialization).</span>
+<span class="n">_CONTRACT_METHOD_DECORATORS</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"field_validator"</span><span class="p">,</span>
+        <span class="s2">"model_validator"</span><span class="p">,</span>
+        <span class="s2">"field_serializer"</span><span class="p">,</span>
+        <span class="s2">"model_serializer"</span><span class="p">,</span>
+        <span class="s2">"computed_field"</span><span class="p">,</span>
+        <span class="s2">"validator"</span><span class="p">,</span>
+        <span class="s2">"root_validator"</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="c1"># Sentinel prefix marking a required field. A plain ``x: T`` yields exactly this; a required</span>
+<span class="c1"># field written as ``x: T = Field(...)`` (no default/default_factory) yields this + the folded</span>
+<span class="c1"># semantic kwargs, so a change to e.g. ``ge=0`` still moves the fingerprint while the field</span>
+<span class="c1"># stays classified as required.</span>
+<span class="n">_REQUIRED</span> <span class="o">=</span> <span class="s2">"&lt;REQUIRED&gt;"</span>
+
+
+<div class="viewcode-block" id="FieldSpec">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.FieldSpec.html#torchcell.provenance.FieldSpec">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FieldSpec</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A single pydantic field's contract-relevant shape."""</span>
+
+    <span class="n">annotation</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">default</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># normalized default source, or a ``_REQUIRED``-prefixed marker</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">required</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""True if the field has no default (a required field)."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">_REQUIRED</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ContractSpec">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.ContractSpec.html#torchcell.provenance.ContractSpec">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ContractSpec</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The contract-relevant surface of one schema class.</span>
+
+<span class="sd">    Two classes with equal ``ContractSpec`` serialize/validate identically as far as this</span>
+<span class="sd">    static analysis can tell, and get the same fingerprint. Docstrings, plain (non-validator)</span>
+<span class="sd">    methods, comments, field descriptions and field ORDER are excluded by construction.</span>
+<span class="sd">    """</span>
+
+    <span class="n">bases</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="n">fields</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">FieldSpec</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span>  <span class="c1"># sorted by field name</span>
+    <span class="n">assigns</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span>  <span class="c1"># enum members / class vars, sorted by name</span>
+    <span class="n">methods</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span>
+        <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="o">...</span>
+    <span class="p">]</span>  <span class="c1"># validator/serializer contracts, sorted by name</span>
+    <span class="n">config</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>  <span class="c1"># nested pydantic-v1 ``class Config`` body, if any</span>
+
+<div class="viewcode-block" id="ContractSpec.canonical">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.ContractSpec.html#torchcell.provenance.ContractSpec.canonical">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">canonical</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Deterministic, order-insensitive serialization used for the fingerprint."""</span>
+        <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"bases::"</span> <span class="o">+</span> <span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">))]</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"field::</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">::</span><span class="si">{</span><span class="n">fs</span><span class="o">.</span><span class="n">annotation</span><span class="si">}</span><span class="s2">::</span><span class="si">{</span><span class="n">fs</span><span class="o">.</span><span class="n">default</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">fs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span>
+        <span class="p">)</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="sa">f</span><span class="s2">"assign::</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">::</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">assigns</span><span class="p">)</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="sa">f</span><span class="s2">"method::</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">::</span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"config::</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_deco_name</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">func</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Call</span><span class="p">)</span> <span class="k">else</span> <span class="n">node</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">target</span><span class="o">.</span><span class="n">attr</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">target</span><span class="o">.</span><span class="n">id</span>
+    <span class="k">return</span> <span class="s2">""</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_field_call</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Call</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">func</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">func</span>
+    <span class="k">return</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">func</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s2">"Field"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">)</span> <span class="ow">and</span> <span class="n">func</span><span class="o">.</span><span class="n">attr</span> <span class="o">==</span> <span class="s2">"Field"</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_ellipsis</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">)</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="bp">Ellipsis</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_field_default</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">expr</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Normalize a field default, folding out documentation-only ``Field`` kwargs.</span>
+
+<span class="sd">    Required-ness is encoded in the returned string via the ``_REQUIRED`` prefix so a field</span>
+<span class="sd">    written ``x: T = Field(description=...)`` (no default) is correctly seen as required.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_REQUIRED</span>
+    <span class="k">if</span> <span class="n">_is_field_call</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Call</span><span class="p">)</span>
+        <span class="n">has_default</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">semantic</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
+            <span class="n">first</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">[</span>
+                <span class="mi">0</span>
+            <span class="p">]</span>  <span class="c1"># positional first arg to Field == the default; ``...`` == required</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_ellipsis</span><span class="p">(</span><span class="n">first</span><span class="p">):</span>
+                <span class="n">has_default</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">semantic</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"default=</span><span class="si">{</span><span class="n">ast</span><span class="o">.</span><span class="n">unparse</span><span class="p">(</span><span class="n">first</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">keywords</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">kw</span><span class="o">.</span><span class="n">arg</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">semantic</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"**"</span> <span class="o">+</span> <span class="n">ast</span><span class="o">.</span><span class="n">unparse</span><span class="p">(</span><span class="n">kw</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">kw</span><span class="o">.</span><span class="n">arg</span> <span class="ow">in</span> <span class="n">_DOC_FIELD_KWARGS</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">semantic</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">kw</span><span class="o">.</span><span class="n">arg</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">ast</span><span class="o">.</span><span class="n">unparse</span><span class="p">(</span><span class="n">kw</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">kw</span><span class="o">.</span><span class="n">arg</span> <span class="o">==</span> <span class="s2">"default"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_is_ellipsis</span><span class="p">(</span><span class="n">kw</span><span class="o">.</span><span class="n">value</span><span class="p">):</span>
+                    <span class="n">has_default</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">elif</span> <span class="n">kw</span><span class="o">.</span><span class="n">arg</span> <span class="o">==</span> <span class="s2">"default_factory"</span><span class="p">:</span>
+                    <span class="n">has_default</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">inner</span> <span class="o">=</span> <span class="s2">"Field("</span> <span class="o">+</span> <span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">semantic</span><span class="p">))</span> <span class="o">+</span> <span class="s2">")"</span>
+        <span class="k">return</span> <span class="n">inner</span> <span class="k">if</span> <span class="n">has_default</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_REQUIRED</span><span class="si">}</span><span class="s2">|</span><span class="si">{</span><span class="n">inner</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">return</span> <span class="n">ast</span><span class="o">.</span><span class="n">unparse</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_assign_target_name</span><span class="p">(</span><span class="n">target</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">target</span><span class="o">.</span><span class="n">id</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_contract_method</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span> <span class="o">|</span> <span class="n">ast</span><span class="o">.</span><span class="n">AsyncFunctionDef</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">_deco_name</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_CONTRACT_METHOD_DECORATORS</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">fn</span><span class="o">.</span><span class="n">decorator_list</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_strip_docstring</span><span class="p">(</span><span class="n">body</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">stmt</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">stmt</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">body</span>
+        <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">body</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ast</span><span class="o">.</span><span class="n">Expr</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">body</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">body</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="n">body</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">return</span> <span class="n">body</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_method_contract</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span> <span class="o">|</span> <span class="n">ast</span><span class="o">.</span><span class="n">AsyncFunctionDef</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Normalized source of a validator/serializer: decorators + signature + body, no docstring."""</span>
+    <span class="n">clone</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+    <span class="n">clone</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">_strip_docstring</span><span class="p">(</span><span class="n">clone</span><span class="o">.</span><span class="n">body</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">Pass</span><span class="p">()]</span>
+    <span class="k">return</span> <span class="n">ast</span><span class="o">.</span><span class="n">unparse</span><span class="p">(</span><span class="n">clone</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_config_contract</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">ClassDef</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">body</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Assign</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">unparse</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">_assign_target_name</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">lines</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="contract_spec">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.contract_spec.html#torchcell.provenance.contract_spec">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">contract_spec</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">ClassDef</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ContractSpec</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Extract the contract-relevant surface of a schema class from its AST."""</span>
+    <span class="n">fields</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">FieldSpec</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">assigns</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">methods</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">config</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">body</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">AnnAssign</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">):</span>
+            <span class="n">fields</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">FieldSpec</span><span class="p">(</span>
+                <span class="n">annotation</span><span class="o">=</span><span class="n">ast</span><span class="o">.</span><span class="n">unparse</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">annotation</span><span class="p">),</span>
+                <span class="n">default</span><span class="o">=</span><span class="n">_field_default</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Assign</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">unparse</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">_assign_target_name</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">assigns</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">AsyncFunctionDef</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">_is_contract_method</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+                <span class="n">methods</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">_method_contract</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">ClassDef</span><span class="p">)</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">"Config"</span><span class="p">:</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="n">_config_contract</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ContractSpec</span><span class="p">(</span>
+        <span class="n">bases</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">unparse</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">bases</span><span class="p">),</span>
+        <span class="n">fields</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">())),</span>
+        <span class="n">assigns</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">assigns</span><span class="o">.</span><span class="n">items</span><span class="p">())),</span>
+        <span class="n">methods</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">methods</span><span class="o">.</span><span class="n">items</span><span class="p">())),</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">spec_fingerprint</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="n">ContractSpec</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""SHA-256 of a contract spec's canonical serialization."""</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">canonical</span><span class="p">()</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="fingerprint">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.fingerprint.html#torchcell.provenance.fingerprint">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fingerprint</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">ClassDef</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Contract fingerprint of a schema class AST node."""</span>
+    <span class="k">return</span> <span class="n">spec_fingerprint</span><span class="p">(</span><span class="n">contract_spec</span><span class="p">(</span><span class="bp">cls</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="SchemaSurface">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.SchemaSurface.html#torchcell.provenance.SchemaSurface">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SchemaSurface</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""All record-contract classes across the schema-surface modules, with their graph.</span>
+
+<span class="sd">    ``specs``/``fingerprints`` are keyed by class name (assumed globally unique across the</span>
+<span class="sd">    surface, which holds in torchcell). ``ref_graph`` maps a class to the surface classes it</span>
+<span class="sd">    references (by base class, field annotation, or any Name in its body) -- the edges used</span>
+<span class="sd">    for the transitive closure.</span>
+<span class="sd">    """</span>
+
+    <span class="n">specs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ContractSpec</span><span class="p">]</span>
+    <span class="n">fingerprints</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+    <span class="n">module_of</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+    <span class="n">ref_graph</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The set of all surface class names."""</span>
+        <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">specs</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_referenced_names</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">ClassDef</span><span class="p">,</span> <span class="n">names</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">refs</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">id</span> <span class="ow">in</span> <span class="n">names</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">id</span> <span class="o">!=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+            <span class="n">refs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">refs</span>
+
+
+<div class="viewcode-block" id="load_surface_from_sources">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.load_surface_from_sources.html#torchcell.provenance.load_surface_from_sources">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_surface_from_sources</span><span class="p">(</span><span class="n">sources</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">SchemaSurface</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build a :class:`SchemaSurface` from ``label -&gt; source text`` pairs.</span>
+
+<span class="sd">    Used to analyze a schema version that is not on disk -- e.g. ``git show HEAD:...`` output</span>
+<span class="sd">    for the static impact check -- without writing temp files. A missing/empty source simply</span>
+<span class="sd">    contributes no classes.</span>
+<span class="sd">    """</span>
+    <span class="n">classdefs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">ClassDef</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">module_of</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">sources</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">source</span><span class="p">)</span><span class="o">.</span><span class="n">body</span><span class="p">:</span>  <span class="c1"># top-level classes only</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">ClassDef</span><span class="p">):</span>
+                <span class="n">classdefs</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span>
+                <span class="n">module_of</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">label</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">classdefs</span><span class="p">)</span>
+    <span class="n">specs</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">contract_spec</span><span class="p">(</span><span class="n">classdefs</span><span class="p">[</span><span class="n">name</span><span class="p">])</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">SchemaSurface</span><span class="p">(</span>
+        <span class="n">specs</span><span class="o">=</span><span class="n">specs</span><span class="p">,</span>
+        <span class="n">fingerprints</span><span class="o">=</span><span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">spec_fingerprint</span><span class="p">(</span><span class="n">specs</span><span class="p">[</span><span class="n">name</span><span class="p">])</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">},</span>
+        <span class="n">module_of</span><span class="o">=</span><span class="n">module_of</span><span class="p">,</span>
+        <span class="n">ref_graph</span><span class="o">=</span><span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">_referenced_names</span><span class="p">(</span><span class="n">classdefs</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="n">names</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">},</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="load_surface">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.load_surface.html#torchcell.provenance.load_surface">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_surface</span><span class="p">(</span><span class="n">module_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">SchemaSurface</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Parse the schema-surface modules on disk into a :class:`SchemaSurface`."""</span>
+    <span class="k">return</span> <span class="n">load_surface_from_sources</span><span class="p">(</span>
+        <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">):</span> <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">module_paths</span><span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">default_surface_modules</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The torchcell schema surface: ``schema.py`` + the ``pydant.py`` base module."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">torchcell.datamodels</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">datamodels</span>  <span class="c1"># local import: avoid import cost/cycles at load</span>
+
+    <span class="n">root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">datamodels</span><span class="o">.</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"schema.py"</span><span class="p">,</span> <span class="n">root</span> <span class="o">/</span> <span class="s2">"pydant.py"</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="load_default_surface">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.load_default_surface.html#torchcell.provenance.load_default_surface">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_default_surface</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">SchemaSurface</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Load the default torchcell schema surface (``schema.py`` + ``pydant.py``)."""</span>
+    <span class="k">return</span> <span class="n">load_surface</span><span class="p">(</span><span class="n">default_surface_modules</span><span class="p">())</span></div>
+
+
+
+<div class="viewcode-block" id="forward_closure">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.forward_closure.html#torchcell.provenance.forward_closure">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">forward_closure</span><span class="p">(</span><span class="n">seeds</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">ref_graph</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""All symbols reachable from ``seeds`` (inclusive) along the reference graph."""</span>
+    <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">seeds</span><span class="p">)</span>
+    <span class="n">stack</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">seeds</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">stack</span><span class="p">:</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">nxt</span> <span class="ow">in</span> <span class="n">ref_graph</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="nb">set</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="n">nxt</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">nxt</span><span class="p">)</span>
+                <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nxt</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">seen</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">loader_schema_deps_from_source</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">surface</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Surface classes a loader's SOURCE TEXT imports from ``torchcell.datamodels``.</span>
+
+<span class="sd">    The text form lets a loader be analyzed at a git ref (``git show &lt;ref&gt;:&lt;path&gt;``)</span>
+<span class="sd">    without checking it out, the same way :func:`load_surface_from_sources` does for</span>
+<span class="sd">    the schema surface.</span>
+<span class="sd">    """</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+    <span class="n">deps</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">ImportFrom</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"torchcell.datamodels"</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">names</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">alias</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">surface</span><span class="o">.</span><span class="n">specs</span><span class="p">:</span>
+                    <span class="n">deps</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">alias</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">deps</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">loader_closure_from_source</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">surface</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Transitive closure of a loader's schema imports, from its source text."""</span>
+    <span class="k">return</span> <span class="n">forward_closure</span><span class="p">(</span>
+        <span class="n">loader_schema_deps_from_source</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">surface</span><span class="p">),</span> <span class="n">surface</span><span class="o">.</span><span class="n">ref_graph</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">symbol_dependents</span><span class="p">(</span>
+    <span class="n">loader_sources</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">surface</span><span class="p">:</span> <span class="n">SchemaSurface</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Reverse index: schema symbol -&gt; the loaders (by label) whose closure contains it.</span>
+
+<span class="sd">    Answers "if this symbol's contract changes, which datasets are disturbed?" for the</span>
+<span class="sd">    whole fleet at once, which is the question an admission check asks about every</span>
+<span class="sd">    symbol a NEW dataset shares with the datasets already served.</span>
+<span class="sd">    """</span>
+    <span class="n">dependents</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">loader_sources</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">symbol</span> <span class="ow">in</span> <span class="n">loader_closure_from_source</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">surface</span><span class="p">):</span>
+            <span class="n">dependents</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dependents</span>
+
+
+<div class="viewcode-block" id="loader_schema_deps">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.loader_schema_deps.html#torchcell.provenance.loader_schema_deps">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">loader_schema_deps</span><span class="p">(</span><span class="n">loader_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">surface</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Surface classes a loader imports directly from any ``torchcell.datamodels`` submodule."""</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">loader_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">))</span>
+    <span class="n">deps</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">ImportFrom</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"torchcell.datamodels"</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">names</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">alias</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">surface</span><span class="o">.</span><span class="n">specs</span><span class="p">:</span>
+                    <span class="n">deps</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">alias</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">deps</span></div>
+
+
+
+<div class="viewcode-block" id="loader_closure">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.loader_closure.html#torchcell.provenance.loader_closure">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">loader_closure</span><span class="p">(</span><span class="n">loader_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">surface</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Transitive closure of a loader's schema imports -- the symbols it actually depends on."""</span>
+    <span class="k">return</span> <span class="n">forward_closure</span><span class="p">(</span><span class="n">loader_schema_deps</span><span class="p">(</span><span class="n">loader_path</span><span class="p">,</span> <span class="n">surface</span><span class="p">),</span> <span class="n">surface</span><span class="o">.</span><span class="n">ref_graph</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

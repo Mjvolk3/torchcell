@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.smith2016.CrispriChemgenSmith2016Dataset
+=======================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.smith2016
+
+.. autoclass:: CrispriChemgenSmith2016Dataset
+   :show-inheritance:
+   :members:

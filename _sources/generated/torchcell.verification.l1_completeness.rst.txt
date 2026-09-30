@@ -1,0 +1,6 @@
+﻿torchcell.verification.l1\_completeness
+=======================================
+
+.. currentmodule:: torchcell.verification
+
+.. autofunction:: l1_completeness

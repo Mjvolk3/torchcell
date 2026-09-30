@@ -1,0 +1,86 @@
+# Contributing
+
+## Branches, pull requests and landing
+
+All work, code and notes alike, happens on a branch checked out as a git worktree under
+`torchcell.worktrees/<branch>/`, created with `scripts/setup-worktree.sh`, while the
+primary checkout stays on `main`. Every branch gets a pull request (`gh pr create`)
+before it lands, because a pull request opened after its commits reach `main` shows no
+commits. Branches land by rebasing onto `main` and fast-forwarding, never through a merge
+commit or the GitHub merge button, and the pull request is then closed with a comment
+saying so. Landings go one at a time through the merge queue (`scripts/merge_queue.py`),
+since all worktrees share one object store. A landing is complete only when the pull
+request is closed and the worktree, the local branch and the remote branch are deleted.
+
+(contributing-tests)=
+
+## Tests
+
+Plain `pytest tests/torchcell` is the hermetic contract CI runs. `tests/conftest.py`
+enforces it:
+
+- It sets `DATA_ROOT` to an empty sentinel path (`/tmp/torchcell-test-data-root`) unless
+  the shell already exports one, and fails the session if any test writes into it.
+- Tests that need something expensive or external carry a marker and are skipped, with
+  the reason printed, unless the matching flag is given:
+
+  | Flag | Marker | Unlocks |
+  | :-- | :-- | :-- |
+  | `--data` | `data` | tests that read the real `$DATA_ROOT` |
+  | `--neo4j` | `neo4j` | tests that open a Neo4j driver |
+  | `--network` | `network` | tests that reach the network, `gh` or `ssh` |
+  | `--gpu` | `gpu` | tests that need a CUDA device |
+  | `--slow` | `slow` | full dataset builds from the `$DATA_ROOT` mirrors |
+  | `--wandb` | `wandb` | tests that call `wandb.init` |
+
+- An unmarked test that tries to run `sbatch`, `gh` or `ssh`, resolve a hostname, open a
+  URL, send an HTTP request, open a Neo4j driver or call `wandb.init` fails with an
+  error naming the marker it needs. `sbatch` is refused even with every flag set.
+
+```bash
+pytest tests/torchcell                  # the CI contract
+pytest tests/torchcell --data --slow    # also run tests that read and build from $DATA_ROOT
+make test-ci                            # plain pytest with DATA_ROOT pointed at an empty temp dir
+```
+
+Fixtures shared across the test tree (`tests/torchcell/conftest.py`) are built in
+memory and need no `DATA_ROOT`. A new module under `torchcell/` ships a test at
+`tests/torchcell/<same directory>/test_<name>.py`, unless it is listed in
+`[tool.torchcell.test_exceptions]` in `pyproject.toml`.
+
+## Pre-commit hooks
+
+`.pre-commit-config.yaml` defines these hooks (install them with `pre-commit install`):
+
+| Hook | Runs on | Does |
+| :-- | :-- | :-- |
+| `ruff-check` | `torchcell/`, `tests/torchcell/`, experiments numbered 016 and later | lint with auto-fix |
+| `ruff-format` | same | format |
+| `markdownlint-cli2` | `notes/*.md` | Markdown lint with auto-fix |
+| `mypy` | `torchcell/`, `tests/` | strict type check of the staged files (`scripts/run-mypy.sh`) |
+| `test-quality` | `tests/**/test_*.py` | rejects tests with no assertion or truthiness-only checks (`scripts/test_quality_check.py`) |
+| `paired-tests` | `torchcell/**/*.py` | requires a test file for each new module (`scripts/check_paired_tests.py`) |
+| `schema-impact` | `torchcell/datamodels/schema.py`, `pydant.py` | reports which dataset loaders a schema change forces to rebuild; blocks a breaking change unless `TORCHCELL_SCHEMA_ACK=1` |
+| `ontology-figure` | the schema modules and the ontology renderers | regenerates the schema ontology figure and fails so the change is seen |
+
+A hook that fails leaves the commit unmade; fix the cause and commit again rather than
+bypassing the hooks.
+
+## Commit messages and releases
+
+Versions are cut by python-semantic-release on every push to `main`
+(`.github/workflows/semantic-release.yaml`) with the `scipy` commit parser. A commit
+message starts with a tag from `allowed_tags` in `[tool.semantic_release]`, a colon and
+a space: `ENH: add the Mota 2024 loader`, or with a scope, `BUG:loader: fix the strain
+id`. The tag decides the version bump:
+
+| Bump | Tags |
+| :-- | :-- |
+| major | `API` |
+| minor | `DEP`, `DEV`, `ENH`, `REV`, `FEAT` |
+| patch | `BLD`, `BUG`, `MAINT` |
+| none | `BENCH`, `DOC`, `STY`, `TST`, `REL`, `TEST` |
+
+With python-semantic-release 10.4.1 (the version in the torchcell environment), a
+message whose tag is not in that list, or whose scope is written in parentheses
+(`ENH(loader): ...`), does not parse and does not contribute to a release.

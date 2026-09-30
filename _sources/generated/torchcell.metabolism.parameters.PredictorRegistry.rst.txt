@@ -1,0 +1,8 @@
+﻿torchcell.metabolism.parameters.PredictorRegistry
+=================================================
+
+.. currentmodule:: torchcell.metabolism.parameters
+
+.. autoclass:: PredictorRegistry
+   :show-inheritance:
+   :members:

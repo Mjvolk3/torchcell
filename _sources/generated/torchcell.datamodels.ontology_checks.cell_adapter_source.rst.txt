@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.ontology\_checks.cell\_adapter\_source
+===========================================================
+
+.. currentmodule:: torchcell.datamodels.ontology_checks
+
+.. autofunction:: cell_adapter_source

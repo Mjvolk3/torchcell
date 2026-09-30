@@ -1,0 +1,8 @@
+﻿torchcell.knowledge\_graphs.build\_time\_projection.DatasetSize
+===============================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.build_time_projection
+
+.. autoclass:: DatasetSize
+   :show-inheritance:
+   :members:

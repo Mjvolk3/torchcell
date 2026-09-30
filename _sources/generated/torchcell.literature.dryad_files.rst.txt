@@ -1,0 +1,6 @@
+﻿torchcell.literature.dryad\_files
+=================================
+
+.. currentmodule:: torchcell.literature
+
+.. autofunction:: dryad_files

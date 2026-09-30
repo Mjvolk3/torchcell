@@ -1,0 +1,383 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data model &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/guide/data-model.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Datasets" href="datasets.html" />
+    <link rel="prev" title="Quickstart" href="quickstart.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User Guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Data model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.html">Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knowledge-graph.html">Knowledge graph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html">Contributing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">User Guide</a></li>
+      <li class="breadcrumb-item active">Data model</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/guide/data-model.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="data-model">
+<h1>Data model<a class="headerlink" href="#data-model" title="Link to this heading"></a></h1>
+<p>The unit of data in torchcell is the <strong>experiment record</strong>: one genotype, grown in one
+environment, observed to have one phenotype, paired with the reference it is measured
+against and the publication it came from. The models live in
+<code class="docutils literal notranslate"><span class="pre">torchcell/datamodels/schema.py</span></code>. They are pydantic models built on <code class="docutils literal notranslate"><span class="pre">ModelStrict</span></code>
+(<code class="docutils literal notranslate"><span class="pre">torchcell/datamodels/pydant.py</span></code>), which forbids extra fields and freezes instances, so
+a record either validates completely or is rejected.</p>
+<p>An interactive view of the class hierarchy, generated from the live models at build
+time, is the <a href="../ontology/index.html">ontology explorer</a>.</p>
+<section id="the-experiment-record">
+<h2>The experiment record<a class="headerlink" href="#the-experiment-record" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Experiment
+  experiment_type   str          key into EXPERIMENT_TYPE_MAP ("fitness", "gene interaction", ...)
+  dataset_name      str          the loader class that produced it, e.g. "SmfCostanzo2016Dataset"
+  genotype          Genotype     what was changed in the strain
+  environment       Environment  what the strain was grown in
+  phenotype         Phenotype    what was measured
+
+ExperimentReference
+  experiment_reference_type  str
+  dataset_name               str
+  genome_reference           ReferenceGenome   species, strain, ploidy
+  environment_reference      Environment
+  phenotype_reference        Phenotype         the reference value (e.g. wild-type fitness 1.0)
+
+Publication
+  pubmed_id, pubmed_url, doi, doi_url           at least one id and one URL are required
+</pre></div>
+</div>
+<p>Each experiment type pairs a subclass of <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> with a subclass of
+<code class="docutils literal notranslate"><span class="pre">ExperimentReference</span></code> that narrows <code class="docutils literal notranslate"><span class="pre">phenotype</span></code> to one phenotype class, for example
+<code class="docutils literal notranslate"><span class="pre">FitnessExperiment</span></code> and <code class="docutils literal notranslate"><span class="pre">FitnessExperimentReference</span></code> with <code class="docutils literal notranslate"><span class="pre">FitnessPhenotype</span></code>. Two
+dictionaries at the end of <code class="docutils literal notranslate"><span class="pre">schema.py</span></code>, <code class="docutils literal notranslate"><span class="pre">EXPERIMENT_TYPE_MAP</span></code> and
+<code class="docutils literal notranslate"><span class="pre">EXPERIMENT_REFERENCE_TYPE_MAP</span></code>, map the <code class="docutils literal notranslate"><span class="pre">experiment_type</span></code> string to the class; every
+reader that deserializes a record (the dataset loaders, <code class="docutils literal notranslate"><span class="pre">Neo4jQueryRaw</span></code>, the converters)
+dispatches through them.</p>
+<section id="genotype">
+<h3>Genotype<a class="headerlink" href="#genotype" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">Genotype.perturbations</span></code> is a list of gene perturbations, sorted on validation by
+<code class="docutils literal notranslate"><span class="pre">(systematic_gene_name,</span> <span class="pre">perturbation_type,</span> <span class="pre">perturbed_gene_name)</span></code> so that equal genotypes
+serialize identically. Every perturbation extends <code class="docutils literal notranslate"><span class="pre">GenePerturbation</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">systematic_gene_name</span></code>: validated against the S288C naming patterns (coding genes
+such as <code class="docutils literal notranslate"><span class="pre">YAL001C</span></code>, mitochondrial <code class="docutils literal notranslate"><span class="pre">Q0010</span></code>-style names, noncoding <code class="docutils literal notranslate"><span class="pre">YNC...</span></code> genes).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">perturbed_gene_name</span></code>: the allele or common name, such as <code class="docutils literal notranslate"><span class="pre">tfc3_damp</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">provenance</span></code>: <code class="docutils literal notranslate"><span class="pre">&quot;engineered&quot;</span></code> (made in the lab) or <code class="docutils literal notranslate"><span class="pre">&quot;natural&quot;</span></code> (found in an isolate).</p></li>
+</ul>
+<p>The concrete perturbation classes are organized by what they change relative to the
+reference genome: presence or absence of a gene (deletions, marker deletions, gene
+additions, natural gene absence and presence), sequence-level alleles (DAmP,
+temperature-sensitive, suppressor and sequence-variant alleles), copy number (natural
+CNVs and engineered copy number), and expression modulation (CRISPRa and CRISPRi). Each
+names its mechanism with a Sequence Ontology term (<code class="docutils literal notranslate"><span class="pre">mechanism_so_id</span></code>,
+<code class="docutils literal notranslate"><span class="pre">mechanism_so_name</span></code>).</p>
+</section>
+<section id="environment">
+<h3>Environment<a class="headerlink" href="#environment" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">Environment</span></code> holds a <code class="docutils literal notranslate"><span class="pre">media</span></code> (a <code class="docutils literal notranslate"><span class="pre">Media</span></code> resolved into typed components, with <code class="docutils literal notranslate"><span class="pre">name</span></code>,
+<code class="docutils literal notranslate"><span class="pre">state</span></code> and <code class="docutils literal notranslate"><span class="pre">is_synthetic</span></code>), an optional <code class="docutils literal notranslate"><span class="pre">temperature</span></code>, a list of environment
+<code class="docutils literal notranslate"><span class="pre">perturbations</span></code> (added small molecules, physical factors, biologic agents), an
+<code class="docutils literal notranslate"><span class="pre">aerobicity</span></code>, and optional <code class="docutils literal notranslate"><span class="pre">duration_hours</span></code> and <code class="docutils literal notranslate"><span class="pre">duration_generations</span></code>.</p>
+</section>
+<section id="phenotype">
+<h3>Phenotype<a class="headerlink" href="#phenotype" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">Phenotype</span></code> is the base class of every measured label. It carries three fields that
+describe the label rather than its value:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">graph_level</span></code>: where the label sits on a gene graph. Validated against <code class="docutils literal notranslate"><span class="pre">edge</span></code>,
+<code class="docutils literal notranslate"><span class="pre">node</span></code>, <code class="docutils literal notranslate"><span class="pre">hyperedge</span></code>, <code class="docutils literal notranslate"><span class="pre">subgraph</span></code>, <code class="docutils literal notranslate"><span class="pre">global</span></code>, <code class="docutils literal notranslate"><span class="pre">metabolism</span></code> and <code class="docutils literal notranslate"><span class="pre">gene</span> <span class="pre">ontology</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">label_name</span></code>: the name of the field that holds the value. A validator checks that the
+concrete class declares that field.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">label_statistic_name</span></code>: the name of the field holding its uncertainty or confidence
+statistic, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+<p>Numeric phenotypes record their uncertainty with its kind: <code class="docutils literal notranslate"><span class="pre">FitnessPhenotype</span></code>, for
+example, stores the source-reported number in <code class="docutils literal notranslate"><span class="pre">fitness_uncertainty</span></code>, names it with
+<code class="docutils literal notranslate"><span class="pre">fitness_uncertainty_type</span></code> (an <code class="docutils literal notranslate"><span class="pre">UncertaintyType</span></code>: <code class="docutils literal notranslate"><span class="pre">sample_sd</span></code>, <code class="docutils literal notranslate"><span class="pre">standard_error</span></code>,
+<code class="docutils literal notranslate"><span class="pre">bootstrap_se</span></code>, <code class="docutils literal notranslate"><span class="pre">variance</span></code>, <code class="docutils literal notranslate"><span class="pre">ci95</span></code>), records the replicate design in <code class="docutils literal notranslate"><span class="pre">n_samples</span></code> and
+<code class="docutils literal notranslate"><span class="pre">sample_unit</span></code>, and derives the standard error <code class="docutils literal notranslate"><span class="pre">fitness_se</span></code> from those when it is not
+supplied (a bootstrap SE is used as is; a sample SD is divided by the square root of
+<code class="docutils literal notranslate"><span class="pre">n_samples</span></code>). A value the
+source does not report is declared as a typed <code class="docutils literal notranslate"><span class="pre">ProvenanceGap</span></code> in <code class="docutils literal notranslate"><span class="pre">provenance_gaps</span></code>, and
+the field itself must then be <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</section>
+<section id="phenotype-classes">
+<h3>Phenotype classes<a class="headerlink" href="#phenotype-classes" title="Link to this heading"></a></h3>
+<p>The defaults below were read from each class’s <code class="docutils literal notranslate"><span class="pre">model_fields</span></code> in <code class="docutils literal notranslate"><span class="pre">schema.py</span></code>.
+<code class="docutils literal notranslate"><span class="pre">graph_level</span></code> is a default, and a loader may set another value (the digenic-interaction
+datasets store <code class="docutils literal notranslate"><span class="pre">GeneInteractionPhenotype</span></code> records at <code class="docutils literal notranslate"><span class="pre">edge</span></code>, the trigenic ones at
+<code class="docutils literal notranslate"><span class="pre">hyperedge</span></code>).</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>Phenotype class</p></th>
+<th class="head text-left"><p>Value field (<code class="docutils literal notranslate"><span class="pre">label_name</span></code>)</p></th>
+<th class="head text-left"><p>Value type</p></th>
+<th class="head text-left"><p><code class="docutils literal notranslate"><span class="pre">graph_level</span></code></p></th>
+<th class="head text-left"><p><code class="docutils literal notranslate"><span class="pre">label_statistic_name</span></code></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">CalMorphPhenotype</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">calmorph</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">float]</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">global</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">calmorph_coefficient_of_variation</span></code></p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">EnvironmentResponsePhenotype</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">environment_response</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">None</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">global</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">environment_response_se</span></code></p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">FitnessPhenotype</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">fitness</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">float</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">global</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">fitness_se</span></code></p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">GeneEssentialityPhenotype</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">is_essential</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">bool</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">node</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">GeneInteractionPhenotype</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">gene_interaction</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">float</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">hyperedge</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">gene_interaction_p_value</span></code></p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">MetabolitePhenotype</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">metabolite_level</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">float]</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">metabolism</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">metabolite_level_se</span></code></p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">MicroarrayExpressionPhenotype</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">expression_log2_ratio</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">float]</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">node</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">expression_log2_ratio_se</span></code></p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">ProteinAbundancePhenotype</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">protein_abundance</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">float]</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">node</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">protein_abundance_se</span></code></p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">PseudobulkExpressionPhenotype</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">expression_log2_ratio</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">float]</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">node</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">dispersion</span></code></p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">RNASeqExpressionPhenotype</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">expression_tpm</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">float]</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">node</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">SyntheticLethalityPhenotype</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">is_synthetic_lethal</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">bool</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">edge</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">synthetic_lethality_statistic_score</span></code></p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">VisualScorePhenotype</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">visual_score</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">float</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">global</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">schema.py</span></code> also defines <code class="docutils literal notranslate"><span class="pre">SyntheticRescuePhenotype</span></code> (<code class="docutils literal notranslate"><span class="pre">is_synthetic_rescue</span></code>, <code class="docutils literal notranslate"><span class="pre">edge</span></code>), and
+<code class="docutils literal notranslate"><span class="pre">EXPERIMENT_TYPE_MAP</span></code> has a fourteenth entry, <code class="docutils literal notranslate"><span class="pre">segregant_growth</span></code>, whose experiment pairs a
+<code class="docutils literal notranslate"><span class="pre">SegregantGenotype</span></code> (a haplotype mosaic of two parent assemblies) with an
+<code class="docutils literal notranslate"><span class="pre">EnvironmentResponsePhenotype</span></code>.</p>
+</section>
+</section>
+<section id="verification-levels">
+<h2>Verification levels<a class="headerlink" href="#verification-levels" title="Link to this heading"></a></h2>
+<p>Built datasets are checked record by record against five ordered levels, defined as
+<code class="docutils literal notranslate"><span class="pre">Level</span></code> in <code class="docutils literal notranslate"><span class="pre">torchcell/verification/report.py</span></code> and implemented as reusable checks in
+<code class="docutils literal notranslate"><span class="pre">torchcell/verification/levels.py</span></code>:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>Level</p></th>
+<th class="head text-left"><p>Name</p></th>
+<th class="head text-left"><p>Checks</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p>L0</p></td>
+<td class="text-left"><p>structural</p></td>
+<td class="text-left"><p>every record instantiates its schema model</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>L1</p></td>
+<td class="text-left"><p>completeness</p></td>
+<td class="text-left"><p>record counts, known keys and contiguity against an oracle</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>L2</p></td>
+<td class="text-left"><p>value fidelity</p></td>
+<td class="text-left"><p>cross-method agreement, types, ranges, no NaN</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>L3</p></td>
+<td class="text-left"><p>semantic</p></td>
+<td class="text-left"><p>units and conventions (fitness as mutant over wild type; log2 of sample over reference)</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>L4</p></td>
+<td class="text-left"><p>cross-source consistency</p></td>
+<td class="text-left"><p>entities that two sources share agree</p></td>
+</tr>
+</tbody>
+</table>
+<p>Each check returns a <code class="docutils literal notranslate"><span class="pre">LevelResult</span></code>; a per-dataset verifier (for example
+<code class="docutils literal notranslate"><span class="pre">torchcell/verification/morphology.py</span></code>) assembles them into a <code class="docutils literal notranslate"><span class="pre">VerificationReport</span></code>
+together with a <code class="docutils literal notranslate"><span class="pre">Provenance</span></code> record of the source.</p>
+</section>
+<section id="provenance-of-hand-entered-values">
+<h2>Provenance of hand-entered values<a class="headerlink" href="#provenance-of-hand-entered-values" title="Link to this heading"></a></h2>
+<p>A constant that a loader cannot read from a data column (a replicate count, the kind of
+an uncertainty, a strain background) is stored as a <code class="docutils literal notranslate"><span class="pre">SourcedValue</span></code>
+(<code class="docutils literal notranslate"><span class="pre">torchcell/verification/sourced.py</span></code>): the value, a <code class="docutils literal notranslate"><span class="pre">Provenance</span></code> naming the source file
+by citation key and sha256, and a verbatim <code class="docutils literal notranslate"><span class="pre">quote</span></code> from that file that justifies it.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="quickstart.html" class="btn btn-neutral float-left" title="Quickstart" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="datasets.html" class="btn btn-neutral float-right" title="Datasets" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

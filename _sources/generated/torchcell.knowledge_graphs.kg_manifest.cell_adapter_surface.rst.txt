@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.cell\_adapter\_surface
+===============================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autofunction:: cell_adapter_surface

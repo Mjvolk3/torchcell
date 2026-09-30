@@ -1,0 +1,537 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.losses &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/modules/losses.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="torchcell.losses.dango.DangoLossSched" href="../generated/torchcell.losses.dango.DangoLossSched.html" />
+    <link rel="prev" title="torchcell.loader.dense_padding_data_loader.dense_padded_from_data_list" href="../generated/torchcell.loader.dense_padding_data_loader.dense_padded_from_data_list.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="loader.html">torchcell.loader</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">torchcell.losses</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#dango"><code class="docutils literal notranslate"><span class="pre">dango</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dcell"><code class="docutils literal notranslate"><span class="pre">dcell</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#diffusion-loss"><code class="docutils literal notranslate"><span class="pre">diffusion_loss</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#distributional"><code class="docutils literal notranslate"><span class="pre">distributional</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#isomorphic-cell-loss"><code class="docutils literal notranslate"><span class="pre">isomorphic_cell_loss</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#list-mle"><code class="docutils literal notranslate"><span class="pre">list_mle</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#logcosh"><code class="docutils literal notranslate"><span class="pre">logcosh</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mle-dist-supcr"><code class="docutils literal notranslate"><span class="pre">mle_dist_supcr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mle-wasserstein"><code class="docutils literal notranslate"><span class="pre">mle_wasserstein</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#multi-dim-nan-tolerant"><code class="docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#point-dist-graph-reg"><code class="docutils literal notranslate"><span class="pre">point_dist_graph_reg</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#not-documented">Not documented</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">torchcell.losses</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/modules/losses.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-torchcell.losses">
+<span id="torchcell-losses"></span><h1>torchcell.losses<a class="headerlink" href="#module-torchcell.losses" title="Link to this heading"></a></h1>
+<p>Loss functions. The package exports <a class="reference internal" href="../generated/torchcell.losses.list_mle.ListMLELoss.html#torchcell.losses.list_mle.ListMLELoss" title="torchcell.losses.list_mle.ListMLELoss"><code class="xref py py-class docutils literal notranslate"><span class="pre">ListMLELoss</span></code></a>, a listwise ranking loss, and <a class="reference internal" href="../generated/torchcell.losses.dcell.DCellLoss.html#torchcell.losses.dcell.DCellLoss" title="torchcell.losses.dcell.DCellLoss"><code class="xref py py-class docutils literal notranslate"><span class="pre">DCellLoss</span></code></a>, the root plus subsystem loss of the DCell model. The remaining modules (<code class="docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant</span></code>, <code class="docutils literal notranslate"><span class="pre">distributional</span></code>, <code class="docutils literal notranslate"><span class="pre">mle_wasserstein</span></code>, <code class="docutils literal notranslate"><span class="pre">point_dist_graph_reg</span></code> and others) are imported by module path from the experiment training scripts and are not re-exported. Every class below is listed under the module that defines it.</p>
+<nav class="contents local" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#dango" id="id12"><code class="docutils literal notranslate"><span class="pre">dango</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#classes" id="id13">Classes</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#dcell" id="id14"><code class="docutils literal notranslate"><span class="pre">dcell</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id1" id="id15">Classes</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#diffusion-loss" id="id16"><code class="docutils literal notranslate"><span class="pre">diffusion_loss</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id2" id="id17">Classes</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#distributional" id="id18"><code class="docutils literal notranslate"><span class="pre">distributional</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id3" id="id19">Classes</a></p></li>
+<li><p><a class="reference internal" href="#functions" id="id20">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#isomorphic-cell-loss" id="id21"><code class="docutils literal notranslate"><span class="pre">isomorphic_cell_loss</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id4" id="id22">Classes</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#list-mle" id="id23"><code class="docutils literal notranslate"><span class="pre">list_mle</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id5" id="id24">Classes</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#logcosh" id="id25"><code class="docutils literal notranslate"><span class="pre">logcosh</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id6" id="id26">Classes</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#mle-dist-supcr" id="id27"><code class="docutils literal notranslate"><span class="pre">mle_dist_supcr</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id7" id="id28">Classes</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#mle-wasserstein" id="id29"><code class="docutils literal notranslate"><span class="pre">mle_wasserstein</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id8" id="id30">Classes</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#multi-dim-nan-tolerant" id="id31"><code class="docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id9" id="id32">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id10" id="id33">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#point-dist-graph-reg" id="id34"><code class="docutils literal notranslate"><span class="pre">point_dist_graph_reg</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id11" id="id35">Classes</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#not-documented" id="id36">Not documented</a></p></li>
+</ul>
+</nav>
+<section id="dango">
+<h2><a class="toc-backref" href="#id12" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">dango</span></code></a><a class="headerlink" href="#dango" title="Link to this heading"></a></h2>
+<p>DANGO loss with epoch-scheduled weighting of reconstruction vs interaction loss.</p>
+<section id="classes">
+<h3><a class="toc-backref" href="#id13" role="doc-backlink">Classes</a><a class="headerlink" href="#classes" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.dango.DangoLossSched.html#torchcell.losses.dango.DangoLossSched" title="torchcell.losses.dango.DangoLossSched"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dango.DangoLossSched</span></code></a></p></td>
+<td><p>Abstract base class for DANGO loss schedulers.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.dango.PreThenPost.html#torchcell.losses.dango.PreThenPost" title="torchcell.losses.dango.PreThenPost"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dango.PreThenPost</span></code></a></p></td>
+<td><p>Schedule that uses reconstruction loss only before transition_epoch, then switches to interaction loss only.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.dango.LinearUntilUniform.html#torchcell.losses.dango.LinearUntilUniform" title="torchcell.losses.dango.LinearUntilUniform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dango.LinearUntilUniform</span></code></a></p></td>
+<td><p>Schedule that linearly transitions from reconstruction-focused to uniform weighting.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.dango.LinearUntilFlipped.html#torchcell.losses.dango.LinearUntilFlipped" title="torchcell.losses.dango.LinearUntilFlipped"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dango.LinearUntilFlipped</span></code></a></p></td>
+<td><p>Schedule that linearly transitions from reconstruction-focused to interaction-focused.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.dango.DangoLoss.html#torchcell.losses.dango.DangoLoss" title="torchcell.losses.dango.DangoLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dango.DangoLoss</span></code></a></p></td>
+<td><p>Combined loss for the DANGO model with dynamic weighting between reconstruction loss and interaction loss.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="dcell">
+<h2><a class="toc-backref" href="#id14" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">dcell</span></code></a><a class="headerlink" href="#dcell" title="Link to this heading"></a></h2>
+<p>Loss for the DCell model: root MSE plus optional subsystem auxiliary losses.</p>
+<section id="id1">
+<h3><a class="toc-backref" href="#id15" role="doc-backlink">Classes</a><a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.dcell.DCellLoss.html#torchcell.losses.dcell.DCellLoss" title="torchcell.losses.dcell.DCellLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dcell.DCellLoss</span></code></a></p></td>
+<td><p>Loss function for the DCellNew model implementation.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="diffusion-loss">
+<h2><a class="toc-backref" href="#id16" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">diffusion_loss</span></code></a><a class="headerlink" href="#diffusion-loss" title="Link to this heading"></a></h2>
+<p>Strict diffusion loss with optional explicit x0 supervision.</p>
+<section id="id2">
+<h3><a class="toc-backref" href="#id17" role="doc-backlink">Classes</a><a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.diffusion_loss.DiffusionLoss.html#torchcell.losses.diffusion_loss.DiffusionLoss" title="torchcell.losses.diffusion_loss.DiffusionLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">diffusion_loss.DiffusionLoss</span></code></a></p></td>
+<td><p>Strict diffusion loss for conditional decoders.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="distributional">
+<h2><a class="toc-backref" href="#id18" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">distributional</span></code></a><a class="headerlink" href="#distributional" title="Link to this heading"></a></h2>
+<p>Distributional decoder heads + proper-scoring-rule losses for the multitask CGT.</p>
+<section id="id3">
+<h3><a class="toc-backref" href="#id19" role="doc-backlink">Classes</a><a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.distributional.DistHead.html#torchcell.losses.distributional.DistHead" title="torchcell.losses.distributional.DistHead"><code class="xref py py-obj docutils literal notranslate"><span class="pre">distributional.DistHead</span></code></a></p></td>
+<td><p>Pluggable distributional readout: interpret a head's raw params, score them, pool.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3><a class="toc-backref" href="#id20" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.distributional.gaussian_crps.html#torchcell.losses.distributional.gaussian_crps" title="torchcell.losses.distributional.gaussian_crps"><code class="xref py py-obj docutils literal notranslate"><span class="pre">distributional.gaussian_crps</span></code></a></p></td>
+<td><p>Closed-form CRPS of a Gaussian <span class="math notranslate nohighlight">\(\mathcal N(\mu,\sigma)\)</span> vs observations.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.distributional.laplace_crps.html#torchcell.losses.distributional.laplace_crps" title="torchcell.losses.distributional.laplace_crps"><code class="xref py py-obj docutils literal notranslate"><span class="pre">distributional.laplace_crps</span></code></a></p></td>
+<td><p>Closed-form CRPS of a Laplace <span class="math notranslate nohighlight">\(\mathrm{Lap}(\mu,b)\)</span> vs observations.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.distributional.gaussian_nll.html#torchcell.losses.distributional.gaussian_nll" title="torchcell.losses.distributional.gaussian_nll"><code class="xref py py-obj docutils literal notranslate"><span class="pre">distributional.gaussian_nll</span></code></a></p></td>
+<td><p>Gaussian negative log-likelihood, WITHOUT the constant term.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.distributional.energy_score.html#torchcell.losses.distributional.energy_score" title="torchcell.losses.distributional.energy_score"><code class="xref py py-obj docutils literal notranslate"><span class="pre">distributional.energy_score</span></code></a></p></td>
+<td><p>Monte-Carlo energy score of a low-rank-plus-diagonal Gaussian, per row.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.distributional.pinball.html#torchcell.losses.distributional.pinball" title="torchcell.losses.distributional.pinball"><code class="xref py py-obj docutils literal notranslate"><span class="pre">distributional.pinball</span></code></a></p></td>
+<td><p>Pinball (quantile / check) loss for a set of predicted quantiles.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.distributional.masked_mean.html#torchcell.losses.distributional.masked_mean" title="torchcell.losses.distributional.masked_mean"><code class="xref py py-obj docutils literal notranslate"><span class="pre">distributional.masked_mean</span></code></a></p></td>
+<td><p>Mean of <code class="docutils literal notranslate"><span class="pre">elem</span></code> over the entries <code class="docutils literal notranslate"><span class="pre">feature_mask</span></code> selects.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.distributional.pit_values.html#torchcell.losses.distributional.pit_values" title="torchcell.losses.distributional.pit_values"><code class="xref py py-obj docutils literal notranslate"><span class="pre">distributional.pit_values</span></code></a></p></td>
+<td><p>Probability integral transform -- ONE calibration diagnostic for every mode.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.distributional.coverage.html#torchcell.losses.distributional.coverage" title="torchcell.losses.distributional.coverage"><code class="xref py py-obj docutils literal notranslate"><span class="pre">distributional.coverage</span></code></a></p></td>
+<td><p>Empirical coverage of the central <code class="docutils literal notranslate"><span class="pre">alpha</span></code> predictive interval, from PIT values.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.distributional.pit_ks.html#torchcell.losses.distributional.pit_ks" title="torchcell.losses.distributional.pit_ks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">distributional.pit_ks</span></code></a></p></td>
+<td><p>Kolmogorov-Smirnov distance between the PIT distribution and <code class="docutils literal notranslate"><span class="pre">Uniform(0,1)</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.distributional.dist_param_dim.html#torchcell.losses.distributional.dist_param_dim" title="torchcell.losses.distributional.dist_param_dim"><code class="xref py py-obj docutils literal notranslate"><span class="pre">distributional.dist_param_dim</span></code></a></p></td>
+<td><p>Params-per-feature for a config <code class="docutils literal notranslate"><span class="pre">dist</span></code> value (the head Linear-width multiplier).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.distributional.make_dist_head.html#torchcell.losses.distributional.make_dist_head" title="torchcell.losses.distributional.make_dist_head"><code class="xref py py-obj docutils literal notranslate"><span class="pre">distributional.make_dist_head</span></code></a></p></td>
+<td><p>Build a <code class="xref py py-class docutils literal notranslate"><span class="pre">DistHead</span></code> from a config <code class="docutils literal notranslate"><span class="pre">dist</span></code> value.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="isomorphic-cell-loss">
+<h2><a class="toc-backref" href="#id21" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">isomorphic_cell_loss</span></code></a><a class="headerlink" href="#isomorphic-cell-loss" title="Link to this heading"></a></h2>
+<p>Isomorphic cell losses combining MSE, distribution, and SupCR terms.</p>
+<section id="id4">
+<h3><a class="toc-backref" href="#id22" role="doc-backlink">Classes</a><a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.isomorphic_cell_loss.ICLoss.html#torchcell.losses.isomorphic_cell_loss.ICLoss" title="torchcell.losses.isomorphic_cell_loss.ICLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isomorphic_cell_loss.ICLoss</span></code></a></p></td>
+<td><p>Weighted sum of MSE, distribution, and SupCR cell losses.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.isomorphic_cell_loss.ICLossStd.html#torchcell.losses.isomorphic_cell_loss.ICLossStd" title="torchcell.losses.isomorphic_cell_loss.ICLossStd"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isomorphic_cell_loss.ICLossStd</span></code></a></p></td>
+<td><p>IC loss with learnable per-task standard deviations (heteroscedastic).</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="list-mle">
+<h2><a class="toc-backref" href="#id23" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">list_mle</span></code></a><a class="headerlink" href="#list-mle" title="Link to this heading"></a></h2>
+<p>ListMLE listwise ranking loss for ordered prediction tasks.</p>
+<section id="id5">
+<h3><a class="toc-backref" href="#id24" role="doc-backlink">Classes</a><a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.list_mle.ListMLELoss.html#torchcell.losses.list_mle.ListMLELoss" title="torchcell.losses.list_mle.ListMLELoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_mle.ListMLELoss</span></code></a></p></td>
+<td><p>Listwise Maximum Likelihood Estimation ranking loss.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="logcosh">
+<h2><a class="toc-backref" href="#id25" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">logcosh</span></code></a><a class="headerlink" href="#logcosh" title="Link to this heading"></a></h2>
+<p>Log-cosh regression loss module.</p>
+<section id="id6">
+<h3><a class="toc-backref" href="#id26" role="doc-backlink">Classes</a><a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.logcosh.LogCoshLoss.html#torchcell.losses.logcosh.LogCoshLoss" title="torchcell.losses.logcosh.LogCoshLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">logcosh.LogCoshLoss</span></code></a></p></td>
+<td><p>Log-cosh loss: a smooth, outlier-robust alternative to MSE.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="mle-dist-supcr">
+<h2><a class="toc-backref" href="#id27" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">mle_dist_supcr</span></code></a><a class="headerlink" href="#mle-dist-supcr" title="Link to this heading"></a></h2>
+<p>Combined MLE, distribution, and supervised contrastive loss with buffering.</p>
+<section id="id7">
+<h3><a class="toc-backref" href="#id28" role="doc-backlink">Classes</a><a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.mle_dist_supcr.AdaptiveWeighting.html#torchcell.losses.mle_dist_supcr.AdaptiveWeighting" title="torchcell.losses.mle_dist_supcr.AdaptiveWeighting"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mle_dist_supcr.AdaptiveWeighting</span></code></a></p></td>
+<td><p>Manages adaptive weighting for buffer contributions during training.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.mle_dist_supcr.TemperatureScheduler.html#torchcell.losses.mle_dist_supcr.TemperatureScheduler" title="torchcell.losses.mle_dist_supcr.TemperatureScheduler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mle_dist_supcr.TemperatureScheduler</span></code></a></p></td>
+<td><p>Manages temperature scheduling for SupCR loss.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.mle_dist_supcr.BufferedWeightedDistLoss.html#torchcell.losses.mle_dist_supcr.BufferedWeightedDistLoss" title="torchcell.losses.mle_dist_supcr.BufferedWeightedDistLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mle_dist_supcr.BufferedWeightedDistLoss</span></code></a></p></td>
+<td><p>Enhanced distribution loss with circular buffer for small batch training.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.mle_dist_supcr.BufferedWeightedSupCRCell.html#torchcell.losses.mle_dist_supcr.BufferedWeightedSupCRCell" title="torchcell.losses.mle_dist_supcr.BufferedWeightedSupCRCell"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mle_dist_supcr.BufferedWeightedSupCRCell</span></code></a></p></td>
+<td><p>Enhanced SupCR loss with circular buffer for small batch training.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.mle_dist_supcr.MleDistSupCR.html#torchcell.losses.mle_dist_supcr.MleDistSupCR" title="torchcell.losses.mle_dist_supcr.MleDistSupCR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mle_dist_supcr.MleDistSupCR</span></code></a></p></td>
+<td><p>Composite loss combining MSE, distribution matching, and SupCR.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="mle-wasserstein">
+<h2><a class="toc-backref" href="#id29" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">mle_wasserstein</span></code></a><a class="headerlink" href="#mle-wasserstein" title="Link to this heading"></a></h2>
+<p>Composite MSE + Wasserstein + SupCR loss with buffers and DDP gathering.</p>
+<section id="id8">
+<h3><a class="toc-backref" href="#id30" role="doc-backlink">Classes</a><a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.mle_wasserstein.AdaptiveWeighting.html#torchcell.losses.mle_wasserstein.AdaptiveWeighting" title="torchcell.losses.mle_wasserstein.AdaptiveWeighting"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mle_wasserstein.AdaptiveWeighting</span></code></a></p></td>
+<td><p>Manages adaptive weighting for buffer contributions during training.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.mle_wasserstein.TemperatureScheduler.html#torchcell.losses.mle_wasserstein.TemperatureScheduler" title="torchcell.losses.mle_wasserstein.TemperatureScheduler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mle_wasserstein.TemperatureScheduler</span></code></a></p></td>
+<td><p>Manages temperature scheduling for SupCR loss.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.mle_wasserstein.WeightedWassersteinLoss.html#torchcell.losses.mle_wasserstein.WeightedWassersteinLoss" title="torchcell.losses.mle_wasserstein.WeightedWassersteinLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mle_wasserstein.WeightedWassersteinLoss</span></code></a></p></td>
+<td><p>Weighted Wasserstein distance loss for multi-dimensional outputs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.mle_wasserstein.BufferedWeightedWassersteinLoss.html#torchcell.losses.mle_wasserstein.BufferedWeightedWassersteinLoss" title="torchcell.losses.mle_wasserstein.BufferedWeightedWassersteinLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mle_wasserstein.BufferedWeightedWassersteinLoss</span></code></a></p></td>
+<td><p>Enhanced Wasserstein loss with circular buffer for small batch training.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.mle_wasserstein.BufferedWeightedSupCRCell.html#torchcell.losses.mle_wasserstein.BufferedWeightedSupCRCell" title="torchcell.losses.mle_wasserstein.BufferedWeightedSupCRCell"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mle_wasserstein.BufferedWeightedSupCRCell</span></code></a></p></td>
+<td><p>Enhanced SupCR loss with circular buffer for small batch training.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.mle_wasserstein.MleWassSupCR.html#torchcell.losses.mle_wasserstein.MleWassSupCR" title="torchcell.losses.mle_wasserstein.MleWassSupCR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mle_wasserstein.MleWassSupCR</span></code></a></p></td>
+<td><p>Composite MSE + Wasserstein + SupCR loss.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="multi-dim-nan-tolerant">
+<h2><a class="toc-backref" href="#id31" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant</span></code></a><a class="headerlink" href="#multi-dim-nan-tolerant" title="Link to this heading"></a></h2>
+<p>NaN-tolerant multi-dimensional loss functions for cell-state regression.</p>
+<section id="id9">
+<h3><a class="toc-backref" href="#id32" role="doc-backlink">Classes</a><a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.SupCR.html#torchcell.losses.multi_dim_nan_tolerant.SupCR" title="torchcell.losses.multi_dim_nan_tolerant.SupCR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant.SupCR</span></code></a></p></td>
+<td><p>Supervised Contrastive Regression (SupCR) loss over multiple target dimensions.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.WeightedSupCRCell.html#torchcell.losses.multi_dim_nan_tolerant.WeightedSupCRCell" title="torchcell.losses.multi_dim_nan_tolerant.WeightedSupCRCell"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant.WeightedSupCRCell</span></code></a></p></td>
+<td><p>SupCR loss with per-dimension weights for cell-state embeddings.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.NaNTolerantL1Loss.html#torchcell.losses.multi_dim_nan_tolerant.NaNTolerantL1Loss" title="torchcell.losses.multi_dim_nan_tolerant.NaNTolerantL1Loss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant.NaNTolerantL1Loss</span></code></a></p></td>
+<td><p>Per-dimension L1 loss that ignores NaN targets.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.NaNTolerantHuberLoss.html#torchcell.losses.multi_dim_nan_tolerant.NaNTolerantHuberLoss" title="torchcell.losses.multi_dim_nan_tolerant.NaNTolerantHuberLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant.NaNTolerantHuberLoss</span></code></a></p></td>
+<td><p>Per-dimension Huber loss that ignores NaN targets.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.NaNTolerantLogCoshLoss.html#torchcell.losses.multi_dim_nan_tolerant.NaNTolerantLogCoshLoss" title="torchcell.losses.multi_dim_nan_tolerant.NaNTolerantLogCoshLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant.NaNTolerantLogCoshLoss</span></code></a></p></td>
+<td><p>Per-dimension log-cosh loss that ignores NaN targets.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.WeightedMSELoss.html#torchcell.losses.multi_dim_nan_tolerant.WeightedMSELoss" title="torchcell.losses.multi_dim_nan_tolerant.WeightedMSELoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant.WeightedMSELoss</span></code></a></p></td>
+<td><p>Per-dimension MSE loss with optional normalized dimension weights.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.NaNTolerantMSELoss.html#torchcell.losses.multi_dim_nan_tolerant.NaNTolerantMSELoss" title="torchcell.losses.multi_dim_nan_tolerant.NaNTolerantMSELoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant.NaNTolerantMSELoss</span></code></a></p></td>
+<td><p>Per-dimension MSE loss that ignores NaN targets.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.NaNTolerantQuantileLoss.html#torchcell.losses.multi_dim_nan_tolerant.NaNTolerantQuantileLoss" title="torchcell.losses.multi_dim_nan_tolerant.NaNTolerantQuantileLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant.NaNTolerantQuantileLoss</span></code></a></p></td>
+<td><p>Quantile regression loss that handles NaN values.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.FastSoftSort.html#torchcell.losses.multi_dim_nan_tolerant.FastSoftSort" title="torchcell.losses.multi_dim_nan_tolerant.FastSoftSort"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant.FastSoftSort</span></code></a></p></td>
+<td><p>Fast differentiable sorting following the original paper implementation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.WeightedDistLoss.html#torchcell.losses.multi_dim_nan_tolerant.WeightedDistLoss" title="torchcell.losses.multi_dim_nan_tolerant.WeightedDistLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant.WeightedDistLoss</span></code></a></p></td>
+<td><p>Distribution-matching (DistLoss) loss using KDE and differentiable sorting.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.CombinedRegressionLoss.html#torchcell.losses.multi_dim_nan_tolerant.CombinedRegressionLoss" title="torchcell.losses.multi_dim_nan_tolerant.CombinedRegressionLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant.CombinedRegressionLoss</span></code></a></p></td>
+<td><p>Dispatch to a NaN-tolerant regression loss and apply per-dimension weights.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.MultiDimNaNTolerantCELoss.html#torchcell.losses.multi_dim_nan_tolerant.MultiDimNaNTolerantCELoss" title="torchcell.losses.multi_dim_nan_tolerant.MultiDimNaNTolerantCELoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant.MultiDimNaNTolerantCELoss</span></code></a></p></td>
+<td><p>Multi-task cross-entropy loss that ignores NaN targets per task.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.CombinedCELoss.html#torchcell.losses.multi_dim_nan_tolerant.CombinedCELoss" title="torchcell.losses.multi_dim_nan_tolerant.CombinedCELoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant.CombinedCELoss</span></code></a></p></td>
+<td><p>Cross-entropy loss combining per-task losses with dimension weights.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.MonotonicParameter.html#torchcell.losses.multi_dim_nan_tolerant.MonotonicParameter" title="torchcell.losses.multi_dim_nan_tolerant.MonotonicParameter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant.MonotonicParameter</span></code></a></p></td>
+<td><p>Parameter that ensures values are monotonically increasing via cumulative softplus.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.MultiDimNaNTolerantOrdinalCELoss.html#torchcell.losses.multi_dim_nan_tolerant.MultiDimNaNTolerantOrdinalCELoss" title="torchcell.losses.multi_dim_nan_tolerant.MultiDimNaNTolerantOrdinalCELoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant.MultiDimNaNTolerantOrdinalCELoss</span></code></a></p></td>
+<td><p>Multi-task ordinal cross-entropy loss with learnable monotonic thresholds.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.CombinedOrdinalCELoss.html#torchcell.losses.multi_dim_nan_tolerant.CombinedOrdinalCELoss" title="torchcell.losses.multi_dim_nan_tolerant.CombinedOrdinalCELoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant.CombinedOrdinalCELoss</span></code></a></p></td>
+<td><p>Combined ordinal classification loss with dimension-wise weighting.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.CategoricalEntropyRegLoss.html#torchcell.losses.multi_dim_nan_tolerant.CategoricalEntropyRegLoss" title="torchcell.losses.multi_dim_nan_tolerant.CategoricalEntropyRegLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant.CategoricalEntropyRegLoss</span></code></a></p></td>
+<td><p>Entropy regularization loss that works with both soft and one-hot categorical targets.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.MseCategoricalEntropyRegLoss.html#torchcell.losses.multi_dim_nan_tolerant.MseCategoricalEntropyRegLoss" title="torchcell.losses.multi_dim_nan_tolerant.MseCategoricalEntropyRegLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant.MseCategoricalEntropyRegLoss</span></code></a></p></td>
+<td><p>Combine MSE loss with entropy regularization, tracking per-dimension losses.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id10">
+<h3><a class="toc-backref" href="#id33" role="doc-backlink">Functions</a><a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.isotonic_l2_pav.html#torchcell.losses.multi_dim_nan_tolerant.isotonic_l2_pav" title="torchcell.losses.multi_dim_nan_tolerant.isotonic_l2_pav"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant.isotonic_l2_pav</span></code></a></p></td>
+<td><p>Solve isotonic regression using the PAV (Pool Adjacent Violators) algorithm.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.fast_soft_sort.html#torchcell.losses.multi_dim_nan_tolerant.fast_soft_sort" title="torchcell.losses.multi_dim_nan_tolerant.fast_soft_sort"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant.fast_soft_sort</span></code></a></p></td>
+<td><p>Fast differentiable sorting that follows the original paper's implementation.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="point-dist-graph-reg">
+<h2><a class="toc-backref" href="#id34" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">point_dist_graph_reg</span></code></a><a class="headerlink" href="#point-dist-graph-reg" title="Link to this heading"></a></h2>
+<p>Composite point + distribution + graph-regularization loss for the cell transformer.</p>
+<section id="id11">
+<h3><a class="toc-backref" href="#id35" role="doc-backlink">Classes</a><a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.losses.point_dist_graph_reg.PointDistGraphReg.html#torchcell.losses.point_dist_graph_reg.PointDistGraphReg" title="torchcell.losses.point_dist_graph_reg.PointDistGraphReg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">point_dist_graph_reg.PointDistGraphReg</span></code></a></p></td>
+<td><p>Modular composite loss for Cell Graph Transformer combining: 1.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="not-documented">
+<h2><a class="toc-backref" href="#id36" role="doc-backlink">Not documented</a><a class="headerlink" href="#not-documented" title="Link to this heading"></a></h2>
+<p>Submodules left out of this page:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">SupCr</span></code> (import fails: ModuleNotFoundError)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dcell_DEPRECATED</span></code> (scratch, demo or deprecated)</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../generated/torchcell.loader.dense_padding_data_loader.dense_padded_from_data_list.html" class="btn btn-neutral float-left" title="torchcell.loader.dense_padding_data_loader.dense_padded_from_data_list" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../generated/torchcell.losses.dango.DangoLossSched.html" class="btn btn-neutral float-right" title="torchcell.losses.dango.DangoLossSched" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

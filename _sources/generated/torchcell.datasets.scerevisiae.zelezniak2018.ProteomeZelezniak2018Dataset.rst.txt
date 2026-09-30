@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.zelezniak2018.ProteomeZelezniak2018Dataset
+=========================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.zelezniak2018
+
+.. autoclass:: ProteomeZelezniak2018Dataset
+   :show-inheritance:
+   :members:

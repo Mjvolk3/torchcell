@@ -1,0 +1,8 @@
+﻿torchcell.data.MeanExperimentDeduplicator
+=========================================
+
+.. currentmodule:: torchcell.data
+
+.. autoclass:: MeanExperimentDeduplicator
+   :show-inheritance:
+   :members:

@@ -1,0 +1,6 @@
+﻿torchcell.trainers.fit\_int\_cell\_gin\_diffpool\_dense\_binary.log\_error\_information
+=======================================================================================
+
+.. currentmodule:: torchcell.trainers.fit_int_cell_gin_diffpool_dense_binary
+
+.. autofunction:: log_error_information

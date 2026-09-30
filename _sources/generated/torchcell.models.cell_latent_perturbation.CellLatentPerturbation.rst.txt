@@ -1,0 +1,8 @@
+﻿torchcell.models.cell\_latent\_perturbation.CellLatentPerturbation
+==================================================================
+
+.. currentmodule:: torchcell.models.cell_latent_perturbation
+
+.. autoclass:: CellLatentPerturbation
+   :show-inheritance:
+   :members:

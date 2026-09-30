@@ -1,0 +1,558 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datasets.scerevisiae.cachera2023 &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/datasets/scerevisiae/cachera2023.html" />
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html">
+            
+              <img src="../../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.datasets.scerevisiae.cachera2023</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.datasets.scerevisiae.cachera2023</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/datasets/scerevisiae/cachera2023</span>
+<span class="c1"># [[torchcell.datasets.scerevisiae.cachera2023]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/cachera2023</span>
+<span class="c1"># Test file: tests/torchcell/datasets/scerevisiae/test_cachera2023.py</span>
+<span class="sd">"""Cachera 2023 CRI-SPA betaxanthin dataset (genome-wide product-proxy screen).</span>
+
+<span class="sd">Cachera et al. 2023 (Nucleic Acids Research, doi:10.1093/nar/gkad656) used CRI-SPA to</span>
+<span class="sd">transfer four betaxanthin-biosynthesis genes into each strain of the ~4800-strain yeast</span>
+<span class="sd">knockout (YKO) collection, then read out per-colony **betaxanthin** (a yellow, naturally</span>
+<span class="sd">fluorescent plant metabolite) by image analysis. The "CRI-SPA score" is a</span>
+<span class="sd">corrected/normalized colony fluorescence intensity -- a quantitative proxy for</span>
+<span class="sd">betaxanthin level (it can be negative because it is population-centered).</span>
+
+<span class="sd">Source: the paper's Data Availability points to the CRI-SPA GitHub repo</span>
+<span class="sd">(github.com/pc2912/CRI-SPA_repo). We ingest `GA1_2_4_6.csv` -- the gene-level</span>
+<span class="sd">corrected+filtered dataset combining screen replicates 1/2/4/6 -- using the 24 h</span>
+<span class="sd">`corrected_mean_intensity` (mean/std/count) as the betaxanthin level + SE + n.</span>
+
+<span class="sd">Maps to `MetabolitePhenotype` (WS4): `metabolite_level = {"betaxanthin": score}` with</span>
+<span class="sd">`measurement_type = "cri_spa_corrected_fluorescence_intensity_24h"`. Gene names in the</span>
+<span class="sd">source are COMMON names, so a genome is required to resolve them to systematic ORF ids</span>
+<span class="sd">(same pattern as Sameith); unresolved names + control/NaN rows are excluded and logged.</span>
+<span class="sd">The varying deletion stores the genome's own standard name as `perturbed_gene_name`</span>
+<span class="sd">(`canonical_common_names`, shared with the Smith/Mormino/Lian loaders), so one gene keeps</span>
+<span class="sd">one spelling across datasets; an ORF with no round-tripping standard name stores the id.</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">urllib.request</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Environment</span><span class="p">,</span>
+    <span class="n">Experiment</span><span class="p">,</span>
+    <span class="n">ExperimentReference</span><span class="p">,</span>
+    <span class="n">GeneAdditionPerturbation</span><span class="p">,</span>
+    <span class="n">Genotype</span><span class="p">,</span>
+    <span class="n">KanMxDeletionPerturbation</span><span class="p">,</span>
+    <span class="n">Media</span><span class="p">,</span>
+    <span class="n">MetaboliteExperiment</span><span class="p">,</span>
+    <span class="n">MetaboliteExperimentReference</span><span class="p">,</span>
+    <span class="n">MetabolitePhenotype</span><span class="p">,</span>
+    <span class="n">Publication</span><span class="p">,</span>
+    <span class="n">ReferenceGenome</span><span class="p">,</span>
+    <span class="n">Temperature</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.smith2006</span><span class="w"> </span><span class="kn">import</span> <span class="n">canonical_common_names</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeneNameStatus</span><span class="p">,</span> <span class="n">SCerevisiaeGenome</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">MEASUREMENT_TYPE</span> <span class="o">=</span> <span class="s2">"cri_spa_corrected_fluorescence_intensity_24h"</span>
+<span class="n">TARGET_METABOLITE</span> <span class="o">=</span> <span class="s2">"betaxanthin"</span>
+
+
+<span class="c1"># The constant engineered background transferred by CRI-SPA into every YKO strain: the</span>
+<span class="c1"># Btx-cassette, chromosomally integrated at site XII-5 (paper Methods; pBTX1/pBTX2). Two</span>
+<span class="c1"># heterologous plant genes (CYP76AD1, DOD) + two feedback-resistant mutant alleles of</span>
+<span class="c1"># NATIVE yeast genes (ARO4^K229L / YBR249C, ARO7^G141S / YPR060C) integrated ectopically</span>
+<span class="c1"># (hence GeneAddition with a variant, NOT AllelePerturbation at the native locus). The</span>
+<span class="c1"># natMX marker is not a betaxanthin gene and is omitted. source_organism for DOD needs</span>
+<span class="c1"># confirmation against DeLoache 2015 (ref 25) at review. plasmid_contig_id stays None</span>
+<span class="c1"># until the plasmid-sequence store lands (Cachera GenBank maps in the OUP SI zip). See</span>
+<span class="c1"># [[torchcell.datamodels.gene-addition-perturbation-design]].</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_betaxanthin_cassette</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">GeneAdditionPerturbation</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Fresh Btx-cassette perturbations (new objects per record)."""</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">GeneAdditionPerturbation</span><span class="p">(</span>
+            <span class="n">systematic_gene_name</span><span class="o">=</span><span class="s2">"CYP76AD1"</span><span class="p">,</span>
+            <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="s2">"CYP76AD1"</span><span class="p">,</span>
+            <span class="n">source_organism</span><span class="o">=</span><span class="s2">"Beta vulgaris"</span><span class="p">,</span>
+            <span class="n">is_heterologous</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">localization</span><span class="o">=</span><span class="s2">"chromosomal_integration"</span><span class="p">,</span>
+            <span class="n">integration_locus</span><span class="o">=</span><span class="s2">"XII-5"</span><span class="p">,</span>
+            <span class="n">construct_name</span><span class="o">=</span><span class="s2">"Btx-cassette"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">GeneAdditionPerturbation</span><span class="p">(</span>
+            <span class="n">systematic_gene_name</span><span class="o">=</span><span class="s2">"DOD"</span><span class="p">,</span>
+            <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="s2">"DOD"</span><span class="p">,</span>
+            <span class="n">source_organism</span><span class="o">=</span><span class="s2">"Mirabilis jalapa"</span><span class="p">,</span>
+            <span class="n">is_heterologous</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">localization</span><span class="o">=</span><span class="s2">"chromosomal_integration"</span><span class="p">,</span>
+            <span class="n">integration_locus</span><span class="o">=</span><span class="s2">"XII-5"</span><span class="p">,</span>
+            <span class="n">construct_name</span><span class="o">=</span><span class="s2">"Btx-cassette"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">GeneAdditionPerturbation</span><span class="p">(</span>
+            <span class="n">systematic_gene_name</span><span class="o">=</span><span class="s2">"YBR249C"</span><span class="p">,</span>
+            <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="s2">"ARO4"</span><span class="p">,</span>
+            <span class="n">source_organism</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
+            <span class="n">is_heterologous</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">localization</span><span class="o">=</span><span class="s2">"chromosomal_integration"</span><span class="p">,</span>
+            <span class="n">integration_locus</span><span class="o">=</span><span class="s2">"XII-5"</span><span class="p">,</span>
+            <span class="n">construct_name</span><span class="o">=</span><span class="s2">"Btx-cassette"</span><span class="p">,</span>
+            <span class="n">variant</span><span class="o">=</span><span class="s2">"K229L"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">GeneAdditionPerturbation</span><span class="p">(</span>
+            <span class="n">systematic_gene_name</span><span class="o">=</span><span class="s2">"YPR060C"</span><span class="p">,</span>
+            <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="s2">"ARO7"</span><span class="p">,</span>
+            <span class="n">source_organism</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
+            <span class="n">is_heterologous</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">localization</span><span class="o">=</span><span class="s2">"chromosomal_integration"</span><span class="p">,</span>
+            <span class="n">integration_locus</span><span class="o">=</span><span class="s2">"XII-5"</span><span class="p">,</span>
+            <span class="n">construct_name</span><span class="o">=</span><span class="s2">"Btx-cassette"</span><span class="p">,</span>
+            <span class="n">variant</span><span class="o">=</span><span class="s2">"G141S"</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+
+<span class="c1"># Gene-level corrected+filtered dataset (replicates 1/2/4/6) from the CRI-SPA repo.</span>
+<span class="n">DATA_URL</span> <span class="o">=</span> <span class="s2">"https://raw.githubusercontent.com/pc2912/CRI-SPA_repo/main/GA1_2_4_6.csv"</span>
+<span class="n">DATA_FILENAME</span> <span class="o">=</span> <span class="s2">"GA1_2_4_6.csv"</span>
+<span class="c1"># Pinned sha256 of GA1_2_4_6.csv (role si_data in the library manifest:</span>
+<span class="c1"># torchcell-library/cacheraCRISPAHighthroughputMethod2023/manifest.json). The stored</span>
+<span class="c1"># artifact + this hash is canonical, NOT the live GitHub URL; verified on download so</span>
+<span class="c1"># upstream drift is detected rather than silently followed.</span>
+<span class="n">DATA_SHA256</span> <span class="o">=</span> <span class="s2">"71f55609067301e1430a1ab3226618c46428488753c6412603e8f0c21bbcac8a"</span>
+<span class="n">_LEVEL</span> <span class="o">=</span> <span class="s2">"corrected_mean_intensity.24_mean"</span>
+<span class="n">_STD</span> <span class="o">=</span> <span class="s2">"corrected_mean_intensity.24_std"</span>
+<span class="n">_COUNT</span> <span class="o">=</span> <span class="s2">"corrected_mean_intensity.24_count"</span>
+
+
+<div class="viewcode-block" id="BetaxanthinCachera2023Dataset">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset.html#torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset">[docs]</a>
+<span class="nd">@register_dataset</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BetaxanthinCachera2023Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Genome-wide betaxanthin CRI-SPA product-proxy screen of the YKO collection."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/betaxanthin_cachera2023"</span><span class="p">,</span>
+        <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset; a genome is required to resolve common gene names."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Experiment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Experiment schema class produced by this dataset."""</span>
+        <span class="k">return</span> <span class="n">MetaboliteExperiment</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reference_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">ExperimentReference</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Experiment-reference schema class produced by this dataset."""</span>
+        <span class="k">return</span> <span class="n">MetaboliteExperimentReference</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The gene-level CRI-SPA dataset required before processing."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">DATA_FILENAME</span><span class="p">]</span>
+
+<div class="viewcode-block" id="BetaxanthinCachera2023Dataset.download">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset.html#torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset.download">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Download the gene-level CRI-SPA dataset from the authors' GitHub repo.</span>
+
+<span class="sd">        The stored artifact's sha256 is canonical: an already-present file is verified</span>
+<span class="sd">        against ``DATA_SHA256`` rather than trusted, and a freshly downloaded file is</span>
+<span class="sd">        verified before use. A mismatch means upstream drift or corruption and raises</span>
+<span class="sd">        (never silently followed).</span>
+<span class="sd">        """</span>
+        <span class="n">dest</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">DATA_FILENAME</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
+            <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">dest</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">digest</span> <span class="o">!=</span> <span class="n">DATA_SHA256</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"CRI-SPA data sha256 mismatch for </span><span class="si">{</span><span class="n">dest</span><span class="si">}</span><span class="s2">: got </span><span class="si">{</span><span class="n">digest</span><span class="si">}</span><span class="s2">, "</span>
+                    <span class="sa">f</span><span class="s2">"expected </span><span class="si">{</span><span class="n">DATA_SHA256</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Downloading CRI-SPA data from </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">DATA_URL</span><span class="p">)</span>
+        <span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">DATA_URL</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">"User-Agent"</span><span class="p">:</span> <span class="s2">"Mozilla/5.0"</span><span class="p">})</span>
+        <span class="k">with</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">req</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">120</span><span class="p">)</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">10000</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"CRI-SPA download too small: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2"> bytes"</span><span class="p">)</span>
+        <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">digest</span> <span class="o">!=</span> <span class="n">DATA_SHA256</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"CRI-SPA data sha256 mismatch on download: got </span><span class="si">{</span><span class="n">digest</span><span class="si">}</span><span class="s2">, "</span>
+                <span class="sa">f</span><span class="s2">"expected </span><span class="si">{</span><span class="n">DATA_SHA256</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">dest</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Wrote </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%d</span><span class="s2"> bytes, sha256 verified)"</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_systematic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gene</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Resolve a source gene name (common or systematic) to an R64 identifier.</span>
+
+<span class="sd">        Uses the genome's layered resolver. Returns the current R64 identifier for a live</span>
+<span class="sd">        gene, an SGD rename, or a valid non-"gene" feature (e.g. a ``blocked_reading_frame``</span>
+<span class="sd">        pseudogene such as ``YER109C``/FLO8 or ``YFL056C``/AAD6 -- REAL loci that are</span>
+<span class="sd">        retained, not dropped). Returns None only when the name is not a recognisable R64</span>
+<span class="sd">        feature (a control like ``WT`` or a malformed id), which the caller drops.</span>
+<span class="sd">        """</span>
+        <span class="n">genome</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">resolve_gene_name</span><span class="p">(</span><span class="n">gene</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">status</span>
+            <span class="ow">in</span> <span class="p">(</span>
+                <span class="n">GeneNameStatus</span><span class="o">.</span><span class="n">CURRENT</span><span class="p">,</span>
+                <span class="n">GeneNameStatus</span><span class="o">.</span><span class="n">RENAMED</span><span class="p">,</span>
+                <span class="n">GeneNameStatus</span><span class="o">.</span><span class="n">NON_GENE_FEATURE</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="ow">and</span> <span class="n">res</span><span class="o">.</span><span class="n">systematic_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">systematic_name</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="BetaxanthinCachera2023Dataset.process">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset.html#torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset.process">[docs]</a>
+    <span class="nd">@post_process</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Parse the CRI-SPA dataset into per-ORF Metabolite experiments and write LMDB."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">"Cachera2023 requires an injected SCerevisiaeGenome to resolve common "</span>
+                <span class="s2">"gene names to systematic ORF ids (source uses common names)."</span>
+            <span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">DATA_FILENAME</span><span class="p">))</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">canonical</span> <span class="o">=</span> <span class="n">canonical_common_names</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
+        <span class="n">n_control_or_nan</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">unresolved</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">collisions</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="n">gene</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">level</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">_LEVEL</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">gene</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"0"</span><span class="p">,</span> <span class="s2">"nan"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="ow">or</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">level</span><span class="p">):</span>
+                <span class="n">n_control_or_nan</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+            <span class="n">systematic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_systematic</span><span class="p">(</span><span class="n">gene</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">systematic</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">unresolved</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">gene</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="c1"># Distinct source names can alias to the same ORF; keep the first, log rest.</span>
+            <span class="k">if</span> <span class="n">systematic</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                <span class="n">collisions</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">systematic</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">systematic</span><span class="p">)</span>
+            <span class="n">count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">_COUNT</span><span class="p">])</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">_COUNT</span><span class="p">])</span> <span class="k">else</span> <span class="mi">1</span>
+            <span class="n">std</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">_STD</span><span class="p">]</span>
+            <span class="n">se</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">float</span><span class="p">(</span><span class="n">std</span><span class="p">)</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">std</span><span class="p">)</span> <span class="ow">and</span> <span class="n">count</span> <span class="o">&gt;</span> <span class="mi">1</span>
+                <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="c1"># `common` is the genome's own standard name for the resolved ORF, so</span>
+            <span class="c1"># `perturbed_gene_name` carries the same spelling this gene gets in every</span>
+            <span class="c1"># other loader (the L1 `canonical_gene_names` rule), with the systematic id</span>
+            <span class="c1"># kept for the 789 ORFs that have no round-tripping standard name. Taking it</span>
+            <span class="c1"># from the genome rather than from the source column is what normalizes the</span>
+            <span class="c1"># 408 rows whose 2023-era spelling has since been superseded (ACN9 -&gt; SDH7,</span>
+            <span class="c1"># AIM1 -&gt; BOL3). Storing `systematic` twice, as this loader did before issue</span>
+            <span class="c1"># #195, threw a name the source supplied for 3,930 of 4,719 records.</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"orf"</span><span class="p">:</span> <span class="n">systematic</span><span class="p">,</span>
+                    <span class="s2">"common"</span><span class="p">:</span> <span class="n">canonical</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">systematic</span><span class="p">,</span> <span class="n">systematic</span><span class="p">),</span>
+                    <span class="s2">"level"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">level</span><span class="p">),</span>
+                    <span class="s2">"se"</span><span class="p">:</span> <span class="n">se</span><span class="p">,</span>
+                    <span class="s2">"n"</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="c1"># Unresolved names are dropped by design (never guessed into an ORF): 'WT' is a</span>
+        <span class="c1"># control and 'YLR287-A' is a malformed id. Names that resolve to a valid non-"gene"</span>
+        <span class="c1"># R64 feature (AAD6/CRS5/FLO8 -&gt; YFL056C/YOR031W/YER109C, blocked_reading_frame</span>
+        <span class="c1"># pseudogenes) are now RETAINED via the genome resolver rather than dropped -- they</span>
+        <span class="c1"># are real loci with a real perturbation. Log the full unresolved list (only a</span>
+        <span class="c1"># handful) so the drop stays auditable.</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Cachera: </span><span class="si">%d</span><span class="s2"> usable ORFs, </span><span class="si">%d</span><span class="s2"> control/NaN rows, </span><span class="si">%d</span><span class="s2"> unresolved names dropped </span><span class="si">%s</span><span class="s2">, "</span>
+            <span class="s2">"</span><span class="si">%d</span><span class="s2"> ORF collisions deduped"</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
+            <span class="n">n_control_or_nan</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">unresolved</span><span class="p">),</span>
+            <span class="nb">sorted</span><span class="p">(</span><span class="n">unresolved</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">collisions</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+
+        <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e11</span><span class="p">))</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">record_row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">rows</span><span class="p">):</span>
+                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span><span class="n">record_row</span><span class="p">)</span>
+                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+                    <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                        <span class="p">{</span>
+                            <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                            <span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                            <span class="s2">"publication"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                        <span class="p">}</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Cachera betaxanthin experiments to LMDB"</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BetaxanthinCachera2023Dataset.preprocess_raw">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset.html#torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset.preprocess_raw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Preprocessing is handled inside process() for this dataset."""</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="BetaxanthinCachera2023Dataset.create_experiment">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset.html#torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset.create_experiment">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span>  <span class="c1"># type: ignore[override]</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">MetaboliteExperiment</span><span class="p">,</span> <span class="n">MetaboliteExperimentReference</span><span class="p">,</span> <span class="n">Publication</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Build the Metabolite experiment/reference/publication for one ORF."""</span>
+        <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4741"</span>
+        <span class="p">)</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">],</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"common"</span><span class="p">]</span>
+                <span class="p">),</span>
+                <span class="o">*</span><span class="n">_betaxanthin_cassette</span><span class="p">(),</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
+            <span class="n">media</span><span class="o">=</span><span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"SC"</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"solid"</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">30</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">MetabolitePhenotype</span><span class="p">(</span>
+            <span class="n">metabolite_level</span><span class="o">=</span><span class="p">{</span><span class="n">TARGET_METABOLITE</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s2">"level"</span><span class="p">]},</span>
+            <span class="n">metabolite_level_se</span><span class="o">=</span><span class="p">{</span><span class="n">TARGET_METABOLITE</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s2">"se"</span><span class="p">]},</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="p">{</span><span class="n">TARGET_METABOLITE</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"n"</span><span class="p">])},</span>
+            <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
+            <span class="n">target_metabolite_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Reference = the CRI-SPA Donor background (4 betaxanthin genes, no extra</span>
+        <span class="c1"># deletion). Scores are population-centered, so the control level is 0.</span>
+        <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">MetabolitePhenotype</span><span class="p">(</span>
+            <span class="n">metabolite_level</span><span class="o">=</span><span class="p">{</span><span class="n">TARGET_METABOLITE</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+            <span class="n">metabolite_level_se</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="p">{</span><span class="n">TARGET_METABOLITE</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+            <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">experiment</span> <span class="o">=</span> <span class="n">MetaboliteExperiment</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">genotype</span><span class="o">=</span><span class="n">genotype</span><span class="p">,</span>
+            <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">phenotype</span><span class="o">=</span><span class="n">phenotype</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="n">MetaboliteExperimentReference</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="n">genome_reference</span><span class="p">,</span>
+            <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(),</span>
+            <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">phenotype_reference</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span>
+            <span class="n">pubmed_id</span><span class="o">=</span><span class="s2">"37572348"</span><span class="p">,</span>
+            <span class="n">pubmed_url</span><span class="o">=</span><span class="s2">"https://pubmed.ncbi.nlm.nih.gov/37572348/"</span><span class="p">,</span>
+            <span class="n">doi</span><span class="o">=</span><span class="s2">"10.1093/nar/gkad656"</span><span class="p">,</span>
+            <span class="n">doi_url</span><span class="o">=</span><span class="s2">"https://doi.org/10.1093/nar/gkad656"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build/load the dataset for interactive debugging.</span>
+
+<span class="sd">    A genome is REQUIRED (the source uses common gene names). Loads the existing LMDB</span>
+<span class="sd">    if already built; to step through ``process()``/``create_experiment`` under a</span>
+<span class="sd">    debugger, delete ``&lt;root&gt;/processed`` first so the build re-runs.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">data_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
+    <span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
+        <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
+        <span class="n">go_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/go"</span><span class="p">),</span>
+        <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/torchcell/betaxanthin_cachera2023"</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">BetaxanthinCachera2023Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"len = </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

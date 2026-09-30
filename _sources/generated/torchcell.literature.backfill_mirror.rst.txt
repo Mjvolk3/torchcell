@@ -1,0 +1,6 @@
+﻿torchcell.literature.backfill\_mirror
+=====================================
+
+.. currentmodule:: torchcell.literature
+
+.. autofunction:: backfill_mirror

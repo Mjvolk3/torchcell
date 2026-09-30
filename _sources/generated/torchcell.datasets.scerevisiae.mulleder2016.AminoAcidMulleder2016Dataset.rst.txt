@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.mulleder2016.AminoAcidMulleder2016Dataset
+========================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.mulleder2016
+
+.. autoclass:: AminoAcidMulleder2016Dataset
+   :show-inheritance:
+   :members:

@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.incremental\_import.constraints\_cypher
+===================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.incremental_import
+
+.. autofunction:: constraints_cypher

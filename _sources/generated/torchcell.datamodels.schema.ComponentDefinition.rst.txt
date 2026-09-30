@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.ComponentDefinition
+===============================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: ComponentDefinition
+   :show-inheritance:
+   :members:

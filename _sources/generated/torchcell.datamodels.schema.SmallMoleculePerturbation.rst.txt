@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.SmallMoleculePerturbation
+=====================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: SmallMoleculePerturbation
+   :show-inheritance:
+   :members:

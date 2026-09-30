@@ -1,0 +1,569 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datasets.scerevisiae.dasilveira2014 &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/datasets/scerevisiae/dasilveira2014.html" />
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html">
+            
+              <img src="../../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.datasets.scerevisiae.dasilveira2014</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.datasets.scerevisiae.dasilveira2014</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/datasets/scerevisiae/dasilveira2014</span>
+<span class="c1"># [[torchcell.datasets.scerevisiae.dasilveira2014]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/dasilveira2014</span>
+<span class="c1"># Test file: tests/torchcell/datasets/scerevisiae/test_dasilveira2014.py</span>
+<span class="sd">"""da Silveira dos Santos 2014 yeast kinase/phosphatase lipidome dataset.</span>
+
+<span class="sd">da Silveira dos Santos A et al. 2014, "Systematic lipidomic analysis of yeast protein</span>
+<span class="sd">kinase and phosphatase mutants" (Mol Biol Cell 25(20):3234-3246,</span>
+<span class="sd">doi:10.1091/mbc.E14-03-0851, PMID 25143408, PMC4196872). A mass-spectrometry lipidomic</span>
+<span class="sd">screen of the nonessential protein-kinase/phosphatase deletion collection, quantifying</span>
+<span class="sd">147 acyl-chain-resolved lipid species (glycerophospholipids + sphingolipids by MRM-MS /</span>
+<span class="sd">Orbitrap direct infusion; ergosterol by GC-MS) as RELATIVE abundances in arbitrary units</span>
+<span class="sd">(a.u.), each species quantified against a spiked internal standard.</span>
+
+<span class="sd">Source (sha256-pinned, in the library mirror ``$DATA_ROOT/torchcell-library/</span>
+<span class="sd">daSystematicLipidomicAnalysis2014/data/``):</span>
+
+<span class="sd">- ``TableS4_complete_dataset_all_lipids.xlsx`` -- the lipid matrix. We ingest the</span>
+<span class="sd">  ``Quant`` sheet (relative quantities in a.u., one aggregated value per mutant x lipid;</span>
+<span class="sd">  the absolute-per-mutant input appropriate for ``MetabolitePhenotype`` levels + a</span>
+<span class="sd">  measured-WT baseline). Orientation: rows = strains, cols = ``Systematic Name`` (col 0),</span>
+<span class="sd">  ``Standard Name`` (col 1), then 147 lipid species. 130 rows total.</span>
+<span class="sd">- ``TableS10_lipidX_chebi_ids.xlsx`` -- per-lipid LipidX id + Name + Formula + ChEBI id.</span>
+<span class="sd">  Copied for provenance; its lipid-name -&gt; ChEBI map is written to</span>
+<span class="sd">  ``preprocess/lipid_chebi.csv`` for a deferred follow-up (see target ids below).</span>
+
+<span class="sd">Maps to ``MetaboliteExperiment`` / ``MetabolitePhenotype`` (one record per mutant):</span>
+<span class="sd">``metabolite_level = {lipid_species_name -&gt; relative abundance (a.u.)}`` with</span>
+<span class="sd">``measurement_type = "lipidomics_ms_relative_abundance_au"``. The value is an ARBITRARY</span>
+<span class="sd">relative abundance, NOT a concentration.</span>
+
+<span class="sd">WILD-TYPE REFERENCE (deviates from a first-pass "no WT row" assumption -- verified against</span>
+<span class="sd">the data): the ``Quant`` sheet's 130 rows are NOT all mutants. THREE rows are wild-type</span>
+<span class="sd">controls -- ``Y7092`` (WT1), ``Y7220`` (WT2), ``BY4741`` (WT3) -- which are strain</span>
+<span class="sd">identifiers, not ORFs, so they cannot be deletion records. Excluding them leaves 127</span>
+<span class="sd">mutant rows (matching the paper's screened-mutant count), and their per-lipid MEAN is used</span>
+<span class="sd">as the measured WT baseline (like the Zelezniak metabolome loader's measured WT). This is</span>
+<span class="sd">strictly more faithful than a population mean over mutants: there is an actual measured WT.</span>
+<span class="sd">Each record's reference is RESTRICTED to the lipids that strain measured (and the WT</span>
+<span class="sd">measured), keeping reference keys a subset of the experiment's (WT covers all 147 lipids</span>
+<span class="sd">collectively; every mutant overlaps WT by &gt;=125 lipids). ``reference_centered=False``.</span>
+
+<span class="sd">Missing values are NaN in the ``Quant`` sheet (1038 cells) and are DROPPED per strain, so</span>
+<span class="sd">each record carries only the lipids that strain measured (125-147 lipids/strain).</span>
+
+<span class="sd">Replicate structure (sourced, Methods "Lipid extraction and analysis", MRM-MS paragraph):</span>
+<span class="sd">"Two independent biological replicates were analyzed, each of which comprised up to six</span>
+<span class="sd">technical replicates." (also Results: "biological duplicates with up to six technical</span>
+<span class="sd">replicates per biological replicate"). The ``Quant`` value is a single aggregated relative</span>
+<span class="sd">quantity per mutant x lipid (batch-adjusted/normalized across the extraction batch), with</span>
+<span class="sd">no released per-strain SE, so ``n_replicates = 2`` per lipid (the INDEPENDENT biological-</span>
+<span class="sd">replicate unit; the up-to-six technical replicates are not independent) and</span>
+<span class="sd">``metabolite_level_se = None``. The WT reference's ``n_replicates`` is the number of the</span>
+<span class="sd">three WT control rows measuring each lipid.</span>
+
+<span class="sd">Background strain (sourced): Methods "Strains" defer the strain list to Supplemental Table</span>
+<span class="sd">S1, which states "Kinase and phosphatase knockout collection was obtained from Claudine</span>
+<span class="sd">Kraft and Matthias Peter (ETH Zurich)" without naming BY4741/BY4742 in prose. The screen's</span>
+<span class="sd">own WT controls include a row explicitly labeled ``BY4741`` (WT3), and the collection is</span>
+<span class="sd">the standard nonessential KanMX kinase/phosphatase deletion set (BY4741, MATa background),</span>
+<span class="sd">so ``ReferenceGenome(strain="BY4741")`` is used with this evidence recorded (not guessed).</span>
+
+<span class="sd">Growth (sourced, Methods "Strains"): YPD rich medium (2% glucose, 1% Bacto Peptone, 2%</span>
+<span class="sd">Bacto Yeast Extract, + MES/Trp/uracil/adenine), grown to early exponential phase</span>
+<span class="sd">(1-2 OD600 units/ml) at 30 C.</span>
+
+<span class="sd">Target ids: ``MetabolitePhenotype.target_metabolite_ids`` is specifically a Yeast9</span>
+<span class="sd">``s_NNNN`` map for constraint-based-model linkage. These lipids map to ChEBI (Table S10),</span>
+<span class="sd">not Yeast9 ``s_NNNN``, so target ids are left ``None`` here and the ChEBI mapping is</span>
+<span class="sd">deferred to a follow-up (as Mulleder deferred its amino-acid -&gt; ``s_NNNN`` ids); the</span>
+<span class="sd">lipid-name -&gt; ChEBI table is emitted to ``preprocess/lipid_chebi.csv`` for that follow-up.</span>
+
+<span class="sd">Counting note: the paper prose reports 129 screened mutants; the released ``Quant`` matrix</span>
+<span class="sd">has 127 mutant rows (+ 3 WT controls). We keep all 127 released mutant rows and flag the</span>
+<span class="sd">129-vs-127 discrepancy.</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Environment</span><span class="p">,</span>
+    <span class="n">Experiment</span><span class="p">,</span>
+    <span class="n">ExperimentReference</span><span class="p">,</span>
+    <span class="n">Genotype</span><span class="p">,</span>
+    <span class="n">KanMxDeletionPerturbation</span><span class="p">,</span>
+    <span class="n">Media</span><span class="p">,</span>
+    <span class="n">MetaboliteExperiment</span><span class="p">,</span>
+    <span class="n">MetaboliteExperimentReference</span><span class="p">,</span>
+    <span class="n">MetabolitePhenotype</span><span class="p">,</span>
+    <span class="n">Publication</span><span class="p">,</span>
+    <span class="n">ReferenceGenome</span><span class="p">,</span>
+    <span class="n">Temperature</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae.s288c</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># The value is an ARBITRARY relative abundance (a.u.), NOT a concentration.</span>
+<span class="n">MEASUREMENT_TYPE</span> <span class="o">=</span> <span class="s2">"lipidomics_ms_relative_abundance_au"</span>
+
+<span class="n">_LIBRARY_CITATION_KEY</span> <span class="o">=</span> <span class="s2">"daSystematicLipidomicAnalysis2014"</span>
+<span class="n">_SYSTEMATIC_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?$"</span><span class="p">)</span>
+
+<span class="c1"># Wild-type control rows in the Quant sheet: strain ids (not ORFs), used as the measured</span>
+<span class="c1"># WT reference, NOT as deletion records.</span>
+<span class="n">_WT_ROW_IDS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"Y7092"</span><span class="p">,</span> <span class="s2">"Y7220"</span><span class="p">,</span> <span class="s2">"BY4741"</span><span class="p">}</span>
+
+<span class="n">_QUANT_SHEET</span> <span class="o">=</span> <span class="s2">"Quant"</span>
+<span class="n">_SYS_COL</span> <span class="o">=</span> <span class="s2">"Systematic Name"</span>
+<span class="n">_STD_COL</span> <span class="o">=</span> <span class="s2">"Standard Name"</span>
+
+<span class="c1"># TableS4 -- the lipid matrix (Quant sheet consumed).</span>
+<span class="n">DATA_FILENAME</span> <span class="o">=</span> <span class="s2">"TableS4_complete_dataset_all_lipids.xlsx"</span>
+<span class="n">DATA_SHA256</span> <span class="o">=</span> <span class="s2">"91409229756c132823e6e7a8dbe552d4d7451833b2ff902740f24a29bced3894"</span>
+
+<span class="c1"># TableS10 -- per-lipid LipidX/ChEBI ids (copied for provenance; ChEBI mapping deferred).</span>
+<span class="n">CHEBI_FILENAME</span> <span class="o">=</span> <span class="s2">"TableS10_lipidX_chebi_ids.xlsx"</span>
+<span class="n">CHEBI_SHA256</span> <span class="o">=</span> <span class="s2">"29a7ed0a11af4700fa051b99717e4686e0399a59c7a7b9be130ae674ed5d58f9"</span>
+
+<span class="c1"># Biological-replicate count per lipid (sourced: "Two independent biological replicates").</span>
+<span class="n">_N_BIOLOGICAL_REPLICATES</span> <span class="o">=</span> <span class="mi">2</span>
+
+
+<div class="viewcode-block" id="MetaboliteDaSilveira2014Dataset">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.dasilveira2014.MetaboliteDaSilveira2014Dataset.html#torchcell.datasets.scerevisiae.dasilveira2014.MetaboliteDaSilveira2014Dataset">[docs]</a>
+<span class="nd">@register_dataset</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MetaboliteDaSilveira2014Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""MS lipidome of the yeast kinase/phosphatase deletion collection (127 mutants)."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/metabolite_dasilveira2014"</span><span class="p">,</span>
+        <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset; a genome resolves/validates ORFs against R64."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Experiment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Experiment schema class produced by this dataset."""</span>
+        <span class="k">return</span> <span class="n">MetaboliteExperiment</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reference_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">ExperimentReference</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Experiment-reference schema class produced by this dataset."""</span>
+        <span class="k">return</span> <span class="n">MetaboliteExperimentReference</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The Table S4 lipid matrix + Table S10 ChEBI ids required before processing."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">DATA_FILENAME</span><span class="p">,</span> <span class="n">CHEBI_FILENAME</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_copy_pinned</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sha256</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Copy one sha256-pinned file from the library mirror into raw_dir + verify."""</span>
+        <span class="n">dest</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
+            <span class="n">data_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
+            <span class="n">src</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">data_root</span><span class="p">,</span> <span class="s2">"torchcell-library"</span><span class="p">,</span> <span class="n">_LIBRARY_CITATION_KEY</span><span class="p">,</span> <span class="s2">"data"</span><span class="p">,</span> <span class="n">filename</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">src</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"library mirror data file not found: </span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">. This dataset's source is "</span>
+                    <span class="sa">f</span><span class="s2">"the sha256-pinned </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2"> in the torchcell-library mirror."</span>
+                <span class="p">)</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+        <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">dest</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">digest</span> <span class="o">!=</span> <span class="n">sha256</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2"> sha256 mismatch: got </span><span class="si">{</span><span class="n">digest</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">sha256</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Verified </span><span class="si">%s</span><span class="s2"> (sha256 </span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">sha256</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MetaboliteDaSilveira2014Dataset.download">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.dasilveira2014.MetaboliteDaSilveira2014Dataset.html#torchcell.datasets.scerevisiae.dasilveira2014.MetaboliteDaSilveira2014Dataset.download">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Copy the pinned Table S4 + Table S10 from the library mirror and verify."""</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_copy_pinned</span><span class="p">(</span><span class="n">DATA_FILENAME</span><span class="p">,</span> <span class="n">DATA_SHA256</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_copy_pinned</span><span class="p">(</span><span class="n">CHEBI_FILENAME</span><span class="p">,</span> <span class="n">CHEBI_SHA256</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_systematic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Validate/resolve a source systematic name against the R64 genome."""</span>
+        <span class="n">genome</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">name</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">alias_to_systematic</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="p">[])</span>
+        <span class="k">if</span> <span class="n">candidates</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_lipid_chebi_map</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Lipid Name -&gt; ChEBI id from Table S10 (header on the 3rd row)."""</span>
+        <span class="n">s10</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">CHEBI_FILENAME</span><span class="p">),</span> <span class="n">header</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">s10</span> <span class="o">=</span> <span class="n">s10</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">{</span>
+                <span class="n">s10</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="s2">"ID"</span><span class="p">,</span>
+                <span class="n">s10</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="s2">"Name"</span><span class="p">,</span>
+                <span class="n">s10</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="s2">"Formula"</span><span class="p">,</span>
+                <span class="n">s10</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">3</span><span class="p">]:</span> <span class="s2">"ChEBI"</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"Name"</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"ChEBI"</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">s10</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"Name"</span><span class="p">])</span> <span class="ow">and</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"ChEBI"</span><span class="p">])</span>
+        <span class="p">}</span>
+
+<div class="viewcode-block" id="MetaboliteDaSilveira2014Dataset.process">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.dasilveira2014.MetaboliteDaSilveira2014Dataset.html#torchcell.datasets.scerevisiae.dasilveira2014.MetaboliteDaSilveira2014Dataset.process">[docs]</a>
+    <span class="nd">@post_process</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Parse the Quant sheet into per-mutant Metabolite experiments and write LMDB."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">"MetaboliteDaSilveira2014Dataset requires an injected SCerevisiaeGenome "</span>
+                <span class="s2">"to validate systematic ORF ids against R64."</span>
+            <span class="p">)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">DATA_FILENAME</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sheet_name</span><span class="o">=</span><span class="n">_QUANT_SHEET</span><span class="p">)</span>
+        <span class="n">lipid_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">_SYS_COL</span><span class="p">,</span> <span class="n">_STD_COL</span><span class="p">)]</span>
+
+        <span class="c1"># Measured WT baseline: per-lipid mean over the three WT control rows (skip NaN).</span>
+        <span class="n">wt_df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="n">_SYS_COL</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">_WT_ROW_IDS</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">wt_df</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">_WT_ROW_IDS</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"expected </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">_WT_ROW_IDS</span><span class="p">)</span><span class="si">}</span><span class="s2"> WT control rows, found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">wt_df</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">wt_mean</span> <span class="o">=</span> <span class="n">wt_df</span><span class="p">[</span><span class="n">lipid_cols</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">skipna</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">wt_count</span> <span class="o">=</span> <span class="n">wt_df</span><span class="p">[</span><span class="n">lipid_cols</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_wt_level</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">c</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">wt_mean</span><span class="p">[</span><span class="n">c</span><span class="p">])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">lipid_cols</span> <span class="k">if</span> <span class="n">wt_mean</span><span class="o">.</span><span class="n">notna</span><span class="p">()[</span><span class="n">c</span><span class="p">]</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_wt_n</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">wt_count</span><span class="p">[</span><span class="n">c</span><span class="p">])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wt_level</span><span class="p">}</span>
+
+        <span class="c1"># ChEBI map (Table S10) -&gt; emitted for the deferred target-id follow-up (not used</span>
+        <span class="c1"># for target_metabolite_ids, which is Yeast9 s_NNNN specific).</span>
+        <span class="n">chebi_by_lipid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lipid_chebi_map</span><span class="p">()</span>
+        <span class="n">chebi_missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">lipid_cols</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">chebi_by_lipid</span><span class="p">]</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"da Silveira: </span><span class="si">%d</span><span class="s2">/</span><span class="si">%d</span><span class="s2"> lipids have a Table S10 ChEBI id (</span><span class="si">%d</span><span class="s2"> missing)"</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">lipid_cols</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">chebi_missing</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">lipid_cols</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">chebi_missing</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="p">{</span><span class="s2">"lipid"</span><span class="p">:</span> <span class="n">c</span><span class="p">,</span> <span class="s2">"chebi"</span><span class="p">:</span> <span class="n">chebi_by_lipid</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="s2">""</span><span class="p">)}</span>
+                <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">lipid_cols</span>
+            <span class="p">]</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"lipid_chebi.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">mut_df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="o">~</span><span class="n">df</span><span class="p">[</span><span class="n">_SYS_COL</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">_WT_ROW_IDS</span><span class="p">)]</span>
+        <span class="n">n_unresolved</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">unresolved</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">mut_df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="n">source_orf</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">_SYS_COL</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">orf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_systematic</span><span class="p">(</span><span class="n">source_orf</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">orf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">n_unresolved</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">unresolved</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">source_orf</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"duplicate ORF </span><span class="si">%s</span><span class="s2"> after resolution; keeping first"</span><span class="p">,</span> <span class="n">orf</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span>
+            <span class="n">std</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">_STD_COL</span><span class="p">]</span>
+            <span class="n">gene_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">std</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">std</span><span class="p">)</span> <span class="k">else</span> <span class="n">orf</span>
+            <span class="n">level</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">c</span><span class="p">])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">lipid_cols</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">c</span><span class="p">])}</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"orf"</span><span class="p">:</span> <span class="n">orf</span><span class="p">,</span> <span class="s2">"gene"</span><span class="p">:</span> <span class="n">gene_name</span><span class="p">,</span> <span class="s2">"level"</span><span class="p">:</span> <span class="n">level</span><span class="p">})</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"da Silveira: </span><span class="si">%d</span><span class="s2"> mutant records, </span><span class="si">%d</span><span class="s2"> WT control rows -&gt; measured reference "</span>
+            <span class="s2">"(</span><span class="si">%d</span><span class="s2"> lipids), </span><span class="si">%d</span><span class="s2"> unresolved ORFs</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">wt_df</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_wt_level</span><span class="p">),</span>
+            <span class="n">n_unresolved</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="n">unresolved</span><span class="si">}</span><span class="s2">)"</span> <span class="k">if</span> <span class="n">unresolved</span> <span class="k">else</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="p">{</span><span class="s2">"orf"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">],</span> <span class="s2">"gene"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">],</span> <span class="s2">"n_lipids"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"level"</span><span class="p">])}</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span>
+            <span class="p">]</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e11</span><span class="p">))</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">record_row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">rows</span><span class="p">):</span>
+                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span><span class="n">record_row</span><span class="p">)</span>
+                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+                    <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                        <span class="p">{</span>
+                            <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                            <span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                            <span class="s2">"publication"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                        <span class="p">}</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> da Silveira lipidome experiments to LMDB"</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MetaboliteDaSilveira2014Dataset.preprocess_raw">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.dasilveira2014.MetaboliteDaSilveira2014Dataset.html#torchcell.datasets.scerevisiae.dasilveira2014.MetaboliteDaSilveira2014Dataset.preprocess_raw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Preprocessing is handled inside process() for this dataset."""</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="MetaboliteDaSilveira2014Dataset.create_experiment">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.dasilveira2014.MetaboliteDaSilveira2014Dataset.html#torchcell.datasets.scerevisiae.dasilveira2014.MetaboliteDaSilveira2014Dataset.create_experiment">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span>  <span class="c1"># type: ignore[override]</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">MetaboliteExperiment</span><span class="p">,</span> <span class="n">MetaboliteExperimentReference</span><span class="p">,</span> <span class="n">Publication</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Build the Metabolite experiment/reference/publication for one mutant."""</span>
+        <span class="c1"># BY4741 nonessential kinase/phosphatase KanMX deletion collection (see docstring:</span>
+        <span class="c1"># BY4741 appears as a WT control row in the released matrix).</span>
+        <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4741"</span>
+        <span class="p">)</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">],</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="c1"># YPD rich medium, early exponential phase, 30 C (Methods "Strains").</span>
+        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
+            <span class="n">media</span><span class="o">=</span><span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"YPD"</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">30</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">level</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"level"</span><span class="p">]</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">MetabolitePhenotype</span><span class="p">(</span>
+            <span class="n">metabolite_level</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">level</span><span class="p">),</span>
+            <span class="n">metabolite_level_se</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># single aggregated Quant value; no released SE</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="p">{</span><span class="n">lip</span><span class="p">:</span> <span class="n">_N_BIOLOGICAL_REPLICATES</span> <span class="k">for</span> <span class="n">lip</span> <span class="ow">in</span> <span class="n">level</span><span class="p">},</span>
+            <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
+            <span class="n">target_metabolite_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># deferred: lipid -&gt; ChEBI (Table S10), not s_NNNN</span>
+        <span class="p">)</span>
+        <span class="c1"># Reference = measured WT baseline RESTRICTED to the lipids this strain measured</span>
+        <span class="c1"># (keeps reference keys a subset of the experiment's; every mutant overlaps WT).</span>
+        <span class="n">ref_level</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wt_level</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">level</span><span class="p">}</span>
+        <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">MetabolitePhenotype</span><span class="p">(</span>
+            <span class="n">metabolite_level</span><span class="o">=</span><span class="n">ref_level</span><span class="p">,</span>
+            <span class="n">metabolite_level_se</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wt_n</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ref_level</span><span class="p">},</span>
+            <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
+            <span class="n">target_metabolite_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">experiment</span> <span class="o">=</span> <span class="n">MetaboliteExperiment</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">genotype</span><span class="o">=</span><span class="n">genotype</span><span class="p">,</span>
+            <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">phenotype</span><span class="o">=</span><span class="n">phenotype</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="n">MetaboliteExperimentReference</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="n">genome_reference</span><span class="p">,</span>
+            <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(),</span>
+            <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">phenotype_reference</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span>
+            <span class="n">pubmed_id</span><span class="o">=</span><span class="s2">"25143408"</span><span class="p">,</span>
+            <span class="n">pubmed_url</span><span class="o">=</span><span class="s2">"https://pubmed.ncbi.nlm.nih.gov/25143408/"</span><span class="p">,</span>
+            <span class="n">doi</span><span class="o">=</span><span class="s2">"10.1091/mbc.E14-03-0851"</span><span class="p">,</span>
+            <span class="n">doi_url</span><span class="o">=</span><span class="s2">"https://doi.org/10.1091/mbc.E14-03-0851"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build/load the dataset for interactive debugging.</span>
+
+<span class="sd">    A genome is REQUIRED (ORFs are validated against R64). Loads the existing LMDB if</span>
+<span class="sd">    already built; to step through ``process()``/``create_experiment`` under a debugger,</span>
+<span class="sd">    delete ``&lt;root&gt;/processed`` first so the build re-runs.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">data_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
+    <span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
+        <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
+        <span class="n">go_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/go"</span><span class="p">),</span>
+        <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/torchcell/metabolite_dasilveira2014"</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">MetaboliteDaSilveira2014Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"len = </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

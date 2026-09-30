@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.MetaboliteExperimentReference
+=========================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: MetaboliteExperimentReference
+   :show-inheritance:
+   :members:

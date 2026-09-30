@@ -1,0 +1,8 @@
+﻿torchcell.models.equivariant\_cell\_graph\_transformer.PerMetaboliteHead
+========================================================================
+
+.. currentmodule:: torchcell.models.equivariant_cell_graph_transformer
+
+.. autoclass:: PerMetaboliteHead
+   :show-inheritance:
+   :members:

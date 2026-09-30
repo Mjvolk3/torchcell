@@ -1,0 +1,414 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Knowledge graph &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/guide/knowledge-graph.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Contributing" href="contributing.html" />
+    <link rel="prev" title="Datasets" href="datasets.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User Guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-model.html">Data model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.html">Datasets</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Knowledge graph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html">Contributing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">User Guide</a></li>
+      <li class="breadcrumb-item active">Knowledge graph</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/guide/knowledge-graph.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="knowledge-graph">
+<h1>Knowledge graph<a class="headerlink" href="#knowledge-graph" title="Link to this heading"></a></h1>
+<p>The served knowledge graph is a Neo4j database built with BioCypher from the dataset
+LMDBs (see <a class="reference internal" href="datasets.html"><span class="std std-doc">Datasets</span></a>). Every experiment record becomes an <code class="docutils literal notranslate"><span class="pre">Experiment</span></code>
+node joined to nodes for its dataset, genotype, perturbations, environment, phenotype
+and reference, so a single Cypher query can select records across datasets by any of
+those parts.</p>
+<p>A Neo4j Browser over the served graph is at
+<a class="reference external" href="https://torchcell-database.ncsa.illinois.edu:7473/browser/">https://torchcell-database.ncsa.illinois.edu:7473/browser/</a>.</p>
+<section id="schema">
+<h2>Schema<a class="headerlink" href="#schema" title="Link to this heading"></a></h2>
+<p>The graph schema is <code class="docutils literal notranslate"><span class="pre">biocypher/config/torchcell_schema_config.yaml</span></code>. BioCypher gives
+each node the label of its class and of the classes it descends from, which is why every
+phenotype node, whatever its class, also carries the label <code class="docutils literal notranslate"><span class="pre">PhenotypicFeature</span></code>.</p>
+<p><strong>Nodes used by the queries under <code class="docutils literal notranslate"><span class="pre">experiments/*/queries/</span></code>:</strong></p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>Label</p></th>
+<th class="head text-left"><p>What it is</p></th>
+<th class="head text-left"><p>Selected properties</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">Dataset</span></code></p></td>
+<td class="text-left"><p>one loader class</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">id</span></code>, the class name (<code class="docutils literal notranslate"><span class="pre">'SmfCostanzo2016Dataset'</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">Experiment</span></code></p></td>
+<td class="text-left"><p>one experiment record</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">id</span></code> (sha256 of the serialized record), <code class="docutils literal notranslate"><span class="pre">serialized_data</span></code></p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">ExperimentReference</span></code></p></td>
+<td class="text-left"><p>the reference the experiment is measured against</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">serialized_data</span></code></p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">Genotype</span></code></p></td>
+<td class="text-left"><p>the set of perturbations in a strain</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">systematic_gene_names</span></code>, <code class="docutils literal notranslate"><span class="pre">perturbation_types</span></code></p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">Perturbation</span></code></p></td>
+<td class="text-left"><p>one gene perturbation</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">systematic_gene_name</span></code>, <code class="docutils literal notranslate"><span class="pre">perturbation_type</span></code></p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">PhenotypicFeature</span></code></p></td>
+<td class="text-left"><p>any phenotype node (<code class="docutils literal notranslate"><span class="pre">FitnessPhenotype</span></code>, <code class="docutils literal notranslate"><span class="pre">GeneInteractionPhenotype</span></code>, …)</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">graph_level</span></code>, <code class="docutils literal notranslate"><span class="pre">label_name</span></code></p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">Environment</span></code></p></td>
+<td class="text-left"><p>medium, temperature and environment perturbations</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">serialized_data</span></code></p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">Media</span></code></p></td>
+<td class="text-left"><p>the growth medium</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">name</span></code>, <code class="docutils literal notranslate"><span class="pre">state</span></code> (<code class="docutils literal notranslate"><span class="pre">solid</span></code>, <code class="docutils literal notranslate"><span class="pre">liquid</span></code> or <code class="docutils literal notranslate"><span class="pre">gas</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">Temperature</span></code></p></td>
+<td class="text-left"><p>the growth temperature</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">value</span></code>, <code class="docutils literal notranslate"><span class="pre">unit</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Relationships</strong>, in the direction they are stored:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>Relationship</p></th>
+<th class="head text-left"><p>From</p></th>
+<th class="head text-left"><p>To</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">ExperimentMemberOf</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">Experiment</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">Dataset</span></code></p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">ExperimentReferenceOf</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">ExperimentReference</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">Experiment</span></code></p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">GenotypeMemberOf</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">Genotype</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">Experiment</span></code></p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">PerturbationMemberOf</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">Perturbation</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">Genotype</span></code></p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">PhenotypeMemberOf</span></code></p></td>
+<td class="text-left"><p>phenotype (<code class="docutils literal notranslate"><span class="pre">PhenotypicFeature</span></code>)</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">Experiment</span></code>, <code class="docutils literal notranslate"><span class="pre">ExperimentReference</span></code></p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">EnvironmentMemberOf</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">Environment</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">Experiment</span></code>, <code class="docutils literal notranslate"><span class="pre">ExperimentReference</span></code></p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">MediaMemberOf</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">Media</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">Environment</span></code></p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">TemperatureMemberOf</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">Temperature</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">Environment</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>The schema file also declares <code class="docutils literal notranslate"><span class="pre">Publication</span></code>, <code class="docutils literal notranslate"><span class="pre">Genome</span></code>, <code class="docutils literal notranslate"><span class="pre">EnvironmentPerturbation</span></code>,
+<code class="docutils literal notranslate"><span class="pre">CrisprConstruct</span></code> and <code class="docutils literal notranslate"><span class="pre">SegregantGenotype</span></code> nodes and the relationships that attach them.
+Each served database also holds one <code class="docutils literal notranslate"><span class="pre">KgRelease</span></code> node describing the release (see
+<a class="reference internal" href="../database/index.html"><span class="std std-doc">Database releases</span></a>).</p>
+</section>
+<section id="writing-a-query">
+<h2>Writing a query<a class="headerlink" href="#writing-a-query" title="Link to this heading"></a></h2>
+<p>A query returns <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> and <code class="docutils literal notranslate"><span class="pre">ExperimentReference</span></code> pairs; <code class="docutils literal notranslate"><span class="pre">Neo4jQueryRaw</span></code> (see
+<a class="reference internal" href="quickstart.html"><span class="std std-doc">Quickstart</span></a>) rebuilds the typed records from them. The excerpt below is
+the first block of <code class="docutils literal notranslate"><span class="pre">experiments/003-fit-int/queries/fit-int.cql</span></code>, annotated:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>// Start from one dataset. Dataset.id is the loader class name.
+MATCH (dataset:Dataset)&lt;-[:ExperimentMemberOf]-(e:Experiment)
+WHERE dataset.id = 'TmiKuzmin2018Dataset'
+// Walk from the experiment to each of its parts.
+MATCH (e)&lt;-[:GenotypeMemberOf]-(g:Genotype)
+MATCH (g)&lt;-[:PerturbationMemberOf]-(p:Perturbation)
+MATCH (e)&lt;-[:ExperimentReferenceOf]-(ref:ExperimentReference)
+MATCH (e)&lt;-[:PhenotypeMemberOf]-(phen:PhenotypicFeature)
+MATCH (e)&lt;-[:EnvironmentMemberOf]-(env:Environment)
+MATCH (env)&lt;-[:MediaMemberOf]-(m:Media)
+MATCH (env)&lt;-[:TemperatureMemberOf]-(t:Temperature)
+// Filter on the phenotype's graph level and the environment.
+WHERE phen.graph_level = 'hyperedge'
+ AND m.name = 'YEPD'
+ AND t.value = 30
+ // Keep a genotype only if EVERY perturbation is a deletion of a gene in $gene_set,
+ // the parameter Neo4jQueryRaw passes through cypher_kwargs.
+ AND ALL(pert IN [(g)&lt;-[:PerturbationMemberOf]-(p) | p]
+WHERE pert.perturbation_type = 'deletion'
+ AND pert.systematic_gene_name IN $gene_set)
+ AND SIZE([(g)&lt;-[:PerturbationMemberOf]-(p) | p]) &gt; 0
+// One row per experiment; ordering by the content-hash id gives a stable order.
+WITH DISTINCT e, ref
+ ORDER BY e.id
+RETURN e, ref
+</pre></div>
+</div>
+<p>Blocks for further datasets are joined with <code class="docutils literal notranslate"><span class="pre">UNION</span> <span class="pre">ALL</span></code>, each with the same <code class="docutils literal notranslate"><span class="pre">RETURN</span></code>
+columns.</p>
+<p>This query is a historical record of what experiment 003 selected, and two of its
+filters no longer select the same records on the served graph. The SGA fitness datasets
+now record their actual selection medium rather than YEPD, and the Kuzmin screens are
+recorded at 26 C, so <code class="docutils literal notranslate"><span class="pre">m.name</span> <span class="pre">=</span> <span class="pre">'YEPD'</span></code> and <code class="docutils literal notranslate"><span class="pre">t.value</span> <span class="pre">=</span> <span class="pre">30</span></code> drop them. The comments at the
+top of <code class="docutils literal notranslate"><span class="pre">experiments/025-solid-growth/queries/001_all_solid_growth.cql</span></code> record these
+changes; that query filters on <code class="docutils literal notranslate"><span class="pre">m.state</span> <span class="pre">=</span> <span class="pre">'solid'</span></code> instead and returns the property
+shape:</p>
+<div class="highlight-cypher notranslate"><div class="highlight"><pre><span></span><span class="k">RETURN</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">serialized_data</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">e_serialized</span><span class="p">,</span><span class="w"> </span><span class="n">ref</span><span class="p">.</span><span class="n">serialized_data</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">ref_serialized</span>
+</pre></div>
+</div>
+<p>Use the property shape for large queries. Returning whole nodes makes the Neo4j driver
+keep every node it has read for the life of the result, measured in the
+<code class="docutils literal notranslate"><span class="pre">Neo4jQueryRaw.process</span></code> comments at 13.6 KB per record on the 025 build against 3 B per
+record for the property shape.</p>
+</section>
+<section id="choosing-a-release">
+<span id="kg-choosing-a-release"></span><h2>Choosing a release<a class="headerlink" href="#choosing-a-release" title="Link to this heading"></a></h2>
+<p>Clients name a <strong>version</strong>, not a database. <code class="docutils literal notranslate"><span class="pre">Neo4jQueryRaw</span></code> resolves the version to a
+database name each time it runs a query, through
+<code class="docutils literal notranslate"><span class="pre">torchcell.knowledge_graphs.releases.resolve_database</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">latest</span></code> (the default) and <code class="docutils literal notranslate"><span class="pre">pinned</span></code> are Neo4j database aliases on the served instance,
+retargeted when a release is published. <code class="docutils literal notranslate"><span class="pre">latest</span></code> follows the newest release; <code class="docutils literal notranslate"><span class="pre">pinned</span></code>
+is held on a release that a paper or an experiment series depends on.</p></li>
+<li><p>A release id (<code class="docutils literal notranslate"><span class="pre">2026.09.21-ab6d8c5d</span></code>) or a <code class="docutils literal notranslate"><span class="pre">major.minor</span></code> version (<code class="docutils literal notranslate"><span class="pre">1.2</span></code>) is looked up
+in the <code class="docutils literal notranslate"><span class="pre">KgRelease</span></code> node of every online database.</p></li>
+<li><p>Anything else raises <code class="docutils literal notranslate"><span class="pre">LookupError</span></code>.</p></li>
+</ul>
+<p>The version comes from, in order, the <code class="docutils literal notranslate"><span class="pre">version</span></code> argument of <code class="docutils literal notranslate"><span class="pre">Neo4jQueryRaw</span></code> and the
+<code class="docutils literal notranslate"><span class="pre">TORCHCELL_KG_VERSION</span></code> environment variable, and is <code class="docutils literal notranslate"><span class="pre">latest</span></code> when neither is set.
+<code class="docutils literal notranslate"><span class="pre">Neo4jCellDataset</span></code> does not pass a version, so set <code class="docutils literal notranslate"><span class="pre">TORCHCELL_KG_VERSION</span></code> to pin a
+whole run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">TORCHCELL_KG_VERSION</span><span class="o">=</span>pinned
+</pre></div>
+</div>
+<section id="the-releases-cli">
+<h3>The releases CLI<a class="headerlink" href="#the-releases-cli" title="Link to this heading"></a></h3>
+<p><strong>Requires the served database.</strong> <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">torchcell.knowledge_graphs.releases</span></code> reads
+<code class="docutils literal notranslate"><span class="pre">NEO4J_URI</span></code>, <code class="docutils literal notranslate"><span class="pre">NEO4J_USER</span></code> and <code class="docutils literal notranslate"><span class="pre">NEO4J_PASSWORD</span></code>, or takes <code class="docutils literal notranslate"><span class="pre">--uri</span></code>, <code class="docutils literal notranslate"><span class="pre">--user</span></code> and
+<code class="docutils literal notranslate"><span class="pre">--password</span></code> before the subcommand.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># One row per served database: version, release id, commit, datasets, nodes, aliases, status.</span>
+python<span class="w"> </span>-m<span class="w"> </span>torchcell.knowledge_graphs.releases<span class="w"> </span>status
+
+<span class="c1"># Every dataset a version serves: class name, record count, content sha256.</span>
+python<span class="w"> </span>-m<span class="w"> </span>torchcell.knowledge_graphs.releases<span class="w"> </span>datasets<span class="w"> </span>--version<span class="w"> </span>latest
+
+<span class="c1"># Which served datasets this checkout would serialize differently (exit status 1 on drift).</span>
+python<span class="w"> </span>-m<span class="w"> </span>torchcell.knowledge_graphs.releases<span class="w"> </span>--repo<span class="w"> </span>.<span class="w"> </span>compat<span class="w"> </span>--version<span class="w"> </span>latest
+
+<span class="c1"># Datasets unchanged, changed, added and removed between two versions.</span>
+python<span class="w"> </span>-m<span class="w"> </span>torchcell.knowledge_graphs.releases<span class="w"> </span>diff<span class="w"> </span><span class="m">1</span>.2<span class="w"> </span>latest
+</pre></div>
+</div>
+<p>A dataset’s content hash is the sha256 of its sorted experiment ids. Experiment ids are
+themselves sha256 hashes of the serialized records, so two releases that report the same
+hash for a dataset serve byte-identical experiment records for it.</p>
+</section>
+</section>
+<section id="converters">
+<span id="kg-converters"></span><h2>Converters<a class="headerlink" href="#converters" title="Link to this heading"></a></h2>
+<p>Some phenotypes are statements that imply a fitness value. A <strong>converter</strong> rewrites
+such records into another experiment type between the raw query and deduplication, so
+they can be pooled with measured values. Converters subclass
+<code class="docutils literal notranslate"><span class="pre">torchcell.datamodels.conversion.Converter</span></code> and declare a <code class="docutils literal notranslate"><span class="pre">ConversionMap</span></code> of input
+type, output type and conversion function for both the experiment and its reference.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>Converter</p></th>
+<th class="head text-left"><p>Input</p></th>
+<th class="head text-left"><p>Output experiment</p></th>
+<th class="head text-left"><p>Output reference</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">GeneEssentialityToFitnessConverter</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">GeneEssentialityExperiment</span></code> with <code class="docutils literal notranslate"><span class="pre">is_essential=True</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">FitnessExperiment</span></code>, fitness 0.0</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">FitnessExperimentReference</span></code>, fitness 1.0</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">SyntheticLethalityToFitnessConverter</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">SyntheticLethalityExperiment</span></code> with <code class="docutils literal notranslate"><span class="pre">is_synthetic_lethal=True</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">FitnessExperiment</span></code>, fitness 0.0</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">FitnessExperimentReference</span></code>, fitness 1.0</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">CompositeFitnessConverter</span></code></p></td>
+<td class="text-left"><p>either of the above</p></td>
+<td class="text-left"><p>tries essentiality first, then synthetic lethality</p></td>
+<td class="text-left"><p>as above</p></td>
+</tr>
+</tbody>
+</table>
+<p>The genotype and environment are carried over unchanged, and records of any other type
+pass through the converter untouched. A record whose phenotype is
+false (a non-essential gene, a pair that is not synthetic lethal) has no fitness
+equivalent: its conversion function returns <code class="docutils literal notranslate"><span class="pre">None</span></code>, and <code class="docutils literal notranslate"><span class="pre">Converter.process</span></code> logs the
+record as an error and leaves it out of the converted LMDB.</p>
+<p>A converted zero is a statement about a gene or a pair, not a measurement of a strain.
+<code class="docutils literal notranslate"><span class="pre">torchcell/data/label_policy.py</span></code> keeps it distinguishable: <code class="docutils literal notranslate"><span class="pre">source_key</span></code> maps every entry
+from a <code class="docutils literal notranslate"><span class="pre">GeneEssentialitySgd</span></code> or <code class="docutils literal notranslate"><span class="pre">SynthLethality</span></code> dataset to the single source
+<code class="docutils literal notranslate"><span class="pre">CONVERTED_ZERO</span></code> (<code class="docutils literal notranslate"><span class="pre">&quot;converted_zero&quot;</span></code>), and the default <code class="docutils literal notranslate"><span class="pre">LabelPolicy</span></code> ranks it last in
+<code class="docutils literal notranslate"><span class="pre">fitness_precedence</span></code> and, with <code class="docutils literal notranslate"><span class="pre">converted_zero_only_without_measurement=True</span></code>, admits it
+only for a genotype that has no measured fitness.</p>
+</section>
+<section id="changing-what-the-graph-serves">
+<h2>Changing what the graph serves<a class="headerlink" href="#changing-what-the-graph-serves" title="Link to this heading"></a></h2>
+<p>The served store carries a build manifest (<code class="docutils literal notranslate"><span class="pre">torchcell/knowledge_graphs/kg_manifest.py</span></code>)
+recording, for every served dataset, the schema-contract fingerprints, the graph schema
+and the adapter code it was serialized under. A new dataset is <strong>admitted
+incrementally</strong>, without rebuilding the others, when nothing already served would
+change; a dataset that is already served can be re-admitted only as a superset of the
+records the store holds for it. Any change to the schema closure of a served dataset, to
+an existing node class, or to adapter code a served dataset uses requires a <strong>full
+rebuild</strong>. The first bumps the minor version of the release, the second the major (see
+<a class="reference internal" href="../database/index.html"><span class="std std-doc">Database releases</span></a>).</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="datasets.html" class="btn btn-neutral float-left" title="Datasets" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="contributing.html" class="btn btn-neutral float-right" title="Contributing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

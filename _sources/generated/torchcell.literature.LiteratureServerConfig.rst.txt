@@ -1,0 +1,8 @@
+﻿torchcell.literature.LiteratureServerConfig
+===========================================
+
+.. currentmodule:: torchcell.literature
+
+.. autoclass:: LiteratureServerConfig
+   :show-inheritance:
+   :members:

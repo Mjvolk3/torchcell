@@ -1,0 +1,6 @@
+﻿torchcell.models.cell\_graph\_transformer.calculate\_weight\_l2\_norm
+=====================================================================
+
+.. currentmodule:: torchcell.models.cell_graph_transformer
+
+.. autofunction:: calculate_weight_l2_norm

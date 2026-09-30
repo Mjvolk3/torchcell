@@ -1,0 +1,6 @@
+﻿torchcell.metabolism.constraints.load\_thermo\_table
+====================================================
+
+.. currentmodule:: torchcell.metabolism.constraints
+
+.. autofunction:: load_thermo_table

@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.yoshida2012.OrganicAcidYoshida2012Dataset
+========================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.yoshida2012
+
+.. autoclass:: OrganicAcidYoshida2012Dataset
+   :show-inheritance:
+   :members:

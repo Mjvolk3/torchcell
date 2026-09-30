@@ -1,0 +1,8 @@
+﻿torchcell.trainers.dcell\_regression\_slim.DCellRegressionSlimTask
+==================================================================
+
+.. currentmodule:: torchcell.trainers.dcell_regression_slim
+
+.. autoclass:: DCellRegressionSlimTask
+   :show-inheritance:
+   :members:

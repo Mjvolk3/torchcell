@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.oduibhir2014.SmfODuibhir2014Dataset
+==================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.oduibhir2014
+
+.. autoclass:: SmfODuibhir2014Dataset
+   :show-inheritance:
+   :members:

@@ -1,0 +1,6 @@
+﻿torchcell.models.hetero\_cell\_bipartite\_dango\_gi.get\_norm\_layer
+====================================================================
+
+.. currentmodule:: torchcell.models.hetero_cell_bipartite_dango_gi
+
+.. autofunction:: get_norm_layer

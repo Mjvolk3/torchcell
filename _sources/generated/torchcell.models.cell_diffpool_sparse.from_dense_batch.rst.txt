@@ -1,0 +1,6 @@
+﻿torchcell.models.cell\_diffpool\_sparse.from\_dense\_batch
+==========================================================
+
+.. currentmodule:: torchcell.models.cell_diffpool_sparse
+
+.. autofunction:: from_dense_batch

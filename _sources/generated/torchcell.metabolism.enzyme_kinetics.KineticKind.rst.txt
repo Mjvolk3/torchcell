@@ -1,0 +1,8 @@
+﻿torchcell.metabolism.enzyme\_kinetics.KineticKind
+=================================================
+
+.. currentmodule:: torchcell.metabolism.enzyme_kinetics
+
+.. autoclass:: KineticKind
+   :show-inheritance:
+   :members:

@@ -1,0 +1,6 @@
+﻿torchcell.sga.read\_gitter\_dat
+===============================
+
+.. currentmodule:: torchcell.sga
+
+.. autofunction:: read_gitter_dat

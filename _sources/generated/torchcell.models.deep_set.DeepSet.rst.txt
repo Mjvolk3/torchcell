@@ -1,0 +1,8 @@
+﻿torchcell.models.deep\_set.DeepSet
+==================================
+
+.. currentmodule:: torchcell.models.deep_set
+
+.. autoclass:: DeepSet
+   :show-inheritance:
+   :members:

@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.MarkerDeletionPerturbation
+======================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: MarkerDeletionPerturbation
+   :show-inheritance:
+   :members:

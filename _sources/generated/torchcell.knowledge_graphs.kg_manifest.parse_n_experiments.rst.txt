@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.parse\_n\_experiments
+==============================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autofunction:: parse_n_experiments

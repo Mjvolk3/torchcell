@@ -1,0 +1,8 @@
+﻿torchcell.models.esm2.Esm2
+==========================
+
+.. currentmodule:: torchcell.models.esm2
+
+.. autoclass:: Esm2
+   :show-inheritance:
+   :members:

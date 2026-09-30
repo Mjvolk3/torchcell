@@ -1,0 +1,8 @@
+﻿torchcell.models.diffusion\_decoder.DenoisingBlock
+==================================================
+
+.. currentmodule:: torchcell.models.diffusion_decoder
+
+.. autoclass:: DenoisingBlock
+   :show-inheritance:
+   :members:

@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.compound\_identity\_curate.cid\_property\_url
+==================================================================
+
+.. currentmodule:: torchcell.datamodels.compound_identity_curate
+
+.. autofunction:: cid_property_url

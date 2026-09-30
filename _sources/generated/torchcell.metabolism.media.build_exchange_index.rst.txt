@@ -1,0 +1,6 @@
+﻿torchcell.metabolism.media.build\_exchange\_index
+=================================================
+
+.. currentmodule:: torchcell.metabolism.media
+
+.. autofunction:: build_exchange_index

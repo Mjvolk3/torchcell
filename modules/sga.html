@@ -1,0 +1,235 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.sga &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/modules/sga.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="torchcell.sga.NormalizationConfig" href="../generated/torchcell.sga.NormalizationConfig.html" />
+    <link rel="prev" title="torchcell.sequence.roman_to_int" href="../generated/torchcell.sequence.roman_to_int.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">torchcell.sga</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#classes">Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#functions">Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">torchcell.sga</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/modules/sga.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-torchcell.sga">
+<span id="torchcell-sga"></span><h1>torchcell.sga<a class="headerlink" href="#module-torchcell.sga" title="Link to this heading"></a></h1>
+<p>A colony-fitness pipeline adapted from SGAtools for single CRISPR knockouts dispensed onto plates by an ECHO acoustic liquid handler. It reads the gitter colony-size file and the ECHO picklist (<code class="docutils literal notranslate"><span class="pre">io</span></code>), corrects positional plate artifacts (<code class="docutils literal notranslate"><span class="pre">normalize</span></code>), and scores each knockout as fitness relative to the on-plate BY4741 wild type (<code class="docutils literal notranslate"><span class="pre">score</span></code>). <code class="docutils literal notranslate"><span class="pre">image</span></code> and <code class="docutils literal notranslate"><span class="pre">cellpose_seg</span></code> measure colony sizes from plate photographs, and <code class="docutils literal notranslate"><span class="pre">viz</span></code> draws plate heatmaps and histograms. The typical call sequence is <a class="reference internal" href="../generated/torchcell.sga.read_gitter_dat.html#torchcell.sga.read_gitter_dat" title="torchcell.sga.read_gitter_dat"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_gitter_dat()</span></code></a>, <a class="reference internal" href="../generated/torchcell.sga.read_echo_picklist.html#torchcell.sga.read_echo_picklist" title="torchcell.sga.read_echo_picklist"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_echo_picklist()</span></code></a>, <a class="reference internal" href="../generated/torchcell.sga.merge_layout.html#torchcell.sga.merge_layout" title="torchcell.sga.merge_layout"><code class="xref py py-func docutils literal notranslate"><span class="pre">merge_layout()</span></code></a>, <a class="reference internal" href="../generated/torchcell.sga.normalize_plate.html#torchcell.sga.normalize_plate" title="torchcell.sga.normalize_plate"><code class="xref py py-func docutils literal notranslate"><span class="pre">normalize_plate()</span></code></a>, then <a class="reference internal" href="../generated/torchcell.sga.score_plate.html#torchcell.sga.score_plate" title="torchcell.sga.score_plate"><code class="xref py py-func docutils literal notranslate"><span class="pre">score_plate()</span></code></a>.</p>
+<nav class="contents local" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#classes" id="id1">Classes</a></p></li>
+<li><p><a class="reference internal" href="#functions" id="id2">Functions</a></p></li>
+</ul>
+</nav>
+<section id="classes">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Classes</a><a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.sga.NormalizationConfig.html#torchcell.sga.NormalizationConfig" title="torchcell.sga.NormalizationConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NormalizationConfig</span></code></a></p></td>
+<td><p>Knobs for the normalization stage.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.sga.ScoreReport.html#torchcell.sga.ScoreReport" title="torchcell.sga.ScoreReport"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ScoreReport</span></code></a></p></td>
+<td><p>Top-level result of scoring one plate against its wild-type reference.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.sga.StrainScore.html#torchcell.sga.StrainScore" title="torchcell.sga.StrainScore"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StrainScore</span></code></a></p></td>
+<td><p>Per-strain aggregate: the analog of an SGAtools combined-file row.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.sga.CellposeSegConfig.html#torchcell.sga.CellposeSegConfig" title="torchcell.sga.CellposeSegConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CellposeSegConfig</span></code></a></p></td>
+<td><p>Parameters for Cellpose-SAM plate segmentation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.sga.PlateSegResult.html#torchcell.sga.PlateSegResult" title="torchcell.sga.PlateSegResult"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PlateSegResult</span></code></a></p></td>
+<td><p>Return bundle for a segmented plate: the gitter-style per-well table plus plate-level counts the classical path cannot report (raw instance count and off-grid contaminant colonies).</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.sga.read_gitter_dat.html#torchcell.sga.read_gitter_dat" title="torchcell.sga.read_gitter_dat"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_gitter_dat</span></code></a></p></td>
+<td><p>Read a gitter <code class="docutils literal notranslate"><span class="pre">.dat</span></code> into a tidy frame: row, col, size, circularity, flags.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.sga.read_echo_picklist.html#torchcell.sga.read_echo_picklist" title="torchcell.sga.read_echo_picklist"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_echo_picklist</span></code></a></p></td>
+<td><p>Read an ECHO picklist into a layout frame: row, col, strain, volume_nl, well.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.sga.merge_layout.html#torchcell.sga.merge_layout" title="torchcell.sga.merge_layout"><code class="xref py py-obj docutils literal notranslate"><span class="pre">merge_layout</span></code></a></p></td>
+<td><p>Attach strain + volume to each quantified colony by (row, col).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.sga.well_to_rowcol.html#torchcell.sga.well_to_rowcol" title="torchcell.sga.well_to_rowcol"><code class="xref py py-obj docutils literal notranslate"><span class="pre">well_to_rowcol</span></code></a></p></td>
+<td><p>Decode a plate well label (<code class="docutils literal notranslate"><span class="pre">'B2'</span></code>, <code class="docutils literal notranslate"><span class="pre">'AA13'</span></code>) to 1-indexed (row, col).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.sga.normalize_plate.html#torchcell.sga.normalize_plate" title="torchcell.sga.normalize_plate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">normalize_plate</span></code></a></p></td>
+<td><p>Run the full normalization on one plate's merged colony table.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.sga.score_plate.html#torchcell.sga.score_plate" title="torchcell.sga.score_plate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">score_plate</span></code></a></p></td>
+<td><p>Score a normalized plate table (output of <code class="docutils literal notranslate"><span class="pre">normalize_plate</span></code>).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.sga.score_table.html#torchcell.sga.score_table" title="torchcell.sga.score_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">score_table</span></code></a></p></td>
+<td><p>Flatten a ScoreReport into a per-strain DataFrame for CSV output.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.sga.quantify_plate_image.html#torchcell.sga.quantify_plate_image" title="torchcell.sga.quantify_plate_image"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quantify_plate_image</span></code></a></p></td>
+<td><p>Quantify colonies on a standardized plate image into a gitter-style table.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.sga.quantify_plate_image_cellpose.html#torchcell.sga.quantify_plate_image_cellpose" title="torchcell.sga.quantify_plate_image_cellpose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quantify_plate_image_cellpose</span></code></a></p></td>
+<td><p>Segment a backlit plate with Cellpose-SAM and quantify colonies onto the fitted array grid.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.sga.load_cellpose_model.html#torchcell.sga.load_cellpose_model" title="torchcell.sga.load_cellpose_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_cellpose_model</span></code></a></p></td>
+<td><p>Load the Cellpose-SAM generalist model (<code class="docutils literal notranslate"><span class="pre">cpsam</span></code>).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.sga.resolve_orientation.html#torchcell.sga.resolve_orientation" title="torchcell.sga.resolve_orientation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_orientation</span></code></a></p></td>
+<td><p>Return (merged, best_op, agreement).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.sga.volume_assay_metrics.html#torchcell.sga.volume_assay_metrics" title="torchcell.sga.volume_assay_metrics"><code class="xref py py-obj docutils literal notranslate"><span class="pre">volume_assay_metrics</span></code></a></p></td>
+<td><p>One row per condition (volume) with the assay-quality metrics.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.sga.volume_position_confound.html#torchcell.sga.volume_position_confound" title="torchcell.sga.volume_position_confound"><code class="xref py py-obj docutils literal notranslate"><span class="pre">volume_position_confound</span></code></a></p></td>
+<td><p>Detect whether the condition variable (volume) is confounded with plate position (row/col).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.sga.recommend_volume.html#torchcell.sga.recommend_volume" title="torchcell.sga.recommend_volume"><code class="xref py py-obj docutils literal notranslate"><span class="pre">recommend_volume</span></code></a></p></td>
+<td><p>Pick the best volume for a fitness screen.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.sga.zfactor.html#torchcell.sga.zfactor" title="torchcell.sga.zfactor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">zfactor</span></code></a></p></td>
+<td><p>Z'-factor between two colony populations (assay separation window).</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../generated/torchcell.sequence.roman_to_int.html" class="btn btn-neutral float-left" title="torchcell.sequence.roman_to_int" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../generated/torchcell.sga.NormalizationConfig.html" class="btn btn-neutral float-right" title="torchcell.sga.NormalizationConfig" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

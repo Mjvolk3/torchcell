@@ -1,0 +1,342 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datasets.nucleotide_transformer &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/datasets/nucleotide_transformer.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.datasets.nucleotide_transformer</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.datasets.nucleotide_transformer</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Dataset of Nucleotide Transformer embeddings for S. cerevisiae genes."""</span>
+
+<span class="c1"># torchcell/datasets/nucleotide_transformer.py</span>
+<span class="c1"># [[torchcell.datasets.nucleotide_transformer]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/nucleotide_transformer.py</span>
+<span class="c1"># Test file: tests/torchcell/datasets/test_nucleotide_transformer.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">Data</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.embedding</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseEmbeddingDataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.models.nucleotide_transformer</span><span class="w"> </span><span class="kn">import</span> <span class="n">NucleotideTransformer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParsedGenome</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae.s288c</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
+
+
+<div class="viewcode-block" id="NucleotideTransformerDataset">
+<a class="viewcode-back" href="../../../generated/torchcell.datasets.NucleotideTransformerDataset.html#torchcell.datasets.NucleotideTransformerDataset">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NucleotideTransformerDataset</span><span class="p">(</span><span class="n">BaseEmbeddingDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Per-gene Nucleotide Transformer sequence embeddings keyed by window model."""</span>
+
+    <span class="n">MODEL_TO_WINDOW</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"nt_window_5979_max"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"window"</span><span class="p">,</span> <span class="mi">5979</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+        <span class="s2">"nt_window_5979"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"window"</span><span class="p">,</span> <span class="mi">5979</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+        <span class="s2">"nt_window_three_prime_5979"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"window_three_prime"</span><span class="p">,</span> <span class="mi">5979</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+        <span class="s2">"nt_window_five_prime_5979"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"window_five_prime"</span><span class="p">,</span> <span class="mi">5979</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+        <span class="s2">"nt_window_three_prime_300"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"window_three_prime"</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+        <span class="s2">"nt_window_five_prime_1003"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"window_five_prime"</span><span class="p">,</span> <span class="mi">1003</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span><span class="p">,</span>
+        <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Set up the dataset, computing or loading embeddings if a model is given.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            root: Root directory for raw and processed data.</span>
+<span class="sd">            genome: Genome providing gene sequences and the gene set.</span>
+<span class="sd">            model_name: Key into ``MODEL_TO_WINDOW`` selecting the embedding model.</span>
+<span class="sd">            transform: Optional transform applied at access time.</span>
+<span class="sd">            pre_transform: Optional transform applied before saving.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="n">ParsedGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">genome</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span> <span class="o">=</span> <span class="n">model_name</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">)</span>
+
+        <span class="c1"># Conditionally load the data</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                <span class="c1"># Initialize the language model</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_model</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">process</span><span class="p">()</span>
+            <span class="c1"># TODO me might consider adding this to others</span>
+            <span class="c1"># only her bc computed on delta.</span>
+            <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"cuda"</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">"cpu"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">slices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">processed_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">map_location</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="n">device</span><span class="p">),</span>
+                <span class="n">weights_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_genome</span><span class="p">(</span><span class="n">genome</span><span class="p">)</span>
+        <span class="k">del</span> <span class="n">genome</span>
+
+<div class="viewcode-block" id="NucleotideTransformerDataset.parse_genome">
+<a class="viewcode-back" href="../../../generated/torchcell.datasets.NucleotideTransformerDataset.html#torchcell.datasets.NucleotideTransformerDataset.parse_genome">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parse_genome</span><span class="p">(</span><span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParsedGenome</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build a ParsedGenome holding the gene set, or None if genome is None."""</span>
+        <span class="c1"># BUG we have to do this black magic because when you merge datasets with +</span>
+        <span class="c1"># the genome is None</span>
+        <span class="k">if</span> <span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">"gene_set"</span><span class="p">]</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span>
+            <span class="k">return</span> <span class="n">ParsedGenome</span><span class="p">(</span><span class="o">**</span><span class="n">data</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="NucleotideTransformerDataset.initialize_model">
+<a class="viewcode-back" href="../../../generated/torchcell.datasets.NucleotideTransformerDataset.html#torchcell.datasets.NucleotideTransformerDataset.initialize_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">initialize_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NucleotideTransformer</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Instantiate the NucleotideTransformer model, or None if no model name."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">NucleotideTransformer</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="NucleotideTransformerDataset.process">
+<a class="viewcode-back" href="../../../generated/torchcell.datasets.NucleotideTransformerDataset.html#torchcell.datasets.NucleotideTransformerDataset.process">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Embed each gene's windowed sequence and save the collated dataset."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">data_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="s2">"five_prime"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span> <span class="ow">or</span> <span class="s2">"three_prime"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">:</span>
+            <span class="n">window_method</span><span class="p">,</span> <span class="n">window_size</span><span class="p">,</span> <span class="n">has_special_codon</span><span class="p">,</span> <span class="n">allow_undersize</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">MODEL_TO_WINDOW</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">window_method</span><span class="p">,</span> <span class="n">window_size</span><span class="p">,</span> <span class="n">is_max_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MODEL_TO_WINDOW</span><span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span>
+            <span class="p">]</span>
+        <span class="n">window_method</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">window_method</span><span class="p">)</span>
+
+        <span class="c1"># TODO check that genome gene set is SortedSet</span>
+        <span class="n">sequences</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">gene_ids</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">genome</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
+        <span class="n">transformer</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">NucleotideTransformer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">gene_id</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">):</span>
+            <span class="n">sequence</span> <span class="o">=</span> <span class="n">genome</span><span class="p">[</span><span class="n">gene_id</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="s2">"three_prime"</span> <span class="ow">in</span> <span class="n">window_method</span> <span class="ow">or</span> <span class="s2">"five_prime"</span> <span class="ow">in</span> <span class="n">window_method</span><span class="p">:</span>
+                <span class="n">dna_selection</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sequence</span><span class="p">,</span> <span class="n">window_method</span><span class="p">)(</span>
+                    <span class="n">window_size</span><span class="p">,</span> <span class="n">allow_undersize</span><span class="o">=</span><span class="n">allow_undersize</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">dna_selection</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sequence</span><span class="p">,</span> <span class="n">window_method</span><span class="p">)(</span>
+                    <span class="n">window_size</span><span class="p">,</span> <span class="n">is_max_size</span><span class="o">=</span><span class="n">is_max_size</span>
+                <span class="p">)</span>
+
+            <span class="n">sequences</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dna_selection</span><span class="o">.</span><span class="n">seq</span><span class="p">)</span>
+            <span class="n">gene_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gene_id</span><span class="p">)</span>
+        <span class="c1"># Compute embeddings in batches</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># Adjust the batch size according to your memory constraints</span>
+        <span class="n">embeddings_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sequences</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">)):</span>
+            <span class="n">batch_sequences</span> <span class="o">=</span> <span class="n">sequences</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">]</span>
+            <span class="n">batch_embeddings</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">embed</span><span class="p">(</span><span class="n">batch_sequences</span><span class="p">,</span> <span class="n">mean_embedding</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">embeddings_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">batch_embeddings</span><span class="p">)</span>
+
+        <span class="n">embeddings</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">embeddings_list</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">gene_id</span><span class="p">,</span> <span class="n">dna_selection</span><span class="p">,</span> <span class="n">embedding</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">gene_ids</span><span class="p">,</span> <span class="n">sequences</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">):</span>
+            <span class="c1"># Create or update the dna_window dictionary</span>
+            <span class="n">dna_window_dict</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">:</span> <span class="n">dna_selection</span><span class="p">}</span>
+
+            <span class="n">data</span> <span class="o">=</span> <span class="n">Data</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">gene_id</span><span class="p">,</span> <span class="n">dna_windows</span><span class="o">=</span><span class="n">dna_window_dict</span><span class="p">)</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">embeddings</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">:</span> <span class="n">embedding</span><span class="p">}</span>
+            <span class="n">data_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre_transform</span><span class="p">:</span>
+            <span class="n">data_list</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pre_transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">data_list</span><span class="p">]</span>
+
+        <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">collate</span><span class="p">(</span><span class="n">data_list</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">processed_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build embedding datasets for all configured window models."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">wandb</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Starting main..."</span><span class="p">)</span>
+    <span class="n">wandb</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"online"</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="s2">"torchcell_embeddings"</span><span class="p">)</span>
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">DATA_ROOT</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"DATA_ROOT"</span><span class="p">)</span>
+
+    <span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
+        <span class="n">data_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">DATA_ROOT</span><span class="p">),</span> <span class="s2">"data/sgd/genome"</span><span class="p">)</span>
+    <span class="p">)</span>  <span class="c1"># type: ignore[call-arg]  # data_root is a valid Genome param; attrs hides it from mypy</span>
+    <span class="n">model_names</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">"nt_window_5979"</span><span class="p">,</span>
+        <span class="s2">"nt_window_5979_max"</span><span class="p">,</span>
+        <span class="s2">"nt_window_three_prime_5979"</span><span class="p">,</span>
+        <span class="s2">"nt_window_five_prime_5979"</span><span class="p">,</span>
+        <span class="s2">"nt_window_three_prime_300"</span><span class="p">,</span>
+        <span class="s2">"nt_window_five_prime_1003"</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="n">event</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">model_name</span> <span class="ow">in</span> <span class="n">model_names</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"event: </span><span class="si">{</span><span class="n">event</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"starting model_name: </span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">({</span><span class="s2">"event"</span><span class="p">:</span> <span class="n">event</span><span class="p">})</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="n">NucleotideTransformerDataset</span><span class="p">(</span>
+            <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">DATA_ROOT</span><span class="p">),</span> <span class="s2">"data/scerevisiae/nucleotide_transformer_embed"</span>
+            <span class="p">),</span>
+            <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">,</span>
+            <span class="n">model_name</span><span class="o">=</span><span class="n">model_name</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Completed Dataset for </span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">dataset</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">event</span> <span class="o">+=</span> <span class="mi">1</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

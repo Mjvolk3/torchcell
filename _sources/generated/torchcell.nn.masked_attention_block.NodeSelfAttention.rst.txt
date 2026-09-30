@@ -1,0 +1,8 @@
+﻿torchcell.nn.masked\_attention\_block.NodeSelfAttention
+=======================================================
+
+.. currentmodule:: torchcell.nn.masked_attention_block
+
+.. autoclass:: NodeSelfAttention
+   :show-inheritance:
+   :members:

@@ -1,0 +1,6 @@
+﻿torchcell.models.hetero\_cell\_isab\_split.get\_norm\_layer
+===========================================================
+
+.. currentmodule:: torchcell.models.hetero_cell_isab_split
+
+.. autofunction:: get_norm_layer

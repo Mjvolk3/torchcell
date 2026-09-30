@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.VisualScoreExperimentReference
+==========================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: VisualScoreExperimentReference
+   :show-inheritance:
+   :members:

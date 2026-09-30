@@ -1,0 +1,6 @@
+﻿torchcell.models.equivariant\_cell\_graph\_transformer.calculate\_weight\_l2\_norm
+==================================================================================
+
+.. currentmodule:: torchcell.models.equivariant_cell_graph_transformer
+
+.. autofunction:: calculate_weight_l2_norm

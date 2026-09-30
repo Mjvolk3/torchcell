@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.SequencePerturbation
+================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: SequencePerturbation
+   :show-inheritance:
+   :members:

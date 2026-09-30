@@ -1,0 +1,8 @@
+﻿torchcell.metabolism.pathway.EvidenceTier
+=========================================
+
+.. currentmodule:: torchcell.metabolism.pathway
+
+.. autoclass:: EvidenceTier
+   :show-inheritance:
+   :members:

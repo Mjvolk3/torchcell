@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.ontology\_checks.PropertyMismatch
+======================================================
+
+.. currentmodule:: torchcell.datamodels.ontology_checks
+
+.. autoclass:: PropertyMismatch
+   :show-inheritance:
+   :members:

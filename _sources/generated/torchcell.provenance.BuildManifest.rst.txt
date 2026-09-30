@@ -1,0 +1,8 @@
+﻿torchcell.provenance.BuildManifest
+==================================
+
+.. currentmodule:: torchcell.provenance
+
+.. autoclass:: BuildManifest
+   :show-inheritance:
+   :members:

@@ -1,0 +1,449 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.metabolism.pathway &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/metabolism/pathway.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.metabolism.pathway</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.metabolism.pathway</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/metabolism/pathway.py</span>
+<span class="c1"># [[torchcell.metabolism.pathway]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/metabolism/pathway.py</span>
+<span class="c1"># Test file: tests/torchcell/metabolism/test_pathway.py</span>
+
+<span class="sd">"""Add a heterologous pathway to a genome-scale model, as a typed perturbation.</span>
+
+<span class="sd">A strain is not only a set of gene deletions. Cachera's screened strains each carry a</span>
+<span class="sd">five-gene cassette that yeast does not have, and the phenotype measured is the output of</span>
+<span class="sd">that cassette. Representing the deletions but not the cassette means the model is asked to</span>
+<span class="sd">predict a molecule its stoichiometry cannot make, which is what forced the earlier</span>
+<span class="sd">betaxanthin head to read an aromatic-precursor proxy instead of the product.</span>
+
+<span class="sd">This module makes the cassette a first-class object of the same kind as a deletion: an edit</span>
+<span class="sd">to the metabolic model, declared once, applied deterministically, and carrying provenance</span>
+<span class="sd">per value. The perturbation is to the MODEL; the genotype perturbation that accompanies it</span>
+<span class="sd">lives in ``torchcell.datamodels.schema``.</span>
+
+<span class="sd">Three properties are load-bearing:</span>
+
+<span class="sd">* **Every coefficient is tiered.** A stoichiometry the source states is ``sourced``; a</span>
+<span class="sd">  cofactor balance that follows from the enzyme class rather than from the paper is</span>
+<span class="sd">  ``convention``; a formula computed from the model's own species is ``derived``. A</span>
+<span class="sd">  pathway whose reactions are all ``convention`` is a guess with citations attached, and</span>
+<span class="sd">  :meth:`HeterologousPathway.evidence_census` makes that visible rather than implicit.</span>
+<span class="sd">* **Product formulas are derived from the model's own metabolites**, never typed in. The</span>
+<span class="sd">  genome-scale model carries charged species at physiological pH, so a formula copied from</span>
+<span class="sd">  a paper's neutral mass would leave the reaction unbalanced in the model's own convention.</span>
+<span class="sd">  Deriving it guarantees mass and charge balance by construction.</span>
+<span class="sd">* **Heterologous genes are constitutive.** They are not yeast open reading frames, so they</span>
+<span class="sd">  have no gene token and cannot be deleted by a knockout library. They must be marked so a</span>
+<span class="sd">  flux layer does not read their absence from the token universe as availability zero,</span>
+<span class="sd">  which would switch the pathway off in every strain.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrEnum</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">cobra</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">model_validator</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1">#: Elemental composition of water, removed by every Schiff-base condensation here.</span>
+<span class="n">_WATER</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"H"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">"O"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="EvidenceTier">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.pathway.EvidenceTier.html#torchcell.metabolism.pathway.EvidenceTier">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EvidenceTier</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Where a coefficient came from, so a guess can never read as a measurement."""</span>
+
+    <span class="n">SOURCED</span> <span class="o">=</span> <span class="s2">"sourced"</span>
+<span class="w">    </span><span class="sd">"""Stated in a cited source, with a quote recorded on the spec."""</span>
+
+    <span class="n">CONVENTION</span> <span class="o">=</span> <span class="s2">"convention"</span>
+<span class="w">    </span><span class="sd">"""Follows from the enzyme class, not from the source. Cofactor balance, usually."""</span>
+
+    <span class="n">DERIVED</span> <span class="o">=</span> <span class="s2">"derived"</span>
+<span class="w">    </span><span class="sd">"""Computed from the model's own species, so it balances by construction."""</span></div>
+
+
+
+<div class="viewcode-block" id="MetaboliteSpec">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.pathway.MetaboliteSpec.html#torchcell.metabolism.pathway.MetaboliteSpec">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MetaboliteSpec</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A metabolite the genome-scale model does not have yet."""</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">compartment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"c"</span>
+    <span class="n">formula</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Charged formula in the model's convention. None means derive it."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">charge</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">metanetx_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">chebi_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">evidence</span><span class="p">:</span> <span class="n">EvidenceTier</span> <span class="o">=</span> <span class="n">EvidenceTier</span><span class="o">.</span><span class="n">SOURCED</span>
+    <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="ReactionSpec">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.pathway.ReactionSpec.html#torchcell.metabolism.pathway.ReactionSpec">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReactionSpec</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A reaction the genome-scale model does not have yet."""</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">stoichiometry</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Metabolite id to coefficient. Negative consumes, positive produces."</span>
+    <span class="p">)</span>
+    <span class="n">lower_bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">upper_bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1000.0</span>
+    <span class="n">gene_reaction_rule</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">spontaneous</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">subsystem</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">evidence</span><span class="p">:</span> <span class="n">EvidenceTier</span> <span class="o">=</span> <span class="n">EvidenceTier</span><span class="o">.</span><span class="n">SOURCED</span>
+    <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_spontaneous_has_no_gene</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReactionSpec</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A spontaneous reaction with a gene rule is a contradiction, not a detail.</span>
+
+<span class="sd">        The distinction is the whole reason the betaxanthin family exists: the condensation</span>
+<span class="sd">        is uncatalyzed, so no deletion in the knockout library can remove it.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">spontaneous</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">gene_reaction_rule</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">: spontaneous reaction cannot carry a gene_reaction_rule "</span>
+                <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">gene_reaction_rule</span><span class="si">!r}</span><span class="s2">)"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+
+<div class="viewcode-block" id="HeterologousPathway">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.pathway.HeterologousPathway.html#torchcell.metabolism.pathway.HeterologousPathway">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HeterologousPathway</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A named set of metabolites, reactions and genes added to a base strain."""</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">base_strain</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">metabolites</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MetaboliteSpec</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">reactions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReactionSpec</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">constitutive_genes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"Heterologous gene ids. Always available: they are not yeast open reading "</span>
+            <span class="s2">"frames, carry no gene token, and no knockout library can delete them."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">source_keys</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Citation keys backing this pathway."</span>
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="HeterologousPathway.evidence_census">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.pathway.HeterologousPathway.html#torchcell.metabolism.pathway.HeterologousPathway.evidence_census">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evidence_census</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Count reactions by evidence tier, so the mix is reportable rather than assumed."""</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">Counter</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">evidence</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">reactions</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="HeterologousPathway.product_ids">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.pathway.HeterologousPathway.html#torchcell.metabolism.pathway.HeterologousPathway.product_ids">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">product_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Metabolite ids the pathway produces and consumes only by draining them.</span>
+
+<span class="sd">        These are the terminal products. A demand or exchange reaction, the single-species</span>
+<span class="sd">        reactions, does not count as consumption: draining a product is how it leaves, not</span>
+<span class="sd">        a step that uses it. For betaxanthin this is one species per condensation partner,</span>
+<span class="sd">        and the measured pigment is their sum.</span>
+<span class="sd">        """</span>
+        <span class="n">internal</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">reactions</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">stoichiometry</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">produced</span> <span class="o">=</span> <span class="p">{</span><span class="n">m</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">internal</span> <span class="k">for</span> <span class="n">m</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">stoichiometry</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="n">consumed</span> <span class="o">=</span> <span class="p">{</span><span class="n">m</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">internal</span> <span class="k">for</span> <span class="n">m</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">stoichiometry</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">produced</span> <span class="o">-</span> <span class="n">consumed</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_derive_formula_and_charge</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">cobra</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span> <span class="n">stoichiometry</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">product_id</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Balance one product against everything else in its reaction.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model: The model holding every OTHER species in the reaction.</span>
+<span class="sd">        stoichiometry: The reaction, including the product being derived.</span>
+<span class="sd">        product_id: The species whose formula is unknown.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``(formula, charge)`` that make the reaction mass and charge balanced.</span>
+<span class="sd">    """</span>
+    <span class="n">elements</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+    <span class="n">charge</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">met_id</span><span class="p">,</span> <span class="n">coeff</span> <span class="ow">in</span> <span class="n">stoichiometry</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">met_id</span> <span class="o">==</span> <span class="n">product_id</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">met</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">metabolites</span><span class="o">.</span><span class="n">get_by_id</span><span class="p">(</span><span class="n">met_id</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">element</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">met</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">elements</span><span class="p">[</span><span class="n">element</span><span class="p">]</span> <span class="o">-=</span> <span class="nb">int</span><span class="p">(</span><span class="n">coeff</span> <span class="o">*</span> <span class="n">count</span><span class="p">)</span>
+        <span class="n">charge</span> <span class="o">-=</span> <span class="nb">int</span><span class="p">(</span><span class="n">coeff</span> <span class="o">*</span> <span class="p">(</span><span class="n">met</span><span class="o">.</span><span class="n">charge</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">product_coeff</span> <span class="o">=</span> <span class="n">stoichiometry</span><span class="p">[</span><span class="n">product_id</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">product_coeff</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">product_id</span><span class="si">}</span><span class="s2">: deriving a formula needs coefficient 1, got </span><span class="si">{</span><span class="n">product_coeff</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="n">negative</span> <span class="o">=</span> <span class="p">{</span><span class="n">e</span><span class="p">:</span> <span class="n">n</span> <span class="k">for</span> <span class="n">e</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">elements</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">negative</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">product_id</span><span class="si">}</span><span class="s2">: derived a negative element count </span><span class="si">{</span><span class="n">negative</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">formula</span> <span class="o">=</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">e</span><span class="si">}{</span><span class="n">elements</span><span class="p">[</span><span class="n">e</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">elements</span><span class="p">[</span><span class="n">e</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">e</span>
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">elements</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">elements</span><span class="p">[</span><span class="n">e</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">formula</span><span class="p">,</span> <span class="n">charge</span>
+
+
+<div class="viewcode-block" id="apply_pathway">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.pathway.apply_pathway.html#torchcell.metabolism.pathway.apply_pathway">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">apply_pathway</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">cobra</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span> <span class="n">pathway</span><span class="p">:</span> <span class="n">HeterologousPathway</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">cobra</span><span class="o">.</span><span class="n">Model</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Add a pathway's metabolites, reactions and genes to a genome-scale model.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model: The base genome-scale model.</span>
+<span class="sd">        pathway: The pathway to add.</span>
+<span class="sd">        inplace: Edit ``model`` rather than a copy. Default copies, because the base model</span>
+<span class="sd">            is shared across arms and a mutated copy is an invisible difference between them.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The edited model.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: A pathway id already exists, or a reaction cannot be balanced.</span>
+<span class="sd">    """</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">model</span> <span class="k">if</span> <span class="n">inplace</span> <span class="k">else</span> <span class="n">model</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="n">clash</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">pathway</span><span class="o">.</span><span class="n">metabolites</span> <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">id</span> <span class="ow">in</span> <span class="n">out</span><span class="o">.</span><span class="n">metabolites</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">clash</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">pathway</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: metabolite ids already in model: </span><span class="si">{</span><span class="n">clash</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">clash</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">pathway</span><span class="o">.</span><span class="n">reactions</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">id</span> <span class="ow">in</span> <span class="n">out</span><span class="o">.</span><span class="n">reactions</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">clash</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">pathway</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: reaction ids already in model: </span><span class="si">{</span><span class="n">clash</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">met_spec</span> <span class="ow">in</span> <span class="n">pathway</span><span class="o">.</span><span class="n">metabolites</span><span class="p">:</span>
+        <span class="n">met</span> <span class="o">=</span> <span class="n">cobra</span><span class="o">.</span><span class="n">Metabolite</span><span class="p">(</span>
+            <span class="n">met_spec</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">met_spec</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">compartment</span><span class="o">=</span><span class="n">met_spec</span><span class="o">.</span><span class="n">compartment</span><span class="p">,</span>
+            <span class="n">formula</span><span class="o">=</span><span class="n">met_spec</span><span class="o">.</span><span class="n">formula</span><span class="p">,</span>
+            <span class="n">charge</span><span class="o">=</span><span class="n">met_spec</span><span class="o">.</span><span class="n">charge</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">annotation</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">met_spec</span><span class="o">.</span><span class="n">metanetx_id</span><span class="p">:</span>
+            <span class="n">annotation</span><span class="p">[</span><span class="s2">"metanetx.chemical"</span><span class="p">]</span> <span class="o">=</span> <span class="n">met_spec</span><span class="o">.</span><span class="n">metanetx_id</span>
+        <span class="k">if</span> <span class="n">met_spec</span><span class="o">.</span><span class="n">chebi_id</span><span class="p">:</span>
+            <span class="n">annotation</span><span class="p">[</span><span class="s2">"chebi"</span><span class="p">]</span> <span class="o">=</span> <span class="n">met_spec</span><span class="o">.</span><span class="n">chebi_id</span>
+        <span class="n">met</span><span class="o">.</span><span class="n">annotation</span> <span class="o">=</span> <span class="n">annotation</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">add_metabolites</span><span class="p">([</span><span class="n">met</span><span class="p">])</span>
+
+    <span class="k">for</span> <span class="n">rxn_spec</span> <span class="ow">in</span> <span class="n">pathway</span><span class="o">.</span><span class="n">reactions</span><span class="p">:</span>
+        <span class="n">rxn</span> <span class="o">=</span> <span class="n">cobra</span><span class="o">.</span><span class="n">Reaction</span><span class="p">(</span>
+            <span class="n">rxn_spec</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">rxn_spec</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">lower_bound</span><span class="o">=</span><span class="n">rxn_spec</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span>
+            <span class="n">upper_bound</span><span class="o">=</span><span class="n">rxn_spec</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">,</span>
+            <span class="n">subsystem</span><span class="o">=</span><span class="n">rxn_spec</span><span class="o">.</span><span class="n">subsystem</span> <span class="ow">or</span> <span class="n">pathway</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">add_reactions</span><span class="p">([</span><span class="n">rxn</span><span class="p">])</span>
+        <span class="n">rxn</span><span class="o">.</span><span class="n">add_metabolites</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">out</span><span class="o">.</span><span class="n">metabolites</span><span class="o">.</span><span class="n">get_by_id</span><span class="p">(</span><span class="n">m</span><span class="p">):</span> <span class="n">c</span> <span class="k">for</span> <span class="n">m</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">rxn_spec</span><span class="o">.</span><span class="n">stoichiometry</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">rxn_spec</span><span class="o">.</span><span class="n">gene_reaction_rule</span><span class="p">:</span>
+            <span class="n">rxn</span><span class="o">.</span><span class="n">gene_reaction_rule</span> <span class="o">=</span> <span class="n">rxn_spec</span><span class="o">.</span><span class="n">gene_reaction_rule</span>
+        <span class="n">rxn</span><span class="o">.</span><span class="n">annotation</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"evidence_tier"</span><span class="p">:</span> <span class="n">rxn_spec</span><span class="o">.</span><span class="n">evidence</span><span class="o">.</span><span class="n">value</span><span class="p">}</span>
+
+    <span class="c1"># Derive any formula left as None, then assert the reaction actually balances. A</span>
+    <span class="c1"># heterologous reaction that silently unbalances the network turns every downstream</span>
+    <span class="c1"># mass-balance residual into a constant offset nobody can attribute.</span>
+    <span class="k">for</span> <span class="n">met_spec</span> <span class="ow">in</span> <span class="n">pathway</span><span class="o">.</span><span class="n">metabolites</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">met_spec</span><span class="o">.</span><span class="n">formula</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">producing</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">r</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">pathway</span><span class="o">.</span><span class="n">reactions</span>
+            <span class="k">if</span> <span class="n">met_spec</span><span class="o">.</span><span class="n">id</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">stoichiometry</span> <span class="ow">and</span> <span class="n">r</span><span class="o">.</span><span class="n">stoichiometry</span><span class="p">[</span><span class="n">met_spec</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">producing</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">met_spec</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">: need exactly one producing reaction to derive a "</span>
+                <span class="sa">f</span><span class="s2">"formula, found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">producing</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">formula</span><span class="p">,</span> <span class="n">charge</span> <span class="o">=</span> <span class="n">_derive_formula_and_charge</span><span class="p">(</span>
+            <span class="n">out</span><span class="p">,</span> <span class="n">producing</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stoichiometry</span><span class="p">,</span> <span class="n">met_spec</span><span class="o">.</span><span class="n">id</span>
+        <span class="p">)</span>
+        <span class="n">met</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">metabolites</span><span class="o">.</span><span class="n">get_by_id</span><span class="p">(</span><span class="n">met_spec</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+        <span class="n">met</span><span class="o">.</span><span class="n">formula</span><span class="p">,</span> <span class="n">met</span><span class="o">.</span><span class="n">charge</span> <span class="o">=</span> <span class="n">formula</span><span class="p">,</span> <span class="n">charge</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"pathway </span><span class="si">%s</span><span class="s2">: derived </span><span class="si">%s</span><span class="s2"> -&gt; </span><span class="si">%s</span><span class="s2"> (charge </span><span class="si">%+d</span><span class="s2">)"</span><span class="p">,</span>
+            <span class="n">pathway</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">met_spec</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+            <span class="n">formula</span><span class="p">,</span>
+            <span class="n">charge</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">unbalanced</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">rxn_spec</span> <span class="ow">in</span> <span class="n">pathway</span><span class="o">.</span><span class="n">reactions</span><span class="p">:</span>
+        <span class="n">rxn</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">reactions</span><span class="o">.</span><span class="n">get_by_id</span><span class="p">(</span><span class="n">rxn_spec</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rxn</span><span class="o">.</span><span class="n">metabolites</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">continue</span>  <span class="c1"># a demand or exchange reaction is unbalanced by definition</span>
+        <span class="n">mass</span> <span class="o">=</span> <span class="n">rxn</span><span class="o">.</span><span class="n">check_mass_balance</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">mass</span><span class="p">:</span>
+            <span class="n">unbalanced</span><span class="p">[</span><span class="n">rxn_spec</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">mass</span>
+    <span class="k">if</span> <span class="n">unbalanced</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">pathway</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: unbalanced reactions </span><span class="si">{</span><span class="n">unbalanced</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">out</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

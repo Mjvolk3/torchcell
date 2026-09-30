@@ -1,0 +1,8 @@
+﻿torchcell.models.equivariant\_cell\_graph\_transformer.GlobalHead
+=================================================================
+
+.. currentmodule:: torchcell.models.equivariant_cell_graph_transformer
+
+.. autoclass:: GlobalHead
+   :show-inheritance:
+   :members:

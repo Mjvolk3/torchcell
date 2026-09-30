@@ -1,0 +1,8 @@
+﻿torchcell.database.connection.Neo4jConnectionSettings
+=====================================================
+
+.. currentmodule:: torchcell.database.connection
+
+.. autoclass:: Neo4jConnectionSettings
+   :show-inheritance:
+   :members:

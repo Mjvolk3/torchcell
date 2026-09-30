@@ -1,0 +1,8 @@
+﻿torchcell.literature.Manifest
+=============================
+
+.. currentmodule:: torchcell.literature
+
+.. autoclass:: Manifest
+   :show-inheritance:
+   :members:

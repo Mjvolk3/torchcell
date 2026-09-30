@@ -1,0 +1,6 @@
+﻿torchcell.metabolism.media.resolve\_component
+=============================================
+
+.. currentmodule:: torchcell.metabolism.media
+
+.. autofunction:: resolve_component

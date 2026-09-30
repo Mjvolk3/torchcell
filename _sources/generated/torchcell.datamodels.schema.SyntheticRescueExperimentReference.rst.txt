@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.SyntheticRescueExperimentReference
+==============================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: SyntheticRescueExperimentReference
+   :show-inheritance:
+   :members:

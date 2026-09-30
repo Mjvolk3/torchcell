@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.ontology\_checks.adapter\_optional\_traversals
+===================================================================
+
+.. currentmodule:: torchcell.datamodels.ontology_checks
+
+.. autofunction:: adapter_optional_traversals

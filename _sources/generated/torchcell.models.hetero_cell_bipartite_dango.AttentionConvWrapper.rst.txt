@@ -1,0 +1,8 @@
+﻿torchcell.models.hetero\_cell\_bipartite\_dango.AttentionConvWrapper
+====================================================================
+
+.. currentmodule:: torchcell.models.hetero_cell_bipartite_dango
+
+.. autoclass:: AttentionConvWrapper
+   :show-inheritance:
+   :members:

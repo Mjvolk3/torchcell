@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.value\_surface\_from\_sources
+======================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autofunction:: value_surface_from_sources

@@ -1,0 +1,8 @@
+﻿torchcell.provenance.LoaderImpact
+=================================
+
+.. currentmodule:: torchcell.provenance
+
+.. autoclass:: LoaderImpact
+   :show-inheritance:
+   :members:

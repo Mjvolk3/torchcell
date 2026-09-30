@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.AllelePerturbation
+==============================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: AllelePerturbation
+   :show-inheritance:
+   :members:

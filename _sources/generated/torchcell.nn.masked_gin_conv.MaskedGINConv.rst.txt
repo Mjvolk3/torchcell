@@ -1,0 +1,8 @@
+﻿torchcell.nn.masked\_gin\_conv.MaskedGINConv
+============================================
+
+.. currentmodule:: torchcell.nn.masked_gin_conv
+
+.. autoclass:: MaskedGINConv
+   :show-inheritance:
+   :members:

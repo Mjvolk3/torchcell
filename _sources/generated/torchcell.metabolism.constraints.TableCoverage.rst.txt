@@ -1,0 +1,8 @@
+﻿torchcell.metabolism.constraints.TableCoverage
+==============================================
+
+.. currentmodule:: torchcell.metabolism.constraints
+
+.. autoclass:: TableCoverage
+   :show-inheritance:
+   :members:

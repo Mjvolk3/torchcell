@@ -1,0 +1,454 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datasets.scerevisiae.mulleder2016 &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/datasets/scerevisiae/mulleder2016.html" />
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html">
+            
+              <img src="../../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.datasets.scerevisiae.mulleder2016</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.datasets.scerevisiae.mulleder2016</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/datasets/scerevisiae/mulleder2016</span>
+<span class="c1"># [[torchcell.datasets.scerevisiae.mulleder2016]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/mulleder2016</span>
+<span class="c1"># Test file: tests/torchcell/datasets/scerevisiae/test_mulleder2016.py</span>
+<span class="sd">"""Mulleder 2016 amino-acid metabolome dataset (genome-wide deletion screen).</span>
+
+<span class="sd">Mulleder et al. 2016 (Cell, doi:10.1016/j.cell.2016.09.007) measured the intracellular</span>
+<span class="sd">concentration of 19 amino acids (the 20 proteinogenic amino acids minus cysteine, which</span>
+<span class="sd">oxidises) by LC-SRM/MS in ~4678 strains of the yeast deletion collection, grown</span>
+<span class="sd">exponentially on synthetic MINIMAL (SM) agar. The collection is PROTOTROPHIC (the</span>
+<span class="sd">auxotrophic markers were restored episomally, Mulleder et al. 2012) so the strains grow</span>
+<span class="sd">on minimal medium without amino-acid supplementation -- essential for reading the</span>
+<span class="sd">amino-acid metabolome.</span>
+
+<span class="sd">Source (scriptable, hash-pinned): Mendeley Data DOI 10.17632/bnzdhd6ck8.1, file</span>
+<span class="sd">``Table_S3_Complete_Dataset.xls``. We ingest the ``intracellular_concentration_mM``</span>
+<span class="sd">sheet: one row per ORF x 19 amino acids in mM (batch-normalised, adjusted for dilution,</span>
+<span class="sd">extraction volume, cell number and volume). The reference/baseline per amino acid is the</span>
+<span class="sd">population robust mean from the ``robust_summary_statistics`` sheet (Minimum Covariance</span>
+<span class="sd">Determinant), the same central tendency the paper's Z-scores are computed against.</span>
+
+<span class="sd">Maps to ``MetabolitePhenotype`` (WS4): ``metabolite_level = {amino_acid -&gt; mM}`` with</span>
+<span class="sd">``measurement_type = "intracellular_concentration_mM"``. The genome-wide screen is n=1</span>
+<span class="sd">per strain (single culture; the 237x QC sample is for analytical performance, not</span>
+<span class="sd">per-strain averaging -- Methods "Yeast" / "Quantification of Amino Acids in High</span>
+<span class="sd">Throughput"), so ``n_replicates = 1`` per amino acid and ``metabolite_level_se = None``.</span>
+<span class="sd">Amino acids are NATIVE Yeast9 metabolites, so ``target_metabolite_ids`` (amino acid -&gt;</span>
+<span class="sd">``s_NNNN``) is populatable for constraint-based-model linkage; left ``None`` here and</span>
+<span class="sd">deferred to a follow-up that sources the ids from YeastGEM (never guessed).</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">urllib.request</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">SM_AGAR</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Environment</span><span class="p">,</span>
+    <span class="n">Experiment</span><span class="p">,</span>
+    <span class="n">ExperimentReference</span><span class="p">,</span>
+    <span class="n">Genotype</span><span class="p">,</span>
+    <span class="n">KanMxDeletionPerturbation</span><span class="p">,</span>
+    <span class="n">MetaboliteExperiment</span><span class="p">,</span>
+    <span class="n">MetaboliteExperimentReference</span><span class="p">,</span>
+    <span class="n">MetabolitePhenotype</span><span class="p">,</span>
+    <span class="n">Publication</span><span class="p">,</span>
+    <span class="n">ReferenceGenome</span><span class="p">,</span>
+    <span class="n">Temperature</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">MEASUREMENT_TYPE</span> <span class="o">=</span> <span class="s2">"intracellular_concentration_mM"</span>
+<span class="n">_CONC_SHEET</span> <span class="o">=</span> <span class="s2">"intracellular_concentration_mM"</span>
+<span class="n">_SUMMARY_SHEET</span> <span class="o">=</span> <span class="s2">"robust_summary_statistics"</span>
+<span class="n">_SYSTEMATIC_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?$"</span><span class="p">)</span>
+
+<span class="c1"># Mendeley Data 10.17632/bnzdhd6ck8.1 -&gt; Table_S3_Complete_Dataset.xls (direct, pinned).</span>
+<span class="n">DATA_URL</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"https://data.mendeley.com/public-files/datasets/bnzdhd6ck8/files/"</span>
+    <span class="s2">"621f3646-9e51-488a-b6b8-f6427b40fc87/file_downloaded"</span>
+<span class="p">)</span>
+<span class="n">DATA_FILENAME</span> <span class="o">=</span> <span class="s2">"Table_S3_Complete_Dataset.xls"</span>
+<span class="n">DATA_SHA256</span> <span class="o">=</span> <span class="s2">"a7fcb4bc8aa5e394e7f6e2b99e327eaa88fa04111ab5602fc7cb3445f653802e"</span>
+
+<span class="c1"># 19 amino acids measured (20 proteinogenic minus cysteine); the exact sheet columns.</span>
+<span class="n">AMINO_ACIDS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"alanine"</span><span class="p">,</span>
+    <span class="s2">"aspartate"</span><span class="p">,</span>
+    <span class="s2">"glutamate"</span><span class="p">,</span>
+    <span class="s2">"phenylalanine"</span><span class="p">,</span>
+    <span class="s2">"glycine"</span><span class="p">,</span>
+    <span class="s2">"histidine"</span><span class="p">,</span>
+    <span class="s2">"isoleucine"</span><span class="p">,</span>
+    <span class="s2">"lysine"</span><span class="p">,</span>
+    <span class="s2">"leucine"</span><span class="p">,</span>
+    <span class="s2">"methionine"</span><span class="p">,</span>
+    <span class="s2">"asparagine"</span><span class="p">,</span>
+    <span class="s2">"proline"</span><span class="p">,</span>
+    <span class="s2">"glutamine"</span><span class="p">,</span>
+    <span class="s2">"arginine"</span><span class="p">,</span>
+    <span class="s2">"serine"</span><span class="p">,</span>
+    <span class="s2">"threonine"</span><span class="p">,</span>
+    <span class="s2">"valine"</span><span class="p">,</span>
+    <span class="s2">"tryptophan"</span><span class="p">,</span>
+    <span class="s2">"tyrosine"</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="AminoAcidMulleder2016Dataset">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.mulleder2016.AminoAcidMulleder2016Dataset.html#torchcell.datasets.scerevisiae.mulleder2016.AminoAcidMulleder2016Dataset">[docs]</a>
+<span class="nd">@register_dataset</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AminoAcidMulleder2016Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Genome-wide intracellular amino-acid metabolome of the yeast deletion collection."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/amino_acid_mulleder2016"</span><span class="p">,</span>
+        <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset (ORFs are systematic ids; no genome injection needed)."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Experiment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Experiment schema class produced by this dataset."""</span>
+        <span class="k">return</span> <span class="n">MetaboliteExperiment</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reference_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">ExperimentReference</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Experiment-reference schema class produced by this dataset."""</span>
+        <span class="k">return</span> <span class="n">MetaboliteExperimentReference</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The Mendeley Table S3 workbook required before processing."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">DATA_FILENAME</span><span class="p">]</span>
+
+<div class="viewcode-block" id="AminoAcidMulleder2016Dataset.download">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.mulleder2016.AminoAcidMulleder2016Dataset.html#torchcell.datasets.scerevisiae.mulleder2016.AminoAcidMulleder2016Dataset.download">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Download Table S3 from Mendeley Data and verify its sha256."""</span>
+        <span class="n">dest</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">DATA_FILENAME</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Downloading Mulleder Table S3 from </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">DATA_URL</span><span class="p">)</span>
+        <span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">DATA_URL</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">"User-Agent"</span><span class="p">:</span> <span class="s2">"Mozilla/5.0"</span><span class="p">})</span>
+        <span class="k">with</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">req</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="n">got</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">got</span> <span class="o">!=</span> <span class="n">DATA_SHA256</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Mulleder Table S3 sha256 mismatch: got </span><span class="si">{</span><span class="n">got</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">DATA_SHA256</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">dest</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Wrote </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%d</span><span class="s2"> bytes, sha256 verified)"</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="AminoAcidMulleder2016Dataset.process">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.mulleder2016.AminoAcidMulleder2016Dataset.html#torchcell.datasets.scerevisiae.mulleder2016.AminoAcidMulleder2016Dataset.process">[docs]</a>
+    <span class="nd">@post_process</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Parse Table S3 into per-ORF Metabolite experiments and write LMDB."""</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">DATA_FILENAME</span><span class="p">)</span>
+        <span class="n">conc</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sheet_name</span><span class="o">=</span><span class="n">_CONC_SHEET</span><span class="p">)</span>
+        <span class="n">summary</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sheet_name</span><span class="o">=</span><span class="n">_SUMMARY_SHEET</span><span class="p">)</span>
+
+        <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">aa</span> <span class="k">for</span> <span class="n">aa</span> <span class="ow">in</span> <span class="n">AMINO_ACIDS</span> <span class="k">if</span> <span class="n">aa</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">conc</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Table S3 concentration sheet missing columns: </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Reference baseline: population robust mean per amino acid (MCD estimate).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reference_levels</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"amino acid"</span><span class="p">]):</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"mean (mM)"</span><span class="p">])</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">summary</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="n">ref_missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">aa</span> <span class="k">for</span> <span class="n">aa</span> <span class="ow">in</span> <span class="n">AMINO_ACIDS</span> <span class="k">if</span> <span class="n">aa</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference_levels</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">ref_missing</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"summary sheet missing amino acids: </span><span class="si">{</span><span class="n">ref_missing</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">n_bad_orf</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">collisions</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">conc</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="n">orf</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"ORF"</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">orf</span><span class="p">):</span>
+                <span class="n">n_bad_orf</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                <span class="n">collisions</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"orf"</span><span class="p">:</span> <span class="n">orf</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="n">aa</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">aa</span><span class="p">])</span> <span class="k">for</span> <span class="n">aa</span> <span class="ow">in</span> <span class="n">AMINO_ACIDS</span><span class="p">}})</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Mulleder: </span><span class="si">%d</span><span class="s2"> usable ORFs, </span><span class="si">%d</span><span class="s2"> non-systematic ORF names skipped, "</span>
+            <span class="s2">"</span><span class="si">%d</span><span class="s2"> ORF collisions deduped"</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
+            <span class="n">n_bad_orf</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">collisions</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+
+        <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e11</span><span class="p">))</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">record_row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">rows</span><span class="p">):</span>
+                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span><span class="n">record_row</span><span class="p">)</span>
+                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+                    <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                        <span class="p">{</span>
+                            <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                            <span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                            <span class="s2">"publication"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                        <span class="p">}</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Mulleder amino-acid experiments to LMDB"</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AminoAcidMulleder2016Dataset.preprocess_raw">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.mulleder2016.AminoAcidMulleder2016Dataset.html#torchcell.datasets.scerevisiae.mulleder2016.AminoAcidMulleder2016Dataset.preprocess_raw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Preprocessing is handled inside process() for this dataset."""</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="AminoAcidMulleder2016Dataset.create_experiment">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.mulleder2016.AminoAcidMulleder2016Dataset.html#torchcell.datasets.scerevisiae.mulleder2016.AminoAcidMulleder2016Dataset.create_experiment">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span>  <span class="c1"># type: ignore[override]</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">MetaboliteExperiment</span><span class="p">,</span> <span class="n">MetaboliteExperimentReference</span><span class="p">,</span> <span class="n">Publication</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Build the Metabolite experiment/reference/publication for one ORF."""</span>
+        <span class="c1"># PROTOTROPHIC deletion collection (auxotrophy restored episomally, Mulleder 2012);</span>
+        <span class="c1"># the prototrophy-restoring marker(s) are not yet modeled as a GeneAddition here.</span>
+        <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4741"</span>
+        <span class="p">)</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">],</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="c1"># Synthetic minimal (SM) agar, 30 C, exponential growth (Methods "Yeast"):</span>
+        <span class="c1"># 6.7 g/L YNB without amino acids (Sigma Y0626) + 2% glucose + 2% agar, sourced</span>
+        <span class="c1"># and quoted on ``SM_AGAR``. The spots on that agar inoculate a liquid SM</span>
+        <span class="c1"># subculture, which is what the amino acids are extracted from, so whether this</span>
+        <span class="c1"># record's state should be liquid (``SM``) is an open question flagged in</span>
+        <span class="c1"># [[torchcell.datamodels.media-components]]; the recipe is the same either way.</span>
+        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span><span class="n">media</span><span class="o">=</span><span class="n">SM_AGAR</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">30</span><span class="p">))</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">MetabolitePhenotype</span><span class="p">(</span>
+            <span class="n">metabolite_level</span><span class="o">=</span><span class="p">{</span><span class="n">aa</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="n">aa</span><span class="p">]</span> <span class="k">for</span> <span class="n">aa</span> <span class="ow">in</span> <span class="n">AMINO_ACIDS</span><span class="p">},</span>
+            <span class="n">metabolite_level_se</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># genome-wide screen is n=1 per strain; no per-strain SE</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="p">{</span><span class="n">aa</span><span class="p">:</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">aa</span> <span class="ow">in</span> <span class="n">AMINO_ACIDS</span><span class="p">},</span>
+            <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
+            <span class="n">target_metabolite_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># deferred: amino acid -&gt; Yeast9 s_NNNN (YeastGEM)</span>
+        <span class="p">)</span>
+        <span class="c1"># Reference = WT-equivalent baseline (population robust mean per amino acid).</span>
+        <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">MetabolitePhenotype</span><span class="p">(</span>
+            <span class="n">metabolite_level</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reference_levels</span><span class="p">),</span>
+            <span class="n">metabolite_level_se</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="p">{</span><span class="n">aa</span><span class="p">:</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">aa</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference_levels</span><span class="p">},</span>
+            <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">experiment</span> <span class="o">=</span> <span class="n">MetaboliteExperiment</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">genotype</span><span class="o">=</span><span class="n">genotype</span><span class="p">,</span>
+            <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">phenotype</span><span class="o">=</span><span class="n">phenotype</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="n">MetaboliteExperimentReference</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="n">genome_reference</span><span class="p">,</span>
+            <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(),</span>
+            <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">phenotype_reference</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span>
+            <span class="n">pubmed_id</span><span class="o">=</span><span class="s2">"27693354"</span><span class="p">,</span>
+            <span class="n">pubmed_url</span><span class="o">=</span><span class="s2">"https://pubmed.ncbi.nlm.nih.gov/27693354/"</span><span class="p">,</span>
+            <span class="n">doi</span><span class="o">=</span><span class="s2">"10.1016/j.cell.2016.09.007"</span><span class="p">,</span>
+            <span class="n">doi_url</span><span class="o">=</span><span class="s2">"https://doi.org/10.1016/j.cell.2016.09.007"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build/load the dataset for interactive debugging.</span>
+
+<span class="sd">    Loads the existing LMDB if already built. To step through</span>
+<span class="sd">    ``process()``/``create_experiment`` under a debugger, delete ``&lt;root&gt;/processed``</span>
+<span class="sd">    first so the build re-runs.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">],</span> <span class="s2">"data/torchcell/amino_acid_mulleder2016"</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">AminoAcidMulleder2016Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"len = </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

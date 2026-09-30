@@ -1,0 +1,8 @@
+﻿torchcell.models.isomorphic\_cell\_attentional.GeneMapper
+=========================================================
+
+.. currentmodule:: torchcell.models.isomorphic_cell_attentional
+
+.. autoclass:: GeneMapper
+   :show-inheritance:
+   :members:

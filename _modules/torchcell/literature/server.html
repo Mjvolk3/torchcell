@@ -1,0 +1,549 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.literature.server &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/literature/server.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.literature.server</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.literature.server</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/literature/server.py</span>
+<span class="c1"># [[torchcell.literature.server]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/literature/server.py</span>
+<span class="c1"># Test file: tests/torchcell/literature/test_server.py</span>
+
+<span class="sd">"""Keyed read-only HTTP endpoint for the OCR literature mirror.</span>
+
+<span class="sd">Serves ``$DATA_ROOT/torchcell-library/&lt;citation_key&gt;/`` over the local network so</span>
+<span class="sd">the M1 Mac (and, if granted a key, a collaborator) can list + pull artifacts on</span>
+<span class="sd">demand, sha256-verified against each key's ``manifest.json``. A client fetch is a</span>
+<span class="sd">scriptable retrieval whose bytes are hash-checked exactly like ``direct_url``.</span>
+
+<span class="sd">This is a private service hosted on GilaHyper (where the mirror physically lives). It</span>
+<span class="sd">is distinct from the ``radiant_endpoint`` ``RetrievalMethod`` slot (issue #20), which</span>
+<span class="sd">is reserved for the Radiant VM serving library-rebuild artifacts alongside the graph</span>
+<span class="sd">database -- a separate concern that this endpoint does not fill.</span>
+
+<span class="sd">The server is read-only, dynamic (a newly added citation-key directory shows up with</span>
+<span class="sd">no restart), and authenticated by named API keys (multiple keys so a collaborator can</span>
+<span class="sd">be granted -- and later revoked -- a distinct key). Keys are stored as sha256 hashes,</span>
+<span class="sd">never plaintext; comparison is constant-time; key values are never logged.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">mimetypes</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">uvicorn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Depends</span><span class="p">,</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">HTTPException</span><span class="p">,</span> <span class="n">Request</span><span class="p">,</span> <span class="n">status</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.responses</span><span class="w"> </span><span class="kn">import</span> <span class="n">FileResponse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.security</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIKeyHeader</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.api_keys</span><span class="w"> </span><span class="kn">import</span> <span class="n">API_KEY_HEADER</span><span class="p">,</span> <span class="n">ApiKeys</span><span class="p">,</span> <span class="n">hash_key</span><span class="p">,</span> <span class="n">print_minted_key</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.literature.backfill</span><span class="w"> </span><span class="kn">import</span> <span class="n">LIBRARY_SUBDIR</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.literature.bib_store</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BIB_STORE_MANIFEST</span><span class="p">,</span>
+    <span class="n">BibRecord</span><span class="p">,</span>
+    <span class="n">BibStoreManifest</span><span class="p">,</span>
+    <span class="n">bib_store_dir</span><span class="p">,</span>
+    <span class="n">load_bib_store</span><span class="p">,</span>
+    <span class="n">validate_bib_name</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.literature.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="n">MANIFEST_FILENAME</span><span class="p">,</span> <span class="n">Manifest</span><span class="p">,</span> <span class="n">_role_for</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">SEARCH_RESULT_CAP</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">KEYS_FILE_VAR</span> <span class="o">=</span> <span class="s2">"TC_LIT_KEYS_FILE"</span>
+<span class="n">INLINE_KEYS_VAR</span> <span class="o">=</span> <span class="s2">"TC_LIT_API_KEYS"</span>
+
+<span class="n">_hash_key</span> <span class="o">=</span> <span class="n">hash_key</span>  <span class="c1"># kept for callers that imported the private name</span>
+
+
+<div class="viewcode-block" id="LiteratureKeys">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.LiteratureKeys.html#torchcell.literature.LiteratureKeys">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LiteratureKeys</span><span class="p">(</span><span class="n">ApiKeys</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The shared :class:`ApiKeys` model bound to the ``TC_LIT_*`` variables."""</span>
+
+<div class="viewcode-block" id="LiteratureKeys.from_pairs">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.LiteratureKeys.html#torchcell.literature.LiteratureKeys.from_pairs">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_pairs</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">env_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">INLINE_KEYS_VAR</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Parse ``name1:key1,name2:key2`` plaintext pairs, hashing each key."""</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">from_pairs</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">env_name</span><span class="o">=</span><span class="n">env_name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LiteratureKeys.from_env">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.LiteratureKeys.html#torchcell.literature.LiteratureKeys.from_env">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_env</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Load keys from ``TC_LIT_KEYS_FILE`` (preferred) or ``TC_LIT_API_KEYS``.</span>
+
+<span class="sd">        Raises ``KeyError`` if neither is set -- the server never runs unauthenticated.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_env_names</span><span class="p">(</span><span class="n">KEYS_FILE_VAR</span><span class="p">,</span> <span class="n">INLINE_KEYS_VAR</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="LiteratureServerConfig">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.LiteratureServerConfig.html#torchcell.literature.LiteratureServerConfig">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LiteratureServerConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Runtime configuration for the literature endpoint."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">arbitrary_types_allowed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">mirror_root</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"The torchcell-library directory to serve."</span><span class="p">)</span>
+    <span class="n">keys</span><span class="p">:</span> <span class="n">LiteratureKeys</span>
+    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"0.0.0.0"</span>
+    <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8723</span>
+
+<div class="viewcode-block" id="LiteratureServerConfig.from_env">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.LiteratureServerConfig.html#torchcell.literature.LiteratureServerConfig.from_env">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_env</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LiteratureServerConfig</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build config from env: ``DATA_ROOT`` + ``TC_LIT_*``."""</span>
+        <span class="n">mirror_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">])</span> <span class="o">/</span> <span class="n">LIBRARY_SUBDIR</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">mirror_root</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"mirror root does not exist: </span><span class="si">{</span><span class="n">mirror_root</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">mirror_root</span><span class="o">=</span><span class="n">mirror_root</span><span class="p">,</span>
+            <span class="n">keys</span><span class="o">=</span><span class="n">LiteratureKeys</span><span class="o">.</span><span class="n">from_env</span><span class="p">(),</span>
+            <span class="n">host</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"TC_LIT_HOST"</span><span class="p">,</span> <span class="s2">"0.0.0.0"</span><span class="p">),</span>
+            <span class="n">port</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"TC_LIT_PORT"</span><span class="p">,</span> <span class="s2">"8723"</span><span class="p">)),</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">FileListing</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A single artifact file as listed by the endpoint."""</span>
+
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">role</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="nb">bytes</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">sha256</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"From the manifest; null if not yet backfilled."</span>
+    <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">KeyListing</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Citation keys currently present in the mirror."""</span>
+
+    <span class="n">citation_keys</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">count</span><span class="p">:</span> <span class="nb">int</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SearchHit</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A citation key matching a search query."""</span>
+
+    <span class="n">citation_key</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">where</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"'citation_key' and/or 'paper.md'."</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SearchResult</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Search results (filename + paper.md substring; NOT semantic)."""</span>
+
+    <span class="n">query</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">hits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SearchHit</span><span class="p">]</span>
+    <span class="n">truncated</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+<span class="n">_api_key_scheme</span> <span class="o">=</span> <span class="n">APIKeyHeader</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">API_KEY_HEADER</span><span class="p">,</span> <span class="n">auto_error</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">require_key</span><span class="p">(</span>
+    <span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">api_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">_api_key_scheme</span><span class="p">)</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Auth dependency: resolve + validate the ``X-API-Key`` header, return its name."""</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">LiteratureServerConfig</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">config</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">keys</span><span class="o">.</span><span class="n">verify</span><span class="p">(</span><span class="n">api_key</span><span class="p">)</span> <span class="k">if</span> <span class="n">api_key</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_401_UNAUTHORIZED</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="s2">"invalid or missing API key"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">name</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_key_dir</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">LiteratureServerConfig</span><span class="p">,</span> <span class="n">citation_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Resolve + containment-check a citation-key directory under the mirror root."""</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">mirror_root</span> <span class="o">/</span> <span class="n">citation_key</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">mirror_root</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">base</span><span class="o">.</span><span class="n">is_relative_to</span><span class="p">(</span><span class="n">root</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">base</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"unknown citation key"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">base</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_artifact</span><span class="p">(</span><span class="n">base</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">rel_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Resolve a file within ``base``, blocking path traversal."""</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="p">(</span><span class="n">base</span> <span class="o">/</span> <span class="n">rel_path</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">target</span><span class="o">.</span><span class="n">is_relative_to</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"path traversal rejected"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">target</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"artifact not found"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">target</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_manifest</span><span class="p">(</span><span class="n">base</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Manifest</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Load a directory's manifest, or None if it has not been backfilled."""</span>
+    <span class="n">manifest_path</span> <span class="o">=</span> <span class="n">base</span> <span class="o">/</span> <span class="n">MANIFEST_FILENAME</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">manifest_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">Manifest</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span><span class="n">manifest_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_list_citation_keys</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">LiteratureServerConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Directories directly under the mirror root (dynamic; reflects new papers).</span>
+
+<span class="sd">    An underscore-prefixed directory is a service directory, not a paper:</span>
+<span class="sd">    ``_sync_reports`` (nightly capture reports) and ``_bib`` (the bibliography</span>
+<span class="sd">    store). Neither is a citation key, so neither is listed as one.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">mirror_root</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"_"</span><span class="p">)</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_bib_record</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">LiteratureServerConfig</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">BibRecord</span><span class="p">,</span> <span class="n">Path</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Resolve a served bibliography name to its manifest record + file."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">validate_bib_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+    <span class="n">manifest</span> <span class="o">=</span> <span class="n">_bib_store</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+    <span class="n">record</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">record</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"unknown bibliography"</span><span class="p">)</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="n">bib_store_dir</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">mirror_root</span><span class="p">)</span> <span class="o">/</span> <span class="n">record</span><span class="o">.</span><span class="n">path</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">target</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="s2">"bibliography listed in the store manifest but absent on disk"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">record</span><span class="p">,</span> <span class="n">target</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_bib_store</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">LiteratureServerConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BibStoreManifest</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The store manifest, or 404 if no export has run on the host yet."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">bib_store_dir</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">mirror_root</span><span class="p">)</span> <span class="o">/</span> <span class="n">BIB_STORE_MANIFEST</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="s2">"no bibliography store; run scripts/lit_bib_store.py on the host"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">load_bib_store</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">mirror_root</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="create_app">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.create_app.html#torchcell.literature.create_app">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_app</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">LiteratureServerConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FastAPI</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build the FastAPI app bound to ``config`` (config stored on ``app.state``)."""</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">(</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">"torchcell literature endpoint"</span><span class="p">,</span>
+        <span class="n">summary</span><span class="o">=</span><span class="s2">"Keyed read-only access to the OCR literature mirror."</span><span class="p">,</span>
+        <span class="n">version</span><span class="o">=</span><span class="s2">"1.1.0"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/health"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">health</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Liveness + mirror summary (no auth)."""</span>
+        <span class="n">store</span> <span class="o">=</span> <span class="n">bib_store_dir</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">mirror_root</span><span class="p">)</span> <span class="o">/</span> <span class="n">BIB_STORE_MANIFEST</span>
+        <span class="n">n_bibs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">load_bib_store</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">mirror_root</span><span class="p">)</span><span class="o">.</span><span class="n">bibs</span><span class="p">)</span> <span class="k">if</span> <span class="n">store</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"status"</span><span class="p">:</span> <span class="s2">"ok"</span><span class="p">,</span>
+            <span class="s2">"n_keys"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">_list_citation_keys</span><span class="p">(</span><span class="n">config</span><span class="p">)),</span>
+            <span class="s2">"n_bibs"</span><span class="p">:</span> <span class="n">n_bibs</span><span class="p">,</span>
+            <span class="s2">"mirror_root"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">mirror_root</span><span class="p">),</span>
+        <span class="p">}</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/keys"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_keys</span><span class="p">(</span><span class="n">_</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_key</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n">KeyListing</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""List citation keys present in the mirror."""</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">_list_citation_keys</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">KeyListing</span><span class="p">(</span><span class="n">citation_keys</span><span class="o">=</span><span class="n">keys</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">))</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/keys/</span><span class="si">{citation_key}</span><span class="s2">/manifest"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_manifest</span><span class="p">(</span><span class="n">citation_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_key</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n">Manifest</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a key's ``manifest.json`` (404 if not yet backfilled)."""</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="n">_key_dir</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">citation_key</span><span class="p">)</span>
+        <span class="n">manifest</span> <span class="o">=</span> <span class="n">_load_manifest</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">manifest</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"no manifest (not backfilled)"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">manifest</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/keys/</span><span class="si">{citation_key}</span><span class="s2">/files"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_files</span><span class="p">(</span>
+        <span class="n">citation_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_key</span><span class="p">)</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">FileListing</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""List a key's files with role + sha256 (from manifest, or live if absent)."""</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="n">_key_dir</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">citation_key</span><span class="p">)</span>
+        <span class="n">manifest</span> <span class="o">=</span> <span class="n">_load_manifest</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">manifest</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="n">FileListing</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">role</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">role</span><span class="p">,</span> <span class="nb">bytes</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span> <span class="n">sha256</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">sha256</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">files</span>
+            <span class="p">]</span>
+        <span class="c1"># Dynamic fallback for a freshly added key with no manifest yet.</span>
+        <span class="n">listings</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FileListing</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">"*"</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">or</span> <span class="n">path</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">MANIFEST_FILENAME</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">rel</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">base</span><span class="p">))</span>
+            <span class="n">listings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">FileListing</span><span class="p">(</span>
+                    <span class="n">path</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span>
+                    <span class="n">role</span><span class="o">=</span><span class="n">_role_for</span><span class="p">(</span><span class="n">rel</span><span class="p">),</span>
+                    <span class="nb">bytes</span><span class="o">=</span><span class="n">path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span><span class="p">,</span>
+                    <span class="n">sha256</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">listings</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/keys/</span><span class="si">{citation_key}</span><span class="s2">/artifact/{rel_path:path}"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_artifact</span><span class="p">(</span>
+        <span class="n">citation_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rel_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_key</span><span class="p">)</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FileResponse</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Stream one artifact; ``X-Artifact-SHA256`` carries the manifest hash."""</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="n">_key_dir</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">citation_key</span><span class="p">)</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">_resolve_artifact</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">rel_path</span><span class="p">)</span>
+        <span class="n">manifest</span> <span class="o">=</span> <span class="n">_load_manifest</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+        <span class="n">headers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">manifest</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">files</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">path</span> <span class="o">==</span> <span class="n">rel_path</span><span class="p">:</span>
+                    <span class="n">headers</span><span class="p">[</span><span class="s2">"X-Artifact-SHA256"</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">sha256</span>
+                    <span class="k">break</span>
+        <span class="n">media_type</span><span class="p">,</span> <span class="n">_enc</span> <span class="o">=</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">FileResponse</span><span class="p">(</span>
+            <span class="n">target</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">media_type</span> <span class="ow">or</span> <span class="s2">"application/octet-stream"</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span>
+        <span class="p">)</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/search"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">search</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_key</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n">SearchResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Substring search over citation keys + ``paper.md`` (NOT semantic)."""</span>
+        <span class="n">needle</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">hits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SearchHit</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">truncated</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">citation_key</span> <span class="ow">in</span> <span class="n">_list_citation_keys</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+            <span class="n">where</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="n">needle</span> <span class="ow">in</span> <span class="n">citation_key</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+                <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"citation_key"</span><span class="p">)</span>
+            <span class="n">paper_md</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">mirror_root</span> <span class="o">/</span> <span class="n">citation_key</span> <span class="o">/</span> <span class="s2">"paper.md"</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">paper_md</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span>
+                <span class="ow">and</span> <span class="n">needle</span> <span class="ow">in</span> <span class="n">paper_md</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="p">):</span>
+                <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"paper.md"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">where</span><span class="p">:</span>
+                <span class="n">hits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">SearchHit</span><span class="p">(</span><span class="n">citation_key</span><span class="o">=</span><span class="n">citation_key</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">))</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">hits</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">SEARCH_RESULT_CAP</span><span class="p">:</span>
+                <span class="n">truncated</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"search: capped at </span><span class="si">%d</span><span class="s2"> hits for </span><span class="si">%r</span><span class="s2">"</span><span class="p">,</span> <span class="n">SEARCH_RESULT_CAP</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+                <span class="k">break</span>
+        <span class="k">return</span> <span class="n">SearchResult</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">q</span><span class="p">,</span> <span class="n">hits</span><span class="o">=</span><span class="n">hits</span><span class="p">,</span> <span class="n">truncated</span><span class="o">=</span><span class="n">truncated</span><span class="p">)</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/bib"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_bibs</span><span class="p">(</span><span class="n">_</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_key</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n">BibStoreManifest</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The bibliography store manifest: every served ``.bib`` with its sha256.</span>
+
+<span class="sd">        The store is written on the host by ``scripts/lit_bib_store.py`` (a</span>
+<span class="sd">        headless Zotero Web API export) and served read-through, like the rest of</span>
+<span class="sd">        the mirror; a new export shows up here with no restart.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">_bib_store</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/bib/</span><span class="si">{name}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_bib</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_key</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n">FileResponse</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Stream one bibliography; ``X-Artifact-SHA256`` carries the manifest hash."""</span>
+        <span class="n">record</span><span class="p">,</span> <span class="n">target</span> <span class="o">=</span> <span class="n">_bib_record</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">FileResponse</span><span class="p">(</span>
+            <span class="n">target</span><span class="p">,</span>
+            <span class="n">media_type</span><span class="o">=</span><span class="s2">"application/x-bibtex"</span><span class="p">,</span>
+            <span class="n">filename</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
+            <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">"X-Artifact-SHA256"</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">sha256</span><span class="p">},</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">app</span></div>
+
+
+
+<div class="viewcode-block" id="create_app_from_env">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.create_app_from_env.html#torchcell.literature.create_app_from_env">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_app_from_env</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">FastAPI</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Factory for ``uvicorn --factory torchcell.literature.server:create_app_from_env``."""</span>
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">create_app</span><span class="p">(</span><span class="n">LiteratureServerConfig</span><span class="o">.</span><span class="n">from_env</span><span class="p">())</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_gen_key</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Print a fresh random API key + the JSON keys-file line to store its hash."""</span>
+    <span class="n">print_minted_key</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">KEYS_FILE_VAR</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""CLI: run the server, or ``--gen-key NAME`` to mint a key."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="vm">__doc__</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--gen-key"</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s2">"NAME"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Mint a key and exit."</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--host"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Override TC_LIT_HOST."</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--port"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Override TC_LIT_PORT."</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">gen_key</span><span class="p">:</span>
+        <span class="n">_gen_key</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">gen_key</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">config</span> <span class="o">=</span> <span class="n">LiteratureServerConfig</span><span class="o">.</span><span class="n">from_env</span><span class="p">()</span>
+    <span class="n">host</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">host</span> <span class="ow">or</span> <span class="n">config</span><span class="o">.</span><span class="n">host</span>
+    <span class="n">port</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">port</span> <span class="ow">or</span> <span class="n">config</span><span class="o">.</span><span class="n">port</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"literature endpoint: serving </span><span class="si">%s</span><span class="s2"> on </span><span class="si">%s</span><span class="s2">:</span><span class="si">%d</span><span class="s2">"</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">mirror_root</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
+    <span class="n">uvicorn</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">create_app</span><span class="p">(</span><span class="n">config</span><span class="p">),</span> <span class="n">host</span><span class="o">=</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">port</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

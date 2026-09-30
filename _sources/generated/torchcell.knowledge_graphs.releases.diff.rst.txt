@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.releases.diff
+=========================================
+
+.. currentmodule:: torchcell.knowledge_graphs.releases
+
+.. autofunction:: diff

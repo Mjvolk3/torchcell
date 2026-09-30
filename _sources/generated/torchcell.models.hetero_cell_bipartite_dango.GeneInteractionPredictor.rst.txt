@@ -1,0 +1,8 @@
+﻿torchcell.models.hetero\_cell\_bipartite\_dango.GeneInteractionPredictor
+========================================================================
+
+.. currentmodule:: torchcell.models.hetero_cell_bipartite_dango
+
+.. autoclass:: GeneInteractionPredictor
+   :show-inheritance:
+   :members:

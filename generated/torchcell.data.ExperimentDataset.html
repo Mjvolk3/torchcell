@@ -1,0 +1,284 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.data.ExperimentDataset &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/generated/torchcell.data.ExperimentDataset.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="torchcell.data.Neo4jCellDataset" href="torchcell.data.Neo4jCellDataset.html" />
+    <link rel="prev" title="torchcell.data.GenotypeAggregator" href="torchcell.data.GenotypeAggregator.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../modules/data.html">torchcell.data</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../modules/data.html#classes">Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/data.html#functions">Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../modules/data.html">torchcell.data</a></li>
+      <li class="breadcrumb-item active">torchcell.data.ExperimentDataset</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/generated/torchcell.data.ExperimentDataset.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="torchcell-data-experimentdataset">
+<h1>torchcell.data.ExperimentDataset<a class="headerlink" href="#torchcell-data-experimentdataset" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ExperimentDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">io_workers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Callable" title="(in Python v3.14)"><span class="pre">Callable</span></a><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_transform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Callable" title="(in Python v3.14)"><span class="pre">Callable</span></a><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_process_file_exist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchcell/data/experiment_dataset.html#ExperimentDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.data.ExperimentDataset" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.data.Dataset.html#torch_geometric.data.Dataset" title="(in pytorch_geometric v2.9.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
+<p>Abstract PyG dataset storing experiment items in an LMDB store.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.experiment_class">
+<em class="property"><span class="k"><span class="pre">abstract</span></span><span class="w"> </span><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">experiment_class</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#type" title="(in Python v3.14)"><span class="pre">type</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="torchcell.datamodels.schema.Experiment.html#torchcell.datamodels.schema.Experiment" title="torchcell.datamodels.schema.Experiment"><span class="pre">Experiment</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#torchcell.data.ExperimentDataset.experiment_class" title="Link to this definition"></a></dt>
+<dd><p>Return the Experiment subclass produced by this dataset.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.reference_class">
+<em class="property"><span class="k"><span class="pre">abstract</span></span><span class="w"> </span><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">reference_class</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#type" title="(in Python v3.14)"><span class="pre">type</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="torchcell.datamodels.schema.ExperimentReference.html#torchcell.datamodels.schema.ExperimentReference" title="torchcell.datamodels.schema.ExperimentReference"><span class="pre">ExperimentReference</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#torchcell.data.ExperimentDataset.reference_class" title="Link to this definition"></a></dt>
+<dd><p>Return the ExperimentReference subclass produced by this dataset.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.raw_file_names">
+<em class="property"><span class="k"><span class="pre">abstract</span></span><span class="w"> </span><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">raw_file_names</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#torchcell.data.ExperimentDataset.raw_file_names" title="Link to this definition"></a></dt>
+<dd><p>Return the raw file names expected under the raw directory.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.processed_file_names">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">processed_file_names</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#torchcell.data.ExperimentDataset.processed_file_names" title="Link to this definition"></a></dt>
+<dd><p>Return the processed artifact name (the LMDB directory).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.process">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/data/experiment_dataset.html#ExperimentDataset.process"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.data.ExperimentDataset.process" title="Link to this definition"></a></dt>
+<dd><p>Build the processed LMDB store from raw data (implemented by subclasses).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.download">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">download</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/data/experiment_dataset.html#ExperimentDataset.download"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.data.ExperimentDataset.download" title="Link to this definition"></a></dt>
+<dd><p>Download raw data into the raw directory (implemented by subclasses).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.close_lmdb">
+<span class="sig-name descname"><span class="pre">close_lmdb</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/data/experiment_dataset.html#ExperimentDataset.close_lmdb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.data.ExperimentDataset.close_lmdb" title="Link to this definition"></a></dt>
+<dd><p>Close the LMDB environment if it is open.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.df">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">df</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><a class="headerlink" href="#torchcell.data.ExperimentDataset.df" title="Link to this definition"></a></dt>
+<dd><p>Return the preprocessed data CSV as a DataFrame, if present.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.preprocess_raw">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">preprocess_raw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preprocess</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="../_modules/torchcell/data/experiment_dataset.html#ExperimentDataset.preprocess_raw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.data.ExperimentDataset.preprocess_raw" title="Link to this definition"></a></dt>
+<dd><p>Clean/normalize the raw DataFrame (implemented by subclasses).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.create_experiment">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">create_experiment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/data/experiment_dataset.html#ExperimentDataset.create_experiment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.data.ExperimentDataset.create_experiment" title="Link to this definition"></a></dt>
+<dd><p>Construct experiment records from preprocessed data (subclasses).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.len">
+<span class="sig-name descname"><span class="pre">len</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></span><a class="reference internal" href="../_modules/torchcell/data/experiment_dataset.html#ExperimentDataset.len"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.data.ExperimentDataset.len" title="Link to this definition"></a></dt>
+<dd><p>Return the number of entries stored in the LMDB database.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span></span><a class="reference internal" href="../_modules/torchcell/data/experiment_dataset.html#ExperimentDataset.get"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.data.ExperimentDataset.get" title="Link to this definition"></a></dt>
+<dd><p>Return one item, or a list of items for list/array/boolean indices.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.get_single_item">
+<span class="sig-name descname"><span class="pre">get_single_item</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span></span><a class="reference internal" href="../_modules/torchcell/data/experiment_dataset.html#ExperimentDataset.get_single_item"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.data.ExperimentDataset.get_single_item" title="Link to this definition"></a></dt>
+<dd><p>Return the deserialized item at <code class="docutils literal notranslate"><span class="pre">idx</span></code>, or None if absent.</p>
+<p>Resolves any interned <code class="docutils literal notranslate"><span class="pre">$ref</span></code> pointers back to the full sub-objects, so
+the returned three-key dict is identical to the pre-interning format (a
+no-op for legacy inline stores).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.extract_systematic_gene_names">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">extract_systematic_gene_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">genotype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/torchcell/data/experiment_dataset.html#ExperimentDataset.extract_systematic_gene_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.data.ExperimentDataset.extract_systematic_gene_names" title="Link to this definition"></a></dt>
+<dd><p>Return the systematic gene names of all perturbations in a genotype.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.compute_gene_set">
+<span class="sig-name descname"><span class="pre">compute_gene_set</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="torchcell.sequence.GeneSet.html#torchcell.sequence.GeneSet" title="torchcell.sequence.data.GeneSet"><span class="pre">GeneSet</span></a></span></span><a class="reference internal" href="../_modules/torchcell/data/experiment_dataset.html#ExperimentDataset.compute_gene_set"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.data.ExperimentDataset.compute_gene_set" title="Link to this definition"></a></dt>
+<dd><p>Compute the dataset gene set sequentially or in parallel.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.compute_gene_set_sequential">
+<span class="sig-name descname"><span class="pre">compute_gene_set_sequential</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="torchcell.sequence.GeneSet.html#torchcell.sequence.GeneSet" title="torchcell.sequence.data.GeneSet"><span class="pre">GeneSet</span></a></span></span><a class="reference internal" href="../_modules/torchcell/data/experiment_dataset.html#ExperimentDataset.compute_gene_set_sequential"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.data.ExperimentDataset.compute_gene_set_sequential" title="Link to this definition"></a></dt>
+<dd><p>Compute the gene set by scanning every LMDB entry in order.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.compute_gene_set_parallel">
+<span class="sig-name descname"><span class="pre">compute_gene_set_parallel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">io_workers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="torchcell.sequence.GeneSet.html#torchcell.sequence.GeneSet" title="torchcell.sequence.data.GeneSet"><span class="pre">GeneSet</span></a></span></span><a class="reference internal" href="../_modules/torchcell/data/experiment_dataset.html#ExperimentDataset.compute_gene_set_parallel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.data.ExperimentDataset.compute_gene_set_parallel" title="Link to this definition"></a></dt>
+<dd><p>Compute the gene set using a multiprocessing batch loader.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.experiment_reference_index">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">experiment_reference_index</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="torchcell.data.ExperimentReferenceIndex.html#torchcell.data.ExperimentReferenceIndex" title="torchcell.data.data.ExperimentReferenceIndex"><span class="pre">ExperimentReferenceIndex</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><a class="headerlink" href="#torchcell.data.ExperimentDataset.experiment_reference_index" title="Link to this definition"></a></dt>
+<dd><p>Load or compute (and cache) the experiment reference index.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.gene_set">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gene_set</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.sequence.GeneSet.html#torchcell.sequence.GeneSet" title="torchcell.sequence.data.GeneSet"><span class="pre">GeneSet</span></a></em><a class="headerlink" href="#torchcell.data.ExperimentDataset.gene_set" title="Link to this definition"></a></dt>
+<dd><p>Return the gene set, loading the cached JSON or computing it.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.transform_item">
+<span class="sig-name descname"><span class="pre">transform_item</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/torchcell/data/experiment_dataset.html#ExperimentDataset.transform_item"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.data.ExperimentDataset.transform_item" title="Link to this definition"></a></dt>
+<dd><p>Rebuild typed experiment/reference/publication objects from a raw item.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="torchcell.data.GenotypeAggregator.html" class="btn btn-neutral float-left" title="torchcell.data.GenotypeAggregator" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="torchcell.data.Neo4jCellDataset.html" class="btn btn-neutral float-right" title="torchcell.data.Neo4jCellDataset" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

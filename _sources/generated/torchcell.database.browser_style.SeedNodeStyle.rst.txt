@@ -1,0 +1,8 @@
+﻿torchcell.database.browser\_style.SeedNodeStyle
+===============================================
+
+.. currentmodule:: torchcell.database.browser_style
+
+.. autoclass:: SeedNodeStyle
+   :show-inheritance:
+   :members:

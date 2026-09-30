@@ -1,0 +1,464 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datasets.scerevisiae.sgd &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/datasets/scerevisiae/sgd.html" />
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html">
+            
+              <img src="../../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.datasets.scerevisiae.sgd</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.datasets.scerevisiae.sgd</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/datasets/scerevisiae/sgd</span>
+<span class="c1"># [[torchcell.datasets.scerevisiae.sgd]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/sgd</span>
+<span class="c1"># Test file: tests/torchcell/datasets/scerevisiae/test_sgd.py</span>
+
+<span class="sd">"""SGD-derived gene essentiality dataset for S. cerevisiae."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">Bio</span><span class="w"> </span><span class="kn">import</span> <span class="n">Entrez</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Environment</span><span class="p">,</span>
+    <span class="n">GeneEssentialityExperiment</span><span class="p">,</span>
+    <span class="n">GeneEssentialityExperimentReference</span><span class="p">,</span>
+    <span class="n">GeneEssentialityPhenotype</span><span class="p">,</span>
+    <span class="n">Genotype</span><span class="p">,</span>
+    <span class="n">Media</span><span class="p">,</span>
+    <span class="n">Publication</span><span class="p">,</span>
+    <span class="n">ReferenceGenome</span><span class="p">,</span>
+    <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">,</span>
+    <span class="n">Temperature</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGraph</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.graph.sgd</span><span class="w"> </span><span class="kn">import</span> <span class="n">main_get_all_genes</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">get_publication_info</span><span class="p">(</span><span class="n">pubmed_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Fetch publication metadata (PubMed URL, DOI) for a PubMed ID via Entrez."""</span>
+    <span class="n">Entrez</span><span class="o">.</span><span class="n">email</span> <span class="o">=</span> <span class="s2">"mvjolk3@illinois.edu"</span>  <span class="c1"># type: ignore[assignment]  # Bio.Entrez.email stub typed as None</span>
+    <span class="n">max_retries</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="n">base_delay</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># seconds</span>
+
+    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_retries</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">handle</span> <span class="o">=</span> <span class="n">Entrez</span><span class="o">.</span><span class="n">efetch</span><span class="p">(</span>  <span class="c1"># type: ignore[no-untyped-call]  # Bio.Entrez has no stubs</span>
+                <span class="n">db</span><span class="o">=</span><span class="s2">"pubmed"</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">pubmed_id</span><span class="p">,</span> <span class="n">rettype</span><span class="o">=</span><span class="s2">"xml"</span><span class="p">,</span> <span class="n">retmode</span><span class="o">=</span><span class="s2">"text"</span>
+            <span class="p">)</span>
+            <span class="n">records</span> <span class="o">=</span> <span class="n">Entrez</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>  <span class="c1"># type: ignore[no-untyped-call]  # Bio.Entrez has no stubs</span>
+            <span class="n">handle</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+            <span class="n">article</span> <span class="o">=</span> <span class="n">records</span><span class="p">[</span><span class="s2">"PubmedArticle"</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">"MedlineCitation"</span><span class="p">][</span><span class="s2">"Article"</span><span class="p">]</span>
+
+            <span class="n">info</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"pubmed_id"</span><span class="p">:</span> <span class="n">pubmed_id</span><span class="p">,</span>
+                <span class="s2">"pubmed_url"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"https://pubmed.ncbi.nlm.nih.gov/</span><span class="si">{</span><span class="n">pubmed_id</span><span class="si">}</span><span class="s2">/"</span><span class="p">,</span>
+                <span class="s2">"doi"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">"doi_url"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="p">}</span>
+
+            <span class="c1"># Try to get DOI from ELocationID</span>
+            <span class="n">doi</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">eid</span>
+                    <span class="k">for</span> <span class="n">eid</span> <span class="ow">in</span> <span class="n">article</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ELocationID"</span><span class="p">,</span> <span class="p">[])</span>
+                    <span class="k">if</span> <span class="n">eid</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="s2">"EIdType"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"doi"</span>
+                <span class="p">),</span>
+                <span class="kc">None</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># If DOI not found in ELocationID, try ArticleId</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">doi</span><span class="p">:</span>
+                <span class="n">article_id_list</span> <span class="o">=</span> <span class="n">records</span><span class="p">[</span><span class="s2">"PubmedArticle"</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">"PubmedData"</span><span class="p">][</span>
+                    <span class="s2">"ArticleIdList"</span>
+                <span class="p">]</span>
+                <span class="n">doi</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="n">article_id</span>
+                        <span class="k">for</span> <span class="n">article_id</span> <span class="ow">in</span> <span class="n">article_id_list</span>
+                        <span class="k">if</span> <span class="n">article_id</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="s2">"IdType"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"doi"</span>
+                    <span class="p">),</span>
+                    <span class="kc">None</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">doi</span><span class="p">:</span>
+                <span class="n">info</span><span class="p">[</span><span class="s2">"doi"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">doi</span><span class="p">)</span>
+                <span class="n">info</span><span class="p">[</span><span class="s2">"doi_url"</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"https://doi.org/</span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">'doi'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+
+            <span class="k">return</span> <span class="n">info</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">attempt</span> <span class="o">&lt;</span> <span class="n">max_retries</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">delay</span> <span class="o">=</span> <span class="n">base_delay</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">attempt</span><span class="p">)</span> <span class="o">+</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Attempt </span><span class="si">{</span><span class="n">attempt</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> failed. Retrying in </span><span class="si">{</span><span class="n">delay</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds..."</span>
+                <span class="p">)</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">delay</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error fetching info for PubMed ID </span><span class="si">{</span><span class="n">pubmed_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="GeneEssentialitySgdDataset">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset.html#torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset">[docs]</a>
+<span class="nd">@register_dataset</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GeneEssentialitySgdDataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Gene essentiality experiments built from SGD inviable null phenotypes."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/gene_essentiality_sgd"</span><span class="p">,</span>
+        <span class="n">scerevisiae_graph</span><span class="p">:</span> <span class="n">SCerevisiaeGraph</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Store the S. cerevisiae graph and initialize the experiment dataset."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scerevisiae_graph</span> <span class="o">=</span> <span class="n">scerevisiae_graph</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">GeneEssentialityExperiment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the experiment model class for this dataset."""</span>
+        <span class="k">return</span> <span class="n">GeneEssentialityExperiment</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reference_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">GeneEssentialityExperimentReference</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the experiment reference model class for this dataset."""</span>
+        <span class="k">return</span> <span class="n">GeneEssentialityExperimentReference</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the raw file names (none, as data is fetched from SGD)."""</span>
+        <span class="k">return</span> <span class="p">[]</span>  <span class="c1"># Return an empty list if there are no raw files to download</span>
+
+<div class="viewcode-block" id="GeneEssentialitySgdDataset.download">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset.html#torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset.download">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Do nothing; this dataset has no raw files to download."""</span>
+        <span class="c1"># If there's nothing to download, you can just pass</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="GeneEssentialitySgdDataset.preprocess_raw">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset.html#torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset.preprocess_raw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the DataFrame unchanged (no raw preprocessing needed)."""</span>
+        <span class="c1"># If there's no preprocessing needed, you can return the DataFrame as is</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="GeneEssentialitySgdDataset.process">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset.html#torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset.process">[docs]</a>
+    <span class="nd">@post_process</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build essentiality experiments from SGD inviable phenotypes into LMDB."""</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Processing SGD Gene Essentiality Data..."</span><span class="p">)</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Check if SGD gene data exists</span>
+        <span class="n">sgd_genes_dir</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"DATA_ROOT"</span><span class="p">,</span> <span class="s2">"data"</span><span class="p">),</span> <span class="s2">"data/sgd/genome/genes"</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">sgd_genes_dir</span><span class="p">):</span>
+            <span class="n">gene_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">sgd_genes_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".json"</span><span class="p">)]</span>
+            <span class="n">gene_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gene_files</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">gene_count</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">if</span> <span class="n">gene_count</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">:</span>  <span class="c1"># Arbitrary threshold to check if genes are downloaded</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"SGD gene data incomplete or missing (found </span><span class="si">{</span><span class="n">gene_count</span><span class="si">}</span><span class="s2"> files)."</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Downloading SGD gene data. This may take 15-30 minutes..."</span><span class="p">)</span>
+            <span class="n">main_get_all_genes</span><span class="p">()</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"SGD gene download complete!"</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"SGD gene data already exists (</span><span class="si">{</span><span class="n">gene_count</span><span class="si">}</span><span class="s2"> gene files found)"</span><span class="p">)</span>
+
+        <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e12</span><span class="p">))</span>
+
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">scerevisiae_graph</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGraph</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">scerevisiae_graph</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">scerevisiae_graph</span><span class="o">.</span><span class="n">G_raw</span><span class="o">.</span><span class="n">nodes</span><span class="p">()):</span>
+                <span class="n">node_data</span> <span class="o">=</span> <span class="n">scerevisiae_graph</span><span class="o">.</span><span class="n">G_raw</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span>
+                <span class="n">inviable_phenotypes</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">i</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">node_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"phenotype_details"</span><span class="p">,</span> <span class="p">[])</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="n">i</span><span class="p">[</span><span class="s2">"mutant_type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"null"</span>
+                        <span class="ow">and</span> <span class="n">i</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">][</span><span class="s2">"display_name"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"S288C"</span>
+                        <span class="ow">and</span> <span class="n">i</span><span class="p">[</span><span class="s2">"phenotype"</span><span class="p">][</span><span class="s2">"display_name"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"inviable"</span>
+                    <span class="p">)</span>
+                <span class="p">]</span>
+
+                <span class="k">for</span> <span class="n">phenotype</span> <span class="ow">in</span> <span class="n">inviable_phenotypes</span><span class="p">:</span>
+                    <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">gene</span><span class="p">,</span> <span class="n">phenotype</span>
+                    <span class="p">)</span>
+
+                    <span class="n">serialized_data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                        <span class="p">{</span>
+                            <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                            <span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                            <span class="s2">"publication"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                        <span class="p">}</span>
+                    <span class="p">)</span>
+                    <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">serialized_data</span><span class="p">)</span>
+                    <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+    <span class="c1"># HACK for this dataset all meta data is guessed,</span>
+    <span class="c1"># since we have no way fo extracting it from the paper yet</span>
+    <span class="c1"># It is a reasonable guess</span>
+<div class="viewcode-block" id="GeneEssentialitySgdDataset.create_experiment">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset.html#torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset.create_experiment">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span>  <span class="c1"># type: ignore[override]  # dataset-specific signature</span>
+        <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">gene</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">phenotype_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
+        <span class="n">GeneEssentialityExperiment</span><span class="p">,</span> <span class="n">GeneEssentialityExperimentReference</span><span class="p">,</span> <span class="n">Publication</span>
+    <span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Build the experiment, reference, and publication for one gene phenotype."""</span>
+        <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"S288C"</span>
+        <span class="p">)</span>
+
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">phenotype_data</span><span class="p">[</span><span class="s2">"locus"</span><span class="p">][</span><span class="s2">"display_name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="s2">"S288C"</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
+            <span class="n">media</span><span class="o">=</span><span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"YEPD"</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"solid"</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">30</span><span class="p">),</span>  <span class="c1"># Assuming standard temperature</span>
+        <span class="p">)</span>
+
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">GeneEssentialityPhenotype</span><span class="p">(</span><span class="n">is_essential</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">GeneEssentialityPhenotype</span><span class="p">(</span><span class="n">is_essential</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">pubmed_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">phenotype_data</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">][</span><span class="s2">"pubmed_id"</span><span class="p">])</span>
+        <span class="n">pub_info</span> <span class="o">=</span> <span class="n">get_publication_info</span><span class="p">(</span><span class="n">pubmed_id</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">pub_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Unable to retrieve publication information for PubMed ID: </span><span class="si">{</span><span class="n">pubmed_id</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+
+        <span class="n">experiment</span> <span class="o">=</span> <span class="n">GeneEssentialityExperiment</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">genotype</span><span class="o">=</span><span class="n">genotype</span><span class="p">,</span>
+            <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">phenotype</span><span class="o">=</span><span class="n">phenotype</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">reference</span> <span class="o">=</span> <span class="n">GeneEssentialityExperimentReference</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="n">genome_reference</span><span class="p">,</span>
+            <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">phenotype_reference</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span>
+            <span class="n">pubmed_id</span><span class="o">=</span><span class="n">pub_info</span><span class="p">[</span><span class="s2">"pubmed_id"</span><span class="p">],</span>
+            <span class="n">pubmed_url</span><span class="o">=</span><span class="n">pub_info</span><span class="p">[</span><span class="s2">"pubmed_url"</span><span class="p">],</span>
+            <span class="n">doi</span><span class="o">=</span><span class="n">pub_info</span><span class="p">[</span><span class="s2">"doi"</span><span class="p">],</span>
+            <span class="n">doi_url</span><span class="o">=</span><span class="n">pub_info</span><span class="p">[</span><span class="s2">"doi_url"</span><span class="p">],</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build and inspect the SGD gene essentiality dataset for ad-hoc runs."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGraph</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae.s288c</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">DATA_ROOT</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"DATA_ROOT"</span><span class="p">)</span>
+
+    <span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
+        <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">DATA_ROOT</span><span class="p">),</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
+        <span class="n">go_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">DATA_ROOT</span><span class="p">),</span> <span class="s2">"data/go"</span><span class="p">),</span>
+        <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">SCerevisiaeGraph</span><span class="p">(</span>
+        <span class="n">sgd_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">DATA_ROOT</span><span class="p">),</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
+        <span class="n">string_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">DATA_ROOT</span><span class="p">),</span> <span class="s2">"data/string"</span><span class="p">),</span>
+        <span class="n">tflink_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">DATA_ROOT</span><span class="p">),</span> <span class="s2">"data/tflink"</span><span class="p">),</span>
+        <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">GeneEssentialitySgdDataset</span><span class="p">(</span><span class="n">scerevisiae_graph</span><span class="o">=</span><span class="n">graph</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

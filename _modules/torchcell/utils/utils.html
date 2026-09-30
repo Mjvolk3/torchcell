@@ -1,0 +1,518 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.utils.utils &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/utils/utils.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.utils.utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.utils.utils</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""General-purpose helpers: numeric formatting, and the repo-wide figure/plot</span>
+<span class="sd">standards (ordered palette, Nature panel widths, true-size SVG export).</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.axes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.figure</span><span class="w"> </span><span class="kn">import</span> <span class="n">Figure</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">Text</span>
+
+<span class="c1"># --- Repo-wide figure/plotting standards. See CLAUDE.md "Figure &amp; Plotting</span>
+<span class="c1"># Standards" and the palette notes/assets/images/color-palette.svg. -----------</span>
+<span class="n">MAX_HEIGHT_MM</span> <span class="o">=</span> <span class="mf">170.0</span>  <span class="c1"># Nature single-figure max height (loose cap)</span>
+<span class="n">PANEL_WIDTHS_MM</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"full"</span><span class="p">:</span> <span class="mf">179.0</span><span class="p">,</span>  <span class="c1"># 1 across (safety margin under Nature's 180 mm)</span>
+    <span class="s2">"wide"</span><span class="p">:</span> <span class="mf">118.9</span><span class="p">,</span>  <span class="c1"># wide panel of an asymmetric pair (with "third")</span>
+    <span class="s2">"half_plus"</span><span class="p">:</span> <span class="mf">88.5</span><span class="p">,</span>  <span class="c1"># 2 across (slightly generous half)</span>
+    <span class="s2">"half"</span><span class="p">:</span> <span class="mf">88.0</span><span class="p">,</span>  <span class="c1"># 2 across (= Nature single-column width)</span>
+    <span class="s2">"third"</span><span class="p">:</span> <span class="mf">57.8</span><span class="p">,</span>  <span class="c1"># 3 across</span>
+    <span class="s2">"sixth"</span><span class="p">:</span> <span class="mf">28.3</span><span class="p">,</span>  <span class="c1"># 6 across (smallest)</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="mm_to_in">
+<a class="viewcode-back" href="../../../generated/torchcell.utils.mm_to_in.html#torchcell.utils.mm_to_in">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">mm_to_in</span><span class="p">(</span><span class="n">mm</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Millimeters -&gt; inches, for matplotlib ``figsize`` at true physical size."""</span>
+    <span class="k">return</span> <span class="n">mm</span> <span class="o">/</span> <span class="mf">25.4</span></div>
+
+
+
+<span class="c1"># Single ordered qualitative plot palette (green-free), as draw.io-style</span>
+<span class="c1"># (line/stroke, fill) PAIRS -- the same object colors used in Fig 1 (light fill +</span>
+<span class="c1"># bold darker line). Assign in order: the four warm primaries (orange/red/purple/</span>
+<span class="c1"># yellow) FIRST, then blue, gray, then darker variants; blue/gray are not used until</span>
+<span class="c1"># the four primaries are used up. PLOT_PALETTE = line/stroke colors (lines, markers,</span>
+<span class="c1"># bar edges &amp; hatches); PLOT_PALETTE_FILL = matching light fills (bar/marker faces).</span>
+<span class="c1"># A simple N-category series takes the first N of each. Visual reference:</span>
+<span class="c1"># notes/assets/images/color-palette.svg (generated by generate_color_palette.py).</span>
+<span class="n">PLOT_PALETTE</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"#D79B00"</span><span class="p">,</span>  <span class="c1"># 1  amber        [orange slot, primary, draw.io]</span>
+    <span class="s2">"#B85450"</span><span class="p">,</span>  <span class="c1"># 2  brick        [red slot, primary, draw.io]</span>
+    <span class="s2">"#9673A6"</span><span class="p">,</span>  <span class="c1"># 3  lilac        [purple slot, primary, draw.io]</span>
+    <span class="s2">"#D6B656"</span><span class="p">,</span>  <span class="c1"># 4  wheat        [yellow slot, primary, draw.io]</span>
+    <span class="s2">"#6C8EBF"</span><span class="p">,</span>  <span class="c1"># 5  steel blue   [blue slot, primary, draw.io]</span>
+    <span class="s2">"#666666"</span><span class="p">,</span>  <span class="c1"># 6  gray         [gray slot, primary, draw.io]</span>
+    <span class="s2">"#9D7100"</span><span class="p">,</span>  <span class="c1"># 7  bronze       [orange slot, dark]</span>
+    <span class="s2">"#863D3A"</span><span class="p">,</span>  <span class="c1"># 8  maroon       [red slot, dark]</span>
+    <span class="s2">"#6E5479"</span><span class="p">,</span>  <span class="c1"># 9  plum         [purple slot, dark]</span>
+    <span class="s2">"#9C853F"</span><span class="p">,</span>  <span class="c1"># 10 old gold     [yellow slot, dark]</span>
+    <span class="s2">"#4F688B"</span><span class="p">,</span>  <span class="c1"># 11 denim        [blue slot, dark]</span>
+    <span class="s2">"#4A4A4A"</span><span class="p">,</span>  <span class="c1"># 12 charcoal     [gray slot, dark]</span>
+    <span class="s2">"#C48161"</span><span class="p">,</span>  <span class="c1"># 13 terracotta   [orange slot, muted earth]</span>
+    <span class="s2">"#9A6B66"</span><span class="p">,</span>  <span class="c1"># 14 rose brown   [red slot, muted earth]</span>
+    <span class="s2">"#B690A4"</span><span class="p">,</span>  <span class="c1"># 15 dusty mauve  [purple slot, muted earth]</span>
+    <span class="s2">"#D2AE7D"</span><span class="p">,</span>  <span class="c1"># 16 sand         [yellow slot, muted earth]</span>
+    <span class="s2">"#899EAB"</span><span class="p">,</span>  <span class="c1"># 17 slate        [blue slot, muted earth]</span>
+    <span class="s2">"#A29682"</span><span class="p">,</span>  <span class="c1"># 18 taupe        [gray slot, muted earth]</span>
+<span class="p">]</span>
+<span class="n">PLOT_PALETTE_FILL</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"#FFE6CC"</span><span class="p">,</span>  <span class="c1"># 1  amber        [orange slot, primary, draw.io]</span>
+    <span class="s2">"#F8CECC"</span><span class="p">,</span>  <span class="c1"># 2  brick        [red slot, primary, draw.io]</span>
+    <span class="s2">"#E1D5E7"</span><span class="p">,</span>  <span class="c1"># 3  lilac        [purple slot, primary, draw.io]</span>
+    <span class="s2">"#FFF2CC"</span><span class="p">,</span>  <span class="c1"># 4  wheat        [yellow slot, primary, draw.io]</span>
+    <span class="s2">"#DAE8FC"</span><span class="p">,</span>  <span class="c1"># 5  steel blue   [blue slot, primary, draw.io]</span>
+    <span class="s2">"#F5F5F5"</span><span class="p">,</span>  <span class="c1"># 6  gray         [gray slot, primary, draw.io]</span>
+    <span class="s2">"#F3D08F"</span><span class="p">,</span>  <span class="c1"># 7  bronze       [orange slot, dark]</span>
+    <span class="s2">"#E5A9A7"</span><span class="p">,</span>  <span class="c1"># 8  maroon       [red slot, dark]</span>
+    <span class="s2">"#CAB8D4"</span><span class="p">,</span>  <span class="c1"># 9  plum         [purple slot, dark]</span>
+    <span class="s2">"#F3E0A9"</span><span class="p">,</span>  <span class="c1"># 10 old gold     [yellow slot, dark]</span>
+    <span class="s2">"#B9CDEA"</span><span class="p">,</span>  <span class="c1"># 11 denim        [blue slot, dark]</span>
+    <span class="s2">"#CACACA"</span><span class="p">,</span>  <span class="c1"># 12 charcoal     [gray slot, dark]</span>
+    <span class="s2">"#F9D0BE"</span><span class="p">,</span>  <span class="c1"># 13 terracotta   [orange slot, muted earth]</span>
+    <span class="s2">"#EFD2CF"</span><span class="p">,</span>  <span class="c1"># 14 rose brown   [red slot, muted earth]</span>
+    <span class="s2">"#E8D3DE"</span><span class="p">,</span>  <span class="c1"># 15 dusty mauve  [purple slot, muted earth]</span>
+    <span class="s2">"#EBD6BC"</span><span class="p">,</span>  <span class="c1"># 16 sand         [yellow slot, muted earth]</span>
+    <span class="s2">"#CFDAE1"</span><span class="p">,</span>  <span class="c1"># 17 slate        [blue slot, muted earth]</span>
+    <span class="s2">"#DFD8CD"</span><span class="p">,</span>  <span class="c1"># 18 taupe        [gray slot, muted earth]</span>
+<span class="p">]</span>
+
+<span class="c1"># The TRUE name of each color. The SLOT (index % 6 -&gt; orange/red/purple/yellow/blue/gray)</span>
+<span class="c1"># is what drives assignment ORDER, but the muted tier is not literally those hues: #18 sits</span>
+<span class="c1"># in the gray slot and is a taupe, #13 is a terracotta, #16 is a sand. Labelling a swatch</span>
+<span class="c1"># with its slot was simply wrong. Use these for legends and swatch labels.</span>
+<span class="n">PLOT_PALETTE_NAMES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"amber"</span><span class="p">,</span>  <span class="c1"># 1</span>
+    <span class="s2">"brick"</span><span class="p">,</span>  <span class="c1"># 2</span>
+    <span class="s2">"lilac"</span><span class="p">,</span>  <span class="c1"># 3</span>
+    <span class="s2">"wheat"</span><span class="p">,</span>  <span class="c1"># 4</span>
+    <span class="s2">"steel blue"</span><span class="p">,</span>  <span class="c1"># 5</span>
+    <span class="s2">"gray"</span><span class="p">,</span>  <span class="c1"># 6</span>
+    <span class="s2">"bronze"</span><span class="p">,</span>  <span class="c1"># 7</span>
+    <span class="s2">"maroon"</span><span class="p">,</span>  <span class="c1"># 8</span>
+    <span class="s2">"plum"</span><span class="p">,</span>  <span class="c1"># 9</span>
+    <span class="s2">"old gold"</span><span class="p">,</span>  <span class="c1"># 10</span>
+    <span class="s2">"denim"</span><span class="p">,</span>  <span class="c1"># 11</span>
+    <span class="s2">"charcoal"</span><span class="p">,</span>  <span class="c1"># 12</span>
+    <span class="s2">"terracotta"</span><span class="p">,</span>  <span class="c1"># 13</span>
+    <span class="s2">"rose brown"</span><span class="p">,</span>  <span class="c1"># 14</span>
+    <span class="s2">"dusty mauve"</span><span class="p">,</span>  <span class="c1"># 15</span>
+    <span class="s2">"sand"</span><span class="p">,</span>  <span class="c1"># 16</span>
+    <span class="s2">"slate"</span><span class="p">,</span>  <span class="c1"># 17</span>
+    <span class="s2">"taupe"</span><span class="p">,</span>  <span class="c1"># 18</span>
+<span class="p">]</span>
+
+<span class="c1"># Display-name overrides for node representations, applied ONLY at plot-label time; the</span>
+<span class="c1"># data keys / model names in code stay unchanged. `fudt_*` is torchcell's internal name for</span>
+<span class="c1"># the Gagneur-lab species-aware DNA language model (HuggingFace gagneurlab/SpeciesLM), which</span>
+<span class="c1"># the paper refers to as "Species LM"; underscore style keeps it consistent with the other</span>
+<span class="c1"># raw feature labels (e.g. codon_frequency). Single source of truth -- edit here, not per</span>
+<span class="c1"># script.</span>
+<span class="n">REPRESENTATION_DISPLAY_NAMES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="c1"># upstream = 5' region, downstream = 3'; written out with underscores to match the</span>
+    <span class="c1"># nucleotide-transformer labels (nt_window_five_prime_*). No size suffix: SpeciesLM is</span>
+    <span class="c1"># not a size we chose (unlike the NT windows), so we do not annotate one.</span>
+    <span class="s2">"fudt_upstream"</span><span class="p">:</span> <span class="s2">"species_lm_five_prime"</span><span class="p">,</span>
+    <span class="s2">"fudt_downstream"</span><span class="p">:</span> <span class="s2">"species_lm_three_prime"</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="display_label">
+<a class="viewcode-back" href="../../../generated/torchcell.utils.display_label.html#torchcell.utils.display_label">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">display_label</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Map an internal representation key to its plot-display label (identity if unmapped)."""</span>
+    <span class="k">return</span> <span class="n">REPRESENTATION_DISPLAY_NAMES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span></div>
+
+
+
+<span class="n">PAPER_RC</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"font.family"</span><span class="p">:</span> <span class="s2">"Arial"</span><span class="p">,</span>
+    <span class="s2">"font.size"</span><span class="p">:</span> <span class="mf">6.0</span><span class="p">,</span>
+    <span class="s2">"axes.labelsize"</span><span class="p">:</span> <span class="mf">6.0</span><span class="p">,</span>
+    <span class="s2">"axes.titlesize"</span><span class="p">:</span> <span class="mf">6.0</span><span class="p">,</span>
+    <span class="s2">"xtick.labelsize"</span><span class="p">:</span> <span class="mf">6.0</span><span class="p">,</span>
+    <span class="s2">"ytick.labelsize"</span><span class="p">:</span> <span class="mf">6.0</span><span class="p">,</span>
+    <span class="s2">"legend.fontsize"</span><span class="p">:</span> <span class="mf">5.0</span><span class="p">,</span>
+    <span class="s2">"figure.titlesize"</span><span class="p">:</span> <span class="mf">6.5</span><span class="p">,</span>
+    <span class="s2">"axes.linewidth"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="s2">"svg.fonttype"</span><span class="p">:</span> <span class="s2">"none"</span><span class="p">,</span>
+    <span class="c1"># Math text ($\tau$, $f_{ijk}$, $\times$) is set in Arial too. matplotlib's default</span>
+    <span class="c1"># mathtext font is DejaVu Sans, so a panel whose only math is an axis label silently</span>
+    <span class="c1"># ships two typefaces, and pdffonts on the converted panel lists DejaVuSans next to</span>
+    <span class="c1"># ArialMT. Custom fontset with the three Arial faces keeps every glyph in one family.</span>
+    <span class="s2">"mathtext.fontset"</span><span class="p">:</span> <span class="s2">"custom"</span><span class="p">,</span>
+    <span class="s2">"mathtext.rm"</span><span class="p">:</span> <span class="s2">"Arial"</span><span class="p">,</span>
+    <span class="s2">"mathtext.it"</span><span class="p">:</span> <span class="s2">"Arial:italic"</span><span class="p">,</span>
+    <span class="s2">"mathtext.bf"</span><span class="p">:</span> <span class="s2">"Arial:bold"</span><span class="p">,</span>
+    <span class="s2">"mathtext.default"</span><span class="p">:</span> <span class="s2">"it"</span><span class="p">,</span>
+    <span class="c1"># Legends are framed: white face, 0.5 pt black edge, square corners</span>
+    <span class="c1"># ([[paper.nature-biotech.style-guide]], Figures). The frame is a border, not a</span>
+    <span class="c1"># license to cover data; the legend still has to sit in a clear region.</span>
+    <span class="s2">"legend.frameon"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="s2">"legend.fancybox"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="s2">"legend.framealpha"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="s2">"legend.edgecolor"</span><span class="p">:</span> <span class="s2">"black"</span><span class="p">,</span>
+    <span class="s2">"legend.facecolor"</span><span class="p">:</span> <span class="s2">"white"</span><span class="p">,</span>
+    <span class="s2">"patch.linewidth"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="c1"># A fixed-figsize panel must NOT be recropped, or the strict width in</span>
+    <span class="c1"># PANEL_WIDTHS_MM stops holding and panels no longer tile across the page.</span>
+    <span class="s2">"savefig.bbox"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="apply_paper_style">
+<a class="viewcode-back" href="../../../generated/torchcell.utils.apply_paper_style.html#torchcell.utils.apply_paper_style">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">apply_paper_style</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Set every rcParam the repo figure standard fixes, explicitly.</span>
+
+<span class="sd">    Setting ``font.size`` alone is not enough, and the reason is a trap worth</span>
+<span class="sd">    knowing. Importing :mod:`torchcell.graph` runs ``plt.style.use`` at module</span>
+<span class="sd">    import time, and that style file sets ``axes.labelsize`` 16,</span>
+<span class="sd">    ``xtick.labelsize`` 14 and ``savefig.bbox`` ``tight`` as absolute values.</span>
+<span class="sd">    Absolute sizes do not scale with ``font.size``, so a later</span>
+<span class="sd">    ``rcParams["font.size"] = 6`` leaves axis labels and ticks at 14 to 16 point</span>
+<span class="sd">    while titles set with an explicit ``fontsize`` come out correct. The result</span>
+<span class="sd">    is a figure with mismatched type whose canvas has silently been recropped</span>
+<span class="sd">    wider than its declared panel width.</span>
+
+<span class="sd">    Call this after every import, and it holds regardless of what an imported</span>
+<span class="sd">    module did to the global state.</span>
+<span class="sd">    """</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">PAPER_RC</span><span class="p">)</span></div>
+
+
+
+<span class="n">PANEL_LABEL_PT</span> <span class="o">=</span> <span class="mf">8.0</span>  <span class="c1"># Nature: panel letters only, the one size above figure text</span>
+<span class="n">PANEL_LABEL_PAD_PT</span> <span class="o">=</span> <span class="mf">1.5</span>
+<span class="c1"># Vertical raise of the letter above the axes top edge. A 6 pt title at pad 3 occupies</span>
+<span class="c1"># 3 to 9 pt above the spine and the topmost tick label reaches ~3 pt above it, so a letter</span>
+<span class="c1"># whose bottom is 12 pt up clears both by at least one letter width -- the white-cross</span>
+<span class="c1"># rule ([[paper.nature-biotech.style-guide]]): a cross the width of the letter box laid</span>
+<span class="c1"># over the letter meets no title, spine, or tick label.</span>
+<span class="n">PANEL_LABEL_RAISE_PT</span> <span class="o">=</span> <span class="mf">12.0</span>
+
+
+<div class="viewcode-block" id="panel_label">
+<a class="viewcode-back" href="../../../generated/torchcell.utils.panel_label.html#torchcell.utils.panel_label">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">panel_label</span><span class="p">(</span>
+    <span class="n">ax</span><span class="p">:</span> <span class="s2">"Axes"</span><span class="p">,</span>
+    <span class="n">letter</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">x</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">y</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">pad_pt</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">PANEL_LABEL_PAD_PT</span><span class="p">,</span>
+    <span class="n">raise_pt</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">PANEL_LABEL_RAISE_PT</span><span class="p">,</span>
+    <span class="n">fontsize</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">PANEL_LABEL_PT</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Text"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Draw a panel letter at the panel's top-left corner, in the repo standard.</span>
+
+<span class="sd">    Nature's band for figure text is 5 to 7 pt, with 8 pt bold lowercase reserved for</span>
+<span class="sd">    panel letters. The letter sits OUTSIDE the axes box, at the top-left of the PANEL --</span>
+<span class="sd">    its left edge flush with the outermost y-axis decoration (the y label, or the tick</span>
+<span class="sd">    labels when there is no y label) -- and carries an opaque white patch, so the letter</span>
+<span class="sd">    survives being cropped out of a composed figure with whatever sits behind it.</span>
+
+<span class="sd">    Placement follows the white-cross rule ([[paper.nature-biotech.style-guide]]): a cross</span>
+<span class="sd">    the width of the letter box laid over the letter meets no title, spine, tick label, or</span>
+<span class="sd">    axis label. The letter is raised ``raise_pt`` points above the axes top edge (one text</span>
+<span class="sd">    line above the title band, clear of the topmost tick label) and pushed left to the</span>
+<span class="sd">    panel's outer edge, which is measured from the axes' tight bounding box, so call this</span>
+<span class="sd">    AFTER the y label and tick formatting are set. ``x`` (axes fraction) overrides the</span>
+<span class="sd">    measured left edge; ``pad_pt`` is then the offset left of that anchor.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScaledTranslation</span>
+
+    <span class="c1"># An Axes always belongs to a figure by the time it can be drawn on, but the</span>
+    <span class="c1"># accessor is typed as optional, so fail loudly rather than on an attribute.</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_figure</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">fig</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"panel_label: the axes is not attached to a figure"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Outer left edge of the panel: axes box minus everything hanging off its left</span>
+        <span class="c1"># (tick labels, y label), measured in points so it survives tight_layout.</span>
+        <span class="c1"># No renderer argument: matplotlib &gt;= 3.6 resolves the figure's own renderer,</span>
+        <span class="c1"># which keeps this independent of the backend the script happens to run on.</span>
+        <span class="n">tight</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_tightbbox</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">tight</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"panel_label: the axes has no tight bounding box to measure"</span>
+            <span class="p">)</span>
+        <span class="n">left_pt</span> <span class="o">=</span> <span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">bbox</span><span class="o">.</span><span class="n">x0</span> <span class="o">-</span> <span class="n">tight</span><span class="o">.</span><span class="n">x0</span><span class="p">)</span> <span class="o">/</span> <span class="n">fig</span><span class="o">.</span><span class="n">dpi</span> <span class="o">*</span> <span class="mf">72.0</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="n">ScaledTranslation</span><span class="p">(</span>
+            <span class="o">-</span><span class="n">left_pt</span> <span class="o">/</span> <span class="mf">72.0</span><span class="p">,</span> <span class="n">raise_pt</span> <span class="o">/</span> <span class="mf">72.0</span><span class="p">,</span> <span class="n">fig</span><span class="o">.</span><span class="n">dpi_scale_trans</span>
+        <span class="p">)</span>
+        <span class="n">ha</span> <span class="o">=</span> <span class="s2">"left"</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="n">ScaledTranslation</span><span class="p">(</span><span class="o">-</span><span class="n">pad_pt</span> <span class="o">/</span> <span class="mf">72.0</span><span class="p">,</span> <span class="n">raise_pt</span> <span class="o">/</span> <span class="mf">72.0</span><span class="p">,</span> <span class="n">fig</span><span class="o">.</span><span class="n">dpi_scale_trans</span><span class="p">)</span>
+        <span class="n">ha</span> <span class="o">=</span> <span class="s2">"right"</span>
+    <span class="k">return</span> <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+        <span class="n">x</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">,</span>
+        <span class="n">letter</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+        <span class="n">transform</span><span class="o">=</span><span class="n">ax</span><span class="o">.</span><span class="n">transAxes</span> <span class="o">+</span> <span class="n">offset</span><span class="p">,</span>
+        <span class="n">fontsize</span><span class="o">=</span><span class="n">fontsize</span><span class="p">,</span>
+        <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">,</span>
+        <span class="n">fontfamily</span><span class="o">=</span><span class="s2">"Arial"</span><span class="p">,</span>
+        <span class="n">ha</span><span class="o">=</span><span class="n">ha</span><span class="p">,</span>
+        <span class="n">va</span><span class="o">=</span><span class="s2">"bottom"</span><span class="p">,</span>
+        <span class="n">bbox</span><span class="o">=</span><span class="p">{</span><span class="s2">"facecolor"</span><span class="p">:</span> <span class="s2">"white"</span><span class="p">,</span> <span class="s2">"edgecolor"</span><span class="p">:</span> <span class="s2">"none"</span><span class="p">,</span> <span class="s2">"pad"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="savefig_true_size_svg">
+<a class="viewcode-back" href="../../../generated/torchcell.utils.savefig_true_size_svg.html#torchcell.utils.savefig_true_size_svg">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">savefig_true_size_svg</span><span class="p">(</span>
+    <span class="n">fig</span><span class="p">:</span> <span class="s2">"Figure"</span><span class="p">,</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">src_dpi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">72</span><span class="p">,</span>
+    <span class="n">drawio_dpi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">savefig_kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Save a matplotlib figure as an SVG that imports at TRUE physical size in draw.io.</span>
+
+<span class="sd">    matplotlib writes SVG coordinates in PostScript points (72 per inch) and tags the</span>
+<span class="sd">    root ``width``/``height`` with the ``pt`` unit. draw.io does not honor the CSS</span>
+<span class="sd">    definition of ``pt``; it reads the numeric ``width``/``height``/``viewBox`` in its</span>
+<span class="sd">    own native unit of 100 per inch. A figure authored at W inches therefore imports at</span>
+<span class="sd">    ``W * 72/100`` inches -- 72% of intended, fonts included (the source of the</span>
+<span class="sd">    57.7 mm-file / 41.4 mm-in-draw.io discrepancy).</span>
+
+<span class="sd">    This saves the SVG, then rewrites the root so the coordinate numbers correspond to</span>
+<span class="sd">    ``drawio_dpi`` (100) per inch and wraps the drawn content in a matching ``scale()``</span>
+<span class="sd">    group. The rendered result is visually identical; only the declared coordinate</span>
+<span class="sd">    system changes, so draw.io lands on the true mm/pt sizes and 6 pt text stays 6 pt.</span>
+
+<span class="sd">    For a fixed-figsize WYSIWYG canvas, do NOT pass ``bbox_inches="tight"`` -- it</span>
+<span class="sd">    recrops the canvas and defeats the intended size; author the figure at its final</span>
+<span class="sd">    ``figsize`` instead. It IS appropriate for a standalone figure whose goal is a</span>
+<span class="sd">    tight crop (e.g. a legend-only image); the rescale still yields a correct</span>
+<span class="sd">    physical size for whatever tight box matplotlib emits.</span>
+<span class="sd">    """</span>
+    <span class="c1"># Byte-stable output, so an SVG can be hash-checked the way a result CSV is.</span>
+    <span class="c1"># matplotlib leaves ``svg.hashsalt`` unset, in which case it seeds the clip-path and</span>
+    <span class="c1"># glyph element ids from a fresh random salt on every process, and it stamps a</span>
+    <span class="c1"># ``&lt;dc:date&gt;`` with the wall-clock save time. Two identical runs then produce files</span>
+    <span class="c1"># with identical vector content but different hashes. Salting with the output</span>
+    <span class="c1"># basename makes the ids a pure function of the figure while keeping distinct</span>
+    <span class="c1"># figures distinct, and ``metadata={"Date": None}`` omits the date stamp. A caller</span>
+    <span class="c1"># that passes its own ``metadata`` keeps it.</span>
+    <span class="n">savefig_kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"metadata"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"Date"</span><span class="p">:</span> <span class="kc">None</span><span class="p">})</span>
+    <span class="k">with</span> <span class="n">matplotlib</span><span class="o">.</span><span class="n">rc_context</span><span class="p">({</span><span class="s2">"svg.hashsalt"</span><span class="p">:</span> <span class="n">osp</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">)}):</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">savefig_kwargs</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">svg</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="c1"># matplotlib always emits an &lt;svg&gt; root tagged with width/height in pt. If any of</span>
+    <span class="c1"># these is missing the file is not a matplotlib SVG and the rescale is meaningless,</span>
+    <span class="c1"># so fail loudly rather than silently writing a wrongly-sized figure.</span>
+    <span class="n">m_tag</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">"&lt;svg\b[^&gt;]*&gt;"</span><span class="p">,</span> <span class="n">svg</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">m_tag</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: no &lt;svg&gt; root tag; not a matplotlib SVG"</span><span class="p">)</span>
+    <span class="n">open_tag</span> <span class="o">=</span> <span class="n">m_tag</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">m_w</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">'width="([\d.]+)pt"'</span><span class="p">,</span> <span class="n">open_tag</span><span class="p">)</span>
+    <span class="n">m_h</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">'height="([\d.]+)pt"'</span><span class="p">,</span> <span class="n">open_tag</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">m_w</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">m_h</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: &lt;svg&gt; root has no pt width/height to rescale"</span><span class="p">)</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">m_w</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">m_h</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">drawio_dpi</span> <span class="o">/</span> <span class="n">src_dpi</span>
+    <span class="n">new_w</span><span class="p">,</span> <span class="n">new_h</span> <span class="o">=</span> <span class="n">w</span> <span class="o">*</span> <span class="n">k</span><span class="p">,</span> <span class="n">h</span> <span class="o">*</span> <span class="n">k</span>
+    <span class="n">new_tag</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">'width="[\d.]+pt"'</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'width="</span><span class="si">{</span><span class="n">new_w</span><span class="si">:</span><span class="s1">.4f</span><span class="si">}</span><span class="s1">"'</span><span class="p">,</span> <span class="n">open_tag</span><span class="p">)</span>
+    <span class="n">new_tag</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">'height="[\d.]+pt"'</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'height="</span><span class="si">{</span><span class="n">new_h</span><span class="si">:</span><span class="s1">.4f</span><span class="si">}</span><span class="s1">"'</span><span class="p">,</span> <span class="n">new_tag</span><span class="p">)</span>
+    <span class="n">new_tag</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span>
+        <span class="sa">r</span><span class="s1">'viewBox="[^"]*"'</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'viewBox="0 0 </span><span class="si">{</span><span class="n">new_w</span><span class="si">:</span><span class="s1">.4f</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">new_h</span><span class="si">:</span><span class="s1">.4f</span><span class="si">}</span><span class="s1">"'</span><span class="p">,</span> <span class="n">new_tag</span>
+    <span class="p">)</span>
+    <span class="n">svg</span> <span class="o">=</span> <span class="n">svg</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">open_tag</span><span class="p">,</span> <span class="n">new_tag</span> <span class="o">+</span> <span class="sa">f</span><span class="s1">'&lt;g transform="scale(</span><span class="si">{</span><span class="n">k</span><span class="si">:</span><span class="s1">.10f</span><span class="si">}</span><span class="s1">)"&gt;'</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">svg</span> <span class="o">=</span> <span class="n">svg</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"&lt;/svg&gt;"</span><span class="p">,</span> <span class="s2">"&lt;/g&gt;&lt;/svg&gt;"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">svg</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="format_scientific_notation">
+<a class="viewcode-back" href="../../../generated/torchcell.utils.format_scientific_notation.html#torchcell.utils.format_scientific_notation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">format_scientific_notation</span><span class="p">(</span><span class="n">num</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Format a number into scientific notation, preserving all significant digits.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        10000 -&gt; "1e04"</span>
+<span class="sd">        10007 -&gt; "1.0007e04"</span>
+<span class="sd">        1234567 -&gt; "1.234567e06"</span>
+<span class="sd">        100 -&gt; "1e02"</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">num</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"0"</span>
+
+    <span class="c1"># Handle negative numbers</span>
+    <span class="n">sign</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="k">if</span> <span class="n">num</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">sign</span> <span class="o">=</span> <span class="s2">"-"</span>
+        <span class="n">num</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">num</span><span class="p">)</span>
+
+    <span class="c1"># Get exponent (power of 10)</span>
+    <span class="n">exponent</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">num</span><span class="p">)))</span>
+    <span class="n">mantissa</span> <span class="o">=</span> <span class="n">num</span> <span class="o">/</span> <span class="p">(</span><span class="mi">10</span><span class="o">**</span><span class="n">exponent</span><span class="p">)</span>
+
+    <span class="c1"># Find minimum precision needed to preserve the exact value</span>
+    <span class="n">mantissa_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">mantissa</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">"</span>  <span class="c1"># Default for Pylance</span>
+    <span class="k">for</span> <span class="n">precision</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">15</span><span class="p">):</span>
+        <span class="n">mantissa_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">mantissa</span><span class="si">:</span><span class="s2">.</span><span class="si">{</span><span class="n">precision</span><span class="si">}</span><span class="s2">f</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">reconstructed</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mantissa_str</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span><span class="o">**</span><span class="n">exponent</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">round</span><span class="p">(</span><span class="n">reconstructed</span><span class="p">)</span> <span class="o">==</span> <span class="nb">round</span><span class="p">(</span><span class="n">num</span><span class="p">):</span>
+            <span class="k">break</span>
+
+    <span class="c1"># Clean up: remove trailing zeros and unnecessary decimal point</span>
+    <span class="n">mantissa_str</span> <span class="o">=</span> <span class="n">mantissa_str</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"0"</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">sign</span><span class="si">}{</span><span class="n">mantissa_str</span><span class="si">}</span><span class="s2">e</span><span class="si">{</span><span class="n">exponent</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">"</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

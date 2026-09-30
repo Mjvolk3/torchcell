@@ -1,0 +1,652 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.data.mean_experiment_deduplicate &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/data/mean_experiment_deduplicate.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.data.mean_experiment_deduplicate</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.data.mean_experiment_deduplicate</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/data/mean_experiment_deduplicate</span>
+<span class="c1"># [[torchcell.data.mean_experiment_deduplicate]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/data/mean_experiment_deduplicate</span>
+<span class="c1"># Test file: tests/torchcell/data/test_mean_experiment_deduplicate.py</span>
+
+<span class="sd">"""Deduplicator that merges duplicate experiments by averaging their values."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">t</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">Deduplicator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FitnessExperiment</span><span class="p">,</span>
+    <span class="n">FitnessExperimentReference</span><span class="p">,</span>
+    <span class="n">FitnessPhenotype</span><span class="p">,</span>
+    <span class="n">GeneInteractionExperiment</span><span class="p">,</span>
+    <span class="n">GeneInteractionExperimentReference</span><span class="p">,</span>
+    <span class="n">GeneInteractionPhenotype</span><span class="p">,</span>
+    <span class="n">Genotype</span><span class="p">,</span>
+    <span class="n">MeanDeletionPerturbation</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EXPERIMENT_REFERENCE_TYPE_MAP</span><span class="p">,</span>
+    <span class="n">EXPERIMENT_TYPE_MAP</span><span class="p">,</span>
+    <span class="n">CalMorphPhenotype</span><span class="p">,</span>
+    <span class="n">GenePerturbationType</span><span class="p">,</span>
+    <span class="n">MetabolitePhenotype</span><span class="p">,</span>
+    <span class="n">MicroarrayExpressionPhenotype</span><span class="p">,</span>
+    <span class="n">Phenotype</span><span class="p">,</span>
+    <span class="n">ProteinAbundancePhenotype</span><span class="p">,</span>
+    <span class="n">RNASeqExpressionPhenotype</span><span class="p">,</span>
+    <span class="n">VisualScorePhenotype</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># Phenotype experiment types that are merged by elementwise dict/scalar averaging.</span>
+<span class="c1"># Their duplicate groups are keyed the same way as fitness (experiment_type + sorted</span>
+<span class="c1"># perturbed gene names in duplicate_check), so cross-modality records never collide.</span>
+<span class="n">_VECTOR_EXPERIMENT_TYPES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"microarray_expression"</span><span class="p">,</span>
+        <span class="s2">"rnaseq_expression"</span><span class="p">,</span>
+        <span class="s2">"calmorph"</span><span class="p">,</span>
+        <span class="s2">"metabolite"</span><span class="p">,</span>
+        <span class="s2">"protein_abundance"</span><span class="p">,</span>
+        <span class="s2">"visual_score"</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_mean_float_dict</span><span class="p">(</span><span class="n">dicts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Elementwise mean over the union of keys, averaging only the present values."""</span>
+    <span class="n">keys</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dicts</span><span class="p">:</span>
+        <span class="n">keys</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">keys</span><span class="p">):</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dicts</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d</span><span class="p">]</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">vals</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_rms_pool_float_dict</span><span class="p">(</span>
+    <span class="n">dicts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""RMS-pool per-key stds: sqrt(mean(std^2)) over present values.</span>
+
+<span class="sd">    Null-safe: dicts that are ``None`` are skipped; if every entry is ``None`` the</span>
+<span class="sd">    field stays ``None`` (e.g. Mulleder metabolite_level_se is null, n_replicates=1).</span>
+<span class="sd">    """</span>
+    <span class="n">present</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dicts</span> <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">present</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">keys</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">present</span><span class="p">:</span>
+        <span class="n">keys</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">keys</span><span class="p">):</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">present</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d</span><span class="p">]</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sum_int_dict</span><span class="p">(</span><span class="n">dicts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Sum per-key integer counts (e.g. n_replicates, read counts) over the union."""</span>
+    <span class="n">keys</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dicts</span><span class="p">:</span>
+        <span class="n">keys</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">keys</span><span class="p">):</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dicts</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<div class="viewcode-block" id="MeanExperimentDeduplicator">
+<a class="viewcode-back" href="../../../generated/torchcell.data.MeanExperimentDeduplicator.html#torchcell.data.MeanExperimentDeduplicator">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MeanExperimentDeduplicator</span><span class="p">(</span><span class="n">Deduplicator</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Deduplicate experiments by averaging duplicates of the same genotype."""</span>
+
+<div class="viewcode-block" id="MeanExperimentDeduplicator.duplicate_check">
+<a class="viewcode-back" href="../../../generated/torchcell.data.MeanExperimentDeduplicator.html#torchcell.data.MeanExperimentDeduplicator.duplicate_check">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">duplicate_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Group data indices by hash of experiment type and perturbed genes."""</span>
+        <span class="n">duplicate_check</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="n">experiment</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span>
+            <span class="n">experiment_type</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">experiment_type</span>
+            <span class="n">perturbations</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">genotype</span><span class="o">.</span><span class="n">perturbations</span>
+            <span class="n">sorted_gene_names</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">pert</span><span class="o">.</span><span class="n">systematic_gene_name</span> <span class="k">for</span> <span class="n">pert</span> <span class="ow">in</span> <span class="n">perturbations</span><span class="p">]</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Create a hash key that includes both experiment type and perturbations</span>
+            <span class="n">hash_input</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">experiment_type</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">sorted_gene_names</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+            <span class="n">hash_key</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">hash_input</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">hash_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">duplicate_check</span><span class="p">:</span>
+                <span class="n">duplicate_check</span><span class="p">[</span><span class="n">hash_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">duplicate_check</span><span class="p">[</span><span class="n">hash_key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">duplicate_check</span></div>
+
+
+<div class="viewcode-block" id="MeanExperimentDeduplicator.duplicate_key">
+<a class="viewcode-back" href="../../../generated/torchcell.data.MeanExperimentDeduplicator.html#torchcell.data.MeanExperimentDeduplicator.duplicate_key">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">duplicate_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the duplicate-group hash for one raw record dict.</span>
+
+<span class="sd">        Identical key construction to :meth:`duplicate_check` -- experiment type</span>
+<span class="sd">        plus the sorted perturbed gene names -- read straight off the stored JSON</span>
+<span class="sd">        so the streaming ``process`` never builds pydantic objects to group.</span>
+<span class="sd">        """</span>
+        <span class="n">experiment</span> <span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span>
+        <span class="n">sorted_gene_names</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">pert</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">pert</span> <span class="ow">in</span> <span class="n">experiment</span><span class="p">[</span><span class="s2">"genotype"</span><span class="p">][</span><span class="s2">"perturbations"</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">hash_input</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">experiment</span><span class="p">[</span><span class="s1">'experiment_type'</span><span class="p">]</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">sorted_gene_names</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">hash_input</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="MeanExperimentDeduplicator.create_deduplicate_entry">
+<a class="viewcode-back" href="../../../generated/torchcell.data.MeanExperimentDeduplicator.html#torchcell.data.MeanExperimentDeduplicator.create_deduplicate_entry">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_deduplicate_entry</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">duplicate_experiments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return a single mean entry for a group of duplicate experiments."""</span>
+        <span class="n">experiment_type</span> <span class="o">=</span> <span class="n">duplicate_experiments</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">experiment_type</span>
+        <span class="k">if</span> <span class="n">experiment_type</span> <span class="o">==</span> <span class="s2">"fitness"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_mean_fitness_entry</span><span class="p">(</span><span class="n">duplicate_experiments</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">experiment_type</span> <span class="o">==</span> <span class="s2">"gene interaction"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_mean_gene_interaction_entry</span><span class="p">(</span><span class="n">duplicate_experiments</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">experiment_type</span> <span class="ow">in</span> <span class="n">_VECTOR_EXPERIMENT_TYPES</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_mean_vector_entry</span><span class="p">(</span><span class="n">duplicate_experiments</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unsupported experiment type: </span><span class="si">{</span><span class="n">experiment_type</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_mean_vector_entry</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">duplicate_experiments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Mean-merge phenotype-family duplicates (expression/morphology/metabolite/etc.).</span>
+
+<span class="sd">        Mirrors the fitness rule: elementwise mean of the per-key value dict, RMS-pooled</span>
+<span class="sd">        std for the uncertainty, MeanDeletionPerturbation genotype, and dataset_name</span>
+<span class="sd">        joined as "a+b+...". The concrete Experiment/ExperimentReference classes are</span>
+<span class="sd">        resolved generically from the type maps so a new family (e.g. Messner protein</span>
+<span class="sd">        abundance) works with no further edits.</span>
+<span class="sd">        """</span>
+        <span class="n">experiment_type</span> <span class="o">=</span> <span class="n">duplicate_experiments</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">experiment_type</span>
+        <span class="n">experiment_cls</span> <span class="o">=</span> <span class="n">EXPERIMENT_TYPE_MAP</span><span class="p">[</span><span class="n">experiment_type</span><span class="p">]</span>
+        <span class="n">reference_cls</span> <span class="o">=</span> <span class="n">EXPERIMENT_REFERENCE_TYPE_MAP</span><span class="p">[</span><span class="n">experiment_type</span><span class="p">]</span>
+
+        <span class="n">mean_phenotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_merge_phenotype</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">exp</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype</span> <span class="k">for</span> <span class="n">exp</span> <span class="ow">in</span> <span class="n">duplicate_experiments</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">mean_genotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_mean_genotype</span><span class="p">(</span><span class="n">duplicate_experiments</span><span class="p">)</span>
+        <span class="n">dataset_name</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"+"</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="nb">sorted</span><span class="p">([</span><span class="n">i</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">dataset_name</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">duplicate_experiments</span><span class="p">])</span>
+        <span class="p">)</span>
+        <span class="n">mean_experiment</span> <span class="o">=</span> <span class="n">experiment_cls</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">genotype</span><span class="o">=</span><span class="n">mean_genotype</span><span class="p">,</span>
+            <span class="n">environment</span><span class="o">=</span><span class="n">duplicate_experiments</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">phenotype</span><span class="o">=</span><span class="n">mean_phenotype</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">mean_reference_phenotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_merge_phenotype</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">exp</span><span class="p">[</span><span class="s2">"experiment_reference"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_reference</span>
+                <span class="k">for</span> <span class="n">exp</span> <span class="ow">in</span> <span class="n">duplicate_experiments</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">reference_dataset_name</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"+"</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="nb">sorted</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="s2">"experiment_reference"</span><span class="p">]</span><span class="o">.</span><span class="n">dataset_name</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">duplicate_experiments</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">mean_reference</span> <span class="o">=</span> <span class="n">reference_cls</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">reference_dataset_name</span><span class="p">,</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="n">duplicate_experiments</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span>
+                <span class="s2">"experiment_reference"</span>
+            <span class="p">]</span><span class="o">.</span><span class="n">genome_reference</span><span class="p">,</span>
+            <span class="n">environment_reference</span><span class="o">=</span><span class="n">duplicate_experiments</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span>
+                <span class="s2">"experiment_reference"</span>
+            <span class="p">]</span><span class="o">.</span><span class="n">environment_reference</span><span class="p">,</span>
+            <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">mean_reference_phenotype</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"experiment"</span><span class="p">:</span> <span class="n">mean_experiment</span><span class="p">,</span> <span class="s2">"experiment_reference"</span><span class="p">:</span> <span class="n">mean_reference</span><span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_merge_phenotype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phenotypes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Phenotype</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Phenotype</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Dispatch elementwise merge on the concrete phenotype type.</span>
+
+<span class="sd">        Value fields are averaged elementwise (per gene/feature/metabolite), std/SE</span>
+<span class="sd">        fields are RMS-pooled (null-safe), and per-key replicate counts are summed.</span>
+<span class="sd">        Non-numeric metadata (measurement_type, ordinal scale, semantics) is taken from</span>
+<span class="sd">        the first record, which is identical across a duplicate group.</span>
+<span class="sd">        """</span>
+        <span class="n">first</span> <span class="o">=</span> <span class="n">phenotypes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">MicroarrayExpressionPhenotype</span><span class="p">):</span>
+            <span class="n">micro</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="n">MicroarrayExpressionPhenotype</span><span class="p">],</span> <span class="n">phenotypes</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">MicroarrayExpressionPhenotype</span><span class="p">(</span>
+                <span class="n">expression_log2_ratio</span><span class="o">=</span><span class="n">_mean_float_dict</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">expression_log2_ratio</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">micro</span><span class="p">]</span>
+                <span class="p">),</span>
+                <span class="n">expression_log2_ratio_se</span><span class="o">=</span><span class="n">_rms_pool_float_dict</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">expression_log2_ratio_se</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">micro</span><span class="p">]</span>
+                <span class="p">),</span>
+                <span class="n">expression</span><span class="o">=</span><span class="n">_mean_float_dict</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">expression</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">micro</span><span class="p">]),</span>
+                <span class="n">expression_log2_ratio_variance</span><span class="o">=</span><span class="n">_rms_pool_float_dict</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">expression_log2_ratio_variance</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">micro</span><span class="p">]</span>
+                <span class="p">),</span>
+                <span class="n">n_replicates</span><span class="o">=</span><span class="n">_sum_int_dict</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">n_replicates</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">micro</span><span class="p">]),</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">RNASeqExpressionPhenotype</span><span class="p">):</span>
+            <span class="n">rna</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="n">RNASeqExpressionPhenotype</span><span class="p">],</span> <span class="n">phenotypes</span><span class="p">)</span>
+            <span class="n">n_mapped</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">n_mapped_reads</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">rna</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">n_mapped_reads</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">RNASeqExpressionPhenotype</span><span class="p">(</span>
+                <span class="n">expression_tpm</span><span class="o">=</span><span class="n">_mean_float_dict</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">expression_tpm</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">rna</span><span class="p">]),</span>
+                <span class="n">expression_count</span><span class="o">=</span><span class="n">_sum_int_dict</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">expression_count</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">rna</span><span class="p">]),</span>
+                <span class="n">measurement_type</span><span class="o">=</span><span class="n">first</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
+                <span class="n">n_mapped_reads</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">n_mapped</span><span class="p">))</span> <span class="k">if</span> <span class="n">n_mapped</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">CalMorphPhenotype</span><span class="p">):</span>
+            <span class="n">morph</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="n">CalMorphPhenotype</span><span class="p">],</span> <span class="n">phenotypes</span><span class="p">)</span>
+            <span class="n">cv_dicts</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">calmorph_coefficient_of_variation</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">morph</span><span class="p">]</span>
+            <span class="n">merged_cv</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">_mean_float_dict</span><span class="p">([</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">cv_dicts</span> <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">])</span>
+                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">cv_dicts</span><span class="p">)</span>
+                <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">CalMorphPhenotype</span><span class="p">(</span>
+                <span class="n">calmorph</span><span class="o">=</span><span class="n">_mean_float_dict</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">calmorph</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">morph</span><span class="p">]),</span>
+                <span class="n">calmorph_coefficient_of_variation</span><span class="o">=</span><span class="n">merged_cv</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">MetabolitePhenotype</span><span class="p">):</span>
+            <span class="n">metab</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="n">MetabolitePhenotype</span><span class="p">],</span> <span class="n">phenotypes</span><span class="p">)</span>
+            <span class="n">target_ids</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">target_metabolite_ids</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">metab</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">target_metabolite_ids</span><span class="p">),</span>
+                <span class="kc">None</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">MetabolitePhenotype</span><span class="p">(</span>
+                <span class="n">metabolite_level</span><span class="o">=</span><span class="n">_mean_float_dict</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">metabolite_level</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">metab</span><span class="p">]),</span>
+                <span class="n">metabolite_level_se</span><span class="o">=</span><span class="n">_rms_pool_float_dict</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">metabolite_level_se</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">metab</span><span class="p">]</span>
+                <span class="p">),</span>
+                <span class="n">n_replicates</span><span class="o">=</span><span class="n">_sum_int_dict</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">n_replicates</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">metab</span><span class="p">]),</span>
+                <span class="n">measurement_type</span><span class="o">=</span><span class="n">first</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
+                <span class="n">target_metabolite_ids</span><span class="o">=</span><span class="n">target_ids</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">ProteinAbundancePhenotype</span><span class="p">):</span>
+            <span class="n">prot</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="n">ProteinAbundancePhenotype</span><span class="p">],</span> <span class="n">phenotypes</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">ProteinAbundancePhenotype</span><span class="p">(</span>
+                <span class="n">protein_abundance</span><span class="o">=</span><span class="n">_mean_float_dict</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">protein_abundance</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">prot</span><span class="p">]),</span>
+                <span class="n">protein_abundance_se</span><span class="o">=</span><span class="n">_rms_pool_float_dict</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">protein_abundance_se</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">prot</span><span class="p">]</span>
+                <span class="p">),</span>
+                <span class="n">n_replicates</span><span class="o">=</span><span class="n">_sum_int_dict</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">n_replicates</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">prot</span><span class="p">]),</span>
+                <span class="n">measurement_type</span><span class="o">=</span><span class="n">first</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">VisualScorePhenotype</span><span class="p">):</span>
+            <span class="n">vis</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="n">VisualScorePhenotype</span><span class="p">],</span> <span class="n">phenotypes</span><span class="p">)</span>
+            <span class="n">score_mins</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">visual_score_min</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">vis</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">visual_score_min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="p">]</span>
+            <span class="n">comments</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">comment_annotations</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">vis</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">comment_annotations</span><span class="p">),</span> <span class="kc">None</span>
+            <span class="p">)</span>
+            <span class="n">score_texts</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">score_text</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">vis</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">score_text</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">VisualScorePhenotype</span><span class="p">(</span>
+                <span class="n">visual_score</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">visual_score</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">vis</span><span class="p">])),</span>
+                <span class="n">visual_score_min</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="n">score_mins</span><span class="p">)</span> <span class="k">if</span> <span class="n">score_mins</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">n_replicates</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">n_replicates</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">vis</span><span class="p">)),</span>
+                <span class="n">score_scale_min</span><span class="o">=</span><span class="n">first</span><span class="o">.</span><span class="n">score_scale_min</span><span class="p">,</span>
+                <span class="n">score_scale_max</span><span class="o">=</span><span class="n">first</span><span class="o">.</span><span class="n">score_scale_max</span><span class="p">,</span>
+                <span class="n">score_semantics</span><span class="o">=</span><span class="n">first</span><span class="o">.</span><span class="n">score_semantics</span><span class="p">,</span>
+                <span class="n">target_product</span><span class="o">=</span><span class="n">first</span><span class="o">.</span><span class="n">target_product</span><span class="p">,</span>
+                <span class="n">target_metabolite_id</span><span class="o">=</span><span class="n">first</span><span class="o">.</span><span class="n">target_metabolite_id</span><span class="p">,</span>
+                <span class="n">score_text</span><span class="o">=</span><span class="n">score_texts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">score_texts</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">comment_annotations</span><span class="o">=</span><span class="n">comments</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Unsupported phenotype type for mean merge: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">first</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_mean_fitness_entry</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">duplicate_experiments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="n">fitness_values</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">exp</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype</span><span class="o">.</span><span class="n">fitness</span>
+            <span class="k">for</span> <span class="n">exp</span> <span class="ow">in</span> <span class="n">duplicate_experiments</span>
+            <span class="k">if</span> <span class="n">exp</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype</span><span class="o">.</span><span class="n">fitness</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">]</span>
+        <span class="n">fitness_stds</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">exp</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype</span><span class="o">.</span><span class="n">fitness_std</span>
+            <span class="k">for</span> <span class="n">exp</span> <span class="ow">in</span> <span class="n">duplicate_experiments</span>
+            <span class="k">if</span> <span class="n">exp</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype</span><span class="o">.</span><span class="n">fitness_std</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">]</span>
+
+        <span class="n">mean_fitness</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">fitness_values</span><span class="p">)</span> <span class="k">if</span> <span class="n">fitness_values</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">mean_fitness_std</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">fitness_stds</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span> <span class="k">if</span> <span class="n">fitness_stds</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="n">mean_phenotype</span> <span class="o">=</span> <span class="n">FitnessPhenotype</span><span class="p">(</span>
+            <span class="n">fitness</span><span class="o">=</span><span class="n">cast</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">mean_fitness</span><span class="p">),</span> <span class="n">fitness_std</span><span class="o">=</span><span class="n">mean_fitness_std</span>
+        <span class="p">)</span>
+
+        <span class="n">mean_genotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_mean_genotype</span><span class="p">(</span><span class="n">duplicate_experiments</span><span class="p">)</span>
+
+        <span class="n">dataset_name</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"+"</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="nb">sorted</span><span class="p">([</span><span class="n">i</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">dataset_name</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">duplicate_experiments</span><span class="p">])</span>
+        <span class="p">)</span>
+
+        <span class="n">mean_experiment</span> <span class="o">=</span> <span class="n">FitnessExperiment</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">genotype</span><span class="o">=</span><span class="n">mean_genotype</span><span class="p">,</span>
+            <span class="n">environment</span><span class="o">=</span><span class="n">duplicate_experiments</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">phenotype</span><span class="o">=</span><span class="n">mean_phenotype</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">mean_reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_mean_fitness_reference</span><span class="p">(</span><span class="n">duplicate_experiments</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"experiment"</span><span class="p">:</span> <span class="n">mean_experiment</span><span class="p">,</span> <span class="s2">"experiment_reference"</span><span class="p">:</span> <span class="n">mean_reference</span><span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_mean_gene_interaction_entry</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">duplicate_experiments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="n">interaction_values</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">exp</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype</span><span class="o">.</span><span class="n">gene_interaction</span>
+            <span class="k">for</span> <span class="n">exp</span> <span class="ow">in</span> <span class="n">duplicate_experiments</span>
+            <span class="k">if</span> <span class="n">exp</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype</span><span class="o">.</span><span class="n">gene_interaction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">]</span>
+        <span class="n">p_values</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">exp</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype</span><span class="o">.</span><span class="n">gene_interaction_p_value</span>
+            <span class="k">for</span> <span class="n">exp</span> <span class="ow">in</span> <span class="n">duplicate_experiments</span>
+            <span class="k">if</span> <span class="n">exp</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype</span><span class="o">.</span><span class="n">gene_interaction_p_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">]</span>
+
+        <span class="n">mean_interaction</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">interaction_values</span><span class="p">)</span> <span class="k">if</span> <span class="n">interaction_values</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">aggregated_p_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_p_value_for_mean</span><span class="p">(</span>
+            <span class="n">interaction_values</span><span class="p">,</span> <span class="n">p_values</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Preserve the source arity (digenic -&gt; "edge", trigenic -&gt; "hyperedge");</span>
+        <span class="c1"># do not fall back to the class default, which would relabel digenic means.</span>
+        <span class="n">mean_phenotype</span> <span class="o">=</span> <span class="n">GeneInteractionPhenotype</span><span class="p">(</span>
+            <span class="n">gene_interaction</span><span class="o">=</span><span class="n">cast</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">mean_interaction</span><span class="p">),</span>
+            <span class="n">gene_interaction_p_value</span><span class="o">=</span><span class="n">aggregated_p_value</span><span class="p">,</span>
+            <span class="n">graph_level</span><span class="o">=</span><span class="n">duplicate_experiments</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype</span><span class="o">.</span><span class="n">graph_level</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">mean_genotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_mean_genotype</span><span class="p">(</span><span class="n">duplicate_experiments</span><span class="p">)</span>
+
+        <span class="n">dataset_name</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"+"</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="nb">sorted</span><span class="p">([</span><span class="n">i</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">dataset_name</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">duplicate_experiments</span><span class="p">])</span>
+        <span class="p">)</span>
+
+        <span class="n">mean_experiment</span> <span class="o">=</span> <span class="n">GeneInteractionExperiment</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">genotype</span><span class="o">=</span><span class="n">mean_genotype</span><span class="p">,</span>
+            <span class="n">environment</span><span class="o">=</span><span class="n">duplicate_experiments</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">phenotype</span><span class="o">=</span><span class="n">mean_phenotype</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">mean_reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_mean_gene_interaction_reference</span><span class="p">(</span>
+            <span class="n">duplicate_experiments</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"experiment"</span><span class="p">:</span> <span class="n">mean_experiment</span><span class="p">,</span> <span class="s2">"experiment_reference"</span><span class="p">:</span> <span class="n">mean_reference</span><span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_mean_genotype</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">duplicate_experiments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Genotype</span><span class="p">:</span>
+        <span class="n">mean_perturbations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">GenePerturbationType</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">pert</span> <span class="ow">in</span> <span class="n">duplicate_experiments</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">genotype</span><span class="o">.</span><span class="n">perturbations</span><span class="p">:</span>
+            <span class="n">mean_pert</span> <span class="o">=</span> <span class="n">MeanDeletionPerturbation</span><span class="p">(</span>
+                <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">pert</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="p">,</span>
+                <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">pert</span><span class="o">.</span><span class="n">perturbed_gene_name</span><span class="p">,</span>
+                <span class="n">num_duplicates</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">duplicate_experiments</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">mean_perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mean_pert</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="n">mean_perturbations</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_mean_fitness_reference</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">duplicate_experiments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FitnessExperimentReference</span><span class="p">:</span>
+        <span class="n">fitness_ref_values</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">exp</span><span class="p">[</span><span class="s2">"experiment_reference"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_reference</span><span class="o">.</span><span class="n">fitness</span>
+            <span class="k">for</span> <span class="n">exp</span> <span class="ow">in</span> <span class="n">duplicate_experiments</span>
+            <span class="k">if</span> <span class="n">exp</span><span class="p">[</span><span class="s2">"experiment_reference"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_reference</span><span class="o">.</span><span class="n">fitness</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">]</span>
+        <span class="n">fitness_ref_stds</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">exp</span><span class="p">[</span><span class="s2">"experiment_reference"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_reference</span><span class="o">.</span><span class="n">fitness_std</span>
+            <span class="k">for</span> <span class="n">exp</span> <span class="ow">in</span> <span class="n">duplicate_experiments</span>
+            <span class="k">if</span> <span class="n">exp</span><span class="p">[</span><span class="s2">"experiment_reference"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_reference</span><span class="o">.</span><span class="n">fitness_std</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">]</span>
+
+        <span class="n">mean_fitness_ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">fitness_ref_values</span><span class="p">)</span> <span class="k">if</span> <span class="n">fitness_ref_values</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">mean_fitness_ref_std</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">fitness_ref_stds</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">fitness_ref_stds</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="n">mean_phenotype_reference</span> <span class="o">=</span> <span class="n">FitnessPhenotype</span><span class="p">(</span>
+            <span class="n">fitness</span><span class="o">=</span><span class="n">cast</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">mean_fitness_ref</span><span class="p">),</span> <span class="n">fitness_std</span><span class="o">=</span><span class="n">mean_fitness_ref_std</span>
+        <span class="p">)</span>
+
+        <span class="n">dataset_name</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"+"</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="nb">sorted</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="s2">"experiment_reference"</span><span class="p">]</span><span class="o">.</span><span class="n">dataset_name</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">duplicate_experiments</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">FitnessExperimentReference</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="n">duplicate_experiments</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span>
+                <span class="s2">"experiment_reference"</span>
+            <span class="p">]</span><span class="o">.</span><span class="n">genome_reference</span><span class="p">,</span>
+            <span class="n">environment_reference</span><span class="o">=</span><span class="n">duplicate_experiments</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span>
+                <span class="s2">"experiment_reference"</span>
+            <span class="p">]</span><span class="o">.</span><span class="n">environment_reference</span><span class="p">,</span>
+            <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">mean_phenotype_reference</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_mean_gene_interaction_reference</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">duplicate_experiments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GeneInteractionExperimentReference</span><span class="p">:</span>
+        <span class="n">interaction_ref_values</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">exp</span><span class="p">[</span><span class="s2">"experiment_reference"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_reference</span><span class="o">.</span><span class="n">gene_interaction</span>
+            <span class="k">for</span> <span class="n">exp</span> <span class="ow">in</span> <span class="n">duplicate_experiments</span>
+            <span class="k">if</span> <span class="n">exp</span><span class="p">[</span><span class="s2">"experiment_reference"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_reference</span><span class="o">.</span><span class="n">gene_interaction</span>
+            <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">]</span>
+
+        <span class="n">mean_interaction_ref</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">interaction_ref_values</span><span class="p">)</span> <span class="k">if</span> <span class="n">interaction_ref_values</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="n">mean_phenotype_reference</span> <span class="o">=</span> <span class="n">GeneInteractionPhenotype</span><span class="p">(</span>
+            <span class="n">gene_interaction</span><span class="o">=</span><span class="n">cast</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">mean_interaction_ref</span><span class="p">),</span>
+            <span class="n">gene_interaction_p_value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">graph_level</span><span class="o">=</span><span class="n">duplicate_experiments</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span>
+                <span class="s2">"experiment_reference"</span>
+            <span class="p">]</span><span class="o">.</span><span class="n">phenotype_reference</span><span class="o">.</span><span class="n">graph_level</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">dataset_name</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"+"</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="nb">sorted</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="s2">"experiment_reference"</span><span class="p">]</span><span class="o">.</span><span class="n">dataset_name</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">duplicate_experiments</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">GeneInteractionExperimentReference</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="n">duplicate_experiments</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span>
+                <span class="s2">"experiment_reference"</span>
+            <span class="p">]</span><span class="o">.</span><span class="n">genome_reference</span><span class="p">,</span>
+            <span class="n">environment_reference</span><span class="o">=</span><span class="n">duplicate_experiments</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span>
+                <span class="s2">"experiment_reference"</span>
+            <span class="p">]</span><span class="o">.</span><span class="n">environment_reference</span><span class="p">,</span>
+            <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">mean_phenotype_reference</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_p_value_for_mean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">p_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_values</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"x and p_values must have the same length."</span><span class="p">)</span>
+
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"At least two data points are required."</span><span class="p">)</span>
+
+        <span class="n">mean_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">sample_std_dev</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">sem</span> <span class="o">=</span> <span class="n">sample_std_dev</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="n">t_stat</span> <span class="o">=</span> <span class="n">mean_x</span> <span class="o">/</span> <span class="n">sem</span>
+        <span class="n">p_value_for_mean</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">sf</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">t_stat</span><span class="p">),</span> <span class="n">df</span><span class="o">=</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span>
+
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">p_value_for_mean</span><span class="p">)</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="k">pass</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

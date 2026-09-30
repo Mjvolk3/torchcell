@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.HaplotypeBlock
+==========================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: HaplotypeBlock
+   :show-inheritance:
+   :members:

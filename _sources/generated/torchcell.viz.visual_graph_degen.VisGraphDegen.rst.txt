@@ -1,0 +1,8 @@
+﻿torchcell.viz.visual\_graph\_degen.VisGraphDegen
+================================================
+
+.. currentmodule:: torchcell.viz.visual_graph_degen
+
+.. autoclass:: VisGraphDegen
+   :show-inheritance:
+   :members:

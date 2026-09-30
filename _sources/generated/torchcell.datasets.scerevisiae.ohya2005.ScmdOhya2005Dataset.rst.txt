@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset
+===========================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.ohya2005
+
+.. autoclass:: ScmdOhya2005Dataset
+   :show-inheritance:
+   :members:

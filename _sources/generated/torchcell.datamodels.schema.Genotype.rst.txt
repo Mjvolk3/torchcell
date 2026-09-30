@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.Genotype
+====================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: Genotype
+   :show-inheritance:
+   :members:

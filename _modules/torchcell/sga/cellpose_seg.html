@@ -1,0 +1,1166 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.sga.cellpose_seg &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/sga/cellpose_seg.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.sga.cellpose_seg</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.sga.cellpose_seg</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/sga/cellpose_seg.py</span>
+<span class="c1"># [[torchcell.sga.cellpose_seg]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/sga/cellpose_seg</span>
+<span class="sd">"""Cellpose-SAM per-colony segmentation for the backlit ECHO CRISPR plates.</span>
+
+<span class="sd">A drop-in alternative to the classical per-cell threshold/watershed in</span>
+<span class="sd">``torchcell.sga.image``. Cellpose returns *instance* masks (one integer id per</span>
+<span class="sd">colony), so touching/merged/off-grid colonies are separated natively -- which</span>
+<span class="sd">makes the "invalidate a well that holds a second colony" rule exact rather than a</span>
+<span class="sd">morphology heuristic.</span>
+
+<span class="sd">The lattice fit that assigns colonies to array wells is UNCHANGED: this module</span>
+<span class="sd">reuses ``image._detect_blobs_backlit`` -&gt; ``_fit_lines`` -&gt; ``_gel_polygon``</span>
+<span class="sd">exactly as ``quantify_plate_image`` does, then replaces only the per-cell</span>
+<span class="sd">boundary step. It returns the SAME DataFrame schema</span>
+<span class="sd">``[row, col, size, circularity, flags, cx, cy]`` so ``normalize_plate`` /</span>
+<span class="sd">``score_plate`` consume it without change.</span>
+
+<span class="sd">Decision + benchmarking rationale: [[experiments.W019-echo-crispr-array.cellpose-segmentation-plan]].</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageOps</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sga.image</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MAX_ASPECT</span><span class="p">,</span>
+    <span class="n">MIN_COLONY_AREA</span><span class="p">,</span>
+    <span class="n">MIN_EXTENT</span><span class="p">,</span>
+    <span class="n">_detect_blobs_backlit</span><span class="p">,</span>
+    <span class="n">_estimate_angle</span><span class="p">,</span>
+    <span class="n">_fit_lines</span><span class="p">,</span>
+    <span class="n">_gel_polygon</span><span class="p">,</span>
+    <span class="n">_grayscale</span><span class="p">,</span>
+    <span class="n">_perimeter</span><span class="p">,</span>
+    <span class="n">_polarity_is_dark</span><span class="p">,</span>
+    <span class="n">_rotate</span><span class="p">,</span>
+    <span class="n">_signed_dist</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="CellposeSegConfig">
+<a class="viewcode-back" href="../../../generated/torchcell.sga.CellposeSegConfig.html#torchcell.sga.CellposeSegConfig">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CellposeSegConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Parameters for Cellpose-SAM plate segmentation.</span>
+
+<span class="sd">    ``node_tol``/``stray_tol`` are fractions of the fitted colony pitch: an</span>
+<span class="sd">    instance whose centroid is within ``node_tol * pitch`` of a grid node is that</span>
+<span class="sd">    well's colony; one within ``stray_tol * pitch`` (but farther than</span>
+<span class="sd">    ``node_tol``) is a near-stray that INVALIDATES the well (flag ``M``); one</span>
+<span class="sd">    farther than ``stray_tol`` from every node is an off-grid contaminant colony</span>
+<span class="sd">    (counted, assigned to no well). ``diameter=None`` uses Cellpose-SAM's</span>
+<span class="sd">    diameter-agnostic default; set it (px) only if faint colonies under-segment.</span>
+<span class="sd">    """</span>
+
+    <span class="n">n_rows</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">14</span>
+    <span class="n">n_cols</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">22</span>
+    <span class="n">polarity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"auto"</span>  <span class="c1"># 'auto' | 'bright' | 'dark'</span>
+    <span class="n">node_tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.55</span>
+    <span class="n">stray_tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">circularity_flag</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.80</span>
+    <span class="n">circularity_reject</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.65</span>  <span class="c1"># below this -&gt; invalidate the well (non-circular)</span>
+    <span class="n">neighbor_invalidate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="kc">True</span>  <span class="c1"># invalidate the closest crowded neighbour of a multi</span>
+    <span class="p">)</span>
+    <span class="n">neighbor_dist</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="mf">0.85</span>  <span class="c1"># flag the nearest neighbour if within this*pitch of the multi</span>
+    <span class="p">)</span>
+    <span class="n">gel_detect</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">edge_policy</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"flag"</span>  <span class="c1"># 'flag' | 'drop'</span>
+    <span class="n">flow_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.4</span>
+    <span class="n">cellprob_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">diameter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># no-op for Cellpose-SAM (cpsam is diameter-agnostic)</span>
+    <span class="n">contrast</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"none"</span>  <span class="c1"># 'none' | 'clahe' | 'flatfield' -- boosts faint colonies</span>
+    <span class="n">clahe_clip</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span>
+    <span class="n">min_instance_area</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">MIN_COLONY_AREA</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"drop Cellpose instances smaller than this (px)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">tighten_size</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"shrink each accepted mask to the dark colony pixels (Otsu within "</span>
+        <span class="s2">"the mask), dropping the faint halo Cellpose includes -- removes the air gap "</span>
+        <span class="s2">"between the drawn outline and the colony and makes the stored size the colony "</span>
+        <span class="s2">"itself. Detection stays as permissive as cellprob/contrast allow."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">tighten_min_frac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">0.20</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"keep the original mask if the tightened (dark) region is smaller "</span>
+        <span class="s2">"than this fraction of it -- guards faint colonies where Otsu over-shrinks."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">tighten_grow_px</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"dilate the Otsu colony core back out this many px toward the "</span>
+        <span class="s2">"visual edge (Otsu splits a hair inside the soft rim), bounded by the original "</span>
+        <span class="s2">"mask. 0 = raw Otsu core (tightest); larger = looser. 3 lands on the edge."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">relax_grid</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"after the classical even-spacing lattice fit, snap each row/column "</span>
+        <span class="s2">"line to the median of the Cellpose colony centroids assigned to it, so the grid "</span>
+        <span class="s2">"FOLLOWS a distorted/perspective plate (rows land on colony rows, not between "</span>
+        <span class="s2">"them). Empty margin rows are extrapolated from the colony grid. Fixes the "</span>
+        <span class="s2">"off-center labels + off-gel leak + mis-bucketed multis on skewed captures."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">homography_refit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"after the even-spacing relax, refit the lattice as a PROJECTIVE "</span>
+        <span class="s2">"(homography) map from array index (row, col) to pixels, estimated by RANSAC from "</span>
+        <span class="s2">"the colonies the relaxed grid already places well. A homography is the exact "</span>
+        <span class="s2">"omni-tray-on-a-table perspective, so it recovers rows a single isotropic pitch "</span>
+        <span class="s2">"SKIPS on a tilted capture (in-image row pitch != column pitch, i.e. a trapezoid) "</span>
+        <span class="s2">"-- while leaving correctly-fit plates unchanged. Deterministic (seeded RANSAC)."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">correct_row_shift</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"after fitting, correct a whole-plate one-row (or one-column) "</span>
+        <span class="s2">"registration slip: when a FAINT edge row is under-detected, the lattice can lock "</span>
+        <span class="s2">"one row too low, skipping the true edge row and parking its opposite edge row on "</span>
+        <span class="s2">"the frame. This silently mis-assigns every strain by a row (blanks pick up a "</span>
+        <span class="s2">"neighbour's colony -&gt; false 'contamination'; WT reference scrambled). Fix: among "</span>
+        <span class="s2">"the grid as-is and shifted +/-1 row/col (edge extrapolated), keep whichever "</span>
+        <span class="s2">"assigns the MOST real colonies, accepting a shift only if it adds a substantial "</span>
+        <span class="s2">"fraction of a row. Self-guarding: on a correctly-fit plate a shift only LOSES "</span>
+        <span class="s2">"colonies, so it is a no-op. Only ONE axis is corrected and only by ONE step (a "</span>
+        <span class="s2">"2-row slip, or a simultaneous row+col slip, is not covered). REQUIRES "</span>
+        <span class="s2">"``relax_grid`` -- the correction runs inside the centroid-snap block, so it is "</span>
+        <span class="s2">"silently inert when ``relax_grid=False``."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">edge_margin_frac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"gel-edge gate half-width in pitch units. A colony is dropped as "</span>
+        <span class="s2">"off-gel only if it sits more than this*pitch outside the fitted gel hexagon. "</span>
+        <span class="s2">"Larger keeps more true edge-row (row A / row P) colonies."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">multi_min_frac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">0.35</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"a second colony on/near a well triggers the multi ('M') flag only "</span>
+        <span class="s2">"if its area is at least this fraction of the primary colony's -- so a Cellpose "</span>
+        <span class="s2">"over-split fragment of one colony no longer falsely rejects the well. NOTE the "</span>
+        <span class="s2">"comparison is RAW-area vs RAW-area (pre-tightening): the primary's raw mask "</span>
+        <span class="s2">"carries a ~1.3-1.4x halo, so a genuine second colony reads ~0.4 of it, not the "</span>
+        <span class="s2">"~0.55 you get if you re-measure after `tighten_size` has shrunk the primary in "</span>
+        <span class="s2">"place. Set this from raw ratios (~0.35), not post-hoc ones."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">multi_min_sep_frac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">0.30</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"companion guard to ``multi_min_frac``: a second instance counts as a "</span>
+        <span class="s2">"competing colony only if its centroid is at least this fraction of the pitch away "</span>
+        <span class="s2">"from the primary's. Real touching doublets sit 0.4-0.55 pitch apart, while a "</span>
+        <span class="s2">"Cellpose over-split sliver of ONE colony shares its centre -- so the separation "</span>
+        <span class="s2">"test is what lets multi_min_frac be lowered enough to catch real doublets without "</span>
+        <span class="s2">"promoting fragments."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">recover_missed_wells</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"after assignment, recover colonies Cellpose MISSED: at every empty "</span>
+        <span class="s2">"in-gel grid node, probe the intensity depression vs the local agar and, if it "</span>
+        <span class="s2">"reads as a real colony (depth &gt; recover_depth_thresh), threshold it in (Otsu "</span>
+        <span class="s2">"core + tighten_grow_px, the SAME size basis as a detected colony -- faintness is "</span>
+        <span class="s2">"a contrast property, not a size one, so a recovered colony is scored normally). "</span>
+        <span class="s2">"Cellpose misses the FAINTEST colonies at the corners/edges (backlight falloff) "</span>
+        <span class="s2">"on the less-grown plates; the correct grid tells us exactly which wells to check. "</span>
+        <span class="s2">"Recovered wells carry detector='recovered' (provenance only, not a quality flag)."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">recover_depth_thresh</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">12.0</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"minimum agar-minus-colony depression (gray levels) for an empty node "</span>
+        <span class="s2">"to be recovered as a colony. Empty wells sit near 0; real colonies are far above "</span>
+        <span class="s2">"this -- so it separates faint colonies from bare agar without recovering blanks."</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="PlateSegResult">
+<a class="viewcode-back" href="../../../generated/torchcell.sga.PlateSegResult.html#torchcell.sga.PlateSegResult">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PlateSegResult</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Return bundle for a segmented plate: the gitter-style per-well table plus</span>
+<span class="sd">    plate-level counts the classical path cannot report (raw instance count and</span>
+<span class="sd">    off-grid contaminant colonies).</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+
+    <span class="n">table</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="n">n_instances</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_offgrid</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">masks</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># drawn instance-id -&gt; invalidation category ('' accepted / 'M' multi / 'N'</span>
+    <span class="c1"># neighbour / 'C' non-circular), for colouring overlays and the montage</span>
+    <span class="n">kept_color</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="c1"># final fitted lattice (n_rows, n_cols, 2) in (y, x) pixels -- the grid actually used</span>
+    <span class="c1"># for assignment, so a labelled overlay can show WHERE each (row, col) well landed and</span>
+    <span class="c1"># expose a mis-registration (grid node off its colony) directly.</span>
+    <span class="n">nodes</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="load_cellpose_model">
+<a class="viewcode-back" href="../../../generated/torchcell.sga.load_cellpose_model.html#torchcell.sga.load_cellpose_model">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_cellpose_model</span><span class="p">(</span><span class="n">gpu</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Load the Cellpose-SAM generalist model (``cpsam``). Weights auto-download</span>
+<span class="sd">    to ``~/.cellpose/models`` on first use. Returns the live model; kept separate</span>
+<span class="sd">    from segmentation so one model instance can process many plates.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">cellpose</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
+
+    <span class="k">return</span> <span class="n">models</span><span class="o">.</span><span class="n">CellposeModel</span><span class="p">(</span><span class="n">gpu</span><span class="o">=</span><span class="n">gpu</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fit_lattice</span><span class="p">(</span>
+    <span class="n">g</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">polarity</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Reproduce ``quantify_plate_image``'s backlit lattice prologue: returns</span>
+<span class="sd">    ``(nodes[n_rows,n_cols,2], pitch, invert, theta, center, roi)``. Kept in lockstep</span>
+<span class="sd">    with ``image.py`` -- if that prologue changes, mirror it here.</span>
+<span class="sd">    """</span>
+    <span class="n">cents</span><span class="p">,</span> <span class="n">pitch</span><span class="p">,</span> <span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">r1</span><span class="p">,</span> <span class="n">c0</span><span class="p">,</span> <span class="n">c1</span><span class="p">)</span> <span class="o">=</span> <span class="n">_detect_blobs_backlit</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">)</span>
+    <span class="n">invert</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">_polarity_is_dark</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">r1</span><span class="p">,</span> <span class="n">c0</span><span class="p">,</span> <span class="n">c1</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">polarity</span> <span class="o">==</span> <span class="s2">"auto"</span>
+        <span class="k">else</span> <span class="n">polarity</span> <span class="o">==</span> <span class="s2">"dark"</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cents</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">n_rows</span> <span class="o">*</span> <span class="n">n_cols</span> <span class="o">*</span> <span class="mf">0.2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"only </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cents</span><span class="p">)</span><span class="si">}</span><span class="s2"> colony blobs detected for a </span><span class="si">{</span><span class="n">n_rows</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">n_cols</span><span class="si">}</span><span class="s2"> array; "</span>
+            <span class="sa">f</span><span class="s2">"the lattice fit would be unreliable."</span>
+        <span class="p">)</span>
+    <span class="n">center</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">r0</span> <span class="o">+</span> <span class="n">r1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="n">c0</span> <span class="o">+</span> <span class="n">c1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">])</span>
+    <span class="n">theta</span> <span class="o">=</span> <span class="n">_estimate_angle</span><span class="p">(</span><span class="n">cents</span><span class="p">,</span> <span class="n">pitch</span><span class="p">)</span>
+    <span class="n">cents_rot</span> <span class="o">=</span> <span class="n">_rotate</span><span class="p">(</span><span class="n">cents</span><span class="p">,</span> <span class="o">-</span><span class="n">theta</span><span class="p">,</span> <span class="n">center</span><span class="p">)</span>
+    <span class="n">ys_r</span> <span class="o">=</span> <span class="n">_fit_lines</span><span class="p">(</span><span class="n">cents_rot</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">n_rows</span><span class="p">)</span>
+    <span class="n">xs_r</span> <span class="o">=</span> <span class="n">_fit_lines</span><span class="p">(</span><span class="n">cents_rot</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">n_cols</span><span class="p">)</span>
+    <span class="n">gy</span><span class="p">,</span> <span class="n">gx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">ys_r</span><span class="p">,</span> <span class="n">xs_r</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s2">"ij"</span><span class="p">)</span>
+    <span class="n">nodes_rot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">gy</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">gx</span><span class="o">.</span><span class="n">ravel</span><span class="p">()],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">nodes</span> <span class="o">=</span> <span class="n">_rotate</span><span class="p">(</span><span class="n">nodes_rot</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">center</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">nodes</span><span class="p">,</span> <span class="n">pitch</span><span class="p">,</span> <span class="n">invert</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">r1</span><span class="p">,</span> <span class="n">c0</span><span class="p">,</span> <span class="n">c1</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_relax_lattice</span><span class="p">(</span>
+    <span class="n">nodes</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">cents</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">n_rows</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">n_cols</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">theta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">center</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">iters</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Snap the even-spacing lattice to the colony centroids so it follows plate</span>
+<span class="sd">    distortion. Working in the de-rotated frame, each row line is moved to the median</span>
+<span class="sd">    y of the centroids nearest it (each column line to the median x), iterated a few</span>
+<span class="sd">    times; rows/columns with too few colonies (empty margins) are linearly</span>
+<span class="sd">    extrapolated from the ones that snapped, so they sit on the colony grid rather</span>
+<span class="sd">    than drifting into the lid/frame. Returns nodes in the original frame.</span>
+<span class="sd">    """</span>
+    <span class="n">cr</span> <span class="o">=</span> <span class="n">_rotate</span><span class="p">(</span><span class="n">cents</span><span class="p">,</span> <span class="o">-</span><span class="n">theta</span><span class="p">,</span> <span class="n">center</span><span class="p">)</span>
+    <span class="n">nrot</span> <span class="o">=</span> <span class="n">_rotate</span><span class="p">(</span><span class="n">nodes</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="o">-</span><span class="n">theta</span><span class="p">,</span> <span class="n">center</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_snap</span><span class="p">(</span>
+        <span class="n">base</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">coord</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">min_count</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">snapped</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iters</span><span class="p">):</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">coord</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">vals</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                <span class="n">m</span> <span class="o">=</span> <span class="n">idx</span> <span class="o">==</span> <span class="n">k</span>
+                <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">&gt;=</span> <span class="n">min_count</span><span class="p">:</span>
+                    <span class="n">vals</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">coord</span><span class="p">[</span><span class="n">m</span><span class="p">]))</span>
+                    <span class="n">snapped</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">snapped</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># extrapolate empty lines from the snapped grid</span>
+            <span class="n">ks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">snapped</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">ks</span><span class="p">,</span> <span class="n">vals</span><span class="p">[</span><span class="n">ks</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">miss</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">snapped</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">vals</span><span class="p">[</span><span class="n">miss</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="n">miss</span> <span class="o">+</span> <span class="n">b</span>
+        <span class="k">return</span> <span class="n">vals</span>
+
+    <span class="n">ys</span> <span class="o">=</span> <span class="n">_snap</span><span class="p">(</span><span class="n">nrot</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">cr</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="mi">4</span><span class="p">)</span>
+    <span class="n">xs</span> <span class="o">=</span> <span class="n">_snap</span><span class="p">(</span><span class="n">nrot</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">n_cols</span><span class="p">,</span> <span class="n">cr</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">gy</span><span class="p">,</span> <span class="n">gx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">ys</span><span class="p">,</span> <span class="n">xs</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s2">"ij"</span><span class="p">)</span>
+    <span class="n">nodes_rot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">gy</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">gx</span><span class="o">.</span><span class="n">ravel</span><span class="p">()],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_rotate</span><span class="p">(</span><span class="n">nodes_rot</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">center</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fit_homography</span><span class="p">(</span><span class="n">src</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">dst</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""3x3 homography ``H`` mapping ``src`` -&gt; ``dst`` (both ``(N, 2)``) by the direct</span>
+<span class="sd">    linear transform, with isotropic (Hartley) normalization for conditioning. In</span>
+<span class="sd">    homogeneous coords ``dst ~ H @ [src; 1]``. Used to model the array as a projective</span>
+<span class="sd">    grid: index space ``(col, row)`` -&gt; pixels, exact for a plate photographed at an</span>
+<span class="sd">    angle (perspective/trapezoid).</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_norm</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(((</span><span class="n">p</span> <span class="o">-</span> <span class="n">c</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">+</span> <span class="mf">1e-12</span><span class="p">)</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">s</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">s</span> <span class="o">*</span> <span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="o">-</span><span class="n">s</span> <span class="o">*</span> <span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+        <span class="n">ph</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">p</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">))]</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+        <span class="k">return</span> <span class="n">ph</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">],</span> <span class="n">t</span>
+
+    <span class="n">sn</span><span class="p">,</span> <span class="n">ts</span> <span class="o">=</span> <span class="n">_norm</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+    <span class="n">dn</span><span class="p">,</span> <span class="n">td</span> <span class="o">=</span> <span class="n">_norm</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="mi">9</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">sn</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">dn</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="n">a</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="n">u</span><span class="p">,</span> <span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">x</span> <span class="o">*</span> <span class="n">u</span><span class="p">,</span> <span class="n">x</span> <span class="o">*</span> <span class="n">v</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span>
+        <span class="n">a</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">u</span><span class="p">,</span> <span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">y</span> <span class="o">*</span> <span class="n">u</span><span class="p">,</span> <span class="n">y</span> <span class="o">*</span> <span class="n">v</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">vt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+    <span class="n">hn</span> <span class="o">=</span> <span class="n">vt</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">td</span><span class="p">)</span> <span class="o">@</span> <span class="n">hn</span> <span class="o">@</span> <span class="n">ts</span>
+    <span class="n">out</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">h</span> <span class="o">/</span> <span class="n">h</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_apply_homography</span><span class="p">(</span><span class="n">h</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pts</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Apply homography ``h`` to ``(N, 2)`` points, returning ``(N, 2)``. A degenerate</span>
+<span class="sd">    RANSAC sample can map a point onto the line at infinity (``w`` -&gt; 0); clamp ``w`` so</span>
+<span class="sd">    such a point becomes a large finite coordinate (rejected as an outlier) rather than</span>
+<span class="sd">    a divide-by-zero NaN.</span>
+<span class="sd">    """</span>
+    <span class="n">ph</span> <span class="o">=</span> <span class="p">(</span><span class="n">h</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">pts</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pts</span><span class="p">))]</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">ph</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-12</span><span class="p">,</span> <span class="mf">1e-12</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+    <span class="n">out</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">ph</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="n">w</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_homography_lattice</span><span class="p">(</span>
+    <span class="n">nodes</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">cents</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">n_rows</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">n_cols</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">pitch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">iters</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="n">ransac_iters</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
+    <span class="n">thresh</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">8.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Refit the lattice as a PROJECTIVE grid and return the corrected nodes.</span>
+
+<span class="sd">    The even-spacing relax carries a single isotropic pitch, so on a plate shot at a</span>
+<span class="sd">    tilt -- where the in-image row pitch differs from the column pitch (a trapezoid) --</span>
+<span class="sd">    the 16-row lattice is too short to span the rows and SKIPS the faintest interior</span>
+<span class="sd">    rows. Here we instead assign colonies to the current grid to label them with array</span>
+<span class="sd">    indices ``(row, col)``, RANSAC-fit a homography ``index -&gt; pixel`` (the exact</span>
+<span class="sd">    perspective of an omni tray on a light box), regenerate all nodes from it, and</span>
+<span class="sd">    iterate. RANSAC discards the mislabeled colonies of any skipped row, so the fit</span>
+<span class="sd">    recovers those rows; on a correctly-fit plate the homography reproduces the grid.</span>
+<span class="sd">    Deterministic: fixed RNG seed.</span>
+<span class="sd">    """</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">ii</span><span class="p">,</span> <span class="n">jj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_rows</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_cols</span><span class="p">),</span> <span class="n">indexing</span><span class="o">=</span><span class="s2">"ij"</span><span class="p">)</span>
+    <span class="n">idx_all</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">jj</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">ii</span><span class="o">.</span><span class="n">ravel</span><span class="p">()],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>  <span class="c1"># (col, row)</span>
+    <span class="n">grid</span> <span class="o">=</span> <span class="n">nodes</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iters</span><span class="p">):</span>
+        <span class="n">nyx</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">src</span><span class="p">,</span> <span class="n">dst</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">cy</span><span class="p">,</span> <span class="n">cx</span> <span class="ow">in</span> <span class="n">cents</span><span class="p">:</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">nyx</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">cy</span><span class="p">,</span> <span class="n">nyx</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">cx</span><span class="p">)</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">pitch</span><span class="p">:</span>
+                <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">)</span>
+                <span class="n">src</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">])</span>
+                <span class="n">dst</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">12</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">grid</span>
+        <span class="n">src_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">dst_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">best_h</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">best_inl</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">best_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">src_a</span><span class="p">),</span> <span class="nb">bool</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">_r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ransac_iters</span><span class="p">):</span>
+            <span class="n">sel</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">src_a</span><span class="p">),</span> <span class="mi">4</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">h</span> <span class="o">=</span> <span class="n">_fit_homography</span><span class="p">(</span><span class="n">src_a</span><span class="p">[</span><span class="n">sel</span><span class="p">],</span> <span class="n">dst_a</span><span class="p">[</span><span class="n">sel</span><span class="p">])</span>
+            <span class="k">except</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(((</span><span class="n">_apply_homography</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">src_a</span><span class="p">)</span> <span class="o">-</span> <span class="n">dst_a</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">err</span> <span class="o">&lt;</span> <span class="n">thresh</span>
+            <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">&gt;</span> <span class="n">best_inl</span><span class="p">:</span>
+                <span class="n">best_inl</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+                <span class="n">best_h</span> <span class="o">=</span> <span class="n">h</span>
+                <span class="n">best_mask</span> <span class="o">=</span> <span class="n">mask</span>
+        <span class="k">if</span> <span class="n">best_h</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">grid</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">_fit_homography</span><span class="p">(</span><span class="n">src_a</span><span class="p">[</span><span class="n">best_mask</span><span class="p">],</span> <span class="n">dst_a</span><span class="p">[</span><span class="n">best_mask</span><span class="p">])</span>  <span class="c1"># refit on inliers</span>
+        <span class="n">px</span> <span class="o">=</span> <span class="n">_apply_homography</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">idx_all</span><span class="p">)</span>  <span class="c1"># (x, y)</span>
+        <span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">px</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">px</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">grid</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_contrast_enhance</span><span class="p">(</span><span class="n">img</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">clahe_clip</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Boost faint-colony contrast BEFORE Cellpose, returning a 3-channel uint8.</span>
+
+<span class="sd">    Faint colonies on backlit plates differ only slightly from the bright agar, so</span>
+<span class="sd">    Cellpose misses them though the eye can see them. Two local operations lift them:</span>
+<span class="sd">    ``clahe`` (contrast-limited adaptive histogram equalization -- local contrast</span>
+<span class="sd">    stretch) and ``flatfield`` (divide out the smooth illumination background, which</span>
+<span class="sd">    also removes the transillumination gradient). Applied to luminance, restacked to</span>
+<span class="sd">    RGB. Only the image Cellpose SEES is changed; the lattice fit uses the original.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">skimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">color</span><span class="p">,</span> <span class="n">exposure</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">skimage.filters</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian</span>
+
+    <span class="n">gray</span> <span class="o">=</span> <span class="n">color</span><span class="o">.</span><span class="n">rgb2gray</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>  <span class="c1"># float [0,1]</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"clahe"</span><span class="p">:</span>
+        <span class="n">enh</span> <span class="o">=</span> <span class="n">exposure</span><span class="o">.</span><span class="n">equalize_adapthist</span><span class="p">(</span><span class="n">gray</span><span class="p">,</span> <span class="n">clip_limit</span><span class="o">=</span><span class="n">clahe_clip</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"flatfield"</span><span class="p">:</span>
+        <span class="n">bg</span> <span class="o">=</span> <span class="n">gaussian</span><span class="p">(</span><span class="n">gray</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="n">gray</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.03</span><span class="p">)</span>  <span class="c1"># type: ignore[no-untyped-call]</span>
+        <span class="n">enh</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">gray</span> <span class="o">/</span> <span class="p">(</span><span class="n">bg</span> <span class="o">+</span> <span class="mf">1e-6</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">enh</span> <span class="o">=</span> <span class="n">exposure</span><span class="o">.</span><span class="n">rescale_intensity</span><span class="p">(</span><span class="n">enh</span><span class="p">,</span> <span class="n">out_range</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>  <span class="c1"># type: ignore[no-untyped-call]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"contrast must be 'none'|'clahe'|'flatfield', got </span><span class="si">{</span><span class="n">method</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">out</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">enh</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_tighten_instance</span><span class="p">(</span>
+    <span class="n">masks</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">iid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">g</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">invert</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">min_frac</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">grow_px</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Shrink instance ``iid`` in ``masks`` to its dark-colony core and return the</span>
+<span class="sd">    tightened area (px). Cellpose masks on backlit plates include a faint halo of</span>
+<span class="sd">    near-agar pixels; Otsu within the mask splits colony (dark, if ``invert``) from</span>
+<span class="sd">    halo (bright), we keep the largest colony component and ZERO the halo pixels of</span>
+<span class="sd">    this id in ``masks`` (so drawn contours + montage tighten too). The core is then</span>
+<span class="sd">    dilated ``grow_px`` px back out toward the visual edge (Otsu splits a hair inside</span>
+<span class="sd">    the soft colony rim), bounded by the original mask so it never re-enters the halo</span>
+<span class="sd">    or a neighbour. If the colony core is &lt; ``min_frac`` of the mask (a faint colony</span>
+<span class="sd">    Otsu over-shrinks), the mask is left untouched and the original area returned.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.ndimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">binary_dilation</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.ndimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">label</span> <span class="k">as</span> <span class="n">_label</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">skimage.filters</span><span class="w"> </span><span class="kn">import</span> <span class="n">threshold_otsu</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">skimage.morphology</span><span class="w"> </span><span class="kn">import</span> <span class="n">disk</span>
+
+    <span class="n">ys</span><span class="p">,</span> <span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">masks</span> <span class="o">==</span> <span class="n">iid</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ys</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ys</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">int</span><span class="p">(</span><span class="n">ys</span><span class="o">.</span><span class="n">max</span><span class="p">())</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">xs</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">int</span><span class="p">(</span><span class="n">xs</span><span class="o">.</span><span class="n">max</span><span class="p">())</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">subm</span> <span class="o">=</span> <span class="n">masks</span><span class="p">[</span><span class="n">y0</span><span class="p">:</span><span class="n">y1</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span><span class="n">x1</span><span class="p">]</span> <span class="o">==</span> <span class="n">iid</span>
+    <span class="n">subg</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="n">y0</span><span class="p">:</span><span class="n">y1</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span><span class="n">x1</span><span class="p">]</span>
+    <span class="n">vals</span> <span class="o">=</span> <span class="n">subg</span><span class="p">[</span><span class="n">subm</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">vals</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">10</span> <span class="ow">or</span> <span class="n">vals</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">==</span> <span class="n">vals</span><span class="o">.</span><span class="n">max</span><span class="p">():</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">subm</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">threshold_otsu</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span>  <span class="c1"># type: ignore[no-untyped-call]</span>
+    <span class="n">colony</span> <span class="o">=</span> <span class="p">(</span><span class="n">subg</span> <span class="o">&lt;=</span> <span class="n">t</span><span class="p">)</span> <span class="k">if</span> <span class="n">invert</span> <span class="k">else</span> <span class="p">(</span><span class="n">subg</span> <span class="o">&gt;=</span> <span class="n">t</span><span class="p">)</span>
+    <span class="n">colony</span> <span class="o">&amp;=</span> <span class="n">subm</span>
+    <span class="n">lab</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">_label</span><span class="p">(</span><span class="n">colony</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">subm</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">lab</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span>
+    <span class="n">counts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">cc</span> <span class="o">=</span> <span class="n">lab</span> <span class="o">==</span> <span class="nb">int</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">argmax</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">grow_px</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># grow back to the visual edge, bounded by the original mask</span>
+        <span class="n">cc</span> <span class="o">=</span> <span class="n">binary_dilation</span><span class="p">(</span><span class="n">cc</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="n">disk</span><span class="p">(</span><span class="n">grow_px</span><span class="p">))</span> <span class="o">&amp;</span> <span class="n">subm</span>  <span class="c1"># type: ignore[no-untyped-call]</span>
+    <span class="k">if</span> <span class="n">cc</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&lt;</span> <span class="nb">max</span><span class="p">(</span><span class="n">min_frac</span> <span class="o">*</span> <span class="n">subm</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="n">MIN_COLONY_AREA</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">subm</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>  <span class="c1"># over-shrunk faint colony -&gt; keep original mask</span>
+    <span class="n">masks</span><span class="p">[</span><span class="n">y0</span><span class="p">:</span><span class="n">y1</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span><span class="n">x1</span><span class="p">][</span><span class="n">subm</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">cc</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># zero the halo pixels of this id</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">cc</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_well</span><span class="p">(</span>
+    <span class="n">ri</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">ci</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">circ</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">flags</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">cx</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">cy</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">iid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">detector</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""One per-well record (1-based row/col); ``iid`` is the drawn instance id or -1.</span>
+<span class="sd">    ``detector`` records provenance: '' empty, 'cellpose' detected, 'recovered' filled in</span>
+<span class="sd">    by the grid-guided miss recovery.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"row"</span><span class="p">:</span> <span class="n">ri</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s2">"col"</span><span class="p">:</span> <span class="n">ci</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s2">"size"</span><span class="p">:</span> <span class="n">size</span><span class="p">,</span>
+        <span class="s2">"circularity"</span><span class="p">:</span> <span class="n">circ</span><span class="p">,</span>
+        <span class="s2">"flags"</span><span class="p">:</span> <span class="n">flags</span><span class="p">,</span>
+        <span class="s2">"cx"</span><span class="p">:</span> <span class="n">cx</span><span class="p">,</span>
+        <span class="s2">"cy"</span><span class="p">:</span> <span class="n">cy</span><span class="p">,</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="n">iid</span><span class="p">,</span>
+        <span class="s2">"detector"</span><span class="p">:</span> <span class="n">detector</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_recover_colony</span><span class="p">(</span>
+    <span class="n">g</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">ny</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">nx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">pitch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">invert</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">depth_thresh</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">grow_px</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Recover a Cellpose-missed colony at an empty grid node from image intensity.</span>
+
+<span class="sd">    Cellpose misses the faintest colonies (low contrast vs agar, worst at the backlight-</span>
+<span class="sd">    falloff corners); the correct grid says a well SHOULD sit here, so we look directly.</span>
+<span class="sd">    Measure the agar-minus-colony depression (median annulus minus 25th-pct core); if it</span>
+<span class="sd">    clears ``depth_thresh`` the well holds a colony. Threshold it with Otsu inside a disk</span>
+<span class="sd">    and grow the core ``grow_px`` px -- the SAME size basis as ``_tighten_instance`` -- so</span>
+<span class="sd">    a faint colony gets its TRUE size (faintness is contrast, not growth). Returns</span>
+<span class="sd">    ``(size, circularity, colony_bbox_mask, y0, x0)`` or None if no colony.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.ndimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">binary_dilation</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.ndimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">label</span> <span class="k">as</span> <span class="n">_label</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">skimage.filters</span><span class="w"> </span><span class="kn">import</span> <span class="n">threshold_otsu</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">skimage.morphology</span><span class="w"> </span><span class="kn">import</span> <span class="n">disk</span> <span class="k">as</span> <span class="n">_disk</span>
+
+    <span class="n">r_out</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">0.78</span> <span class="o">*</span> <span class="n">pitch</span><span class="p">)</span>
+    <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ny</span> <span class="o">-</span> <span class="n">r_out</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ny</span> <span class="o">+</span> <span class="n">r_out</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nx</span> <span class="o">-</span> <span class="n">r_out</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">nx</span> <span class="o">+</span> <span class="n">r_out</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">sub</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="n">y0</span><span class="p">:</span><span class="n">y1</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span><span class="n">x1</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">yy</span><span class="p">,</span> <span class="n">xx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="n">y0</span><span class="p">:</span><span class="n">y1</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span><span class="n">x1</span><span class="p">]</span>
+    <span class="n">rr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">yy</span> <span class="o">-</span> <span class="n">ny</span><span class="p">,</span> <span class="n">xx</span> <span class="o">-</span> <span class="n">nx</span><span class="p">)</span>
+    <span class="n">core</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[</span><span class="n">rr</span> <span class="o">&lt;=</span> <span class="mf">0.28</span> <span class="o">*</span> <span class="n">pitch</span><span class="p">]</span>
+    <span class="n">ann</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[(</span><span class="n">rr</span> <span class="o">&gt;=</span> <span class="mf">0.55</span> <span class="o">*</span> <span class="n">pitch</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">rr</span> <span class="o">&lt;=</span> <span class="n">r_out</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="n">core</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">20</span> <span class="ow">or</span> <span class="n">ann</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">20</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">bg</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">ann</span><span class="p">))</span>
+    <span class="n">depth</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">bg</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">core</span><span class="p">,</span> <span class="mi">25</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">invert</span>
+        <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">core</span><span class="p">,</span> <span class="mi">75</span><span class="p">))</span> <span class="o">-</span> <span class="n">bg</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">depth</span> <span class="o">&lt;=</span> <span class="n">depth_thresh</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">win</span> <span class="o">=</span> <span class="n">rr</span> <span class="o">&lt;=</span> <span class="mf">0.46</span> <span class="o">*</span> <span class="n">pitch</span>
+    <span class="n">vals</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[</span><span class="n">win</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">vals</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">20</span> <span class="ow">or</span> <span class="n">vals</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">==</span> <span class="n">vals</span><span class="o">.</span><span class="n">max</span><span class="p">():</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">threshold_otsu</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span>  <span class="c1"># type: ignore[no-untyped-call]</span>
+    <span class="n">colony</span> <span class="o">=</span> <span class="p">((</span><span class="n">sub</span> <span class="o">&lt;=</span> <span class="n">t</span><span class="p">)</span> <span class="k">if</span> <span class="n">invert</span> <span class="k">else</span> <span class="p">(</span><span class="n">sub</span> <span class="o">&gt;=</span> <span class="n">t</span><span class="p">))</span> <span class="o">&amp;</span> <span class="n">win</span>
+    <span class="n">lab</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">_label</span><span class="p">(</span><span class="n">colony</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">lab</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span>
+    <span class="n">counts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">cc</span> <span class="o">=</span> <span class="n">lab</span> <span class="o">==</span> <span class="nb">int</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">argmax</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">grow_px</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">cc</span> <span class="o">=</span> <span class="n">binary_dilation</span><span class="p">(</span><span class="n">cc</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="n">_disk</span><span class="p">(</span><span class="n">grow_px</span><span class="p">))</span> <span class="o">&amp;</span> <span class="n">win</span>  <span class="c1"># type: ignore[no-untyped-call]</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">cc</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">size</span> <span class="o">&lt;</span> <span class="n">MIN_COLONY_AREA</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">perim</span> <span class="o">=</span> <span class="n">_perimeter</span><span class="p">(</span><span class="n">cc</span><span class="p">)</span>
+    <span class="n">circ</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">size</span> <span class="o">/</span> <span class="p">(</span><span class="n">perim</span><span class="o">**</span><span class="mi">2</span><span class="p">)))</span> <span class="k">if</span> <span class="n">perim</span> <span class="k">else</span> <span class="mf">0.0</span>
+    <span class="k">return</span> <span class="n">size</span><span class="p">,</span> <span class="n">circ</span><span class="p">,</span> <span class="n">cc</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">x0</span>
+
+
+<span class="c1"># invalidation category -&gt; outline colour (green accepted; agar is yellow, so the</span>
+<span class="c1"># non-circular category is PURPLE, not yellow)</span>
+<span class="n">_CATEGORY_COLOR</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">""</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>  <span class="c1"># accepted -- green</span>
+    <span class="s2">"M"</span><span class="p">:</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>  <span class="c1"># multiple colonies -- red</span>
+    <span class="s2">"N"</span><span class="p">:</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">140</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>  <span class="c1"># neighbour of a multi well -- orange</span>
+    <span class="s2">"C"</span><span class="p">:</span> <span class="p">(</span><span class="mi">170</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">),</span>  <span class="c1"># non-circular -- purple</span>
+    <span class="s2">"R"</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">255</span><span class="p">),</span>  <span class="c1"># grid-recovered Cellpose miss -- blue</span>
+    <span class="s2">"X"</span><span class="p">:</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">147</span><span class="p">),</span>  <span class="c1"># extra colliding colony (cause of a multi) -- deep pink</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_instance_props</span><span class="p">(</span><span class="n">masks</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">min_area</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Per-instance geometry from a Cellpose integer-label image: area, centroid,</span>
+<span class="sd">    circularity, bbox aspect, extent. Instances below ``min_area`` are dropped.</span>
+<span class="sd">    """</span>
+    <span class="n">props</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">masks</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">[</span><span class="n">ids</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]:</span>
+        <span class="n">blob</span> <span class="o">=</span> <span class="n">masks</span> <span class="o">==</span> <span class="n">i</span>
+        <span class="n">area</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">blob</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">area</span> <span class="o">&lt;</span> <span class="n">min_area</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">ys</span><span class="p">,</span> <span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">blob</span><span class="p">)</span>
+        <span class="n">cy</span><span class="p">,</span> <span class="n">cx</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">ys</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">xs</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+        <span class="n">hb</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ys</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">ys</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">wb</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">xs</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">xs</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">aspect</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">hb</span><span class="p">,</span> <span class="n">wb</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">hb</span><span class="p">,</span> <span class="n">wb</span><span class="p">))</span>
+        <span class="n">extent</span> <span class="o">=</span> <span class="n">area</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">hb</span> <span class="o">*</span> <span class="n">wb</span><span class="p">)</span>
+        <span class="n">perim</span> <span class="o">=</span> <span class="n">_perimeter</span><span class="p">(</span><span class="n">blob</span><span class="p">)</span>
+        <span class="n">circ</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">area</span> <span class="o">/</span> <span class="p">(</span><span class="n">perim</span><span class="o">**</span><span class="mi">2</span><span class="p">)))</span> <span class="k">if</span> <span class="n">perim</span> <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="n">props</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">"id"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">),</span>
+                <span class="s2">"area"</span><span class="p">:</span> <span class="n">area</span><span class="p">,</span>
+                <span class="s2">"cy"</span><span class="p">:</span> <span class="n">cy</span><span class="p">,</span>
+                <span class="s2">"cx"</span><span class="p">:</span> <span class="n">cx</span><span class="p">,</span>
+                <span class="s2">"aspect"</span><span class="p">:</span> <span class="n">aspect</span><span class="p">,</span>
+                <span class="s2">"extent"</span><span class="p">:</span> <span class="n">extent</span><span class="p">,</span>
+                <span class="s2">"circ"</span><span class="p">:</span> <span class="n">circ</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">props</span>
+
+
+<span class="c1"># distinct, green-free instance-fill colours (green is reserved for accepted</span>
+<span class="c1"># outlines); cycled per colony so touching colonies are visually separable.</span>
+<span class="n">_INSTANCE_COLORS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">[</span><span class="mi">230</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">75</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">245</span><span class="p">,</span> <span class="mi">130</span><span class="p">,</span> <span class="mi">48</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">255</span><span class="p">,</span> <span class="mi">225</span><span class="p">,</span> <span class="mi">25</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">130</span><span class="p">,</span> <span class="mi">200</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">145</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">180</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">70</span><span class="p">,</span> <span class="mi">240</span><span class="p">,</span> <span class="mi">240</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">240</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">230</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">250</span><span class="p">,</span> <span class="mi">190</span><span class="p">,</span> <span class="mi">190</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">230</span><span class="p">,</span> <span class="mi">190</span><span class="p">,</span> <span class="mi">255</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">170</span><span class="p">,</span> <span class="mi">110</span><span class="p">,</span> <span class="mi">40</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">128</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+    <span class="p">],</span>
+    <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_draw_cellpose_overlay</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">masks</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">kept_color</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">out</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Visual-QC overlay: draw each IN-GEL colony's circumference on the original,</span>
+<span class="sd">    coloured by invalidation category -- green accepted, red multi-colony, orange</span>
+<span class="sd">    neighbour-of-multi, purple non-circular. Only kept (in-gel, on-grid) instances</span>
+<span class="sd">    are drawn, so off-plate/frame detections never appear. ``df`` is accepted for a</span>
+<span class="sd">    stable signature but the colouring comes from ``kept_color`` (instance id -&gt;</span>
+<span class="sd">    category), which matches exactly what the pipeline invalidates.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">skimage.segmentation</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_boundaries</span>
+
+    <span class="n">im</span> <span class="o">=</span> <span class="n">ImageOps</span><span class="o">.</span><span class="n">exif_transpose</span><span class="p">(</span><span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">))</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">"RGB"</span><span class="p">)</span>
+    <span class="n">over</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">im</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">masks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">masks</span><span class="p">)</span>
+    <span class="c1"># draw accepted first, then recovered, then invalidations + collision partners on top</span>
+    <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="s2">"R"</span><span class="p">,</span> <span class="s2">"X"</span><span class="p">,</span> <span class="s2">"C"</span><span class="p">,</span> <span class="s2">"N"</span><span class="p">,</span> <span class="s2">"M"</span><span class="p">):</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">kept_color</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="n">cat</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ids</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">sel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">masks</span><span class="p">,</span> <span class="n">ids</span><span class="p">),</span> <span class="n">masks</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">over</span><span class="p">[</span><span class="n">find_boundaries</span><span class="p">(</span><span class="n">sel</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"thick"</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">_CATEGORY_COLOR</span><span class="p">[</span><span class="n">cat</span><span class="p">])</span>  <span class="c1"># type: ignore[no-untyped-call]</span>
+    <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">over</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_snap_edge_row</span><span class="p">(</span>
+    <span class="n">nodes</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">cents</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">n_rows</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">n_cols</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">pitch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">node_tol</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Correct a whole-plate one-row/one-column registration slip (see</span>
+<span class="sd">    ``CellposeSegConfig.correct_row_shift``). Among the lattice as-is and shifted by one</span>
+<span class="sd">    row/column in each direction -- the vacated edge extrapolated linearly per line, the</span>
+<span class="sd">    opposite edge dropped -- keep whichever places the MOST colony centroids within</span>
+<span class="sd">    ``node_tol * pitch`` of a node. A shift is accepted only if it assigns at least</span>
+<span class="sd">    ``max(0.25 * lane, 6)`` more colonies than the current fit, so a correctly-registered</span>
+<span class="sd">    plate (where any shift only sheds colonies) is left untouched.</span>
+<span class="sd">    """</span>
+    <span class="n">tol</span> <span class="o">=</span> <span class="n">node_tol</span> <span class="o">*</span> <span class="n">pitch</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">assigned</span><span class="p">(</span><span class="n">g</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="n">ny</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(((</span><span class="n">cents</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">ny</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">((</span><span class="n">d</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">tol</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+
+    <span class="n">cands</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{(</span><span class="s2">"none"</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="n">nodes</span><span class="p">}</span>
+    <span class="c1"># row shifts: extrapolate a new edge row, drop the opposite edge row</span>
+    <span class="n">cands</span><span class="p">[(</span><span class="s2">"row"</span><span class="p">,</span> <span class="o">+</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+        <span class="p">[(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">nodes</span><span class="p">[</span><span class="mi">1</span><span class="p">])[</span><span class="kc">None</span><span class="p">],</span> <span class="n">nodes</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="mi">0</span>
+    <span class="p">)</span>
+    <span class="n">cands</span><span class="p">[(</span><span class="s2">"row"</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">nodes</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">nodes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">nodes</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">])[</span><span class="kc">None</span><span class="p">]],</span> <span class="mi">0</span>
+    <span class="p">)</span>
+    <span class="c1"># column shifts (same idea along axis 1)</span>
+    <span class="n">cands</span><span class="p">[(</span><span class="s2">"col"</span><span class="p">,</span> <span class="o">+</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+        <span class="p">[(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">nodes</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">nodes</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">nodes</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="n">cands</span><span class="p">[(</span><span class="s2">"col"</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">nodes</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:],</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">nodes</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">nodes</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">2</span><span class="p">])[:,</span> <span class="kc">None</span><span class="p">]],</span> <span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="n">assigned</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span>
+    <span class="n">best_grid</span><span class="p">,</span> <span class="n">best_score</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">,</span> <span class="n">base</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">grid</span> <span class="ow">in</span> <span class="n">cands</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="p">(</span><span class="s2">"none"</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">lane</span> <span class="o">=</span> <span class="n">n_cols</span> <span class="k">if</span> <span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"row"</span> <span class="k">else</span> <span class="n">n_rows</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">assigned</span><span class="p">(</span><span class="n">grid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">s</span> <span class="o">&gt;</span> <span class="n">best_score</span> <span class="ow">and</span> <span class="n">s</span> <span class="o">-</span> <span class="n">base</span> <span class="o">&gt;=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.25</span> <span class="o">*</span> <span class="n">lane</span><span class="p">,</span> <span class="mi">6</span><span class="p">):</span>
+            <span class="n">best_grid</span><span class="p">,</span> <span class="n">best_score</span> <span class="o">=</span> <span class="n">grid</span><span class="p">,</span> <span class="n">s</span>
+    <span class="k">return</span> <span class="n">best_grid</span>
+
+
+<div class="viewcode-block" id="quantify_plate_image_cellpose">
+<a class="viewcode-back" href="../../../generated/torchcell.sga.quantify_plate_image_cellpose.html#torchcell.sga.quantify_plate_image_cellpose">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">quantify_plate_image_cellpose</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">cfg</span><span class="p">:</span> <span class="n">CellposeSegConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">overlay_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">return_masks</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">precomputed_masks</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PlateSegResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Segment a backlit plate with Cellpose-SAM and quantify colonies onto the</span>
+<span class="sd">    fitted array grid.</span>
+
+<span class="sd">    Returns a ``PlateSegResult`` whose ``table`` matches the classical</span>
+<span class="sd">    ``quantify_plate_image`` schema (``row, col, size, circularity, flags, cx,</span>
+<span class="sd">    cy``); ``flags`` codes: ``C`` low circularity, ``E`` straddles gel edge,</span>
+<span class="sd">    ``M`` multiple colonies on the well (rejected downstream).</span>
+
+<span class="sd">    ``precomputed_masks`` skips the Cellpose forward pass and re-runs only the</span>
+<span class="sd">    grid/gel/assignment/scoring on a given instance-mask array (``model`` may be</span>
+<span class="sd">    ``None``) -- for re-deriving the grid (e.g. relaxation) from cached masks</span>
+<span class="sd">    without a GPU. If those masks are already Otsu-tightened, pass</span>
+<span class="sd">    ``tighten_size=False`` so they are not tightened twice.</span>
+<span class="sd">    """</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">cfg</span> <span class="ow">or</span> <span class="n">CellposeSegConfig</span><span class="p">()</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">_grayscale</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">nodes</span><span class="p">,</span> <span class="n">pitch</span><span class="p">,</span> <span class="n">invert</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">_roi</span> <span class="o">=</span> <span class="n">_fit_lattice</span><span class="p">(</span>
+        <span class="n">g</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">n_rows</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">n_cols</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">polarity</span>
+    <span class="p">)</span>
+    <span class="n">edge_margin</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">edge_margin_frac</span> <span class="o">*</span> <span class="n">pitch</span>
+
+    <span class="k">if</span> <span class="n">precomputed_masks</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">masks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">precomputed_masks</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ImageOps</span><span class="o">.</span><span class="n">exif_transpose</span><span class="p">(</span><span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">))</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">"RGB"</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">contrast</span> <span class="o">!=</span> <span class="s2">"none"</span><span class="p">:</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">_contrast_enhance</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">contrast</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">clahe_clip</span><span class="p">)</span>
+        <span class="n">masks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span>
+                <span class="n">img</span><span class="p">,</span>
+                <span class="n">flow_threshold</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">flow_threshold</span><span class="p">,</span>
+                <span class="n">cellprob_threshold</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">cellprob_threshold</span><span class="p">,</span>
+                <span class="n">diameter</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">diameter</span><span class="p">,</span>
+            <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">)</span>
+    <span class="n">props</span> <span class="o">=</span> <span class="n">_instance_props</span><span class="p">(</span><span class="n">masks</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">min_instance_area</span><span class="p">)</span>
+
+    <span class="c1"># relax the grid onto the Cellpose colony centroids (follows plate distortion),</span>
+    <span class="c1"># then derive the gel polygon from the corrected grid so its boundary tracks the</span>
+    <span class="c1"># true colony extent (no lid/frame leak). Drop NN-isolated specks first so a lone</span>
+    <span class="c1"># lid/frame detection cannot bias the snap.</span>
+    <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">relax_grid</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">props</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">cfg</span><span class="o">.</span><span class="n">n_rows</span> <span class="o">*</span> <span class="n">cfg</span><span class="o">.</span><span class="n">n_cols</span><span class="p">:</span>
+        <span class="n">cents</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">p</span><span class="p">[</span><span class="s2">"cy"</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="s2">"cx"</span><span class="p">]]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">props</span><span class="p">])</span>
+        <span class="n">dd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(((</span><span class="n">cents</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">cents</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">fill_diagonal</span><span class="p">(</span><span class="n">dd</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+        <span class="n">cents</span> <span class="o">=</span> <span class="n">cents</span><span class="p">[</span><span class="n">dd</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1.8</span> <span class="o">*</span> <span class="n">pitch</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cents</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">cfg</span><span class="o">.</span><span class="n">n_rows</span> <span class="o">*</span> <span class="n">cfg</span><span class="o">.</span><span class="n">n_cols</span><span class="p">:</span>
+            <span class="n">nodes</span> <span class="o">=</span> <span class="n">_relax_lattice</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">cents</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">n_rows</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">n_cols</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">center</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">homography_refit</span><span class="p">:</span>
+                <span class="n">nodes</span> <span class="o">=</span> <span class="n">_homography_lattice</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">cents</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">n_rows</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">n_cols</span><span class="p">,</span> <span class="n">pitch</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">correct_row_shift</span><span class="p">:</span>
+                <span class="c1"># fix a one-row/col slip BEFORE the gel polygon is derived, so the gel</span>
+                <span class="c1"># (and every downstream assignment) tracks the corrected grid.</span>
+                <span class="n">nodes</span> <span class="o">=</span> <span class="n">_snap_edge_row</span><span class="p">(</span>
+                    <span class="n">nodes</span><span class="p">,</span> <span class="n">cents</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">n_rows</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">n_cols</span><span class="p">,</span> <span class="n">pitch</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">node_tol</span>
+                <span class="p">)</span>
+
+    <span class="n">gel_sd</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">gel_detect</span><span class="p">:</span>
+        <span class="n">_gel_poly</span><span class="p">,</span> <span class="n">gel_mask</span> <span class="o">=</span> <span class="n">_gel_polygon</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">nodes</span><span class="p">,</span> <span class="n">pitch</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">center</span><span class="p">)</span>
+        <span class="n">gel_sd</span> <span class="o">=</span> <span class="n">_signed_dist</span><span class="p">(</span><span class="n">gel_mask</span><span class="p">)</span>
+
+    <span class="n">node_yx</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># (n_rows*n_cols, 2)</span>
+    <span class="c1"># bucket each in-gel instance to its nearest node; track off-grid contaminants</span>
+    <span class="n">buckets</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">n_offgrid</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">props</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">gel_sd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">yi</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s2">"cy"</span><span class="p">])),</span> <span class="mi">0</span><span class="p">),</span> <span class="n">g</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">xi</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s2">"cx"</span><span class="p">])),</span> <span class="mi">0</span><span class="p">),</span> <span class="n">g</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">gel_sd</span><span class="p">[</span><span class="n">yi</span><span class="p">,</span> <span class="n">xi</span><span class="p">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">edge_margin</span><span class="p">:</span>
+                <span class="k">continue</span>  <span class="c1"># outside the gel hexagon -&gt; frame/panel, not a colony</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">node_yx</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">p</span><span class="p">[</span><span class="s2">"cy"</span><span class="p">],</span> <span class="n">node_yx</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">p</span><span class="p">[</span><span class="s2">"cx"</span><span class="p">])</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">dist</span> <span class="o">&gt;</span> <span class="n">cfg</span><span class="o">.</span><span class="n">stray_tol</span> <span class="o">*</span> <span class="n">pitch</span><span class="p">:</span>
+            <span class="n">n_offgrid</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">continue</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">p</span><span class="p">,</span> <span class="s2">"dist"</span><span class="p">:</span> <span class="n">dist</span><span class="p">}</span>
+        <span class="n">buckets</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+    <span class="n">recs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">well_idx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># (ri,ci) -&gt; recs index, occupied only</span>
+    <span class="n">empty_wells</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># (ri,ci,recs_idx) with no instance</span>
+    <span class="n">competitor_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>  <span class="c1"># extra colliding colonies (cause of a multi flag)</span>
+    <span class="k">for</span> <span class="n">ri</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">n_rows</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">ci</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">n_cols</span><span class="p">):</span>
+            <span class="n">j</span> <span class="o">=</span> <span class="n">ri</span> <span class="o">*</span> <span class="n">cfg</span><span class="o">.</span><span class="n">n_cols</span> <span class="o">+</span> <span class="n">ci</span>
+            <span class="n">yc</span><span class="p">,</span> <span class="n">xc</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">node_yx</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="mi">0</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">node_yx</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="n">insts</span> <span class="o">=</span> <span class="n">buckets</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="n">on</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">insts</span> <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="s2">"dist"</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">node_tol</span> <span class="o">*</span> <span class="n">pitch</span><span class="p">]</span>
+            <span class="n">near</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">p</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">insts</span>
+                <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">node_tol</span> <span class="o">*</span> <span class="n">pitch</span> <span class="o">&lt;</span> <span class="n">p</span><span class="p">[</span><span class="s2">"dist"</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">stray_tol</span> <span class="o">*</span> <span class="n">pitch</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">on</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">near</span><span class="p">:</span>
+                <span class="n">empty_wells</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">ri</span><span class="p">,</span> <span class="n">ci</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">recs</span><span class="p">)))</span>
+                <span class="n">recs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_well</span><span class="p">(</span><span class="n">ri</span><span class="p">,</span> <span class="n">ci</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="n">xc</span><span class="p">,</span> <span class="n">yc</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+                <span class="k">continue</span>
+            <span class="n">pool</span> <span class="o">=</span> <span class="n">on</span> <span class="k">if</span> <span class="n">on</span> <span class="k">else</span> <span class="n">near</span>
+            <span class="n">best</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">pool</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="p">[</span><span class="s2">"area"</span><span class="p">])</span>
+            <span class="n">orig_area</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">best</span><span class="p">[</span><span class="s2">"area"</span><span class="p">])</span>
+            <span class="n">cym</span><span class="p">,</span> <span class="n">cxm</span> <span class="o">=</span> <span class="n">best</span><span class="p">[</span><span class="s2">"cy"</span><span class="p">],</span> <span class="n">best</span><span class="p">[</span><span class="s2">"cx"</span><span class="p">]</span>
+            <span class="n">sd_val</span> <span class="o">=</span> <span class="n">pitch</span>
+            <span class="k">if</span> <span class="n">gel_sd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">syi</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">cym</span><span class="p">)),</span> <span class="mi">0</span><span class="p">),</span> <span class="n">g</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">sxi</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">cxm</span><span class="p">)),</span> <span class="mi">0</span><span class="p">),</span> <span class="n">g</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">sd_val</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">gel_sd</span><span class="p">[</span><span class="n">syi</span><span class="p">,</span> <span class="n">sxi</span><span class="p">])</span>
+            <span class="n">accepted</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">orig_area</span> <span class="o">&gt;=</span> <span class="n">MIN_COLONY_AREA</span>
+                <span class="ow">and</span> <span class="n">best</span><span class="p">[</span><span class="s2">"dist"</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">node_tol</span> <span class="o">*</span> <span class="n">pitch</span>
+                <span class="ow">and</span> <span class="n">best</span><span class="p">[</span><span class="s2">"aspect"</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">MAX_ASPECT</span>
+                <span class="ow">and</span> <span class="n">best</span><span class="p">[</span><span class="s2">"extent"</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">MIN_EXTENT</span>
+                <span class="ow">and</span> <span class="n">sd_val</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="n">edge_margin</span>
+                <span class="ow">and</span> <span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">edge_policy</span> <span class="o">!=</span> <span class="s2">"drop"</span> <span class="ow">or</span> <span class="n">sd_val</span> <span class="o">&gt;=</span> <span class="n">edge_margin</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">accepted</span><span class="p">:</span>
+                <span class="c1"># The well holds no VALID colony, so it is empty for scoring purposes --</span>
+                <span class="c1"># and it must go on empty_wells too, or grid-guided recovery never probes</span>
+                <span class="c1"># it. Missing this is why a faint corner colony whose only nearby instance</span>
+                <span class="c1"># was rejected (too far / wrong shape / off-gel) stayed 0 even though the</span>
+                <span class="c1"># recovery probe would have found it.</span>
+                <span class="n">empty_wells</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">ri</span><span class="p">,</span> <span class="n">ci</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">recs</span><span class="p">)))</span>
+                <span class="c1"># Record the NODE, not the rejected instance's centroid: the well is empty,</span>
+                <span class="c1"># its nominal position is its grid node, and recovery probes from this</span>
+                <span class="c1"># stored position. Storing the reject's centroid would send the probe to</span>
+                <span class="c1"># whatever was rejected (e.g. a frame blob at a corner) and let it "recover"</span>
+                <span class="c1"># that instead of the well -- matching the truly-empty branch above.</span>
+                <span class="n">recs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_well</span><span class="p">(</span><span class="n">ri</span><span class="p">,</span> <span class="n">ci</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="n">xc</span><span class="p">,</span> <span class="n">yc</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+                <span class="k">continue</span>
+            <span class="c1"># tighten the stored size to the dark colony core (drop the halo); detection</span>
+            <span class="c1"># already happened, so this only sharpens the size/outline, never recall.</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">_tighten_instance</span><span class="p">(</span>
+                    <span class="n">masks</span><span class="p">,</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="n">best</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]),</span>
+                    <span class="n">g</span><span class="p">,</span>
+                    <span class="n">invert</span><span class="p">,</span>
+                    <span class="n">cfg</span><span class="o">.</span><span class="n">tighten_min_frac</span><span class="p">,</span>
+                    <span class="n">cfg</span><span class="o">.</span><span class="n">tighten_grow_px</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">tighten_size</span>
+                <span class="k">else</span> <span class="n">orig_area</span>
+            <span class="p">)</span>
+            <span class="n">flags</span> <span class="o">=</span> <span class="s2">""</span>
+            <span class="k">if</span> <span class="n">best</span><span class="p">[</span><span class="s2">"circ"</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">cfg</span><span class="o">.</span><span class="n">circularity_reject</span><span class="p">:</span>
+                <span class="n">flags</span> <span class="o">+=</span> <span class="s2">"C"</span>  <span class="c1"># non-circular -&gt; invalidate (purple)</span>
+            <span class="k">if</span> <span class="o">-</span><span class="n">edge_margin</span> <span class="o">&lt;=</span> <span class="n">sd_val</span> <span class="o">&lt;</span> <span class="n">edge_margin</span><span class="p">:</span>
+                <span class="n">flags</span> <span class="o">+=</span> <span class="s2">"E"</span>
+            <span class="c1"># multi ('M') fires only on a SECOND real colony (area &gt;= multi_min_frac of</span>
+            <span class="c1"># the primary) on/near the well -- a Cellpose over-split fragment no longer</span>
+            <span class="c1"># falsely rejects a clean single colony.</span>
+            <span class="n">competitors</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">p</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">(</span><span class="n">on</span> <span class="o">+</span> <span class="n">near</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s2">"id"</span><span class="p">])</span> <span class="o">!=</span> <span class="nb">int</span><span class="p">(</span><span class="n">best</span><span class="p">[</span><span class="s2">"id"</span><span class="p">])</span>
+                <span class="ow">and</span> <span class="n">p</span><span class="p">[</span><span class="s2">"area"</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">multi_min_frac</span> <span class="o">*</span> <span class="n">orig_area</span>
+                <span class="ow">and</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s2">"cy"</span><span class="p">]</span> <span class="o">-</span> <span class="n">best</span><span class="p">[</span><span class="s2">"cy"</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="s2">"cx"</span><span class="p">]</span> <span class="o">-</span> <span class="n">best</span><span class="p">[</span><span class="s2">"cx"</span><span class="p">]))</span>
+                <span class="o">&gt;=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">multi_min_sep_frac</span> <span class="o">*</span> <span class="n">pitch</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="n">competitors</span><span class="p">:</span>
+                <span class="n">flags</span> <span class="o">+=</span> <span class="s2">"M"</span>  <span class="c1"># two colonies compete for nutrient -&gt; invalidate (red)</span>
+                <span class="c1"># the extra colliding colonies are not grid wells; mark them so the</span>
+                <span class="c1"># collision shows BOTH colonies, not just the invalidated well.</span>
+                <span class="n">competitor_ids</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s2">"id"</span><span class="p">])</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">competitors</span><span class="p">)</span>
+            <span class="n">well_idx</span><span class="p">[(</span><span class="n">ri</span><span class="p">,</span> <span class="n">ci</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">recs</span><span class="p">)</span>
+            <span class="n">recs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">_well</span><span class="p">(</span>
+                    <span class="n">ri</span><span class="p">,</span>
+                    <span class="n">ci</span><span class="p">,</span>
+                    <span class="n">size</span><span class="p">,</span>
+                    <span class="nb">float</span><span class="p">(</span><span class="n">best</span><span class="p">[</span><span class="s2">"circ"</span><span class="p">]),</span>
+                    <span class="n">flags</span><span class="p">,</span>
+                    <span class="n">cxm</span><span class="p">,</span>
+                    <span class="n">cym</span><span class="p">,</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="n">best</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]),</span>
+                    <span class="s2">"cellpose"</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="c1"># neighbour invalidation: a multi well holds a duplicate that crowds ONE adjacent</span>
+    <span class="c1"># colony. Flag the single nearest occupied orthogonal neighbour whose colony comes</span>
+    <span class="c1"># within neighbor_dist*pitch of any of this well's colonies -- the closest crowded</span>
+    <span class="c1"># neighbour, not all four; normally-spaced neighbours (further than the cutoff) are</span>
+    <span class="c1"># left accepted.</span>
+    <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">neighbor_invalidate</span><span class="p">:</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">ri</span><span class="p">,</span> <span class="n">ci</span><span class="p">),</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">well_idx</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="s2">"M"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">recs</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="s2">"flags"</span><span class="p">]):</span>
+                <span class="k">continue</span>
+            <span class="n">j</span> <span class="o">=</span> <span class="n">ri</span> <span class="o">*</span> <span class="n">cfg</span><span class="o">.</span><span class="n">n_cols</span> <span class="o">+</span> <span class="n">ci</span>
+            <span class="n">mine</span> <span class="o">=</span> <span class="p">[(</span><span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s2">"cy"</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s2">"cx"</span><span class="p">]))</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">buckets</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="p">[])]</span>
+            <span class="n">best_nb</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">best_d</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e18</span>
+            <span class="k">for</span> <span class="n">dr</span><span class="p">,</span> <span class="n">dc</span> <span class="ow">in</span> <span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)):</span>
+                <span class="n">nb</span> <span class="o">=</span> <span class="n">well_idx</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">ri</span> <span class="o">+</span> <span class="n">dr</span><span class="p">,</span> <span class="n">ci</span> <span class="o">+</span> <span class="n">dc</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">nb</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">ny</span><span class="p">,</span> <span class="n">nx</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">recs</span><span class="p">[</span><span class="n">nb</span><span class="p">][</span><span class="s2">"cy"</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">recs</span><span class="p">[</span><span class="n">nb</span><span class="p">][</span><span class="s2">"cx"</span><span class="p">])</span>
+                <span class="n">nbd</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+                    <span class="nb">min</span><span class="p">(((</span><span class="n">ny</span> <span class="o">-</span> <span class="n">my</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">nx</span> <span class="o">-</span> <span class="n">mx</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span> <span class="k">for</span> <span class="n">my</span><span class="p">,</span> <span class="n">mx</span> <span class="ow">in</span> <span class="n">mine</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">nbd</span> <span class="o">&lt;</span> <span class="n">best_d</span><span class="p">:</span>
+                    <span class="n">best_d</span> <span class="o">=</span> <span class="n">nbd</span>
+                    <span class="n">best_nb</span> <span class="o">=</span> <span class="n">nb</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">best_nb</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="n">best_d</span> <span class="o">&lt;</span> <span class="n">cfg</span><span class="o">.</span><span class="n">neighbor_dist</span> <span class="o">*</span> <span class="n">pitch</span>
+                <span class="ow">and</span> <span class="ow">not</span> <span class="p">({</span><span class="s2">"M"</span><span class="p">,</span> <span class="s2">"N"</span><span class="p">}</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">recs</span><span class="p">[</span><span class="n">best_nb</span><span class="p">][</span><span class="s2">"flags"</span><span class="p">])))</span>
+            <span class="p">):</span>
+                <span class="n">recs</span><span class="p">[</span><span class="n">best_nb</span><span class="p">][</span><span class="s2">"flags"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">recs</span><span class="p">[</span><span class="n">best_nb</span><span class="p">][</span><span class="s2">"flags"</span><span class="p">])</span> <span class="o">+</span> <span class="s2">"N"</span>
+
+    <span class="c1"># grid-guided recovery of Cellpose MISSES: at each empty in-gel node, look directly at</span>
+    <span class="c1"># the image for a colony Cellpose failed to detect (faint corners / backlight falloff)</span>
+    <span class="c1"># and fill it in with a true-size threshold. New instance ids are written into `masks`</span>
+    <span class="c1"># so the overlay draws them; recovered wells are scored like any colony (detector tag</span>
+    <span class="c1"># is provenance only).</span>
+    <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">recover_missed_wells</span><span class="p">:</span>
+        <span class="n">next_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">masks</span><span class="o">.</span><span class="n">max</span><span class="p">())</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">ri</span><span class="p">,</span> <span class="n">ci</span><span class="p">,</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">empty_wells</span><span class="p">:</span>
+            <span class="n">yc</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">recs</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="s2">"cy"</span><span class="p">])))</span>
+            <span class="n">xc</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">recs</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="s2">"cx"</span><span class="p">])))</span>
+            <span class="k">if</span> <span class="n">gel_sd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">yi</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">yc</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">g</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">xi</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">xc</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">g</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">gel_sd</span><span class="p">[</span><span class="n">yi</span><span class="p">,</span> <span class="n">xi</span><span class="p">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">edge_margin</span><span class="p">:</span>
+                    <span class="k">continue</span>  <span class="c1"># off-gel -- do not invent colonies on the frame/bevel</span>
+            <span class="n">rec</span> <span class="o">=</span> <span class="n">_recover_colony</span><span class="p">(</span>
+                <span class="n">g</span><span class="p">,</span> <span class="n">yc</span><span class="p">,</span> <span class="n">xc</span><span class="p">,</span> <span class="n">pitch</span><span class="p">,</span> <span class="n">invert</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">recover_depth_thresh</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">tighten_grow_px</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">rec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">size</span><span class="p">,</span> <span class="n">circ</span><span class="p">,</span> <span class="n">cc</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">x0</span> <span class="o">=</span> <span class="n">rec</span>
+            <span class="c1"># Validate the RECOVERED REGION, not just the node it was probed from. At a</span>
+            <span class="c1"># corner well the threshold can run downhill off the colony onto the plastic</span>
+            <span class="c1"># frame/bevel, so the blob ends up outside the gel and well away from its node</span>
+            <span class="c1"># (observed: centroid 0.68*pitch off-node at gel_sd -40 while the node itself</span>
+            <span class="c1"># read +19). Trim the region to in-gel pixels, then require what survives to be</span>
+            <span class="c1"># a real colony still centred on its own well.</span>
+            <span class="n">ys</span><span class="p">,</span> <span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">cc</span><span class="p">)</span>
+            <span class="n">gy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">y0</span> <span class="o">+</span> <span class="n">ys</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">g</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">gx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">x0</span> <span class="o">+</span> <span class="n">xs</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">g</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">gel_sd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">keep</span> <span class="o">=</span> <span class="n">gel_sd</span><span class="p">[</span><span class="n">gy</span><span class="p">,</span> <span class="n">gx</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="n">edge_margin</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">keep</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="k">continue</span>
+                <span class="n">cc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">cc</span><span class="p">)</span>
+                <span class="n">cc</span><span class="p">[</span><span class="n">ys</span><span class="p">[</span><span class="n">keep</span><span class="p">],</span> <span class="n">xs</span><span class="p">[</span><span class="n">keep</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">ys</span><span class="p">,</span> <span class="n">xs</span> <span class="o">=</span> <span class="n">ys</span><span class="p">[</span><span class="n">keep</span><span class="p">],</span> <span class="n">xs</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span>
+                <span class="n">size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">keep</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">size</span> <span class="o">&lt;</span> <span class="n">MIN_COLONY_AREA</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">((</span><span class="n">y0</span> <span class="o">+</span> <span class="n">ys</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">-</span> <span class="n">yc</span><span class="p">,</span> <span class="p">(</span><span class="n">x0</span> <span class="o">+</span> <span class="n">xs</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">-</span> <span class="n">xc</span><span class="p">))</span> <span class="o">&gt;</span> <span class="p">(</span>
+                <span class="n">cfg</span><span class="o">.</span><span class="n">node_tol</span> <span class="o">*</span> <span class="n">pitch</span>
+            <span class="p">):</span>
+                <span class="k">continue</span>  <span class="c1"># recovered blob is not centred on this well -- frame artefact</span>
+            <span class="n">masks</span><span class="p">[</span><span class="n">y0</span> <span class="p">:</span> <span class="n">y0</span> <span class="o">+</span> <span class="n">cc</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x0</span> <span class="p">:</span> <span class="n">x0</span> <span class="o">+</span> <span class="n">cc</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="n">cc</span><span class="p">]</span> <span class="o">=</span> <span class="n">next_id</span>
+            <span class="n">recs</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">_well</span><span class="p">(</span>
+                <span class="n">ri</span><span class="p">,</span>
+                <span class="n">ci</span><span class="p">,</span>
+                <span class="n">size</span><span class="p">,</span>
+                <span class="n">circ</span><span class="p">,</span>
+                <span class="s2">""</span><span class="p">,</span>
+                <span class="nb">float</span><span class="p">(</span><span class="n">x0</span> <span class="o">+</span> <span class="n">xs</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
+                <span class="nb">float</span><span class="p">(</span><span class="n">y0</span> <span class="o">+</span> <span class="n">ys</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
+                <span class="n">next_id</span><span class="p">,</span>
+                <span class="s2">"recovered"</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">well_idx</span><span class="p">[(</span><span class="n">ri</span><span class="p">,</span> <span class="n">ci</span><span class="p">)]</span> <span class="o">=</span> <span class="n">idx</span>
+            <span class="n">next_id</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="n">kept_color</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">recs</span><span class="p">:</span>
+        <span class="n">rid</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"id"</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">rid</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"flags"</span><span class="p">])</span>
+        <span class="n">kept_color</span><span class="p">[</span><span class="n">rid</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"R"</span>
+            <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"detector"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"recovered"</span>
+            <span class="k">else</span> <span class="s2">"M"</span>
+            <span class="k">if</span> <span class="s2">"M"</span> <span class="ow">in</span> <span class="n">f</span>
+            <span class="k">else</span> <span class="s2">"N"</span>
+            <span class="k">if</span> <span class="s2">"N"</span> <span class="ow">in</span> <span class="n">f</span>
+            <span class="k">else</span> <span class="s2">"C"</span>
+            <span class="k">if</span> <span class="s2">"C"</span> <span class="ow">in</span> <span class="n">f</span>
+            <span class="k">else</span> <span class="s2">""</span>
+        <span class="p">)</span>
+    <span class="c1"># the extra colliding colonies (not grid wells) drawn distinctly from the red well</span>
+    <span class="k">for</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">competitor_ids</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">cid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kept_color</span><span class="p">:</span>
+            <span class="n">kept_color</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"X"</span>
+
+    <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"row"</span><span class="p">,</span> <span class="s2">"col"</span><span class="p">,</span> <span class="s2">"size"</span><span class="p">,</span> <span class="s2">"circularity"</span><span class="p">,</span> <span class="s2">"flags"</span><span class="p">,</span> <span class="s2">"cx"</span><span class="p">,</span> <span class="s2">"cy"</span><span class="p">,</span> <span class="s2">"detector"</span><span class="p">]</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([{</span><span class="n">k</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">}</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">recs</span><span class="p">])</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"size"</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">MIN_COLONY_AREA</span><span class="p">,</span> <span class="p">[</span><span class="s2">"size"</span><span class="p">,</span> <span class="s2">"circularity"</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span>
+
+    <span class="n">masks_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">masks</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">overlay_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_draw_cellpose_overlay</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">masks_arr</span><span class="p">,</span> <span class="n">kept_color</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">overlay_path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">PlateSegResult</span><span class="p">(</span>
+        <span class="n">table</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
+        <span class="n">n_instances</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">props</span><span class="p">),</span>
+        <span class="n">n_offgrid</span><span class="o">=</span><span class="n">n_offgrid</span><span class="p">,</span>
+        <span class="n">masks</span><span class="o">=</span><span class="n">masks_arr</span> <span class="k">if</span> <span class="n">return_masks</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">kept_color</span><span class="o">=</span><span class="n">kept_color</span><span class="p">,</span>
+        <span class="n">nodes</span><span class="o">=</span><span class="n">node_yx</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">n_rows</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">n_cols</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

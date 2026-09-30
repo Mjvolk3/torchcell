@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.compound\_identity\_curate.CuratedRow
+==========================================================
+
+.. currentmodule:: torchcell.datamodels.compound_identity_curate
+
+.. autoclass:: CuratedRow
+   :show-inheritance:
+   :members:

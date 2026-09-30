@@ -1,0 +1,6 @@
+﻿torchcell.paper.tables.read\_first\_record
+==========================================
+
+.. currentmodule:: torchcell.paper.tables
+
+.. autofunction:: read_first_record

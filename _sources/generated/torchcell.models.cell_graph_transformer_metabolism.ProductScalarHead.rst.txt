@@ -1,0 +1,8 @@
+﻿torchcell.models.cell\_graph\_transformer\_metabolism.ProductScalarHead
+=======================================================================
+
+.. currentmodule:: torchcell.models.cell_graph_transformer_metabolism
+
+.. autoclass:: ProductScalarHead
+   :show-inheritance:
+   :members:

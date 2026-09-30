@@ -1,0 +1,8 @@
+﻿torchcell.provenance.ChangeKind
+===============================
+
+.. currentmodule:: torchcell.provenance
+
+.. autoclass:: ChangeKind
+   :show-inheritance:
+   :members:

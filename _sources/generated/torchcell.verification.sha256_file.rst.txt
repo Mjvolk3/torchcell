@@ -1,0 +1,6 @@
+﻿torchcell.verification.sha256\_file
+===================================
+
+.. currentmodule:: torchcell.verification
+
+.. autofunction:: sha256_file

@@ -1,0 +1,161 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datasets.dataset_registry.dataset_registry &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/generated/torchcell.datasets.dataset_registry.dataset_registry.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="torchcell.datasets.scerevisiae.auesukaree2009.EnvChemgenAuesukaree2009Dataset" href="torchcell.datasets.scerevisiae.auesukaree2009.EnvChemgenAuesukaree2009Dataset.html" />
+    <link rel="prev" title="torchcell.datasets.dataset_registry.register_dataset" href="torchcell.datasets.dataset_registry.register_dataset.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../modules/datasets.html">torchcell.datasets</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../modules/datasets.html#embedding-datasets">Embedding datasets</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../modules/datasets.html#dataset-registry">Dataset registry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/datasets.html#registered-s-cerevisiae-experiment-datasets">Registered <em>S. cerevisiae</em> experiment datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/datasets.html#not-documented">Not documented</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../modules/datasets.html">torchcell.datasets</a></li>
+      <li class="breadcrumb-item active">torchcell.datasets.dataset_registry.dataset_registry</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/generated/torchcell.datasets.dataset_registry.dataset_registry.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="torchcell-datasets-dataset-registry-dataset-registry">
+<h1>torchcell.datasets.dataset_registry.dataset_registry<a class="headerlink" href="#torchcell-datasets-dataset-registry-dataset-registry" title="Link to this heading"></a></h1>
+<dl class="py data">
+<dt class="sig sig-object py" id="torchcell.datasets.dataset_registry.dataset_registry">
+<span class="sig-name descname"><span class="pre">dataset_registry</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#type" title="(in Python v3.14)"><span class="pre">type</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'AminoAcidCooper2010Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.cooper2010.AminoAcidCooper2010Dataset'&gt;,</span> <span class="pre">'AminoAcidMulleder2016Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.mulleder2016.AminoAcidMulleder2016Dataset'&gt;,</span> <span class="pre">'BetaxanthinCachera2023Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset'&gt;,</span> <span class="pre">'Bloom2019Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.bloom2019.Bloom2019Dataset'&gt;,</span> <span class="pre">'CarotenoidOzaydin2013Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.ozaydin2013.CarotenoidOzaydin2013Dataset'&gt;,</span> <span class="pre">'CaudalPanTranscriptome2024Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset'&gt;,</span> <span class="pre">'CrisprMagicLian2019Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.lian2019.CrisprMagicLian2019Dataset'&gt;,</span> <span class="pre">'CrispriChemgenSmith2016Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.smith2016.CrispriChemgenSmith2016Dataset'&gt;,</span> <span class="pre">'CrispriMormino2022Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.mormino2022.CrispriMormino2022Dataset'&gt;,</span> <span class="pre">'DmMicroarraySameith2015Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.sameith2015.DmMicroarraySameith2015Dataset'&gt;,</span> <span class="pre">'DmfCostanzo2016Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.costanzo2016.DmfCostanzo2016Dataset'&gt;,</span> <span class="pre">'DmfKuzmin2018Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.kuzmin2018.DmfKuzmin2018Dataset'&gt;,</span> <span class="pre">'DmfKuzmin2020Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.kuzmin2020.DmfKuzmin2020Dataset'&gt;,</span> <span class="pre">'DmiCostanzo2016Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.costanzo2016.DmiCostanzo2016Dataset'&gt;,</span> <span class="pre">'DmiKuzmin2018Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.kuzmin2018.DmiKuzmin2018Dataset'&gt;,</span> <span class="pre">'DmiKuzmin2020Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.kuzmin2020.DmiKuzmin2020Dataset'&gt;,</span> <span class="pre">'EnvChemgenAuesukaree2009Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.auesukaree2009.EnvChemgenAuesukaree2009Dataset'&gt;,</span> <span class="pre">'EnvChemgenCostanzo2021Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.costanzo2021.EnvChemgenCostanzo2021Dataset'&gt;,</span> <span class="pre">'EnvChemgenHoepfner2014Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.hoepfner2014.EnvChemgenHoepfner2014Dataset'&gt;,</span> <span class="pre">'EnvChemgenMota2024Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.mota2024.EnvChemgenMota2024Dataset'&gt;,</span> <span class="pre">'EnvChemgenVanacloig2022Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.vanacloig2022.EnvChemgenVanacloig2022Dataset'&gt;,</span> <span class="pre">'EnvChemgenWildenhain2015Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.wildenhain2015.EnvChemgenWildenhain2015Dataset'&gt;,</span> <span class="pre">'FattyAcidSmith2006Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.smith2006.FattyAcidSmith2006Dataset'&gt;,</span> <span class="pre">'FattyAcidXue2025Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.xue2025.FattyAcidXue2025Dataset'&gt;,</span> <span class="pre">'GeneEssentialitySgdDataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset'&gt;,</span> <span class="pre">'HetHillenmeyer2008Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.hillenmeyer2008.HetHillenmeyer2008Dataset'&gt;,</span> <span class="pre">'HomHillenmeyer2008Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.hillenmeyer2008.HomHillenmeyer2008Dataset'&gt;,</span> <span class="pre">'IsobutanolScreenLopez2024Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.lopez2024.IsobutanolScreenLopez2024Dataset'&gt;,</span> <span class="pre">'IsobutanolValidatedLopez2024Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.lopez2024.IsobutanolValidatedLopez2024Dataset'&gt;,</span> <span class="pre">'MetaboliteDaSilveira2014Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.dasilveira2014.MetaboliteDaSilveira2014Dataset'&gt;,</span> <span class="pre">'MetaboliteZelezniak2018Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.zelezniak2018.MetaboliteZelezniak2018Dataset'&gt;,</span> <span class="pre">'MicroarrayKemmeren2014Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.kemmeren2014.MicroarrayKemmeren2014Dataset'&gt;,</span> <span class="pre">'NadalRibellesPerturbSeq2025Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.nadal_ribelles2025.NadalRibellesPerturbSeq2025Dataset'&gt;,</span> <span class="pre">'OrganicAcidYoshida2012Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.yoshida2012.OrganicAcidYoshida2012Dataset'&gt;,</span> <span class="pre">'ProteomeMessner2023Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.messner2023.ProteomeMessner2023Dataset'&gt;,</span> <span class="pre">'ProteomeZelezniak2018Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.zelezniak2018.ProteomeZelezniak2018Dataset'&gt;,</span> <span class="pre">'ScmdOhnuki2018Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.ohnuki2018.ScmdOhnuki2018Dataset'&gt;,</span> <span class="pre">'ScmdOhnuki2022Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.ohnuki2022.ScmdOhnuki2022Dataset'&gt;,</span> <span class="pre">'ScmdOhya2005Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset'&gt;,</span> <span class="pre">'SmMicroarraySameith2015Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.sameith2015.SmMicroarraySameith2015Dataset'&gt;,</span> <span class="pre">'SmfBaryshnikova2010Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.baryshnikova2010.SmfBaryshnikova2010Dataset'&gt;,</span> <span class="pre">'SmfCostanzo2016Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset'&gt;,</span> <span class="pre">'SmfKuzmin2018Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.kuzmin2018.SmfKuzmin2018Dataset'&gt;,</span> <span class="pre">'SmfKuzmin2020Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.kuzmin2020.SmfKuzmin2020Dataset'&gt;,</span> <span class="pre">'SmfODuibhir2014Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.oduibhir2014.SmfODuibhir2014Dataset'&gt;,</span> <span class="pre">'SynthLethalityYeastSynthLethDbDataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset'&gt;,</span> <span class="pre">'SynthRescueYeastSynthLethDbDataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.synth_leth_db.SynthRescueYeastSynthLethDbDataset'&gt;,</span> <span class="pre">'TmfKuzmin2018Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.kuzmin2018.TmfKuzmin2018Dataset'&gt;,</span> <span class="pre">'TmfKuzmin2020Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.kuzmin2020.TmfKuzmin2020Dataset'&gt;,</span> <span class="pre">'TmiKuzmin2018Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.kuzmin2018.TmiKuzmin2018Dataset'&gt;,</span> <span class="pre">'TmiKuzmin2020Dataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.kuzmin2020.TmiKuzmin2020Dataset'&gt;,</span> <span class="pre">'YeastPhenomeDataset':</span> <span class="pre">&lt;class</span> <span class="pre">'torchcell.datasets.scerevisiae.yeastphenome.YeastPhenomeDataset'&gt;}</span></em><a class="headerlink" href="#torchcell.datasets.dataset_registry.dataset_registry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="torchcell.datasets.dataset_registry.register_dataset.html" class="btn btn-neutral float-left" title="torchcell.datasets.dataset_registry.register_dataset" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="torchcell.datasets.scerevisiae.auesukaree2009.EnvChemgenAuesukaree2009Dataset.html" class="btn btn-neutral float-right" title="torchcell.datasets.scerevisiae.auesukaree2009.EnvChemgenAuesukaree2009Dataset" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

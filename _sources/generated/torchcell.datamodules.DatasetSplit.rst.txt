@@ -1,0 +1,8 @@
+﻿torchcell.datamodules.DatasetSplit
+==================================
+
+.. currentmodule:: torchcell.datamodules
+
+.. autoclass:: DatasetSplit
+   :show-inheritance:
+   :members:

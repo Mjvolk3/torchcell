@@ -1,0 +1,558 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datasets.scerevisiae.ohya2005 &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/datasets/scerevisiae/ohya2005.html" />
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html">
+            
+              <img src="../../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.datasets.scerevisiae.ohya2005</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.datasets.scerevisiae.ohya2005</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""CalMorph morphology dataset for S. cerevisiae haploid deletions (Ohya 2005, SCMD).</span>
+
+<span class="sd">Ohya et al. 2005, "High-dimensional and large-scale phenotyping of yeast mutants",</span>
+<span class="sd">Proc Natl Acad Sci USA 102:19015-19020 (doi:10.1073/pnas.0509436102; PMID 16365294).</span>
+<span class="sd">CalMorph high-dimensional single-cell morphology of the haploid ``BY4741`` non-essential</span>
+<span class="sd">single-gene deletion collection (kanMX4 marker). This is the haploid full-knockout screen;</span>
+<span class="sd">its diploid essential-gene dosage counterpart is</span>
+<span class="sd">:class:`~torchcell.datasets.scerevisiae.ohnuki2018.ScmdOhnuki2018Dataset` and its</span>
+<span class="sd">drug-hypersensitive quadruple-deletion counterpart is</span>
+<span class="sd">:class:`~torchcell.datasets.scerevisiae.ohnuki2022.ScmdOhnuki2022Dataset`.</span>
+
+<span class="sd">Values are RAW per-strain CalMorph population averages, one 501-length vector per strain:</span>
+<span class="sd">281 base parameters (``CALMORPH_LABELS``: 220 mean + 61 ratio) + 220 coefficient-of-</span>
+<span class="sd">variation / noise parameters (``CALMORPH_STATISTICS``, prefixed CCV/ACV/DCV/TCV). The</span>
+<span class="sd">122-row wildtype matrix (122 independent ``his3`` WT replicate averages) is aggregated</span>
+<span class="sd">per-feature into a single mean-WT reference phenotype.</span>
+
+<span class="sd">DATA PROVENANCE -- the 501-trait CalMorph matrices are Ohya 2005's OWN published data,</span>
+<span class="sd">distributed via the SCMD (Saccharomyces cerevisiae Morphological Database) portal. The</span>
+<span class="sd">later Suzuki et al. 2018 "Global study of holistic morphological effectors" (BMC Genomics</span>
+<span class="sd">19:149; PMID 29458326; doi 10.1186/s12864-018-4526-z) merely REUSED this same dataset (its</span>
+<span class="sd">reference [21]); it did not generate the values. Hence the publication recorded per record</span>
+<span class="sd">is Ohya 2005.</span>
+
+<span class="sd">SOURCING / SHA256 PINS (loader reads the library-mirror ``data/`` files and verifies both</span>
+<span class="sd">hashes, never the live URL):</span>
+<span class="sd">- ``mt4718data.tsv`` (mutant matrix, 4718 strains x 501 features; ID column ``ORF``)</span>
+<span class="sd">  sha256 ``c4ba1e84b4ea6273f0162ef9230e15634933c8c0c4910dd7546a21c6293e0fc0``.</span>
+<span class="sd">- ``wt122data.tsv`` (122 WT ``his3`` replicate averages; ID column ``NAME``; feature</span>
+<span class="sd">  columns byte-compatible with the mutant file) sha256</span>
+<span class="sd">  ``ab2c31b5150b2a33c15b5d22f1bef8687719975223559a740ea233c1f67b27c3``.</span>
+<span class="sd">- Historical retrieval URLs (SCMD portal): ``http://www.yeast.ib.k.u-tokyo.ac.jp/SCMD/</span>
+<span class="sd">  download.php?path=mt4718data.tsv`` and ``...=wt122data.tsv`` (Box mirror fallbacks in</span>
+<span class="sd">  the manifest). See ``$DATA_ROOT/torchcell-library/</span>
+<span class="sd">  ohyaHighdimensionalLargescalePhenotyping2005a/manifest.json``.</span>
+
+<span class="sd">ENVIRONMENT -- Ohya 2005 Methods, verbatim: "Each strain was grown in yeast extract/</span>
+<span class="sd">peptone/dextrose medium, and logarithmic-phase cells were fixed." So media = YPD, state =</span>
+<span class="sd">liquid (logarithmic-phase liquid culture, then fixed for imaging). Temperature is NOT</span>
+<span class="sd">stated in Ohya 2005; it is resolved via the Ohya-lab CalMorph standard (25 C), corroborated</span>
+<span class="sd">by Suzuki 2018 (which reuses this data, "grown at 25 C") and by the same-lab Ohnuki</span>
+<span class="sd">2018/2022 CalMorph loaders (both 25 C, sourced verbatim from their Methods). Recording</span>
+<span class="sd">25 C here follows the deferral convention (defer method detail to the cited/related mirrored</span>
+<span class="sd">paper); FLAG: pin the verbatim Ohya-2005 temperature once that paper is mirrored.</span>
+
+<span class="sd">ORFs are 2005-annotation SGD systematic names, reconciled to the current R64-4-1 annotation</span>
+<span class="sd">by the shared genome resolver (:meth:`SCerevisiaeGenome.resolve_gene_name`). Every strain is</span>
+<span class="sd">a real measured perturbation, so NO record is dropped for a naming reason: a name that</span>
+<span class="sd">resolves to a current R64 identifier (a live gene, an SGD rename, or a valid non-"gene"</span>
+<span class="sd">feature such as a ``blocked_reading_frame`` pseudogene) is remapped to that id; a name that</span>
+<span class="sd">SGD retired entirely, or whose remap would collide with another strain's record (an SGD</span>
+<span class="sd">merge of two distinct 2005 ORFs), is retained verbatim with its legacy 2005 systematic name.</span>
+<span class="sd">Rows with any missing CalMorph value are dropped whole -- values are NEVER imputed. Net</span>
+<span class="sd">built records: 4718 (0 dropped for naming; ~17 remapped to current ids, the rest kept as</span>
+<span class="sd">current or legacy systematic names). Historical note: an earlier build dropped 23</span>
+<span class="sd">non-R64 names (4695 records) with a hand-authored rename table; the resolver supersedes that,</span>
+<span class="sd">retaining all 4718 and correctly remapping 20 renames + non-gene features the manual table</span>
+<span class="sd">missed.</span>
+<span class="sd">"""</span>
+
+<span class="c1"># torchcell/datasets/scerevisiae/ohya2005</span>
+<span class="c1"># [[torchcell.datasets.scerevisiae.ohya2005]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/ohya2005</span>
+<span class="c1"># Test file: tests/torchcell/datasets/scerevisiae/test_Ohya2005.py</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CalMorphExperiment</span><span class="p">,</span>
+    <span class="n">CalMorphExperimentReference</span><span class="p">,</span>
+    <span class="n">CalMorphPhenotype</span><span class="p">,</span>
+    <span class="n">Environment</span><span class="p">,</span>
+    <span class="n">Experiment</span><span class="p">,</span>
+    <span class="n">ExperimentReference</span><span class="p">,</span>
+    <span class="n">Genotype</span><span class="p">,</span>
+    <span class="n">KanMxDeletionPerturbation</span><span class="p">,</span>
+    <span class="n">Media</span><span class="p">,</span>
+    <span class="n">Publication</span><span class="p">,</span>
+    <span class="n">ReferenceGenome</span><span class="p">,</span>
+    <span class="n">Temperature</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.gene_name_reconcile</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">default_genome</span><span class="p">,</span>
+    <span class="n">reconcile_systematic_names</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># CV parameters are prefixed CCV/ACV/DCV/TCV; everything else is a base parameter.</span>
+<span class="n">_CV_PREFIXES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"CCV"</span><span class="p">,</span> <span class="s2">"ACV"</span><span class="p">,</span> <span class="s2">"DCV"</span><span class="p">,</span> <span class="s2">"TCV"</span><span class="p">)</span>
+
+<span class="c1"># sha256-pinned raw matrices in the library mirror ``data/`` directory.</span>
+<span class="n">_RAW_FILES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"mt4718data.tsv"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"sha256"</span><span class="p">:</span> <span class="s2">"c4ba1e84b4ea6273f0162ef9230e15634933c8c0c4910dd7546a21c6293e0fc0"</span><span class="p">,</span>
+        <span class="s2">"id_column"</span><span class="p">:</span> <span class="s2">"ORF"</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s2">"wt122data.tsv"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"sha256"</span><span class="p">:</span> <span class="s2">"ab2c31b5150b2a33c15b5d22f1bef8687719975223559a740ea233c1f67b27c3"</span><span class="p">,</span>
+        <span class="s2">"id_column"</span><span class="p">:</span> <span class="s2">"NAME"</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+
+<span class="c1"># Library mirror holding the sha256-pinned raw matrices (relative to DATA_ROOT).</span>
+<span class="n">_MIRROR_DIR</span> <span class="o">=</span> <span class="s2">"torchcell-library/ohyaHighdimensionalLargescalePhenotyping2005a/data"</span>
+
+
+<div class="viewcode-block" id="ScmdOhya2005Dataset">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.html#torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset">[docs]</a>
+<span class="nd">@register_dataset</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ScmdOhya2005Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""CalMorph morphology for haploid non-essential single-gene deletions (Ohya 2005).</span>
+
+<span class="sd">    Haploid ``BY4741`` full-deletion CalMorph screen; the haploid full-knockout base of the</span>
+<span class="sd">    SCMD CalMorph family (Ohnuki 2018 = diploid essential-gene heterozygotes; Ohnuki 2022 =</span>
+<span class="sd">    drug-hypersensitive quadruple deletions).</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/scmd_ohya2005"</span><span class="p">,</span>
+        <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset; an optional genome resolves 2005 ORF names to R64.</span>
+
+<span class="sd">        If ``genome`` is not supplied one is constructed from ``DATA_ROOT`` during</span>
+<span class="sd">        processing (used only to reconcile source ORF names to the current annotation).</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Experiment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the experiment schema class for this dataset."""</span>
+        <span class="k">return</span> <span class="n">CalMorphExperiment</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reference_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">ExperimentReference</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the experiment-reference schema class for this dataset."""</span>
+        <span class="k">return</span> <span class="n">CalMorphExperimentReference</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the raw mutant and wildtype TSV filenames."""</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">_RAW_FILES</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ScmdOhya2005Dataset.download">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.html#torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.download">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Copy both matrices from the sha256-pinned library mirror and verify hashes."""</span>
+        <span class="n">data_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
+        <span class="n">mirror</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="n">_MIRROR_DIR</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">filename</span><span class="p">,</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">_RAW_FILES</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">dest</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
+                <span class="n">src</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mirror</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">src</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2"> not found in the library mirror </span><span class="si">{</span><span class="n">mirror</span><span class="si">}</span><span class="s2">. The SCMD "</span>
+                        <span class="s2">"portal is the historical source; recover the file and deposit it, "</span>
+                        <span class="s2">"then rebuild (sha256 verified)."</span>
+                    <span class="p">)</span>
+                <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+            <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">dest</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">digest</span> <span class="o">!=</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"sha256"</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2"> sha256 mismatch: got </span><span class="si">{</span><span class="n">digest</span><span class="si">}</span><span class="s2">, "</span>
+                    <span class="sa">f</span><span class="s2">"expected </span><span class="si">{</span><span class="n">spec</span><span class="p">[</span><span class="s1">'sha256'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ScmdOhya2005Dataset.process">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.html#torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.process">[docs]</a>
+    <span class="nd">@post_process</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Load raw TSVs, build CalMorph experiments, and write the LMDB store."""</span>
+        <span class="n">df_mutant</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="s2">"mt4718data.tsv"</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">df_wt</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="s2">"wt122data.tsv"</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_calmorph_data</span><span class="p">(</span><span class="n">df_mutant</span><span class="p">)</span>
+
+        <span class="c1"># Save preprocessed data</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="c1"># Aggregate the 122 WT replicate averages into a single mean-WT reference.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wt_reference_phenotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_wt_reference</span><span class="p">(</span><span class="n">df_wt</span><span class="p">)</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Processing Ohya 2005 CalMorph morphology data..."</span><span class="p">)</span>
+
+        <span class="c1"># Initialize LMDB environment</span>
+        <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e12</span><span class="p">))</span>
+
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_calmorph_experiment</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">wt_reference_phenotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">wt_reference_phenotype</span>
+                <span class="p">)</span>
+
+                <span class="c1"># Serialize the Pydantic objects</span>
+                <span class="n">serialized_data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                        <span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                        <span class="s2">"publication"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">serialized_data</span><span class="p">)</span>
+
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ScmdOhya2005Dataset.preprocess_raw">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.html#torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.preprocess_raw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Preprocess raw data - for CalMorph this is handled in process()."""</span>
+        <span class="c1"># For this dataset, preprocessing happens in process()</span>
+        <span class="c1"># This method is required by base class but not used in our flow</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="ScmdOhya2005Dataset.preprocess_calmorph_data">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.html#torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.preprocess_calmorph_data">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_calmorph_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_mutant</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Clean the mutant matrix, drop incomplete rows, and reconcile ORF names to R64.</span>
+
+<span class="sd">        Names are reconciled to the current R64-4-1 annotation with the genome's layered</span>
+<span class="sd">        resolver (:meth:`SCerevisiaeGenome.resolve_gene_name`). NO record is dropped for a</span>
+<span class="sd">        naming reason -- every strain is a real measured perturbation. A resolved current</span>
+<span class="sd">        identifier (live gene, SGD rename, or valid non-"gene" feature) replaces the legacy</span>
+<span class="sd">        2005 name UNLESS doing so would collide with another strain's record (an SGD merge</span>
+<span class="sd">        of two distinct 2005 ORFs), in which case the original 2005 systematic name is kept</span>
+<span class="sd">        so the two strains stay distinct. Retired/ambiguous names are kept verbatim.</span>
+<span class="sd">        """</span>
+        <span class="n">df_mutant</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="c1"># The ORF column carries the systematic gene name; there is no common-name column.</span>
+        <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"ORF"</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="n">df_mutant</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="p">[</span><span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()]</span>
+        <span class="n">df_mutant</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="p">[</span><span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">""</span><span class="p">]</span>
+
+        <span class="c1"># Drop any strain with a missing CalMorph value -- CalMorph completeness requires</span>
+        <span class="c1"># the full 501-trait vocabulary per record; values are NEVER imputed (drop whole).</span>
+        <span class="n">feature_cols</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">c</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df_mutant</span><span class="o">.</span><span class="n">columns</span>
+            <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"ORF"</span><span class="p">,</span> <span class="s2">"systematic_gene_name"</span><span class="p">,</span> <span class="s2">"perturbed_gene_name"</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">has_all</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="p">[</span><span class="n">feature_cols</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">n_nan</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="o">~</span><span class="n">has_all</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">n_nan</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">"Ohya 2005: dropping </span><span class="si">%d</span><span class="s2"> mutant row(s) with missing CalMorph values: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+                <span class="n">n_nan</span><span class="p">,</span>
+                <span class="n">df_mutant</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">has_all</span><span class="p">,</span> <span class="s2">"systematic_gene_name"</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()[:</span><span class="mi">20</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="n">df_mutant</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="p">[</span><span class="n">has_all</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">default_genome</span><span class="p">()</span>
+        <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">reconcile_systematic_names</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">,</span> <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Ohya 2005"</span>
+        <span class="p">)</span>
+        <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"perturbed_gene_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Ohya 2005: </span><span class="si">%d</span><span class="s2"> non-essential deletion strains (0 dropped for naming)"</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">df_mutant</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">df_mutant</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_wt_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_wt</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Aggregate the WT replicate averages into a per-feature mean reference."""</span>
+        <span class="n">info_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"NAME"</span><span class="p">,</span> <span class="s2">"ORF"</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df_wt</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+        <span class="n">morphology_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df_wt</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">info_columns</span><span class="p">]</span>
+        <span class="n">wt_means</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">morphology_columns</span><span class="p">:</span>
+            <span class="n">numeric_values</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">df_wt</span><span class="p">[</span><span class="n">col</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span>
+            <span class="n">wt_means</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">numeric_values</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">wt_means</span>
+
+<div class="viewcode-block" id="ScmdOhya2005Dataset.create_experiment">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.html#torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.create_experiment">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Required by base class but not used - see create_calmorph_experiment."""</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="ScmdOhya2005Dataset.create_calmorph_experiment">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.html#torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.create_calmorph_experiment">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_calmorph_experiment</span><span class="p">(</span>
+        <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">wt_reference_phenotype</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CalMorphExperiment</span><span class="p">,</span> <span class="n">CalMorphExperimentReference</span><span class="p">,</span> <span class="n">Publication</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Build a CalMorph experiment and reference pair from one data row."""</span>
+        <span class="c1"># Genome reference - haploid BY4741 (MATa his3D1 leu2D0 lys2D0 ura3D0).</span>
+        <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4741"</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Create genotype for the non-essential single-gene deletion mutant (kanMX4).</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"perturbed_gene_name"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Environment -- Ohya 2005 Methods: YPD, logarithmic-phase (liquid) culture.</span>
+        <span class="c1"># Temperature 25 C from the Ohya-lab CalMorph standard (see module docstring).</span>
+        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
+            <span class="n">media</span><span class="o">=</span><span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"YPD"</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">25</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">environment_reference</span> <span class="o">=</span> <span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">()</span>
+
+        <span class="c1"># Extract morphology measurements and separate base from CV parameters. Rows are</span>
+        <span class="c1"># guaranteed complete + finite (incomplete rows dropped in preprocessing).</span>
+        <span class="n">info_columns</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"ORF"</span><span class="p">,</span> <span class="s2">"systematic_gene_name"</span><span class="p">,</span> <span class="s2">"perturbed_gene_name"</span><span class="p">}</span>
+        <span class="n">base_measurements</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">cv_measurements</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">row</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">info_columns</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">float_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">col</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">_CV_PREFIXES</span><span class="p">):</span>
+                <span class="n">cv_measurements</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">float_value</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">base_measurements</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">float_value</span>
+
+        <span class="c1"># Create phenotype with separated base and CV measurements</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">CalMorphPhenotype</span><span class="p">(</span>
+            <span class="n">calmorph</span><span class="o">=</span><span class="n">base_measurements</span><span class="p">,</span>
+            <span class="n">calmorph_coefficient_of_variation</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">cv_measurements</span> <span class="k">if</span> <span class="n">cv_measurements</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Reference phenotype from the aggregated WT, split the same way.</span>
+        <span class="n">wt_base</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">wt_reference_phenotype</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">_CV_PREFIXES</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="n">wt_cv</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">wt_reference_phenotype</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">_CV_PREFIXES</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">CalMorphPhenotype</span><span class="p">(</span>
+            <span class="n">calmorph</span><span class="o">=</span><span class="n">wt_base</span><span class="p">,</span> <span class="n">calmorph_coefficient_of_variation</span><span class="o">=</span><span class="n">wt_cv</span> <span class="k">if</span> <span class="n">wt_cv</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Create reference</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="n">CalMorphExperimentReference</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="n">genome_reference</span><span class="p">,</span>
+            <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment_reference</span><span class="p">,</span>
+            <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">phenotype_reference</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Create experiment</span>
+        <span class="n">experiment</span> <span class="o">=</span> <span class="n">CalMorphExperiment</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">genotype</span><span class="o">=</span><span class="n">genotype</span><span class="p">,</span>
+            <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">phenotype</span><span class="o">=</span><span class="n">phenotype</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Publication -- Ohya 2005 PNAS (the data producer; see module docstring).</span>
+        <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span>
+            <span class="n">pubmed_id</span><span class="o">=</span><span class="s2">"16365294"</span><span class="p">,</span>
+            <span class="n">pubmed_url</span><span class="o">=</span><span class="s2">"https://pubmed.ncbi.nlm.nih.gov/16365294/"</span><span class="p">,</span>
+            <span class="n">doi</span><span class="o">=</span><span class="s2">"10.1073/pnas.0509436102"</span><span class="p">,</span>
+            <span class="n">doi_url</span><span class="o">=</span><span class="s2">"https://www.pnas.org/doi/10.1073/pnas.0509436102"</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span></div>
+</div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">data_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">ScmdOhya2005Dataset</span><span class="p">(</span>
+        <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/torchcell/scmd_ohya2005"</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Dataset size: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

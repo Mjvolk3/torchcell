@@ -1,0 +1,8 @@
+﻿torchcell.models.gpu\_edge\_mask\_generator.GPUEdgeMaskGenerator
+================================================================
+
+.. currentmodule:: torchcell.models.gpu_edge_mask_generator
+
+.. autoclass:: GPUEdgeMaskGenerator
+   :show-inheritance:
+   :members:

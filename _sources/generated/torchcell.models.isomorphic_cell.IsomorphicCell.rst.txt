@@ -1,0 +1,8 @@
+﻿torchcell.models.isomorphic\_cell.IsomorphicCell
+================================================
+
+.. currentmodule:: torchcell.models.isomorphic_cell
+
+.. autoclass:: IsomorphicCell
+   :show-inheritance:
+   :members:

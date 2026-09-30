@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.compound\_identity\_curate.PubChemClient
+=============================================================
+
+.. currentmodule:: torchcell.datamodels.compound_identity_curate
+
+.. autoclass:: PubChemClient
+   :show-inheritance:
+   :members:

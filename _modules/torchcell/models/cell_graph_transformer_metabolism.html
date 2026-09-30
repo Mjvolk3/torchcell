@@ -1,0 +1,911 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.models.cell_graph_transformer_metabolism &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/models/cell_graph_transformer_metabolism.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.models.cell_graph_transformer_metabolism</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.models.cell_graph_transformer_metabolism</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/models/cell_graph_transformer_metabolism</span>
+<span class="c1"># [[torchcell.models.cell_graph_transformer_metabolism]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/cell_graph_transformer_metabolism</span>
+<span class="c1"># Test file: tests/torchcell/models/test_cell_graph_transformer_metabolism.py</span>
+
+<span class="sd">"""CGT-Metabolism: the Cell Graph Transformer with production / metabolome readouts.</span>
+
+<span class="sd">This is the model class the metabolism work (pigment production, metabolome transfer,</span>
+<span class="sd">and later the enzyme-constrained flux layer) is built inside. Track A -- the SIMB</span>
+<span class="sd">demonstration -- activates only the readout heads; no flux layer is involved.</span>
+
+<span class="sd">WHAT IS REUSED, AND WHY IT IS REUSED RATHER THAN COPIED</span>
+<span class="sd">-------------------------------------------------------</span>
+<span class="sd">The encoder (learnable gene embeddings + CLS token + the graph-regularized transformer</span>
+<span class="sd">layers), the graph-regularization KL term, and the EQUIVARIANT perturbation operator</span>
+<span class="sd">(``EquivariantPerturbationTransform``) plus the Type-II ``PerturbationHead`` are taken</span>
+<span class="sd">from :mod:`torchcell.models.equivariant_cell_graph_transformer` **unchanged**, by</span>
+<span class="sd">subclassing :class:`~torchcell.models.equivariant_cell_graph_transformer.CellGraphTransformer`</span>
+<span class="sd">and delegating the whole forward to it.</span>
+
+<span class="sd">That is a stronger guarantee than transcribing those ~900 lines into this file: a</span>
+<span class="sd">transcription can silently drift from the original, whereas an inherited implementation</span>
+<span class="sd">IS the original. What subclassing does NOT make free is initialization parity -- new</span>
+<span class="sd">parameters created in a subclass ``__init__`` consume the global RNG stream, so a head</span>
+<span class="sd">constructed in the wrong place would change every encoder weight for a given seed and</span>
+<span class="sd">quietly invalidate any comparison against a Fig-3 run. Every metabolism head is therefore</span>
+<span class="sd">constructed strictly AFTER ``super().__init__()`` returns, and</span>
+<span class="sd">``tests/torchcell/models/test_cell_graph_transformer_metabolism.py`` asserts allclose</span>
+<span class="sd">outputs against the parent at a fixed seed with the metabolism heads disabled.</span>
+
+<span class="sd">THE THREE HEADS (Track A)</span>
+<span class="sd">-------------------------</span>
+<span class="sd">Declared through ``heads_config`` alongside the inherited ``global`` / ``per_gene`` /</span>
+<span class="sd">``per_metabolite`` entries. Each extra entry needs a ``kind``:</span>
+
+<span class="sd">* ``betaxanthin``   -- ``kind: scalar``. Cachera 2023 CRI-SPA corrected fluorescence,</span>
+<span class="sd">  population-centred (so it can be negative), one value per strain.</span>
+<span class="sd">* ``beta_carotene`` -- ``kind: scalar``. Ozaydin 2013 colony-colour score, a SUBJECTIVE</span>
+<span class="sd">  ORDINAL on -5..+5. Report Spearman for this target, not Pearson.</span>
+<span class="sd">* ``mulleder19``    -- ``kind: vector``, ``output_dim: 19``. Mulleder 2016 intracellular</span>
+<span class="sd">  amino-acid concentrations in mM over 19 FIXED key-sorted columns</span>
+<span class="sd">  (``alanine ... valine``). Deliberately NOT aligned to Yeast9 metabolite ids: the 19</span>
+<span class="sd">  columns are dense in every record, so Track A needs no ``s_NNNN`` mapping at all.</span>
+
+<span class="sd">**They must not share a head.** The three targets are a centred fluorescence, an ordinal</span>
+<span class="sd">in -5..+5, and an absolute mM concentration -- mutually incomparable units. One shared</span>
+<span class="sd">scalar head would be asked to regress three different scales onto one output, and the</span>
+<span class="sd">largest-magnitude target would dominate the loss. Separate heads, separate losses, one</span>
+<span class="sd">shared encoder: that separation IS the multitask claim, and it costs three small MLPs.</span>
+
+<span class="sd">TRACK B (not implemented here)</span>
+<span class="sd">------------------------------</span>
+<span class="sd">The metabolite/enzyme entity layers, the flux readout with the box satisfied by</span>
+<span class="sd">reparameterization, the soft ``Sv = 0`` / capacity / budget / thermodynamic terms, and</span>
+<span class="sd">the GPR-derived availability chain all attach at the same place these heads do -- the</span>
+<span class="sd">``(h_CLS, H_genes_pert)`` pair returned by the inherited forward. Nothing in Track A</span>
+<span class="sd">forecloses them; nothing in Track A pays for them either.</span>
+<span class="sd">"""</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="c1"># WORKTREE IMPORT BOOTSTRAP -- must run BEFORE any `torchcell` import below.</span>
+    <span class="c1">#</span>
+    <span class="c1"># Running this file directly (python .../cell_graph_transformer_metabolism.py, or a</span>
+    <span class="c1"># VS Code debug session) puts THIS file's directory on sys.path, but the `torchcell`</span>
+    <span class="c1"># PACKAGE still resolves through the editable install, which points at the PRIMARY</span>
+    <span class="c1"># checkout. You then execute the worktree's model file against main's library and get</span>
+    <span class="c1"># errors like `cannot import name 'DeletionKeyedGenotypeAggregator' from</span>
+    <span class="c1"># 'torchcell.data'` -- a symbol that exists only on this branch.</span>
+    <span class="c1">#</span>
+    <span class="c1"># Prepending the worktree root (three levels up: torchcell/models/&lt;file&gt;) makes the</span>
+    <span class="c1"># sibling `torchcell` package win, so the file is always debugged against the code it</span>
+    <span class="c1"># actually lives in. Only applies to direct execution; imports are unaffected.</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_osp</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_sys</span>
+
+    <span class="n">_sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span>
+        <span class="mi">0</span><span class="p">,</span> <span class="n">_osp</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">_osp</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">_osp</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">_osp</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))))</span>
+    <span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">HeteroData</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.metabolism.flux_layer</span><span class="w"> </span><span class="kn">import</span> <span class="n">FluxLayer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.models.equivariant_cell_graph_transformer</span><span class="w"> </span><span class="kn">import</span> <span class="n">CellGraphTransformer</span>
+
+<span class="c1">#: heads_config keys handled by the parent class; everything else is a metabolism head.</span>
+<span class="n">INHERITED_HEADS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"global"</span><span class="p">,</span> <span class="s2">"per_gene"</span><span class="p">,</span> <span class="s2">"per_metabolite"</span><span class="p">})</span>
+
+
+<div class="viewcode-block" id="FluxMetaboliteHead">
+<a class="viewcode-back" href="../../../generated/torchcell.models.cell_graph_transformer_metabolism.FluxMetaboliteHead.html#torchcell.models.cell_graph_transformer_metabolism.FluxMetaboliteHead">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FluxMetaboliteHead</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Read a measured metabolite level off the predicted flux vector's turnover.</span>
+
+<span class="sd">    The mechanistic head. Instead of an MLP over pooled gene tokens, it reads</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \omega_i(v)=\tfrac12\sum_j\lvert S_{ij}v_j\rvert</span>
+
+<span class="sd">    at the metabolite indices that the measurement actually names, and maps each through</span>
+<span class="sd">    its own affine in log space:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \hat y_k = a_k\,\log\!\big(1+\omega_{i_k}(v)\big) + b_k .</span>
+
+<span class="sd">    **Turnover is not concentration, and the affine is where that gap is admitted.** A</span>
+<span class="sd">    metabolite's pool size depends on its turnover and on its effective residence time,</span>
+<span class="sd">    and a steady-state flux model has no residence time in it. What the model can claim is</span>
+<span class="sd">    that a strain whose flux carries more mass through tyrosine should have more tyrosine,</span>
+<span class="sd">    monotonically -- which is exactly what a per-metabolite affine in :math:`\log\omega`</span>
+<span class="sd">    encodes, and it is why the metric to read is a correlation rather than an error in mM.</span>
+
+<span class="sd">    A per-metabolite affine, not a shared one, because the 19 amino acids differ by orders</span>
+<span class="sd">    of magnitude in both pool size and flux; one shared slope would make the largest pool</span>
+<span class="sd">    set the scale for all of them.</span>
+<span class="sd">    """</span>
+
+    <span class="n">metabolite_indices</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metabolite_indices</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">param_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Bind the head to fixed metabolite rows of ``S``.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            metabolite_indices: ``[F]`` long, the GEM metabolite index of each measured</span>
+<span class="sd">                column, in the column order the target uses.</span>
+<span class="sd">            param_dim: Distributional parameters per column.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"metabolite_indices"</span><span class="p">,</span> <span class="n">metabolite_indices</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">metabolite_indices</span><span class="o">.</span><span class="n">numel</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">param_dim</span> <span class="o">=</span> <span class="n">param_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span><span class="p">,</span> <span class="n">param_dim</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bias</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span><span class="p">,</span> <span class="n">param_dim</span><span class="p">))</span>
+
+<div class="viewcode-block" id="FluxMetaboliteHead.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.models.cell_graph_transformer_metabolism.FluxMetaboliteHead.html#torchcell.models.cell_graph_transformer_metabolism.FluxMetaboliteHead.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">turnover</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""``[B, m] -&gt; [B, F]`` (point) or ``[B, F, param_dim]``."""</span>
+        <span class="n">omega</span> <span class="o">=</span> <span class="n">turnover</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">metabolite_indices</span><span class="p">]</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="n">omega</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mf">0.0</span><span class="p">))</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">h</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span>
+        <span class="k">return</span> <span class="n">out</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dim</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">out</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="FluxScalarHead">
+<a class="viewcode-back" href="../../../generated/torchcell.models.cell_graph_transformer_metabolism.FluxScalarHead.html#torchcell.models.cell_graph_transformer_metabolism.FluxScalarHead">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FluxScalarHead</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Read a scalar production phenotype off the predicted flux vector.</span>
+
+<span class="sd">    A production phenotype is a flux the GEM does not contain -- betaxanthin's route is a</span>
+<span class="sd">    heterologous cassette, so no column of :math:`S` carries it. What the GEM does carry is</span>
+<span class="sd">    the **precursor supply**, and the readout is therefore a learned sparse combination of</span>
+<span class="sd">    the native fluxes plus the turnover of the named precursor metabolites:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \hat y = w^\top v + u^\top \log\!\big(1+\omega_{\mathcal{P}}(v)\big) + b .</span>
+
+<span class="sd">    Naming the precursor metabolites is what makes the head a hypothesis rather than</span>
+<span class="sd">    another projection: for betaxanthin they are cytosolic tyrosine and its aromatic</span>
+<span class="sd">    precursors, and if the flux layer carries information about production it should be</span>
+<span class="sd">    visible there before it is visible anywhere else. The dense :math:`w^\top v` term is</span>
+<span class="sd">    kept alongside so that the precursor claim can be **ablated against** an unrestricted</span>
+<span class="sd">    read of the same flux vector, rather than assumed.</span>
+<span class="sd">    """</span>
+
+    <span class="n">precursor_indices</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">n_reactions</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">precursor_indices</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">use_dense_flux</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">param_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build the readout.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            n_reactions: Width of the flux vector.</span>
+<span class="sd">            precursor_indices: ``[P]`` GEM metabolite indices of the named precursors.</span>
+<span class="sd">            use_dense_flux: Include the unrestricted ``w^T v`` term.</span>
+<span class="sd">            param_dim: Distributional parameters.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"precursor_indices"</span><span class="p">,</span> <span class="n">precursor_indices</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">param_dim</span> <span class="o">=</span> <span class="n">param_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_dense_flux</span> <span class="o">=</span> <span class="n">use_dense_flux</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">precursor</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">precursor_indices</span><span class="o">.</span><span class="n">numel</span><span class="p">()),</span> <span class="n">param_dim</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">use_dense_flux</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dense</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">n_reactions</span><span class="p">,</span> <span class="n">param_dim</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FluxScalarHead.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.models.cell_graph_transformer_metabolism.FluxScalarHead.html#torchcell.models.cell_graph_transformer_metabolism.FluxScalarHead.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">turnover</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""``([B, r], [B, m]) -&gt; [B, 1]`` or ``[B, 1, param_dim]``."""</span>
+        <span class="n">omega</span> <span class="o">=</span> <span class="n">turnover</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">precursor_indices</span><span class="p">]</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">precursor</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="n">omega</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_dense_flux</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">out</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dense</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dim</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">out</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ProductScalarHead">
+<a class="viewcode-back" href="../../../generated/torchcell.models.cell_graph_transformer_metabolism.ProductScalarHead.html#torchcell.models.cell_graph_transformer_metabolism.ProductScalarHead">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProductScalarHead</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Whole-cell readout for a SCALAR production phenotype (one value per strain).</span>
+
+<span class="sd">    Reads the CLS token, optionally concatenated with a mean pool over the equivariant</span>
+<span class="sd">    perturbed gene embeddings, and emits exactly one value. Structurally this is the S1</span>
+<span class="sd">    pooled readout; it is a distinct class from the vector head so that "this head is</span>
+<span class="sd">    scalar" is a property of the module rather than of a config string that some other</span>
+<span class="sd">    code has to agree with. ``output_dim`` is fixed at 1 by construction -- a scalar</span>
+<span class="sd">    target assigned into a wider head broadcasts silently, and the cheapest place to</span>
+<span class="sd">    make that impossible is here.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">hidden_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">use_gene_pool</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">use_pert_pool</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">param_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build the MLP mapping ``[h_CLS (|| mean_i h_i_pert)]`` to one value.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            hidden_dim: Model hidden dimension.</span>
+<span class="sd">            use_gene_pool: Concatenate a mean pool over ALL gene tokens of the perturbed</span>
+<span class="sd">                representation. Measured across-batch std 1.3e-2 -- the perturbation</span>
+<span class="sd">                operator cross-attends, so this is NOT as diluted as "one of 6,607 tokens</span>
+<span class="sd">                differs" would suggest (see ``perturbed_gene_pool``).</span>
+<span class="sd">            use_pert_pool: Concatenate a mean pool over ONLY the perturbed gene tokens.</span>
+<span class="sd">                Measured across-batch std 3.2e-2, i.e. ~2.5x the genome-wide pool. For a</span>
+<span class="sd">                single-KO strain this is the genotype itself, so keep it on; it is a</span>
+<span class="sd">                modest signal-to-background gain, not a cure for the observed nulls.</span>
+<span class="sd">            dropout: Dropout probability.</span>
+<span class="sd">            param_dim: Distributional params for the single feature (1 point, 2</span>
+<span class="sd">                gaussian, K quantile). ``output_dim`` stays 1 either way.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hidden_dim</span> <span class="o">=</span> <span class="n">hidden_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_gene_pool</span> <span class="o">=</span> <span class="n">use_gene_pool</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_pert_pool</span> <span class="o">=</span> <span class="n">use_pert_pool</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">param_dim</span> <span class="o">=</span> <span class="n">param_dim</span>
+        <span class="n">in_dim</span> <span class="o">=</span> <span class="n">hidden_dim</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">use_gene_pool</span><span class="p">)</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">use_pert_pool</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlp</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">in_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">param_dim</span><span class="p">),</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="ProductScalarHead.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.models.cell_graph_transformer_metabolism.ProductScalarHead.html#torchcell.models.cell_graph_transformer_metabolism.ProductScalarHead.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">h_CLS</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">H_genes_pert</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">pert_pool</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return ``[batch, 1]`` (point) or ``[batch, 1, param_dim]`` (distributional)."""</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">H_genes_pert</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">h_CLS</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_gene_pool</span><span class="p">:</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="n">H_genes_pert</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_pert_pool</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">pert_pool</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"use_pert_pool=True but pert_pool was not supplied; the model's "</span>
+                    <span class="s2">"forward must pass perturbed_gene_pool(...)."</span>
+                <span class="p">)</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="n">pert_pool</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlp</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dim</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dim</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="perturbed_gene_pool">
+<a class="viewcode-back" href="../../../generated/torchcell.models.cell_graph_transformer_metabolism.perturbed_gene_pool.html#torchcell.models.cell_graph_transformer_metabolism.perturbed_gene_pool">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">perturbed_gene_pool</span><span class="p">(</span>
+    <span class="n">H_genes_pert</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">perturbation_indices</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">perturbation_indices_batch</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Mean over ONLY the perturbed gene tokens, per sample. Returns ``[batch, d]``.</span>
+
+<span class="sd">    WHY THIS EXISTS, with the numbers MEASURED rather than assumed (run ``main()`` in this</span>
+<span class="sd">    file to reproduce them on a real batch):</span>
+
+<span class="sd">    ======================================  ==================</span>
+<span class="sd">    head input term                         across-batch std</span>
+<span class="sd">    ======================================  ==================</span>
+<span class="sd">    ``h_CLS``                               **0.000e+00**</span>
+<span class="sd">    mean over ALL 6607 gene tokens          1.309e-02</span>
+<span class="sd">    mean over PERTURBED genes only          3.217e-02</span>
+<span class="sd">    ======================================  ==================</span>
+
+<span class="sd">    Two conclusions, one of which corrects an earlier guess:</span>
+
+<span class="sd">    1. ``h_CLS`` is the encoding of the UNPERTURBED reference graph (the parent encodes</span>
+<span class="sd">       ``G`` once at batch size 1) and is broadcast identically across the batch. Its</span>
+<span class="sd">       across-batch variance is EXACTLY zero -- it cannot distinguish two strains, yet it</span>
+<span class="sd">       occupies a full ``hidden_dim`` of the head's input width. That part is confirmed.</span>
+<span class="sd">    2. The genome-wide mean is NOT attenuated ~1/6607, as a naive "only one of 6,607</span>
+<span class="sd">       tokens differs" argument predicts. The equivariant perturbation operator</span>
+<span class="sd">       cross-attends, so it has already propagated the perturbation into many gene</span>
+<span class="sd">       representations before any pooling happens. The perturbed-gene pool carries only</span>
+<span class="sd">       **~2.5x** the across-batch signal of the genome-wide pool, not ~6607x.</span>
+
+<span class="sd">    So this pool is a real but MODEST improvement in signal-to-background, and it is NOT</span>
+<span class="sd">    a sufficient explanation for the observed mean collapse (job 1331: val pearson exactly</span>
+<span class="sd">    0.00000, val loss ~0.97 = the variance of the standardized target). The genotype</span>
+<span class="sd">    signal reaching the head is measurable either way; the model's failure to map it onto</span>
+<span class="sd">    betaxanthin is a separate problem.</span>
+
+<span class="sd">    Keeping it is still justified -- for a single-KO strain the perturbed gene's</span>
+<span class="sd">    representation IS the genotype, which is the S0 argument from the decoder note applied</span>
+<span class="sd">    to a scalar target -- but do not cite it as the fix for the nulls.</span>
+
+<span class="sd">    Index convention matches the parent operator</span>
+<span class="sd">    (``equivariant_cell_graph_transformer.py:1649``): ``perturbation_indices`` is a flat</span>
+<span class="sd">    ``[total_pert_genes]`` tensor of gene indices and ``perturbation_indices_batch``</span>
+<span class="sd">    assigns each entry to its sample.</span>
+<span class="sd">    """</span>
+    <span class="n">batch_size</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">H_genes_pert</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">gathered</span> <span class="o">=</span> <span class="n">H_genes_pert</span><span class="p">[</span><span class="n">perturbation_indices_batch</span><span class="p">,</span> <span class="n">perturbation_indices</span><span class="p">]</span>
+    <span class="n">pooled</span> <span class="o">=</span> <span class="n">H_genes_pert</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+    <span class="n">pooled</span><span class="o">.</span><span class="n">index_add_</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">perturbation_indices_batch</span><span class="p">,</span> <span class="n">gathered</span><span class="p">)</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">H_genes_pert</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>
+    <span class="n">counts</span><span class="o">.</span><span class="n">index_add_</span><span class="p">(</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="n">perturbation_indices_batch</span><span class="p">,</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">counts</span><span class="p">[</span><span class="n">perturbation_indices_batch</span><span class="p">]),</span>
+    <span class="p">)</span>
+    <span class="c1"># A sample with no perturbation (wild type) keeps a zero vector rather than NaN.</span>
+    <span class="k">return</span> <span class="n">pooled</span> <span class="o">/</span> <span class="n">counts</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="MetabolomeVectorHead">
+<a class="viewcode-back" href="../../../generated/torchcell.models.cell_graph_transformer_metabolism.MetabolomeVectorHead.html#torchcell.models.cell_graph_transformer_metabolism.MetabolomeVectorHead">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MetabolomeVectorHead</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Whole-cell readout for a FIXED-COLUMN metabolome vector (Mulleder's 19 AAs).</span>
+
+<span class="sd">    The columns are the measured metabolite keys in ``sorted()`` order -- the same order</span>
+<span class="sd">    the ``Perturbation`` graph processor uses when it flattens the ``metabolite_level``</span>
+<span class="sd">    dict -- so column ``k`` of the output is always the same amino acid. This head does</span>
+<span class="sd">    NOT read the Yeast9 metabolite node set and needs no ``s_NNNN`` mapping: the</span>
+<span class="sd">    measured set is small, dense, and fixed, which is precisely why Track A can skip the</span>
+<span class="sd">    metabolite-id alignment that a general per-metabolite readout would require.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">hidden_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">output_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">use_gene_pool</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">use_pert_pool</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">param_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build the MLP mapping the pooled representation to ``output_dim`` columns.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            hidden_dim: Model hidden dimension.</span>
+<span class="sd">            output_dim: Number of measured metabolite columns F (19 for Mulleder).</span>
+<span class="sd">            use_gene_pool: Concatenate a mean pool over ALL gene tokens of the perturbed</span>
+<span class="sd">                representation. Measured across-batch std 1.3e-2 -- the perturbation</span>
+<span class="sd">                operator cross-attends, so this is NOT as diluted as "one of 6,607 tokens</span>
+<span class="sd">                differs" would suggest (see ``perturbed_gene_pool``).</span>
+<span class="sd">            use_pert_pool: Concatenate a mean pool over ONLY the perturbed gene tokens.</span>
+<span class="sd">                Measured across-batch std 3.2e-2, i.e. ~2.5x the genome-wide pool. For a</span>
+<span class="sd">                single-KO strain this is the genotype itself, so keep it on; it is a</span>
+<span class="sd">                modest signal-to-background gain, not a cure for the observed nulls.</span>
+<span class="sd">            dropout: Dropout probability.</span>
+<span class="sd">            param_dim: Distributional params PER COLUMN; ``output_dim`` stays F.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">output_dim</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"MetabolomeVectorHead output_dim must be &gt;= 2, got </span><span class="si">{</span><span class="n">output_dim</span><span class="si">}</span><span class="s2">; "</span>
+                <span class="s2">"use ProductScalarHead for a single-value phenotype."</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hidden_dim</span> <span class="o">=</span> <span class="n">hidden_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span> <span class="o">=</span> <span class="n">output_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_gene_pool</span> <span class="o">=</span> <span class="n">use_gene_pool</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_pert_pool</span> <span class="o">=</span> <span class="n">use_pert_pool</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">param_dim</span> <span class="o">=</span> <span class="n">param_dim</span>
+        <span class="n">in_dim</span> <span class="o">=</span> <span class="n">hidden_dim</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">use_gene_pool</span><span class="p">)</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">use_pert_pool</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlp</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">in_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">output_dim</span> <span class="o">*</span> <span class="n">param_dim</span><span class="p">),</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="MetabolomeVectorHead.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.models.cell_graph_transformer_metabolism.MetabolomeVectorHead.html#torchcell.models.cell_graph_transformer_metabolism.MetabolomeVectorHead.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">h_CLS</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">H_genes_pert</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">pert_pool</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return ``[batch, F]`` (point) or ``[batch, F, param_dim]``."""</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">H_genes_pert</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">h_CLS</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_gene_pool</span><span class="p">:</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="n">H_genes_pert</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_pert_pool</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">pert_pool</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"use_pert_pool=True but pert_pool was not supplied; the model's "</span>
+                    <span class="s2">"forward must pass perturbed_gene_pool(...)."</span>
+                <span class="p">)</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="n">pert_pool</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlp</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dim</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dim</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="CellGraphTransformerMetabolism">
+<a class="viewcode-back" href="../../../generated/torchcell.models.cell_graph_transformer_metabolism.CellGraphTransformerMetabolism.html#torchcell.models.cell_graph_transformer_metabolism.CellGraphTransformerMetabolism">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CellGraphTransformerMetabolism</span><span class="p">(</span><span class="n">CellGraphTransformer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""CellGraphTransformer + named production / metabolome readout heads.</span>
+
+<span class="sd">    Every extra ``heads_config`` entry (any key outside :data:`INHERITED_HEADS`) becomes</span>
+<span class="sd">    one head, registered as the submodule ``f"{name}_head"`` and emitted into</span>
+<span class="sd">    ``reps["head_outputs"][name]``. The spec keys are:</span>
+
+<span class="sd">    * ``kind`` -- ``"scalar"`` (:class:`ProductScalarHead`) or ``"vector"``</span>
+<span class="sd">      (:class:`MetabolomeVectorHead`). Required; there is no default, because guessing</span>
+<span class="sd">      it is exactly the mistake that lets a scalar target broadcast across a vector head.</span>
+<span class="sd">    * ``output_dim`` -- feature count F (must be 1 for ``scalar``).</span>
+<span class="sd">    * ``use_gene_pool`` / ``dropout`` / ``param_dim`` -- as for the inherited heads.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">flux_layer</span><span class="p">:</span> <span class="n">FluxLayer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build the inherited model, then the flux layer, then the metabolism heads.</span>
+
+<span class="sd">        The metabolism heads are constructed strictly after ``super().__init__()`` so the</span>
+<span class="sd">        encoder + PERT parameters consume the RNG stream in exactly the parent's order</span>
+<span class="sd">        and are bit-identical to the parent's at the same seed (parity-tested).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            *args: Positional arguments forwarded verbatim to the parent constructor.</span>
+<span class="sd">            **kwargs: Keyword arguments forwarded verbatim to the parent constructor.</span>
+<span class="sd">            flux_layer: An already-built :class:`~torchcell.metabolism.flux_layer.FluxLayer`,</span>
+<span class="sd">                or None for the pooled-readout baseline. It is passed in rather than</span>
+<span class="sd">                constructed here because building it loads a genome-scale model from disk</span>
+<span class="sd">                and runs a rank-revealing QR -- work that belongs to the experiment script,</span>
+<span class="sd">                once, not to every model instantiation.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flux_layer</span> <span class="o">=</span> <span class="n">flux_layer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metabolism_head_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">raw_spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">heads_config</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">INHERITED_HEADS</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">spec</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">raw_spec</span> <span class="ow">or</span> <span class="p">{})</span>
+            <span class="n">kind</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"kind"</span><span class="p">)</span>
+            <span class="n">output_dim</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"output_dim"</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">head</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span>
+            <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"flux_metabolite"</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">flux_layer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"head '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' is kind='flux_metabolite' but no flux_layer was "</span>
+                        <span class="s2">"supplied; a mechanistic head cannot read a flux vector that the "</span>
+                        <span class="s2">"model does not compute."</span>
+                    <span class="p">)</span>
+                <span class="n">head</span> <span class="o">=</span> <span class="n">FluxMetaboliteHead</span><span class="p">(</span>
+                    <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">spec</span><span class="p">[</span><span class="s2">"metabolite_indices"</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">),</span>
+                    <span class="n">param_dim</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"param_dim"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"flux_scalar"</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">flux_layer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"head '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' is kind='flux_scalar' but no flux_layer was "</span>
+                        <span class="s2">"supplied."</span>
+                    <span class="p">)</span>
+                <span class="n">head</span> <span class="o">=</span> <span class="n">FluxScalarHead</span><span class="p">(</span>
+                    <span class="n">n_reactions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">flux_layer</span><span class="o">.</span><span class="n">n_reactions</span><span class="p">,</span>
+                    <span class="n">precursor_indices</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span>
+                        <span class="n">spec</span><span class="p">[</span><span class="s2">"precursor_indices"</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span>
+                    <span class="p">),</span>
+                    <span class="n">use_dense_flux</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"use_dense_flux"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)),</span>
+                    <span class="n">param_dim</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"param_dim"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"scalar"</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">output_dim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"head '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' is kind='scalar' but output_dim=</span><span class="si">{</span><span class="n">output_dim</span><span class="si">}</span><span class="s2">; "</span>
+                        <span class="s2">"a scalar head emits exactly one value."</span>
+                    <span class="p">)</span>
+                <span class="n">head</span> <span class="o">=</span> <span class="n">ProductScalarHead</span><span class="p">(</span>
+                    <span class="n">hidden_dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hidden_channels</span><span class="p">,</span>
+                    <span class="n">use_gene_pool</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"use_gene_pool"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)),</span>
+                    <span class="n">use_pert_pool</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"use_pert_pool"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)),</span>
+                    <span class="n">dropout</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"dropout"</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)),</span>
+                    <span class="n">param_dim</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"param_dim"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"vector"</span><span class="p">:</span>
+                <span class="n">head</span> <span class="o">=</span> <span class="n">MetabolomeVectorHead</span><span class="p">(</span>
+                    <span class="n">hidden_dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hidden_channels</span><span class="p">,</span>
+                    <span class="n">output_dim</span><span class="o">=</span><span class="n">output_dim</span><span class="p">,</span>
+                    <span class="n">use_gene_pool</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"use_gene_pool"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)),</span>
+                    <span class="n">use_pert_pool</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"use_pert_pool"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)),</span>
+                    <span class="n">dropout</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"dropout"</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)),</span>
+                    <span class="n">param_dim</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"param_dim"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"metabolism head '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' needs kind in "</span>
+                    <span class="s2">"{'scalar','vector','flux_scalar','flux_metabolite'} in its "</span>
+                    <span class="sa">f</span><span class="s2">"heads_config spec, got </span><span class="si">{</span><span class="n">kind</span><span class="si">!r}</span><span class="s2">."</span>
+                <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_module</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_head"</span><span class="p">,</span> <span class="n">head</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metabolism_head_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flux_head_names</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">n</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metabolism_head_names</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">_head"</span><span class="p">),</span> <span class="p">(</span><span class="n">FluxScalarHead</span><span class="p">,</span> <span class="n">FluxMetaboliteHead</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+
+<div class="viewcode-block" id="CellGraphTransformerMetabolism.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.models.cell_graph_transformer_metabolism.CellGraphTransformerMetabolism.html#torchcell.models.cell_graph_transformer_metabolism.CellGraphTransformerMetabolism.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">cell_graph</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Run the inherited forward, then append the metabolism head outputs.</span>
+
+<span class="sd">        The encoder, graph-regularization loss and equivariant perturbation operator are</span>
+<span class="sd">        the parent's, invoked unchanged; the heads read the ``h_CLS`` /</span>
+<span class="sd">        ``H_genes_pert`` pair the parent already returns.</span>
+
+<span class="sd">        ``*args``/``**kwargs`` FORWARD WHATEVER THE PARENT ACCEPTS, and that is deliberate</span>
+<span class="sd">        rather than lazy. This override exists only to append heads -- it has no opinion on</span>
+<span class="sd">        the parent's signature -- but by naming the parent's arguments explicitly it USED to</span>
+<span class="sd">        pin them, so when the masked-label objective added ``observed_values`` /</span>
+<span class="sd">        ``observed_mask`` to the parent and the trainer began passing them unconditionally,</span>
+<span class="sd">        every metabolism run died with::</span>
+
+<span class="sd">            TypeError: CellGraphTransformerMetabolism.forward() got an unexpected</span>
+<span class="sd">            keyword argument 'observed_values'</span>
+
+<span class="sd">        -- at the first training batch, i.e. ~20 minutes into a job, after the dataset and</span>
+<span class="sd">        embeddings had loaded. A pass-through signature makes the subclass transparent to</span>
+<span class="sd">        future parent arguments, which is the property the "subclass rather than transcribe"</span>
+<span class="sd">        decision in this module's header was chosen for in the first place. (It is</span>
+<span class="sd">        ``*args, **kwargs`` rather than named-plus-``**kwargs`` because that is the form</span>
+<span class="sd">        mypy accepts as a Liskov-compatible override.)</span>
+<span class="sd">        """</span>
+        <span class="n">predictions</span><span class="p">,</span> <span class="n">reps</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">h_CLS</span> <span class="o">=</span> <span class="n">reps</span><span class="p">[</span><span class="s2">"h_CLS"</span><span class="p">]</span>
+        <span class="n">H_genes_pert</span> <span class="o">=</span> <span class="n">reps</span><span class="p">[</span><span class="s2">"H_genes_pert"</span><span class="p">]</span>
+        <span class="n">head_outputs</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">reps</span><span class="p">[</span><span class="s2">"head_outputs"</span><span class="p">])</span>
+        <span class="n">pert_pool</span> <span class="o">=</span> <span class="n">perturbed_gene_pool</span><span class="p">(</span>
+            <span class="n">H_genes_pert</span><span class="p">,</span>
+            <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">perturbation_indices</span><span class="p">,</span>
+            <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">perturbation_indices_batch</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">flux_layer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">flux_head_names</span><span class="p">:</span>
+            <span class="n">flux</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">flux_layer</span><span class="p">(</span>
+                <span class="n">H_genes_pert</span><span class="p">,</span>
+                <span class="n">pert_pool</span><span class="p">,</span>
+                <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">perturbation_indices</span><span class="p">,</span>
+                <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">perturbation_indices_batch</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">reps</span><span class="p">[</span><span class="s2">"flux"</span><span class="p">]</span> <span class="o">=</span> <span class="n">flux</span>
+            <span class="n">turnover</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">flux_layer</span><span class="o">.</span><span class="n">turnover</span><span class="p">(</span><span class="n">flux</span><span class="p">[</span><span class="s2">"v"</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">flux_head_names</span><span class="p">:</span>
+                <span class="n">head</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_head"</span><span class="p">)</span>
+                <span class="n">head_outputs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">head</span><span class="p">(</span><span class="n">turnover</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="n">FluxMetaboliteHead</span><span class="p">)</span>
+                    <span class="k">else</span> <span class="n">head</span><span class="p">(</span><span class="n">flux</span><span class="p">[</span><span class="s2">"v"</span><span class="p">],</span> <span class="n">turnover</span><span class="p">)</span>
+                <span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metabolism_head_names</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">flux_head_names</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_head"</span><span class="p">))</span>
+            <span class="n">head_outputs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">head</span><span class="p">(</span><span class="n">h_CLS</span><span class="p">,</span> <span class="n">H_genes_pert</span><span class="p">,</span> <span class="n">pert_pool</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">reps</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">num_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Parameter counts, with one entry per metabolism head."""</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">num_parameters</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"total"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metabolism_head_names</span><span class="p">:</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_head"</span><span class="p">))</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">head</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">)</span>
+            <span class="n">counts</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_head"</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span>
+            <span class="n">total</span> <span class="o">+=</span> <span class="n">n</span>
+        <span class="n">counts</span><span class="p">[</span><span class="s2">"total"</span><span class="p">]</span> <span class="o">=</span> <span class="n">total</span>
+        <span class="k">return</span> <span class="n">counts</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Run ONE real batch through the model and report what each head actually sees.</span>
+
+<span class="sd">    Run from the repo/worktree root::</span>
+
+<span class="sd">        PYTHONPATH=$PWD ~/miniconda3/envs/torchcell/bin/python \\</span>
+<span class="sd">            torchcell/models/cell_graph_transformer_metabolism.py</span>
+
+<span class="sd">    The point of this entry is the HEAD-INPUT VARIANCE table. A readout can only</span>
+<span class="sd">    distinguish two strains through terms that DIFFER between them, and on the</span>
+<span class="sd">    ``fig6_pigment_transfer`` build the three candidate terms differ by orders of</span>
+<span class="sd">    magnitude:</span>
+
+<span class="sd">    * ``h_CLS`` -- the encoding of the unperturbed reference graph, broadcast across the</span>
+<span class="sd">      batch. Across-batch std is EXACTLY 0: it cannot carry genotype.</span>
+<span class="sd">    * ``mean over all N=6607 gene tokens`` -- one token differs per single-KO strain, so</span>
+<span class="sd">      the across-batch std is ~1/6607 of the per-token scale.</span>
+<span class="sd">    * ``mean over the perturbed gene tokens only`` -- the genotype itself.</span>
+
+<span class="sd">    Reading those three numbers side by side is what turns "the model predicts a</span>
+<span class="sd">    constant" into a diagnosis. It is the check that would have caught the pooling</span>
+<span class="sd">    defect immediately, so it lives with the model rather than in a notebook.</span>
+<span class="sd">    """</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span>
+
+    <span class="kn">import</span><span class="w"> </span><span class="nn">torchcell</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">DeletionKeyedGenotypeAggregator</span><span class="p">,</span>
+        <span class="n">MeanExperimentDeduplicator</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.graph_processor</span><span class="w"> </span><span class="kn">import</span> <span class="n">Perturbation</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.neo4j_cell</span><span class="w"> </span><span class="kn">import</span> <span class="n">Neo4jCellDataset</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGraph</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.graph.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_gene_multigraph</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae.s288c</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
+
+    <span class="c1"># Print WHICH torchcell won. If this is not the tree containing this file, the run is</span>
+    <span class="c1"># meaningless -- see the worktree import bootstrap at the top of the module.</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"torchcell package: </span><span class="si">{</span><span class="n">osp</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">torchcell</span><span class="o">.</span><span class="vm">__file__</span><span class="p">))</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"this model file  : </span><span class="si">{</span><span class="n">osp</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">data_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
+    <span class="n">experiment_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"EXPERIMENT_ROOT"</span><span class="p">]</span>
+    <span class="n">query_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="n">experiment_root</span><span class="p">,</span> <span class="s2">"019-simb-multimodal/queries/fig6_pigment_transfer.cql"</span>
+    <span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">query_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+    <span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
+        <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
+        <span class="n">go_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/go"</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">SCerevisiaeGraph</span><span class="p">(</span>
+        <span class="n">sgd_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
+        <span class="n">string_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/string"</span><span class="p">),</span>
+        <span class="n">tflink_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/tflink"</span><span class="p">),</span>
+        <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">Neo4jCellDataset</span><span class="p">(</span>
+        <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">data_root</span><span class="p">,</span>
+            <span class="s2">"data/torchcell/experiments/019-simb-multimodal/fig6_pigment_transfer"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
+        <span class="n">gene_set</span><span class="o">=</span><span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">,</span>
+        <span class="c1"># Connection comes from NEO4J_URI/NEO4J_USER/NEO4J_PASSWORD in the environment</span>
+        <span class="c1"># (defaulting to the locally served instance). The radiant host this previously</span>
+        <span class="c1"># hardcoded no longer serves the database.</span>
+        <span class="n">graphs</span><span class="o">=</span><span class="n">build_gene_multigraph</span><span class="p">(</span>
+            <span class="n">graph</span><span class="o">=</span><span class="n">graph</span><span class="p">,</span> <span class="n">graph_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"physical"</span><span class="p">,</span> <span class="s2">"regulatory"</span><span class="p">]</span>
+        <span class="p">),</span>
+        <span class="n">incidence_graphs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">node_embeddings</span><span class="o">=</span><span class="p">{},</span>
+        <span class="n">converter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">deduplicator</span><span class="o">=</span><span class="n">MeanExperimentDeduplicator</span><span class="p">,</span>
+        <span class="n">aggregator</span><span class="o">=</span><span class="n">DeletionKeyedGenotypeAggregator</span><span class="p">,</span>
+        <span class="n">graph_processor</span><span class="o">=</span><span class="n">Perturbation</span><span class="p">(),</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"dataset: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span><span class="si">}</span><span class="s2"> aggregated genotypes"</span><span class="p">)</span>
+
+    <span class="c1"># follow_batch is what creates `perturbation_indices_batch`, which the perturbed-gene</span>
+    <span class="c1"># pool needs to attribute each perturbed gene to its sample.</span>
+    <span class="n">loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span>
+        <span class="n">dataset</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+        <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">follow_batch</span><span class="o">=</span><span class="p">[</span><span class="s2">"perturbation_indices"</span><span class="p">,</span> <span class="s2">"phenotype_values"</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="n">batch</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">loader</span><span class="p">))</span>
+
+    <span class="n">heads_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"betaxanthin"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"scalar"</span><span class="p">,</span> <span class="s2">"output_dim"</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+        <span class="s2">"beta_carotene"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"scalar"</span><span class="p">,</span> <span class="s2">"output_dim"</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+        <span class="s2">"mulleder19"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"vector"</span><span class="p">,</span> <span class="s2">"output_dim"</span><span class="p">:</span> <span class="mi">19</span><span class="p">},</span>
+    <span class="p">}</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">CellGraphTransformerMetabolism</span><span class="p">(</span>
+        <span class="n">cell_graph</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">cell_graph</span><span class="p">,</span>
+        <span class="n">gene_num</span><span class="o">=</span><span class="mi">6607</span><span class="p">,</span>
+        <span class="n">hidden_channels</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+        <span class="n">num_transformer_layers</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">num_attention_heads</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+        <span class="n">dropout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">heads_config</span><span class="o">=</span><span class="n">heads_config</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">parameters:"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">num_parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">k</span><span class="si">:</span><span class="s2">28s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">&gt;9,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">reps</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">cell_graph</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+        <span class="n">h_CLS</span> <span class="o">=</span> <span class="n">reps</span><span class="p">[</span><span class="s2">"h_CLS"</span><span class="p">]</span>
+        <span class="n">H_genes_pert</span> <span class="o">=</span> <span class="n">reps</span><span class="p">[</span><span class="s2">"H_genes_pert"</span><span class="p">]</span>
+        <span class="n">pert_pool</span> <span class="o">=</span> <span class="n">perturbed_gene_pool</span><span class="p">(</span>
+            <span class="n">H_genes_pert</span><span class="p">,</span>
+            <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">perturbation_indices</span><span class="p">,</span>
+            <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">perturbation_indices_batch</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">H_genes_pert</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">cls_b</span> <span class="o">=</span> <span class="n">h_CLS</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">gene_pool</span> <span class="o">=</span> <span class="n">H_genes_pert</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">batch: </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2"> strains, H_genes_pert </span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="n">H_genes_pert</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">HEAD-INPUT VARIANCE (std ACROSS the batch, averaged over dims):"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="s1">'term'</span><span class="si">:</span><span class="s2">&lt;34</span><span class="si">}{</span><span class="s1">'across-batch std'</span><span class="si">:</span><span class="s2">&gt;18</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="p">(</span><span class="s2">"h_CLS (reference cell)"</span><span class="p">,</span> <span class="n">cls_b</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"mean over ALL 6607 gene tokens"</span><span class="p">,</span> <span class="n">gene_pool</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"mean over PERTURBED genes only"</span><span class="p">,</span> <span class="n">pert_pool</span><span class="p">),</span>
+        <span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">label</span><span class="si">:</span><span class="s2">&lt;34</span><span class="si">}{</span><span class="n">t</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">&gt;18.3e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">ratio</span> <span class="o">=</span> <span class="n">pert_pool</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">/</span> <span class="n">gene_pool</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span>
+            <span class="nb">min</span><span class="o">=</span><span class="mf">1e-12</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">  perturbed-pool signal is </span><span class="si">{</span><span class="n">ratio</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">x the genome-wide pool"</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">head outputs:"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">out</span> <span class="ow">in</span> <span class="n">cast</span><span class="p">(</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">reps</span><span class="p">[</span><span class="s2">"head_outputs"</span><span class="p">])</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">&lt;20</span><span class="si">}{</span><span class="nb">str</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span><span class="si">:</span><span class="s2">&gt;16</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

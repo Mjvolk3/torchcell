@@ -1,0 +1,235 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.literature &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/modules/literature.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="torchcell.literature.BackfillReport" href="../generated/torchcell.literature.BackfillReport.html" />
+    <link rel="prev" title="torchcell.knowledge_graphs.subset.subset_dataset" href="../generated/torchcell.knowledge_graphs.subset.subset_dataset.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">torchcell.literature</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#classes">Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#functions">Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">torchcell.literature</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/modules/literature.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-torchcell.literature">
+<span id="torchcell-literature"></span><h1>torchcell.literature<a class="headerlink" href="#module-torchcell.literature" title="Link to this heading"></a></h1>
+<p>The literature capture subsystem. It reads papers and supplementary files from Zotero (<code class="docutils literal notranslate"><span class="pre">zotero</span></code>), OCRs or extracts them into markdown (<code class="docutils literal notranslate"><span class="pre">ocr</span></code>, <code class="docutils literal notranslate"><span class="pre">extract</span></code>, <code class="docutils literal notranslate"><span class="pre">scanned</span></code>), fetches supplementary data (<code class="docutils literal notranslate"><span class="pre">si_data</span></code>), and records a sha256 provenance manifest for every stored artifact (<code class="docutils literal notranslate"><span class="pre">manifest</span></code>, <code class="docutils literal notranslate"><span class="pre">provenance</span></code>) in the on-disk mirror. <code class="docutils literal notranslate"><span class="pre">server</span></code> is the read-only HTTP endpoint (<code class="docutils literal notranslate"><span class="pre">tc-lit-server</span></code>) that serves the mirrored artifacts, and <code class="docutils literal notranslate"><span class="pre">sync</span></code> reconciles the mirror against a Zotero collection.</p>
+<nav class="contents local" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#classes" id="id1">Classes</a></p></li>
+<li><p><a class="reference internal" href="#functions" id="id2">Functions</a></p></li>
+</ul>
+</nav>
+<section id="classes">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Classes</a><a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.literature.BackfillReport.html#torchcell.literature.BackfillReport" title="torchcell.literature.BackfillReport"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BackfillReport</span></code></a></p></td>
+<td><p>Summary of a mirror-wide backfill run.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.literature.Manifest.html#torchcell.literature.Manifest" title="torchcell.literature.Manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Manifest</span></code></a></p></td>
+<td><p>Provenance + integrity record for one paper's captured artifact.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.literature.LiteratureServerConfig.html#torchcell.literature.LiteratureServerConfig" title="torchcell.literature.LiteratureServerConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LiteratureServerConfig</span></code></a></p></td>
+<td><p>Runtime configuration for the literature endpoint.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.literature.LiteratureKeys.html#torchcell.literature.LiteratureKeys" title="torchcell.literature.LiteratureKeys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LiteratureKeys</span></code></a></p></td>
+<td><p>The shared <code class="xref py py-class docutils literal notranslate"><span class="pre">ApiKeys</span></code> model bound to the <code class="docutils literal notranslate"><span class="pre">TC_LIT_*</span></code> variables.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.literature.ZoteroConfig.html#torchcell.literature.ZoteroConfig" title="torchcell.literature.ZoteroConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ZoteroConfig</span></code></a></p></td>
+<td><p>Credentials for a single Zotero library.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.literature.ZoteroLibrary.html#torchcell.literature.ZoteroLibrary" title="torchcell.literature.ZoteroLibrary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ZoteroLibrary</span></code></a></p></td>
+<td><p>Synchronous handle to one Zotero library.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.literature.backfill_key.html#torchcell.literature.backfill_key" title="torchcell.literature.backfill_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">backfill_key</span></code></a></p></td>
+<td><p>Regularize one citation-key directory to a <code class="docutils literal notranslate"><span class="pre">manifest.json</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.literature.backfill_mirror.html#torchcell.literature.backfill_mirror" title="torchcell.literature.backfill_mirror"><code class="xref py py-obj docutils literal notranslate"><span class="pre">backfill_mirror</span></code></a></p></td>
+<td><p>Backfill manifests for every citation-key directory under <code class="docutils literal notranslate"><span class="pre">root</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.literature.capture_by_doi.html#torchcell.literature.capture_by_doi" title="torchcell.literature.capture_by_doi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">capture_by_doi</span></code></a></p></td>
+<td><p>Capture a paper's full artifact from Zotero + external SI data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.literature.generate_citation_key.html#torchcell.literature.generate_citation_key" title="torchcell.literature.generate_citation_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_citation_key</span></code></a></p></td>
+<td><p>Generate a Better BibTeX-style citation key from paper metadata.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.literature.build_manifest.html#torchcell.literature.build_manifest" title="torchcell.literature.build_manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_manifest</span></code></a></p></td>
+<td><p>Scan an artifact directory and build its manifest.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.literature.write_manifest.html#torchcell.literature.write_manifest" title="torchcell.literature.write_manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_manifest</span></code></a></p></td>
+<td><p>Write <code class="docutils literal notranslate"><span class="pre">manifest.json</span></code> into the artifact directory; return its path.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.literature.ocr_artifact.html#torchcell.literature.ocr_artifact" title="torchcell.literature.ocr_artifact"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ocr_artifact</span></code></a></p></td>
+<td><p>OCR every PDF in an artifact directory: <code class="docutils literal notranslate"><span class="pre">paper.pdf</span></code> and each <code class="docutils literal notranslate"><span class="pre">si/si*.pdf</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.literature.ocr_pdf.html#torchcell.literature.ocr_pdf" title="torchcell.literature.ocr_pdf"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ocr_pdf</span></code></a></p></td>
+<td><p>OCR one PDF to markdown next to it (<code class="docutils literal notranslate"><span class="pre">&lt;stem&gt;.pdf</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">&lt;stem&gt;.md</span></code>).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.literature.create_app.html#torchcell.literature.create_app" title="torchcell.literature.create_app"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_app</span></code></a></p></td>
+<td><p>Build the FastAPI app bound to <code class="docutils literal notranslate"><span class="pre">config</span></code> (config stored on <code class="docutils literal notranslate"><span class="pre">app.state</span></code>).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.literature.create_app_from_env.html#torchcell.literature.create_app_from_env" title="torchcell.literature.create_app_from_env"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_app_from_env</span></code></a></p></td>
+<td><p>Factory for <code class="docutils literal notranslate"><span class="pre">uvicorn</span> <span class="pre">--factory</span> <span class="pre">torchcell.literature.server:create_app_from_env</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.literature.dryad_files.html#torchcell.literature.dryad_files" title="torchcell.literature.dryad_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dryad_files</span></code></a></p></td>
+<td><p>Resolve a DRYAD dataset DOI to <code class="docutils literal notranslate"><span class="pre">[(filename,</span> <span class="pre">download_url),</span> <span class="pre">...]</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.literature.fetch_si_data.html#torchcell.literature.fetch_si_data" title="torchcell.literature.fetch_si_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_si_data</span></code></a></p></td>
+<td><p>Download SI data files into <code class="docutils literal notranslate"><span class="pre">&lt;artifact_dir&gt;/si/si_data/</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.literature.make_zotero_client.html#torchcell.literature.make_zotero_client" title="torchcell.literature.make_zotero_client"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_zotero_client</span></code></a></p></td>
+<td><p>Construct a pyzotero client from a <a class="reference internal" href="../generated/torchcell.literature.ZoteroConfig.html#torchcell.literature.ZoteroConfig" title="torchcell.literature.ZoteroConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ZoteroConfig</span></code></a>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.literature.with_zotero_retry.html#torchcell.literature.with_zotero_retry" title="torchcell.literature.with_zotero_retry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">with_zotero_retry</span></code></a></p></td>
+<td><p>Run a zero-arg Zotero call with bounded exponential-backoff retry.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../generated/torchcell.knowledge_graphs.subset.subset_dataset.html" class="btn btn-neutral float-left" title="torchcell.knowledge_graphs.subset.subset_dataset" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../generated/torchcell.literature.BackfillReport.html" class="btn btn-neutral float-right" title="torchcell.literature.BackfillReport" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

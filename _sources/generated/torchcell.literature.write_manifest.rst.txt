@@ -1,0 +1,6 @@
+﻿torchcell.literature.write\_manifest
+====================================
+
+.. currentmodule:: torchcell.literature
+
+.. autofunction:: write_manifest

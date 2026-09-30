@@ -1,0 +1,6 @@
+﻿torchcell.paper.tables.read\_frontmatter
+========================================
+
+.. currentmodule:: torchcell.paper.tables
+
+.. autofunction:: read_frontmatter

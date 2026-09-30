@@ -1,0 +1,534 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.paper.ontology_graph &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/paper/ontology_graph.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.paper.ontology_graph</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.paper.ontology_graph</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Introspect the torchcell pydantic schema into a typed, renderable graph.</span>
+
+<span class="sd">The schema in :mod:`torchcell.datamodels.schema` is the ontology: an experiment is</span>
+<span class="sd">a typed ``genotype x environment -&gt; phenotype`` record. This module reads the live</span>
+<span class="sd">pydantic models (never a hand-maintained copy) and produces an</span>
+<span class="sd">:class:`OntologyGraph` describing every class, its own fields, its inheritance</span>
+<span class="sd">parent, and its composition references.</span>
+
+<span class="sd">Reading the models at runtime rather than parsing source is what keeps the diagram</span>
+<span class="sd">honest: a class added to the schema shows up in the figure on the next regeneration,</span>
+<span class="sd">and a class that is renamed cannot leave a stale box behind.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">enum</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">types</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">typing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels</span><span class="w"> </span><span class="kn">import</span> <span class="n">compound_identity</span> <span class="k">as</span> <span class="n">compound_identity_module</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels</span><span class="w"> </span><span class="kn">import</span> <span class="n">media</span> <span class="k">as</span> <span class="n">media_module</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels</span><span class="w"> </span><span class="kn">import</span> <span class="n">pydant</span> <span class="k">as</span> <span class="n">pydant_module</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels</span><span class="w"> </span><span class="kn">import</span> <span class="n">schema</span> <span class="k">as</span> <span class="n">schema_module</span>
+
+<span class="c1"># Mixins that carry configuration rather than domain content. They are real bases,</span>
+<span class="c1"># but drawing them would add a box every class points at and say nothing about the</span>
+<span class="c1"># biology, so they are recorded as a note in the legend instead.</span>
+<span class="n">CONFIG_MIXINS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"ModelStrict"</span><span class="p">,</span> <span class="s2">"ModelStrictArbitrary"</span><span class="p">})</span>
+
+<span class="c1"># Lane assignment. Each entry is (lane key, roots) where a root's entire inheritance</span>
+<span class="c1"># subtree joins that lane. Order here is the left-to-right / top-to-bottom reading</span>
+<span class="c1"># order of the finished figure.</span>
+<span class="n">LANE_ROOTS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"genotype"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"Genotype"</span><span class="p">,</span>
+        <span class="s2">"GenePerturbation"</span><span class="p">,</span>
+        <span class="s2">"CrisprConstruct"</span><span class="p">,</span>
+        <span class="s2">"ExpressionRangeMultiplier"</span><span class="p">,</span>
+        <span class="s2">"SegregantGenotype"</span><span class="p">,</span>
+        <span class="s2">"SegregantParent"</span><span class="p">,</span>
+        <span class="s2">"HaplotypeBlock"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"environment"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"Environment"</span><span class="p">,</span>
+        <span class="s2">"EnvironmentPerturbation"</span><span class="p">,</span>
+        <span class="s2">"Media"</span><span class="p">,</span>
+        <span class="s2">"MediaComponent"</span><span class="p">,</span>
+        <span class="s2">"Compound"</span><span class="p">,</span>
+        <span class="s2">"CompoundIdentityRecord"</span><span class="p">,</span>
+        <span class="s2">"CompoundIdentityResolution"</span><span class="p">,</span>
+        <span class="s2">"Concentration"</span><span class="p">,</span>
+        <span class="s2">"Solvent"</span><span class="p">,</span>
+        <span class="s2">"Temperature"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"phenotype"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Phenotype"</span><span class="p">,),</span>
+    <span class="s2">"experiment"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Experiment"</span><span class="p">,</span> <span class="s2">"ExperimentReference"</span><span class="p">),</span>
+    <span class="s2">"provenance"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Publication"</span><span class="p">,</span> <span class="s2">"ProvenanceGapMixin"</span><span class="p">,</span> <span class="s2">"ReferenceGenome"</span><span class="p">,</span> <span class="s2">"SOTerm"</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="n">LANE_TITLES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"genotype"</span><span class="p">:</span> <span class="s2">"Genotype — what was changed in the cell"</span><span class="p">,</span>
+    <span class="s2">"environment"</span><span class="p">:</span> <span class="s2">"Environment — what the cell was grown in"</span><span class="p">,</span>
+    <span class="s2">"phenotype"</span><span class="p">:</span> <span class="s2">"Phenotype — what was measured"</span><span class="p">,</span>
+    <span class="s2">"experiment"</span><span class="p">:</span> <span class="s2">"Experiment — the typed record and its reference"</span><span class="p">,</span>
+    <span class="s2">"provenance"</span><span class="p">:</span> <span class="s2">"Provenance — where the record came from"</span><span class="p">,</span>
+    <span class="s2">"enum"</span><span class="p">:</span> <span class="s2">"Controlled vocabularies"</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1"># Block heading + one-line gloss for the printed schematic panel. These two are the</span>
+<span class="c1"># only editorial strings on that figure; everything inside a block is derived from the</span>
+<span class="c1"># graph, so a class cannot be named on the panel unless it exists in the schema.</span>
+<span class="n">LANE_HEADINGS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"genotype"</span><span class="p">:</span> <span class="s2">"GENOTYPE"</span><span class="p">,</span>
+    <span class="s2">"environment"</span><span class="p">:</span> <span class="s2">"ENVIRONMENT"</span><span class="p">,</span>
+    <span class="s2">"phenotype"</span><span class="p">:</span> <span class="s2">"PHENOTYPE"</span><span class="p">,</span>
+    <span class="s2">"experiment"</span><span class="p">:</span> <span class="s2">"EXPERIMENT"</span><span class="p">,</span>
+    <span class="s2">"provenance"</span><span class="p">:</span> <span class="s2">"PROVENANCE"</span><span class="p">,</span>
+    <span class="s2">"enum"</span><span class="p">:</span> <span class="s2">"CONTROLLED VOCABULARIES"</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">LANE_SUBTITLES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"genotype"</span><span class="p">:</span> <span class="s2">"1..n perturbations off a reference genome"</span><span class="p">,</span>
+    <span class="s2">"environment"</span><span class="p">:</span> <span class="s2">"medium × temperature × perturbation"</span><span class="p">,</span>
+    <span class="s2">"phenotype"</span><span class="p">:</span> <span class="s2">"what was measured, with its uncertainty"</span><span class="p">,</span>
+    <span class="s2">"experiment"</span><span class="p">:</span> <span class="s2">"the typed record, paired with its control"</span><span class="p">,</span>
+    <span class="s2">"provenance"</span><span class="p">:</span> <span class="s2">"where the record came from"</span><span class="p">,</span>
+    <span class="s2">"enum"</span><span class="p">:</span> <span class="s2">"closed sets, no free text"</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1"># Domain -&gt; palette slot. Six domains map onto the six primary palette colors, so the</span>
+<span class="c1"># four warm primaries are spent before blue and gray (see CLAUDE.md figure standards).</span>
+<span class="n">LANE_PALETTE_INDEX</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"genotype"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1"># amber</span>
+    <span class="s2">"environment"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># brick</span>
+    <span class="s2">"phenotype"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>  <span class="c1"># lilac</span>
+    <span class="s2">"experiment"</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>  <span class="c1"># wheat</span>
+    <span class="s2">"provenance"</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>  <span class="c1"># steel blue</span>
+    <span class="s2">"enum"</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>  <span class="c1"># gray</span>
+<span class="p">}</span>
+
+<span class="n">LANE_ORDER</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"genotype"</span><span class="p">,</span>
+    <span class="s2">"environment"</span><span class="p">,</span>
+    <span class="s2">"experiment"</span><span class="p">,</span>
+    <span class="s2">"phenotype"</span><span class="p">,</span>
+    <span class="s2">"provenance"</span><span class="p">,</span>
+    <span class="s2">"enum"</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="OntologyField">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.ontology_graph.OntologyField.html#torchcell.paper.ontology_graph.OntologyField">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OntologyField</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One pydantic field on a class, as it should appear in a diagram row."""</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">type_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"rendered type, unions collapsed for width"</span><span class="p">)</span>
+    <span class="n">required</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">inherited</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"declared on an ancestor, not on this class"</span><span class="p">)</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">references</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"schema class/enum names appearing anywhere in the annotation"</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="OntologyClass">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.ontology_graph.OntologyClass.html#torchcell.paper.ontology_graph.OntologyClass">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OntologyClass</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A pydantic model or enum in the schema, plus its place in the ontology."""</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"'model' or 'enum'"</span><span class="p">)</span>
+    <span class="n">lane</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">module</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">doc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">parent</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"single schema base class"</span><span class="p">)</span>
+    <span class="n">own_fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">OntologyField</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">inherited_field_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">enum_members</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">is_abstract</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">row_count</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Rows the card body needs (fields for a model, members for an enum)."""</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">enum_members</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"enum"</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">own_fields</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="CompositionEdge">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.ontology_graph.CompositionEdge.html#torchcell.paper.ontology_graph.CompositionEdge">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CompositionEdge</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A ``has-a`` edge: ``source.field`` holds one or more ``target``."""</span>
+
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">target</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">field_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">is_collection</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+
+
+<div class="viewcode-block" id="OntologyGraph">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.ontology_graph.OntologyGraph.html#torchcell.paper.ontology_graph.OntologyGraph">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OntologyGraph</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The whole schema as classes plus inheritance and composition edges."""</span>
+
+    <span class="n">classes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">OntologyClass</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">composition_edges</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CompositionEdge</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+<div class="viewcode-block" id="OntologyGraph.children_of">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.ontology_graph.OntologyGraph.html#torchcell.paper.ontology_graph.OntologyGraph.children_of">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">children_of</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Direct inheritance children, in stable alphabetical order."""</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">classes</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">parent</span> <span class="o">==</span> <span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OntologyGraph.lane_members">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.ontology_graph.OntologyGraph.html#torchcell.paper.ontology_graph.OntologyGraph.lane_members">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">lane_members</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lane</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Class names in a lane, in stable alphabetical order."""</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">classes</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">lane</span> <span class="o">==</span> <span class="n">lane</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OntologyGraph.descendants_of">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.ontology_graph.OntologyGraph.html#torchcell.paper.ontology_graph.OntologyGraph.descendants_of">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">descendants_of</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Every class below ``name`` in the inheritance tree, excluding itself."""</span>
+        <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">frontier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">children_of</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">frontier</span><span class="p">:</span>
+            <span class="n">child</span> <span class="o">=</span> <span class="n">frontier</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+            <span class="n">frontier</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">children_of</span><span class="p">(</span><span class="n">child</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">out</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OntologyGraph.lane_roots">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.ontology_graph.OntologyGraph.html#torchcell.paper.ontology_graph.OntologyGraph.lane_roots">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">lane_roots</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lane</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Classes in ``lane`` whose inheritance parent sits outside the lane."""</span>
+        <span class="n">roots</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">lane_members</span><span class="p">(</span><span class="n">lane</span><span class="p">):</span>
+            <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">classes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span>
+            <span class="k">if</span> <span class="n">parent</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">classes</span><span class="p">[</span><span class="n">parent</span><span class="p">]</span><span class="o">.</span><span class="n">lane</span> <span class="o">!=</span> <span class="n">lane</span><span class="p">:</span>
+                <span class="n">roots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">roots</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_collapse_type</span><span class="p">(</span><span class="n">annotation</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Render an annotation compactly enough to fit a card row.</span>
+
+<span class="sd">    Wide discriminated unions (``Genotype.perturbations`` is a union of 19</span>
+<span class="sd">    perturbation classes) would blow the card width out by an order of magnitude,</span>
+<span class="sd">    so a union of more than two schema classes collapses to a count. The members</span>
+<span class="sd">    are not lost -- they are still drawn as composition edges.</span>
+<span class="sd">    """</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">annotation</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">prefix</span> <span class="ow">in</span> <span class="p">(</span>
+        <span class="s2">"torchcell.datamodels.schema."</span><span class="p">,</span>
+        <span class="s2">"torchcell.datamodels.pydant."</span><span class="p">,</span>
+        <span class="s2">"torchcell.datamodels.media."</span><span class="p">,</span>
+        <span class="s2">"torchcell.datamodels.compound_identity."</span><span class="p">,</span>
+        <span class="s2">"torchcell.verification.sourced."</span><span class="p">,</span>
+        <span class="s2">"typing."</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">text</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"&lt;class '"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">text</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"'&gt;"</span><span class="p">):</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="mi">8</span><span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"&lt;enum '"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"'&gt;"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+
+    <span class="n">origin</span> <span class="o">=</span> <span class="n">typing</span><span class="o">.</span><span class="n">get_origin</span><span class="p">(</span><span class="n">annotation</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="n">typing</span><span class="o">.</span><span class="n">Union</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">UnionType</span><span class="p">):</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">typing</span><span class="o">.</span><span class="n">get_args</span><span class="p">(</span><span class="n">annotation</span><span class="p">)</span> <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)]</span>
+        <span class="n">optional</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">typing</span><span class="o">.</span><span class="n">get_args</span><span class="p">(</span><span class="n">annotation</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">"one of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span> <span class="o">+</span> <span class="p">(</span><span class="s2">" | None"</span> <span class="k">if</span> <span class="n">optional</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">set</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+        <span class="p">(</span><span class="n">inner</span><span class="p">,)</span> <span class="o">=</span> <span class="n">typing</span><span class="o">.</span><span class="n">get_args</span><span class="p">(</span><span class="n">annotation</span><span class="p">)[:</span><span class="mi">1</span><span class="p">]</span> <span class="ow">or</span> <span class="p">(</span><span class="kc">None</span><span class="p">,)</span>
+        <span class="n">inner_origin</span> <span class="o">=</span> <span class="n">typing</span><span class="o">.</span><span class="n">get_origin</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">inner_origin</span> <span class="ow">in</span> <span class="p">(</span><span class="n">typing</span><span class="o">.</span><span class="n">Union</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">UnionType</span><span class="p">):</span>
+            <span class="n">members</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">typing</span><span class="o">.</span><span class="n">get_args</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span> <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">members</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">return</span> <span class="sa">f</span><span class="s2">"list[one of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">members</span><span class="p">)</span><span class="si">}</span><span class="s2">]"</span>
+    <span class="k">return</span> <span class="n">text</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">46</span> <span class="k">else</span> <span class="n">text</span><span class="p">[:</span><span class="mi">44</span><span class="p">]</span> <span class="o">+</span> <span class="s2">"…"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_referenced_names</span><span class="p">(</span><span class="n">annotation</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">known</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Every schema class/enum name appearing anywhere inside an annotation."""</span>
+    <span class="n">found</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">walk</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">"__name__"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">known</span><span class="p">:</span>
+            <span class="n">found</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">typing</span><span class="o">.</span><span class="n">get_args</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+            <span class="n">walk</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+
+    <span class="n">walk</span><span class="p">(</span><span class="n">annotation</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">found</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_collection</span><span class="p">(</span><span class="n">annotation</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">typing</span><span class="o">.</span><span class="n">get_origin</span><span class="p">(</span><span class="n">annotation</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">set</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span>
+        <span class="n">typing</span><span class="o">.</span><span class="n">get_origin</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">set</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">typing</span><span class="o">.</span><span class="n">get_args</span><span class="p">(</span><span class="n">annotation</span><span class="p">)</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_lane_for</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">parent_chain</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Lane of a class: its own root assignment, else its nearest assigned ancestor.</span>
+
+<span class="sd">    Raises rather than defaulting. A silent catch-all would file every newly added</span>
+<span class="sd">    top-level class under whichever lane the default named, and the figure would look</span>
+<span class="sd">    correct while quietly misplacing it -- the exact drift this module exists to stop.</span>
+<span class="sd">    """</span>
+    <span class="k">for</span> <span class="n">lane</span><span class="p">,</span> <span class="n">roots</span> <span class="ow">in</span> <span class="n">LANE_ROOTS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">roots</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">lane</span>
+    <span class="k">for</span> <span class="n">ancestor</span> <span class="ow">in</span> <span class="n">parent_chain</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">lane</span><span class="p">,</span> <span class="n">roots</span> <span class="ow">in</span> <span class="n">LANE_ROOTS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">ancestor</span> <span class="ow">in</span> <span class="n">roots</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">lane</span>
+    <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> has no lane: it is not in LANE_ROOTS and none of its ancestors "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">parent_chain</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'(no schema base)'</span><span class="si">}</span><span class="s2"> are either. Add it to LANE_ROOTS in "</span>
+        <span class="sa">f</span><span class="s2">"torchcell/paper/ontology_graph.py."</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="build_ontology_graph">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.ontology_graph.build_ontology_graph.html#torchcell.paper.ontology_graph.build_ontology_graph">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_ontology_graph</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">OntologyGraph</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Introspect the live schema modules into an :class:`OntologyGraph`."""</span>
+    <span class="n">modules</span> <span class="o">=</span> <span class="p">(</span><span class="n">schema_module</span><span class="p">,</span> <span class="n">media_module</span><span class="p">,</span> <span class="n">pydant_module</span><span class="p">,</span> <span class="n">compound_identity_module</span><span class="p">)</span>
+    <span class="n">module_names</span> <span class="o">=</span> <span class="p">{</span><span class="n">m</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">modules</span><span class="p">}</span>
+
+    <span class="n">registry</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">modules</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">(</span><span class="n">module</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">registry</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__module__</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">module_names</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">CONFIG_MIXINS</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">):</span>
+                <span class="n">registry</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"model"</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
+                <span class="n">registry</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"enum"</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span>
+
+    <span class="n">known</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">registry</span><span class="p">)</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">OntologyGraph</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span> <span class="ow">in</span> <span class="n">registry</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">parents</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">b</span><span class="o">.</span><span class="vm">__name__</span>
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__bases__</span>
+            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">in</span> <span class="n">registry</span> <span class="ow">and</span> <span class="n">registry</span><span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="vm">__name__</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"model"</span>
+        <span class="p">]</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="n">parents</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">parents</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="n">chain</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">parent</span>
+        <span class="k">while</span> <span class="n">cursor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">chain</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cursor</span><span class="p">)</span>
+            <span class="n">cursor_parents</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">b</span><span class="o">.</span><span class="vm">__name__</span>
+                <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">registry</span><span class="p">[</span><span class="n">cursor</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="vm">__bases__</span>
+                <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">in</span> <span class="n">registry</span>
+            <span class="p">]</span>
+            <span class="n">cursor</span> <span class="o">=</span> <span class="n">cursor_parents</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">cursor_parents</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="n">entry</span> <span class="o">=</span> <span class="n">OntologyClass</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">kind</span><span class="o">=</span><span class="n">kind</span><span class="p">,</span>
+            <span class="n">lane</span><span class="o">=</span><span class="s2">"enum"</span> <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"enum"</span> <span class="k">else</span> <span class="n">_lane_for</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">chain</span><span class="p">),</span>
+            <span class="n">module</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+            <span class="n">doc</span><span class="o">=</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">getdoc</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">parent</span><span class="o">=</span><span class="n">parent</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"enum"</span><span class="p">:</span>
+            <span class="n">enum_cls</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">type</span><span class="p">[</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">],</span> <span class="n">obj</span><span class="p">)</span>
+            <span class="n">entry</span><span class="o">.</span><span class="n">enum_members</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">m</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">m</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">enum_cls</span>
+            <span class="p">]</span>
+            <span class="n">graph</span><span class="o">.</span><span class="n">classes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">entry</span>
+            <span class="k">continue</span>
+
+        <span class="n">model_cls</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">],</span> <span class="n">obj</span><span class="p">)</span>
+        <span class="n">declared</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">"__annotations__"</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{})</span>
+        <span class="n">inherited</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">model_cls</span><span class="o">.</span><span class="n">model_fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">field_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">declared</span><span class="p">:</span>
+                <span class="n">inherited</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+            <span class="n">refs</span> <span class="o">=</span> <span class="n">_referenced_names</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">annotation</span><span class="p">,</span> <span class="n">known</span><span class="p">)</span>
+            <span class="n">entry</span><span class="o">.</span><span class="n">own_fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">OntologyField</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="n">field_name</span><span class="p">,</span>
+                    <span class="n">type_label</span><span class="o">=</span><span class="n">_collapse_type</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">annotation</span><span class="p">),</span>
+                    <span class="n">required</span><span class="o">=</span><span class="n">info</span><span class="o">.</span><span class="n">is_required</span><span class="p">(),</span>
+                    <span class="n">inherited</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">description</span><span class="o">=</span><span class="n">info</span><span class="o">.</span><span class="n">description</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span>
+                    <span class="n">references</span><span class="o">=</span><span class="n">refs</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">ref</span> <span class="ow">in</span> <span class="n">refs</span><span class="p">:</span>
+                <span class="n">graph</span><span class="o">.</span><span class="n">composition_edges</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">CompositionEdge</span><span class="p">(</span>
+                        <span class="n">source</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                        <span class="n">target</span><span class="o">=</span><span class="n">ref</span><span class="p">,</span>
+                        <span class="n">field_name</span><span class="o">=</span><span class="n">field_name</span><span class="p">,</span>
+                        <span class="n">is_collection</span><span class="o">=</span><span class="n">_is_collection</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">annotation</span><span class="p">),</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+        <span class="n">entry</span><span class="o">.</span><span class="n">inherited_field_count</span> <span class="o">=</span> <span class="n">inherited</span>
+        <span class="c1"># A base class nobody instantiates directly: it has subclasses and its name</span>
+        <span class="c1"># is the bare concept ("Phenotype", "GenePerturbation").</span>
+        <span class="n">graph</span><span class="o">.</span><span class="n">classes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">entry</span>
+
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">classes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"model"</span><span class="p">:</span>
+            <span class="n">entry</span><span class="o">.</span><span class="n">is_abstract</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">parent</span> <span class="o">==</span> <span class="n">name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">classes</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="k">return</span> <span class="n">graph</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

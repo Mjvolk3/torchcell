@@ -1,0 +1,611 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.models.gpu_edge_mask_generator &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/models/gpu_edge_mask_generator.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.models.gpu_edge_mask_generator</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.models.gpu_edge_mask_generator</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/models/gpu_edge_mask_generator</span>
+<span class="c1"># [[torchcell.models.gpu_edge_mask_generator]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/gpu_edge_mask_generator</span>
+
+<span class="sd">"""GPU-based edge mask generator for zero-copy lazy subgraph representation.</span>
+
+<span class="sd">Keeps incidence cache on GPU to generate edge masks from perturbation indices</span>
+<span class="sd">without CPU→GPU transfer of large mask tensors.</span>
+
+<span class="sd">Key optimization:</span>
+<span class="sd">- CPU approach: Transfer 65 MB masks per batch</span>
+<span class="sd">- GPU approach: Transfer 0.0004 MB indices per batch, generate masks on GPU</span>
+<span class="sd">- Expected speedup: 20-30x in data loading pipeline</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">HeteroData</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="GPUEdgeMaskGenerator">
+<a class="viewcode-back" href="../../../generated/torchcell.models.gpu_edge_mask_generator.GPUEdgeMaskGenerator.html#torchcell.models.gpu_edge_mask_generator.GPUEdgeMaskGenerator">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GPUEdgeMaskGenerator</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Generates edge masks on GPU from perturbation indices.</span>
+
+<span class="sd">    Stores incidence cache and base masks on GPU to avoid CPU→GPU transfer</span>
+<span class="sd">    of large mask tensors during training.</span>
+
+<span class="sd">    Architecture:</span>
+<span class="sd">        1. One-time GPU setup (during __init__):</span>
+<span class="sd">           - Build incidence cache on GPU (~19 MB)</span>
+<span class="sd">           - Create base edge masks (all True)</span>
+
+<span class="sd">        2. Per-batch (in training_step):</span>
+<span class="sd">           - Transfer perturbation indices (~448 bytes)</span>
+<span class="sd">           - Generate masks on GPU using incidence cache</span>
+<span class="sd">           - Use masks in message passing</span>
+
+<span class="sd">    Expected Performance:</span>
+<span class="sd">        - Data transfer: 65 MB → 0.0004 MB per batch (162,500x reduction)</span>
+<span class="sd">        - Training speed: ~0.3 it/s → 8-10 it/s (25-33x speedup)</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell_graph</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Initialize GPU mask generator.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cell_graph: Full cell graph with all edge types</span>
+<span class="sd">            device: GPU device to use</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Initializing GPUEdgeMaskGenerator on </span><span class="si">{</span><span class="n">device</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="c1"># Build incidence cache on GPU</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build_incidence_cache_gpu</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">)</span>
+
+        <span class="c1"># Build vectorized incidence tensors for batch operations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build_vectorized_incidence_tensors</span><span class="p">()</span>
+
+        <span class="c1"># Register base masks as buffers (included in model.to(device))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_create_base_masks</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">)</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"GPUEdgeMaskGenerator initialized: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">incidence_cache</span><span class="p">)</span><span class="si">}</span><span class="s2"> edge types"</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_incidence_cache_gpu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell_graph</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build node-to-edge incidence mappings on GPU.</span>
+
+<span class="sd">        For each gene node, creates tensor of edge positions where that gene</span>
+<span class="sd">        appears as either source or destination.</span>
+
+<span class="sd">        Memory: ~19 MB for typical yeast graph (6607 nodes, 9 edge types)</span>
+<span class="sd">        """</span>
+        <span class="n">num_genes</span> <span class="o">=</span> <span class="n">cell_graph</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span>
+        <span class="n">cache</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">total_elements</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">for</span> <span class="n">edge_type</span> <span class="ow">in</span> <span class="n">cell_graph</span><span class="o">.</span><span class="n">edge_types</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">edge_type</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"gene"</span> <span class="ow">and</span> <span class="n">edge_type</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"gene"</span><span class="p">:</span>
+                <span class="n">edge_index</span> <span class="o">=</span> <span class="n">cell_graph</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span><span class="o">.</span><span class="n">edge_index</span>
+                <span class="n">num_edges</span> <span class="o">=</span> <span class="n">edge_index</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+                <span class="c1"># Initialize empty lists for each gene</span>
+                <span class="n">node_to_edges</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_genes</span><span class="p">)]</span>
+
+                <span class="c1"># Build incidence mapping: node -&gt; [edge_positions]</span>
+                <span class="k">for</span> <span class="n">edge_pos</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_edges</span><span class="p">):</span>
+                    <span class="n">src</span> <span class="o">=</span> <span class="n">edge_index</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">edge_pos</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                    <span class="n">dst</span> <span class="o">=</span> <span class="n">edge_index</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">edge_pos</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                    <span class="n">node_to_edges</span><span class="p">[</span><span class="n">src</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">edge_pos</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">src</span> <span class="o">!=</span> <span class="n">dst</span><span class="p">:</span>  <span class="c1"># Avoid duplicate for self-loops</span>
+                        <span class="n">node_to_edges</span><span class="p">[</span><span class="n">dst</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">edge_pos</span><span class="p">)</span>
+
+                <span class="c1"># Convert lists to tensors and move to GPU</span>
+                <span class="n">gpu_tensors</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">edges</span> <span class="ow">in</span> <span class="n">node_to_edges</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">edges</span><span class="p">:</span>
+                        <span class="n">tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+                            <span class="n">edges</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span>
+                        <span class="p">)</span>
+                        <span class="n">gpu_tensors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
+                        <span class="n">total_elements</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">edges</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">gpu_tensors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+                        <span class="p">)</span>
+
+                <span class="n">cache</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">gpu_tensors</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">incidence_cache</span> <span class="o">=</span> <span class="n">cache</span>
+
+        <span class="c1"># Estimate GPU memory usage</span>
+        <span class="n">memory_mb</span> <span class="o">=</span> <span class="p">(</span><span class="n">total_elements</span> <span class="o">*</span> <span class="mi">8</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># 8 bytes per int64</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Incidence cache GPU memory: </span><span class="si">{</span><span class="n">memory_mb</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> MB (</span><span class="si">{</span><span class="n">total_elements</span><span class="si">}</span><span class="s2"> elements)"</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_vectorized_incidence_tensors</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build padded incidence tensors for vectorized batch operations.</span>
+
+<span class="sd">        Converts the list-based incidence cache to padded tensors that allow</span>
+<span class="sd">        for vectorized lookups without Python loops or .item() calls.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">incidence_tensors</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">incidence_masks</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># Track valid vs padded positions</span>
+
+        <span class="n">num_genes</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">incidence_cache</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">incidence_cache</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">edge_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">incidence_cache</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">node_to_edges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">incidence_cache</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span>
+
+            <span class="c1"># Find max edges per node for padding</span>
+            <span class="n">max_edges</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">edges</span><span class="p">)</span> <span class="k">for</span> <span class="n">edges</span> <span class="ow">in</span> <span class="n">node_to_edges</span><span class="p">)</span> <span class="k">if</span> <span class="n">node_to_edges</span> <span class="k">else</span> <span class="mi">0</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Create padded tensor</span>
+            <span class="n">incidence_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">num_genes</span><span class="p">,</span> <span class="n">max_edges</span><span class="p">),</span>
+                <span class="o">-</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># Padding value</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span>
+                <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Create mask for valid positions</span>
+            <span class="n">incidence_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">num_genes</span><span class="p">,</span> <span class="n">max_edges</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Fill tensor with actual edge indices</span>
+            <span class="k">for</span> <span class="n">node_idx</span><span class="p">,</span> <span class="n">edges</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">node_to_edges</span><span class="p">):</span>
+                <span class="n">num_edges</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">edges</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">num_edges</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">incidence_tensor</span><span class="p">[</span><span class="n">node_idx</span><span class="p">,</span> <span class="p">:</span><span class="n">num_edges</span><span class="p">]</span> <span class="o">=</span> <span class="n">edges</span>
+                    <span class="n">incidence_mask</span><span class="p">[</span><span class="n">node_idx</span><span class="p">,</span> <span class="p">:</span><span class="n">num_edges</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">incidence_tensors</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">incidence_tensor</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">incidence_masks</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">incidence_mask</span>
+
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Edge type </span><span class="si">{</span><span class="n">edge_type</span><span class="si">}</span><span class="s2">: tensor shape </span><span class="si">{</span><span class="n">incidence_tensor</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, "</span>
+                <span class="sa">f</span><span class="s2">"density </span><span class="si">{</span><span class="n">incidence_mask</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_base_masks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell_graph</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create base edge masks (all True) as model buffers.</span>
+
+<span class="sd">        These are cloned and modified per-batch to create sample-specific masks.</span>
+<span class="sd">        """</span>
+        <span class="k">for</span> <span class="n">edge_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">incidence_cache</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">num_edges</span> <span class="o">=</span> <span class="n">cell_graph</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span><span class="o">.</span><span class="n">edge_index</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">base_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_edges</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+            <span class="c1"># Register as buffer (automatically moved with model.to(device))</span>
+            <span class="n">buffer_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"base_mask_</span><span class="si">{</span><span class="n">edge_type</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">edge_type</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">edge_type</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="n">buffer_name</span><span class="p">,</span> <span class="n">base_mask</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GPUEdgeMaskGenerator.generate_batch_masks">
+<a class="viewcode-back" href="../../../generated/torchcell.models.gpu_edge_mask_generator.GPUEdgeMaskGenerator.html#torchcell.models.gpu_edge_mask_generator.GPUEdgeMaskGenerator.generate_batch_masks">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_batch_masks</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">batch_perturbation_indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Generate edge masks for a batch of perturbations.</span>
+
+<span class="sd">        For batched graphs in PyG, we need to concatenate masks across samples</span>
+<span class="sd">        with proper offsets matching the concatenated edge_index.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            batch_perturbation_indices: List of perturbation index tensors,</span>
+<span class="sd">                one per sample in batch. Each tensor contains indices of perturbed genes.</span>
+<span class="sd">            batch_size: Number of samples in batch</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            edge_mask_dict: {edge_type: concatenated_mask} where mask length</span>
+<span class="sd">                matches the batched edge_index length</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # Sample 1: perturb genes [42, 100]</span>
+<span class="sd">            &gt;&gt;&gt; # Sample 2: perturb genes [7]</span>
+<span class="sd">            &gt;&gt;&gt; pert_indices = [torch.tensor([42, 100]), torch.tensor([7])]</span>
+<span class="sd">            &gt;&gt;&gt; masks = generator.generate_batch_masks(pert_indices, batch_size=2)</span>
+<span class="sd">            &gt;&gt;&gt; # masks[edge_type] has length = 2 * num_edges (concatenated)</span>
+<span class="sd">        """</span>
+        <span class="n">batch_masks</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Generate mask for each sample, then concatenate</span>
+        <span class="k">for</span> <span class="n">edge_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">incidence_cache</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="c1"># Get base mask</span>
+            <span class="n">buffer_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"base_mask_</span><span class="si">{</span><span class="n">edge_type</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">edge_type</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">edge_type</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+            <span class="n">base_mask</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">buffer_name</span><span class="p">)</span>
+
+            <span class="c1"># Generate mask for each sample in batch</span>
+            <span class="n">sample_masks</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="n">sample_pert_indices</span> <span class="ow">in</span> <span class="n">batch_perturbation_indices</span><span class="p">:</span>
+                <span class="c1"># Clone base mask (all True)</span>
+                <span class="n">sample_mask</span> <span class="o">=</span> <span class="n">base_mask</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+
+                <span class="c1"># Ensure perturbation indices are on GPU</span>
+                <span class="k">if</span> <span class="n">sample_pert_indices</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
+                    <span class="n">sample_pert_indices</span> <span class="o">=</span> <span class="n">sample_pert_indices</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+                <span class="c1"># For each perturbed gene, mask its affected edges</span>
+                <span class="n">node_to_edges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">incidence_cache</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span>
+                <span class="n">max_node_idx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">node_to_edges</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+
+                <span class="k">for</span> <span class="n">pert_idx</span> <span class="ow">in</span> <span class="n">sample_pert_indices</span><span class="p">:</span>
+                    <span class="n">idx</span> <span class="o">=</span> <span class="n">pert_idx</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+                    <span class="c1"># Bounds check</span>
+                    <span class="k">if</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">idx</span> <span class="o">&gt;</span> <span class="n">max_node_idx</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">"Perturbation index </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2"> out of bounds [0, </span><span class="si">{</span><span class="n">max_node_idx</span><span class="si">}</span><span class="s2">]. "</span>
+                            <span class="sa">f</span><span class="s2">"Edge type: </span><span class="si">{</span><span class="n">edge_type</span><span class="si">}</span><span class="s2">, "</span>
+                            <span class="sa">f</span><span class="s2">"Sample perturbation indices: </span><span class="si">{</span><span class="n">sample_pert_indices</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
+                        <span class="p">)</span>
+
+                    <span class="n">affected_edges</span> <span class="o">=</span> <span class="n">node_to_edges</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">affected_edges</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="c1"># Set affected edges to False (masked out)</span>
+                        <span class="n">sample_mask</span><span class="p">[</span><span class="n">affected_edges</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+                <span class="n">sample_masks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sample_mask</span><span class="p">)</span>
+
+            <span class="c1"># Concatenate masks across batch</span>
+            <span class="c1"># This matches PyG's batching where edge_index is concatenated</span>
+            <span class="n">batch_masks</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">sample_masks</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">batch_masks</span></div>
+
+
+<div class="viewcode-block" id="GPUEdgeMaskGenerator.generate_batch_masks_vectorized">
+<a class="viewcode-back" href="../../../generated/torchcell.models.gpu_edge_mask_generator.GPUEdgeMaskGenerator.html#torchcell.models.gpu_edge_mask_generator.GPUEdgeMaskGenerator.generate_batch_masks_vectorized">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_batch_masks_vectorized</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">batch_perturbation_indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""VECTORIZED: Generate edge masks with zero Python loops and zero .item() calls.</span>
+
+<span class="sd">        This is the optimized version that eliminates GPU→CPU synchronizations.</span>
+<span class="sd">        Expected speedup: 10-20x compared to the loop-based version.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            batch_perturbation_indices: List of perturbation index tensors,</span>
+<span class="sd">                one per sample in batch</span>
+<span class="sd">            batch_size: Number of samples in batch</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            edge_mask_dict: {edge_type: concatenated_mask}</span>
+<span class="sd">        """</span>
+        <span class="n">batch_masks</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Early return for empty batch</span>
+        <span class="k">if</span> <span class="n">batch_size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">batch_masks</span>
+
+        <span class="c1"># Flatten all perturbation indices and create batch assignments</span>
+        <span class="c1"># This allows us to process all perturbations in parallel</span>
+        <span class="n">pert_lengths</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+            <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">batch_perturbation_indices</span><span class="p">],</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span>
+            <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Skip if no perturbations</span>
+        <span class="k">if</span> <span class="n">pert_lengths</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Return all-True masks</span>
+            <span class="k">for</span> <span class="n">edge_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">incidence_tensors</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">buffer_name</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"base_mask_</span><span class="si">{</span><span class="n">edge_type</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">edge_type</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">edge_type</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+                <span class="n">base_mask</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">buffer_name</span><span class="p">)</span>
+                <span class="n">batch_masks</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">base_mask</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">batch_masks</span>
+
+        <span class="c1"># Concatenate all perturbation indices</span>
+        <span class="c1"># DEFENSIVE: Force contiguous GPU tensors to ensure proper device backing</span>
+        <span class="n">all_pert_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">non_blocking</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">batch_perturbation_indices</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="c1"># EXTRA DEFENSIVE: Ensure concatenated result is on the right device</span>
+        <span class="c1"># torch.cat can sometimes return CPU tensor if inputs are mixed</span>
+        <span class="k">if</span> <span class="n">all_pert_indices</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
+            <span class="n">all_pert_indices</span> <span class="o">=</span> <span class="n">all_pert_indices</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">non_blocking</span><span class="o">=</span><span class="kc">False</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>
+
+        <span class="c1"># Create batch assignment for each perturbation</span>
+        <span class="n">batch_assignment</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">repeat_interleave</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">),</span> <span class="n">pert_lengths</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Process each edge type</span>
+        <span class="k">for</span> <span class="n">edge_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">incidence_tensors</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="c1"># Get base mask and incidence data</span>
+            <span class="n">buffer_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"base_mask_</span><span class="si">{</span><span class="n">edge_type</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">edge_type</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">edge_type</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+            <span class="n">base_mask</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">buffer_name</span><span class="p">)</span>
+            <span class="n">num_edges</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">base_mask</span><span class="p">)</span>
+
+            <span class="c1"># Get precomputed incidence tensor and validity mask</span>
+            <span class="n">incidence_tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">incidence_tensors</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span>
+            <span class="n">incidence_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">incidence_masks</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span>
+
+            <span class="c1"># CRITICAL FIX: Ensure indices are on the same device as incidence_tensor</span>
+            <span class="c1"># In DDP mode, tensors can be on different GPUs (cuda:0, cuda:1, etc.)</span>
+            <span class="k">if</span> <span class="n">all_pert_indices</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="n">incidence_tensor</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Device mismatch detected: all_pert_indices on </span><span class="si">{</span><span class="n">all_pert_indices</span><span class="o">.</span><span class="n">device</span><span class="si">}</span><span class="s2">, "</span>
+                    <span class="sa">f</span><span class="s2">"incidence_tensor on </span><span class="si">{</span><span class="n">incidence_tensor</span><span class="o">.</span><span class="n">device</span><span class="si">}</span><span class="s2">. Fixing..."</span>
+                <span class="p">)</span>
+                <span class="n">all_pert_indices</span> <span class="o">=</span> <span class="n">all_pert_indices</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
+                    <span class="n">incidence_tensor</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">non_blocking</span><span class="o">=</span><span class="kc">False</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Also ensure batch_assignment is on the same device</span>
+            <span class="k">if</span> <span class="n">batch_assignment</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="n">incidence_tensor</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Device mismatch detected: batch_assignment on </span><span class="si">{</span><span class="n">batch_assignment</span><span class="o">.</span><span class="n">device</span><span class="si">}</span><span class="s2">, "</span>
+                    <span class="sa">f</span><span class="s2">"incidence_tensor on </span><span class="si">{</span><span class="n">incidence_tensor</span><span class="o">.</span><span class="n">device</span><span class="si">}</span><span class="s2">. Fixing..."</span>
+                <span class="p">)</span>
+                <span class="n">batch_assignment</span> <span class="o">=</span> <span class="n">batch_assignment</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
+                    <span class="n">incidence_tensor</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">non_blocking</span><span class="o">=</span><span class="kc">False</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Bounds check (vectorized)</span>
+            <span class="n">max_node_idx</span> <span class="o">=</span> <span class="n">incidence_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">all_pert_indices</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="ow">or</span> <span class="p">(</span><span class="n">all_pert_indices</span> <span class="o">&gt;</span> <span class="n">max_node_idx</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="n">invalid_idx</span> <span class="o">=</span> <span class="n">all_pert_indices</span><span class="p">[</span>
+                    <span class="p">(</span><span class="n">all_pert_indices</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">all_pert_indices</span> <span class="o">&gt;</span> <span class="n">max_node_idx</span><span class="p">)</span>
+                <span class="p">]</span>
+                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Perturbation indices </span><span class="si">{</span><span class="n">invalid_idx</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s2"> out of bounds [0, </span><span class="si">{</span><span class="n">max_node_idx</span><span class="si">}</span><span class="s2">]. "</span>
+                    <span class="sa">f</span><span class="s2">"Edge type: </span><span class="si">{</span><span class="n">edge_type</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Create batch-replicated mask (all True initially)</span>
+            <span class="n">batch_mask</span> <span class="o">=</span> <span class="n">base_mask</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>
+
+            <span class="c1"># Vectorized lookup: get all affected edges for all perturbations</span>
+            <span class="c1"># Shape: [num_perturbations, max_edges_per_node]</span>
+            <span class="n">affected_edges</span> <span class="o">=</span> <span class="n">incidence_tensor</span><span class="p">[</span><span class="n">all_pert_indices</span><span class="p">]</span>
+            <span class="n">affected_valid</span> <span class="o">=</span> <span class="n">incidence_mask</span><span class="p">[</span><span class="n">all_pert_indices</span><span class="p">]</span>
+
+            <span class="c1"># Compute global edge indices with batch offsets</span>
+            <span class="c1"># Each sample's edges are offset by sample_idx * num_edges</span>
+            <span class="n">batch_offsets</span> <span class="o">=</span> <span class="n">batch_assignment</span> <span class="o">*</span> <span class="n">num_edges</span>
+
+            <span class="c1"># Broadcasting: add batch offset to each edge index</span>
+            <span class="c1"># Shape: [num_perturbations, max_edges_per_node]</span>
+            <span class="n">affected_edges_global</span> <span class="o">=</span> <span class="n">affected_edges</span> <span class="o">+</span> <span class="n">batch_offsets</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+            <span class="c1"># Flatten and filter out invalid (padded) positions</span>
+            <span class="n">affected_edges_flat</span> <span class="o">=</span> <span class="n">affected_edges_global</span><span class="p">[</span><span class="n">affected_valid</span><span class="p">]</span>
+
+            <span class="c1"># Set affected edges to False (vectorized scatter)</span>
+            <span class="k">if</span> <span class="n">affected_edges_flat</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">batch_mask</span><span class="p">[</span><span class="n">affected_edges_flat</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+            <span class="n">batch_masks</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">batch_mask</span>
+
+        <span class="k">return</span> <span class="n">batch_masks</span></div>
+
+
+<div class="viewcode-block" id="GPUEdgeMaskGenerator.generate_single_mask">
+<a class="viewcode-back" href="../../../generated/torchcell.models.gpu_edge_mask_generator.GPUEdgeMaskGenerator.html#torchcell.models.gpu_edge_mask_generator.GPUEdgeMaskGenerator.generate_single_mask">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_single_mask</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">perturbation_indices</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Generate edge masks for a single sample.</span>
+
+<span class="sd">        Useful for validation or single-sample inference.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            perturbation_indices: Tensor of perturbed gene indices</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            edge_mask_dict: {edge_type: mask_tensor} for one sample</span>
+<span class="sd">        """</span>
+        <span class="n">edge_mask_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Ensure indices on GPU</span>
+        <span class="k">if</span> <span class="n">perturbation_indices</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
+            <span class="n">perturbation_indices</span> <span class="o">=</span> <span class="n">perturbation_indices</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">edge_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">incidence_cache</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="c1"># Get base mask (all True)</span>
+            <span class="n">buffer_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"base_mask_</span><span class="si">{</span><span class="n">edge_type</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">edge_type</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">edge_type</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+            <span class="n">base_mask</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">buffer_name</span><span class="p">)</span>
+
+            <span class="c1"># Clone for this sample</span>
+            <span class="n">edge_mask</span> <span class="o">=</span> <span class="n">base_mask</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+
+            <span class="c1"># Mask edges affected by perturbations</span>
+            <span class="n">node_to_edges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">incidence_cache</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">pert_idx</span> <span class="ow">in</span> <span class="n">perturbation_indices</span><span class="p">:</span>
+                <span class="n">affected_edges</span> <span class="o">=</span> <span class="n">node_to_edges</span><span class="p">[</span><span class="n">pert_idx</span><span class="o">.</span><span class="n">item</span><span class="p">()]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">affected_edges</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">edge_mask</span><span class="p">[</span><span class="n">affected_edges</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+            <span class="n">edge_mask_dict</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">edge_mask</span>
+
+        <span class="k">return</span> <span class="n">edge_mask_dict</span></div>
+
+
+<div class="viewcode-block" id="GPUEdgeMaskGenerator.get_memory_usage">
+<a class="viewcode-back" href="../../../generated/torchcell.models.gpu_edge_mask_generator.GPUEdgeMaskGenerator.html#torchcell.models.gpu_edge_mask_generator.GPUEdgeMaskGenerator.get_memory_usage">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_memory_usage</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get estimated GPU memory usage.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict with memory usage in MB:</span>
+<span class="sd">                - incidence_cache: Memory used by incidence cache</span>
+<span class="sd">                - base_masks: Memory used by base masks</span>
+<span class="sd">                - total: Total memory usage</span>
+<span class="sd">        """</span>
+        <span class="c1"># Count incidence cache elements</span>
+        <span class="n">cache_elements</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span> <span class="k">for</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="n">node_to_edges</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">node_to_edges</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">incidence_cache</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">cache_mb</span> <span class="o">=</span> <span class="p">(</span><span class="n">cache_elements</span> <span class="o">*</span> <span class="mi">8</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># int64 = 8 bytes</span>
+
+        <span class="c1"># Count base mask elements</span>
+        <span class="n">mask_elements</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"base_mask_</span><span class="si">{</span><span class="n">et</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">et</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">et</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">et</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">incidence_cache</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">mask_mb</span> <span class="o">=</span> <span class="p">(</span><span class="n">mask_elements</span> <span class="o">*</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># bool = 1 byte</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"incidence_cache_mb"</span><span class="p">:</span> <span class="n">cache_mb</span><span class="p">,</span>
+            <span class="s2">"base_masks_mb"</span><span class="p">:</span> <span class="n">mask_mb</span><span class="p">,</span>
+            <span class="s2">"total_mb"</span><span class="p">:</span> <span class="n">cache_mb</span> <span class="o">+</span> <span class="n">mask_mb</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

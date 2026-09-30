@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.pydant.ModelStrictArbitrary
+================================================
+
+.. currentmodule:: torchcell.datamodels.pydant
+
+.. autoclass:: ModelStrictArbitrary
+   :show-inheritance:
+   :members:

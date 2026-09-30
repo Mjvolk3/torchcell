@@ -1,0 +1,6 @@
+﻿torchcell.datasets.dataset\_registry.dataset\_registry
+======================================================
+
+.. currentmodule:: torchcell.datasets.dataset_registry
+
+.. autodata:: dataset_registry

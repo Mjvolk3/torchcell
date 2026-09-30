@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.costanzo2021.EnvChemgenCostanzo2021Dataset
+=========================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.costanzo2021
+
+.. autoclass:: EnvChemgenCostanzo2021Dataset
+   :show-inheritance:
+   :members:

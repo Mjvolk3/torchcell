@@ -1,0 +1,8 @@
+﻿torchcell.metabolism.parameters.KcatPredictor
+=============================================
+
+.. currentmodule:: torchcell.metabolism.parameters
+
+.. autoclass:: KcatPredictor
+   :show-inheritance:
+   :members:

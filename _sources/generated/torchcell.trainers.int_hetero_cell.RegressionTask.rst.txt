@@ -1,0 +1,8 @@
+﻿torchcell.trainers.int\_hetero\_cell.RegressionTask
+===================================================
+
+.. currentmodule:: torchcell.trainers.int_hetero_cell
+
+.. autoclass:: RegressionTask
+   :show-inheritance:
+   :members:

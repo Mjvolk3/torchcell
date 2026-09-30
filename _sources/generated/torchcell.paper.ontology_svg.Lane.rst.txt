@@ -1,0 +1,8 @@
+﻿torchcell.paper.ontology\_svg.Lane
+==================================
+
+.. currentmodule:: torchcell.paper.ontology_svg
+
+.. autoclass:: Lane
+   :show-inheritance:
+   :members:

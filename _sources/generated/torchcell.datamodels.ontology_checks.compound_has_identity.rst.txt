@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.ontology\_checks.compound\_has\_identity
+=============================================================
+
+.. currentmodule:: torchcell.datamodels.ontology_checks
+
+.. autofunction:: compound_has_identity

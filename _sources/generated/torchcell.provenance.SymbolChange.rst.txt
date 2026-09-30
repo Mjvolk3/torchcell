@@ -1,0 +1,8 @@
+﻿torchcell.provenance.SymbolChange
+=================================
+
+.. currentmodule:: torchcell.provenance
+
+.. autoclass:: SymbolChange
+   :show-inheritance:
+   :members:

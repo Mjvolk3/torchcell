@@ -1,0 +1,253 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.provenance &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/modules/provenance.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="torchcell.provenance.ContractSpec" href="../generated/torchcell.provenance.ContractSpec.html" />
+    <link rel="prev" title="torchcell.profiling.get_timing_summary" href="../generated/torchcell.profiling.get_timing_summary.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">torchcell.provenance</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#classes">Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#functions">Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">torchcell.provenance</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/modules/provenance.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-torchcell.provenance">
+<span id="torchcell-provenance"></span><h1>torchcell.provenance<a class="headerlink" href="#module-torchcell.provenance" title="Link to this heading"></a></h1>
+<p>Schema-dependency tracking, which decides when a built dataset must be rebuilt because the schema changed. <code class="docutils literal notranslate"><span class="pre">schema_impact</span></code> diffs the working-tree schema against a git ref, classifies each change as breaking or stale, and names the loaders that must rebuild (it runs as a pre-commit hook). <code class="docutils literal notranslate"><span class="pre">build_manifest</span></code> stores, next to each built LMDB, the contract fingerprints of the schema symbols its loader depends on, and its <code class="docutils literal notranslate"><span class="pre">check</span></code> reports which built datasets are stale. A fingerprint hashes a symbol’s contract (field shape and validators), not its source text, so a docstring edit flags nothing. <code class="docutils literal notranslate"><span class="pre">schema_deps</span></code> is the shared AST analysis.</p>
+<nav class="contents local" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#classes" id="id1">Classes</a></p></li>
+<li><p><a class="reference internal" href="#functions" id="id2">Functions</a></p></li>
+</ul>
+</nav>
+<section id="classes">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Classes</a><a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.provenance.ContractSpec.html#torchcell.provenance.ContractSpec" title="torchcell.provenance.ContractSpec"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ContractSpec</span></code></a></p></td>
+<td><p>The contract-relevant surface of one schema class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.provenance.FieldSpec.html#torchcell.provenance.FieldSpec" title="torchcell.provenance.FieldSpec"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FieldSpec</span></code></a></p></td>
+<td><p>A single pydantic field's contract-relevant shape.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.provenance.SchemaSurface.html#torchcell.provenance.SchemaSurface" title="torchcell.provenance.SchemaSurface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SchemaSurface</span></code></a></p></td>
+<td><p>All record-contract classes across the schema-surface modules, with their graph.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.provenance.ChangeKind.html#torchcell.provenance.ChangeKind" title="torchcell.provenance.ChangeKind"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ChangeKind</span></code></a></p></td>
+<td><p>Severity of a schema-symbol change for its dependent datasets.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.provenance.ImpactReport.html#torchcell.provenance.ImpactReport" title="torchcell.provenance.ImpactReport"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ImpactReport</span></code></a></p></td>
+<td><p>The full result of diffing a schema change: changed symbols and impacted loaders.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.provenance.LoaderImpact.html#torchcell.provenance.LoaderImpact" title="torchcell.provenance.LoaderImpact"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LoaderImpact</span></code></a></p></td>
+<td><p>A dataset loader whose closure contains one or more changed symbols.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.provenance.SymbolChange.html#torchcell.provenance.SymbolChange" title="torchcell.provenance.SymbolChange"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SymbolChange</span></code></a></p></td>
+<td><p>A schema symbol that changed contract between two surfaces, with its severity.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.provenance.BuildManifest.html#torchcell.provenance.BuildManifest" title="torchcell.provenance.BuildManifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BuildManifest</span></code></a></p></td>
+<td><p>Records the schema contract a built LMDB was produced against.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.provenance.DatasetCheck.html#torchcell.provenance.DatasetCheck" title="torchcell.provenance.DatasetCheck"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DatasetCheck</span></code></a></p></td>
+<td><p>Per-dataset outcome of a fleet-wide staleness scan.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.provenance.StaleResult.html#torchcell.provenance.StaleResult" title="torchcell.provenance.StaleResult"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StaleResult</span></code></a></p></td>
+<td><p>Result of checking one manifest against the current schema surface.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.provenance.SymbolDrift.html#torchcell.provenance.SymbolDrift" title="torchcell.provenance.SymbolDrift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SymbolDrift</span></code></a></p></td>
+<td><p>One schema symbol whose contract fingerprint no longer matches the manifest.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.provenance.contract_spec.html#torchcell.provenance.contract_spec" title="torchcell.provenance.contract_spec"><code class="xref py py-obj docutils literal notranslate"><span class="pre">contract_spec</span></code></a></p></td>
+<td><p>Extract the contract-relevant surface of a schema class from its AST.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.provenance.fingerprint.html#torchcell.provenance.fingerprint" title="torchcell.provenance.fingerprint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fingerprint</span></code></a></p></td>
+<td><p>Contract fingerprint of a schema class AST node.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.provenance.forward_closure.html#torchcell.provenance.forward_closure" title="torchcell.provenance.forward_closure"><code class="xref py py-obj docutils literal notranslate"><span class="pre">forward_closure</span></code></a></p></td>
+<td><p>All symbols reachable from <code class="docutils literal notranslate"><span class="pre">seeds</span></code> (inclusive) along the reference graph.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.provenance.load_default_surface.html#torchcell.provenance.load_default_surface" title="torchcell.provenance.load_default_surface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_default_surface</span></code></a></p></td>
+<td><p>Load the default torchcell schema surface (<code class="docutils literal notranslate"><span class="pre">schema.py</span></code> + <code class="docutils literal notranslate"><span class="pre">pydant.py</span></code>).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.provenance.load_surface.html#torchcell.provenance.load_surface" title="torchcell.provenance.load_surface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_surface</span></code></a></p></td>
+<td><p>Parse the schema-surface modules on disk into a <a class="reference internal" href="../generated/torchcell.provenance.SchemaSurface.html#torchcell.provenance.SchemaSurface" title="torchcell.provenance.SchemaSurface"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchemaSurface</span></code></a>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.provenance.load_surface_from_sources.html#torchcell.provenance.load_surface_from_sources" title="torchcell.provenance.load_surface_from_sources"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_surface_from_sources</span></code></a></p></td>
+<td><p>Build a <a class="reference internal" href="../generated/torchcell.provenance.SchemaSurface.html#torchcell.provenance.SchemaSurface" title="torchcell.provenance.SchemaSurface"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchemaSurface</span></code></a> from <code class="docutils literal notranslate"><span class="pre">label</span> <span class="pre">-&gt;</span> <span class="pre">source</span> <span class="pre">text</span></code> pairs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.provenance.loader_closure.html#torchcell.provenance.loader_closure" title="torchcell.provenance.loader_closure"><code class="xref py py-obj docutils literal notranslate"><span class="pre">loader_closure</span></code></a></p></td>
+<td><p>Transitive closure of a loader's schema imports -- the symbols it actually depends on.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.provenance.loader_schema_deps.html#torchcell.provenance.loader_schema_deps" title="torchcell.provenance.loader_schema_deps"><code class="xref py py-obj docutils literal notranslate"><span class="pre">loader_schema_deps</span></code></a></p></td>
+<td><p>Surface classes a loader imports directly from any <code class="docutils literal notranslate"><span class="pre">torchcell.datamodels</span></code> submodule.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.provenance.build_impact_report.html#torchcell.provenance.build_impact_report" title="torchcell.provenance.build_impact_report"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_impact_report</span></code></a></p></td>
+<td><p>Diff the working-tree schema surface against <code class="docutils literal notranslate"><span class="pre">base</span></code> and map changes to loaders.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.provenance.classify_change.html#torchcell.provenance.classify_change" title="torchcell.provenance.classify_change"><code class="xref py py-obj docutils literal notranslate"><span class="pre">classify_change</span></code></a></p></td>
+<td><p>Classify a fingerprint-changed symbol into breaking/stale with human-readable reasons.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.provenance.diff_surfaces.html#torchcell.provenance.diff_surfaces" title="torchcell.provenance.diff_surfaces"><code class="xref py py-obj docutils literal notranslate"><span class="pre">diff_surfaces</span></code></a></p></td>
+<td><p>Every symbol whose contract changed between two surfaces, classified.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.provenance.check_all.html#torchcell.provenance.check_all" title="torchcell.provenance.check_all"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_all</span></code></a></p></td>
+<td><p>Check every built dataset under DATA_ROOT for schema staleness.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.provenance.check_manifest.html#torchcell.provenance.check_manifest" title="torchcell.provenance.check_manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_manifest</span></code></a></p></td>
+<td><p>Compare a manifest's stored fingerprints against the current local schema surface.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.provenance.compute_manifest.html#torchcell.provenance.compute_manifest" title="torchcell.provenance.compute_manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_manifest</span></code></a></p></td>
+<td><p>Build a <a class="reference internal" href="../generated/torchcell.provenance.BuildManifest.html#torchcell.provenance.BuildManifest" title="torchcell.provenance.BuildManifest"><code class="xref py py-class docutils literal notranslate"><span class="pre">BuildManifest</span></code></a> from a loader's transitive schema closure.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.provenance.write_build_manifest.html#torchcell.provenance.write_build_manifest" title="torchcell.provenance.write_build_manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_build_manifest</span></code></a></p></td>
+<td><p>Compute and write <code class="docutils literal notranslate"><span class="pre">build_manifest.json</span></code> for a freshly built dataset instance.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../generated/torchcell.profiling.get_timing_summary.html" class="btn btn-neutral float-left" title="torchcell.profiling.get_timing_summary" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../generated/torchcell.provenance.ContractSpec.html" class="btn btn-neutral float-right" title="torchcell.provenance.ContractSpec" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

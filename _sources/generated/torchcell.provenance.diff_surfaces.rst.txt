@@ -1,0 +1,6 @@
+﻿torchcell.provenance.diff\_surfaces
+===================================
+
+.. currentmodule:: torchcell.provenance
+
+.. autofunction:: diff_surfaces

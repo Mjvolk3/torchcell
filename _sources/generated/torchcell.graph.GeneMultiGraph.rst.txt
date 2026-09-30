@@ -1,0 +1,8 @@
+﻿torchcell.graph.GeneMultiGraph
+==============================
+
+.. currentmodule:: torchcell.graph
+
+.. autoclass:: GeneMultiGraph
+   :show-inheritance:
+   :members:

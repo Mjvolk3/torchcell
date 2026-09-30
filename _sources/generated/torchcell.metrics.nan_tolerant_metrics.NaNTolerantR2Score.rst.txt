@@ -1,0 +1,8 @@
+﻿torchcell.metrics.nan\_tolerant\_metrics.NaNTolerantR2Score
+===========================================================
+
+.. currentmodule:: torchcell.metrics.nan_tolerant_metrics
+
+.. autoclass:: NaNTolerantR2Score
+   :show-inheritance:
+   :members:

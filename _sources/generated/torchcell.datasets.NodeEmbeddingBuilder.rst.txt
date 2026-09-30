@@ -1,0 +1,8 @@
+﻿torchcell.datasets.NodeEmbeddingBuilder
+=======================================
+
+.. currentmodule:: torchcell.datasets
+
+.. autoclass:: NodeEmbeddingBuilder
+   :show-inheritance:
+   :members:

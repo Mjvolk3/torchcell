@@ -1,0 +1,6 @@
+﻿torchcell.provenance.loader\_closure
+====================================
+
+.. currentmodule:: torchcell.provenance
+
+.. autofunction:: loader_closure

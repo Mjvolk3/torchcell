@@ -1,0 +1,390 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datasets &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/modules/datasets.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="torchcell.datasets.NucleotideTransformerDataset" href="../generated/torchcell.datasets.NucleotideTransformerDataset.html" />
+    <link rel="prev" title="torchcell.dataset_readers.LmdbDatasetReader" href="../generated/torchcell.dataset_readers.LmdbDatasetReader.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">torchcell.datasets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#embedding-datasets">Embedding datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dataset-registry">Dataset registry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#registered-s-cerevisiae-experiment-datasets">Registered <em>S. cerevisiae</em> experiment datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#not-documented">Not documented</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">torchcell.datasets</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/modules/datasets.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-torchcell.datasets">
+<span id="torchcell-datasets"></span><h1>torchcell.datasets<a class="headerlink" href="#module-torchcell.datasets" title="Link to this heading"></a></h1>
+<p>Dataset loaders. The top level of <code class="docutils literal notranslate"><span class="pre">torchcell.datasets</span></code> holds the per-gene embedding datasets (sequence language-model embeddings, codon frequencies, one-hot and random baselines), which derive from the in-memory embedding base in <code class="docutils literal notranslate"><span class="pre">torchcell.data.embedding</span></code>, and <code class="docutils literal notranslate"><span class="pre">NodeEmbeddingBuilder</span></code>, which builds them from a configuration. The experiment datasets live in <code class="docutils literal notranslate"><span class="pre">torchcell.datasets.scerevisiae</span></code>: one module per source publication, each reading that publication’s released data, converting its records into <a class="reference internal" href="datamodels.html#module-torchcell.datamodels" title="torchcell.datamodels"><code class="xref py py-mod docutils literal notranslate"><span class="pre">torchcell.datamodels</span></code></a> experiments and storing them in LMDB. A class decorated with <a class="reference internal" href="../generated/torchcell.datasets.dataset_registry.register_dataset.html#torchcell.datasets.dataset_registry.register_dataset" title="torchcell.datasets.dataset_registry.register_dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">register_dataset()</span></code></a> is added to <code class="docutils literal notranslate"><span class="pre">dataset_registry</span></code>, the name-to-class map that <code class="docutils literal notranslate"><span class="pre">knowledge_graphs.create_kg</span></code> and <code class="docutils literal notranslate"><span class="pre">knowledge_graphs.kg_manifest</span></code> look datasets up in; the table below lists every registered class.</p>
+<nav class="contents local" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#embedding-datasets" id="id1">Embedding datasets</a></p></li>
+<li><p><a class="reference internal" href="#dataset-registry" id="id2">Dataset registry</a></p></li>
+<li><p><a class="reference internal" href="#registered-s-cerevisiae-experiment-datasets" id="id3">Registered <em>S. cerevisiae</em> experiment datasets</a></p></li>
+<li><p><a class="reference internal" href="#not-documented" id="id4">Not documented</a></p></li>
+</ul>
+</nav>
+<section id="embedding-datasets">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Embedding datasets</a><a class="headerlink" href="#embedding-datasets" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.NucleotideTransformerDataset.html#torchcell.datasets.NucleotideTransformerDataset" title="torchcell.datasets.NucleotideTransformerDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NucleotideTransformerDataset</span></code></a></p></td>
+<td><p>Per-gene Nucleotide Transformer sequence embeddings keyed by window model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.FungalUpDownTransformerDataset.html#torchcell.datasets.FungalUpDownTransformerDataset" title="torchcell.datasets.FungalUpDownTransformerDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FungalUpDownTransformerDataset</span></code></a></p></td>
+<td><p>Per-gene embeddings from the fungal up/down-stream sequence transformer.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.CodonFrequencyDataset.html#torchcell.datasets.CodonFrequencyDataset" title="torchcell.datasets.CodonFrequencyDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CodonFrequencyDataset</span></code></a></p></td>
+<td><p>Embedding dataset of CDS codon-frequency vectors per gene.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.OneHotGeneDataset.html#torchcell.datasets.OneHotGeneDataset" title="torchcell.datasets.OneHotGeneDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OneHotGeneDataset</span></code></a></p></td>
+<td><p>Embedding dataset producing one-hot vectors over the genome gene set.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.ProtT5Dataset.html#torchcell.datasets.ProtT5Dataset" title="torchcell.datasets.ProtT5Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ProtT5Dataset</span></code></a></p></td>
+<td><p>Embedding dataset of ProtT5 protein representations per gene.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.GraphEmbeddingDataset.html#torchcell.datasets.GraphEmbeddingDataset" title="torchcell.datasets.GraphEmbeddingDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GraphEmbeddingDataset</span></code></a></p></td>
+<td><p>Node-feature embeddings derived from an SGD gene graph.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.Esm2Dataset.html#torchcell.datasets.Esm2Dataset" title="torchcell.datasets.Esm2Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Esm2Dataset</span></code></a></p></td>
+<td><p>Embedding dataset that computes ESM2 protein embeddings per gene.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.CalmDataset.html#torchcell.datasets.CalmDataset" title="torchcell.datasets.CalmDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CalmDataset</span></code></a></p></td>
+<td><p>Embedding dataset that runs the CaLM model over gene CDS sequences.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.RandomEmbeddingDataset.html#torchcell.datasets.RandomEmbeddingDataset" title="torchcell.datasets.RandomEmbeddingDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RandomEmbeddingDataset</span></code></a></p></td>
+<td><p>Embedding dataset assigning each gene a random feature vector.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.NodeEmbeddingBuilder.html#torchcell.datasets.NodeEmbeddingBuilder" title="torchcell.datasets.NodeEmbeddingBuilder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NodeEmbeddingBuilder</span></code></a></p></td>
+<td><p>Builder class for creating node embedding datasets based on configuration.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="dataset-registry">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Dataset registry</a><a class="headerlink" href="#dataset-registry" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.dataset_registry.register_dataset.html#torchcell.datasets.dataset_registry.register_dataset" title="torchcell.datasets.dataset_registry.register_dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_dataset</span></code></a></p></td>
+<td><p>Register a dataset class by its name and return it unchanged (decorator).</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.dataset_registry.dataset_registry.html#torchcell.datasets.dataset_registry.dataset_registry" title="torchcell.datasets.dataset_registry.dataset_registry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dataset_registry</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="registered-s-cerevisiae-experiment-datasets">
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">Registered <em>S. cerevisiae</em> experiment datasets</a><a class="headerlink" href="#registered-s-cerevisiae-experiment-datasets" title="Link to this heading"></a></h2>
+<p>The 52 classes in <code class="docutils literal notranslate"><span class="pre">dataset_registry</span></code>, grouped by source module (one module per publication).</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.auesukaree2009.EnvChemgenAuesukaree2009Dataset.html#torchcell.datasets.scerevisiae.auesukaree2009.EnvChemgenAuesukaree2009Dataset" title="torchcell.datasets.scerevisiae.auesukaree2009.EnvChemgenAuesukaree2009Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">auesukaree2009.EnvChemgenAuesukaree2009Dataset</span></code></a></p></td>
+<td><p>Auesukaree 2009 six-stress env x geno -&gt; categorical sensitivity dataset.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.baryshnikova2010.SmfBaryshnikova2010Dataset.html#torchcell.datasets.scerevisiae.baryshnikova2010.SmfBaryshnikova2010Dataset" title="torchcell.datasets.scerevisiae.baryshnikova2010.SmfBaryshnikova2010Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">baryshnikova2010.SmfBaryshnikova2010Dataset</span></code></a></p></td>
+<td><p>Baryshnikova 2010 genome-scale single-mutant fitness dataset (6023 alleles).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.bloom2019.Bloom2019Dataset.html#torchcell.datasets.scerevisiae.bloom2019.Bloom2019Dataset" title="torchcell.datasets.scerevisiae.bloom2019.Bloom2019Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bloom2019.Bloom2019Dataset</span></code></a></p></td>
+<td><p>Bloom 2019: one record per (segregant, condition), 530,100 records.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset.html#torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset" title="torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cachera2023.BetaxanthinCachera2023Dataset</span></code></a></p></td>
+<td><p>Genome-wide betaxanthin CRI-SPA product-proxy screen of the YKO collection.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.html#torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset" title="torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">caudal2024.CaudalPanTranscriptome2024Dataset</span></code></a></p></td>
+<td><p>Natural-isolate pan-transcriptome: each isolate a perturbation set off S288C.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.cooper2010.AminoAcidCooper2010Dataset.html#torchcell.datasets.scerevisiae.cooper2010.AminoAcidCooper2010Dataset" title="torchcell.datasets.scerevisiae.cooper2010.AminoAcidCooper2010Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cooper2010.AminoAcidCooper2010Dataset</span></code></a></p></td>
+<td><p>Cooper 2010 CE-LIF amino-acid pools of the deletion collection (ratio to plate).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.costanzo2016.DmfCostanzo2016Dataset.html#torchcell.datasets.scerevisiae.costanzo2016.DmfCostanzo2016Dataset" title="torchcell.datasets.scerevisiae.costanzo2016.DmfCostanzo2016Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">costanzo2016.DmfCostanzo2016Dataset</span></code></a></p></td>
+<td><p>Double-mutant fitness dataset from Costanzo et al. 2016.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.costanzo2016.DmiCostanzo2016Dataset.html#torchcell.datasets.scerevisiae.costanzo2016.DmiCostanzo2016Dataset" title="torchcell.datasets.scerevisiae.costanzo2016.DmiCostanzo2016Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">costanzo2016.DmiCostanzo2016Dataset</span></code></a></p></td>
+<td><p>Double-mutant genetic interaction dataset from Costanzo et al. 2016.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset.html#torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset" title="torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">costanzo2016.SmfCostanzo2016Dataset</span></code></a></p></td>
+<td><p>Single-mutant fitness dataset from Costanzo et al. 2016.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.costanzo2021.EnvChemgenCostanzo2021Dataset.html#torchcell.datasets.scerevisiae.costanzo2021.EnvChemgenCostanzo2021Dataset" title="torchcell.datasets.scerevisiae.costanzo2021.EnvChemgenCostanzo2021Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">costanzo2021.EnvChemgenCostanzo2021Dataset</span></code></a></p></td>
+<td><p>Costanzo 2021 condition-SGA: env x (deletion | ts-allele) -&gt; differential fitness.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.dasilveira2014.MetaboliteDaSilveira2014Dataset.html#torchcell.datasets.scerevisiae.dasilveira2014.MetaboliteDaSilveira2014Dataset" title="torchcell.datasets.scerevisiae.dasilveira2014.MetaboliteDaSilveira2014Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dasilveira2014.MetaboliteDaSilveira2014Dataset</span></code></a></p></td>
+<td><p>MS lipidome of the yeast kinase/phosphatase deletion collection (127 mutants).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.hillenmeyer2008.HetHillenmeyer2008Dataset.html#torchcell.datasets.scerevisiae.hillenmeyer2008.HetHillenmeyer2008Dataset" title="torchcell.datasets.scerevisiae.hillenmeyer2008.HetHillenmeyer2008Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hillenmeyer2008.HetHillenmeyer2008Dataset</span></code></a></p></td>
+<td><p>FitDb HIP (heterozygous, engineered-CNV) fitness-defect log2-ratio dataset.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.hillenmeyer2008.HomHillenmeyer2008Dataset.html#torchcell.datasets.scerevisiae.hillenmeyer2008.HomHillenmeyer2008Dataset" title="torchcell.datasets.scerevisiae.hillenmeyer2008.HomHillenmeyer2008Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hillenmeyer2008.HomHillenmeyer2008Dataset</span></code></a></p></td>
+<td><p>FitDb HOP (homozygous, KanMX deletion) fitness-defect z-score dataset.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.hoepfner2014.EnvChemgenHoepfner2014Dataset.html#torchcell.datasets.scerevisiae.hoepfner2014.EnvChemgenHoepfner2014Dataset" title="torchcell.datasets.scerevisiae.hoepfner2014.EnvChemgenHoepfner2014Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hoepfner2014.EnvChemgenHoepfner2014Dataset</span></code></a></p></td>
+<td><p>Hoepfner 2014 HIP-HOP atlas: env x (het-CNV | hom-deletion) -&gt; sensitivity score.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.kemmeren2014.MicroarrayKemmeren2014Dataset.html#torchcell.datasets.scerevisiae.kemmeren2014.MicroarrayKemmeren2014Dataset" title="torchcell.datasets.scerevisiae.kemmeren2014.MicroarrayKemmeren2014Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kemmeren2014.MicroarrayKemmeren2014Dataset</span></code></a></p></td>
+<td><p>Deletion-mutant microarray expression profiling from Kemmeren et al. 2014.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.kuzmin2018.DmfKuzmin2018Dataset.html#torchcell.datasets.scerevisiae.kuzmin2018.DmfKuzmin2018Dataset" title="torchcell.datasets.scerevisiae.kuzmin2018.DmfKuzmin2018Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kuzmin2018.DmfKuzmin2018Dataset</span></code></a></p></td>
+<td><p>Double-mutant fitness experiments from Kuzmin 2018.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.kuzmin2018.DmiKuzmin2018Dataset.html#torchcell.datasets.scerevisiae.kuzmin2018.DmiKuzmin2018Dataset" title="torchcell.datasets.scerevisiae.kuzmin2018.DmiKuzmin2018Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kuzmin2018.DmiKuzmin2018Dataset</span></code></a></p></td>
+<td><p>Double-mutant genetic-interaction experiments from Kuzmin 2018.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.kuzmin2018.SmfKuzmin2018Dataset.html#torchcell.datasets.scerevisiae.kuzmin2018.SmfKuzmin2018Dataset" title="torchcell.datasets.scerevisiae.kuzmin2018.SmfKuzmin2018Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kuzmin2018.SmfKuzmin2018Dataset</span></code></a></p></td>
+<td><p>Single-mutant fitness experiments from Kuzmin 2018.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.kuzmin2018.TmfKuzmin2018Dataset.html#torchcell.datasets.scerevisiae.kuzmin2018.TmfKuzmin2018Dataset" title="torchcell.datasets.scerevisiae.kuzmin2018.TmfKuzmin2018Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kuzmin2018.TmfKuzmin2018Dataset</span></code></a></p></td>
+<td><p>Triple-mutant fitness experiments from Kuzmin 2018.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.kuzmin2018.TmiKuzmin2018Dataset.html#torchcell.datasets.scerevisiae.kuzmin2018.TmiKuzmin2018Dataset" title="torchcell.datasets.scerevisiae.kuzmin2018.TmiKuzmin2018Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kuzmin2018.TmiKuzmin2018Dataset</span></code></a></p></td>
+<td><p>Triple-mutant genetic-interaction experiments from Kuzmin 2018.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.kuzmin2020.DmfKuzmin2020Dataset.html#torchcell.datasets.scerevisiae.kuzmin2020.DmfKuzmin2020Dataset" title="torchcell.datasets.scerevisiae.kuzmin2020.DmfKuzmin2020Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kuzmin2020.DmfKuzmin2020Dataset</span></code></a></p></td>
+<td><p>Double-mutant fitness experiments from Kuzmin et al. 2020.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.kuzmin2020.DmiKuzmin2020Dataset.html#torchcell.datasets.scerevisiae.kuzmin2020.DmiKuzmin2020Dataset" title="torchcell.datasets.scerevisiae.kuzmin2020.DmiKuzmin2020Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kuzmin2020.DmiKuzmin2020Dataset</span></code></a></p></td>
+<td><p>Digenic interaction experiments from Kuzmin et al. 2020.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.kuzmin2020.SmfKuzmin2020Dataset.html#torchcell.datasets.scerevisiae.kuzmin2020.SmfKuzmin2020Dataset" title="torchcell.datasets.scerevisiae.kuzmin2020.SmfKuzmin2020Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kuzmin2020.SmfKuzmin2020Dataset</span></code></a></p></td>
+<td><p>Single-mutant fitness experiments from Kuzmin et al. 2020.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.kuzmin2020.TmfKuzmin2020Dataset.html#torchcell.datasets.scerevisiae.kuzmin2020.TmfKuzmin2020Dataset" title="torchcell.datasets.scerevisiae.kuzmin2020.TmfKuzmin2020Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kuzmin2020.TmfKuzmin2020Dataset</span></code></a></p></td>
+<td><p>Triple-mutant fitness experiments from Kuzmin et al. 2020.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.kuzmin2020.TmiKuzmin2020Dataset.html#torchcell.datasets.scerevisiae.kuzmin2020.TmiKuzmin2020Dataset" title="torchcell.datasets.scerevisiae.kuzmin2020.TmiKuzmin2020Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kuzmin2020.TmiKuzmin2020Dataset</span></code></a></p></td>
+<td><p>Trigenic interaction experiments from Kuzmin et al. 2020.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.lian2019.CrisprMagicLian2019Dataset.html#torchcell.datasets.scerevisiae.lian2019.CrisprMagicLian2019Dataset" title="torchcell.datasets.scerevisiae.lian2019.CrisprMagicLian2019Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lian2019.CrisprMagicLian2019Dataset</span></code></a></p></td>
+<td><p>Lian 2019 MAGIC per-guide CRISPRa/i/d furfural-enrichment env x geno dataset.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.lopez2024.IsobutanolScreenLopez2024Dataset.html#torchcell.datasets.scerevisiae.lopez2024.IsobutanolScreenLopez2024Dataset" title="torchcell.datasets.scerevisiae.lopez2024.IsobutanolScreenLopez2024Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lopez2024.IsobutanolScreenLopez2024Dataset</span></code></a></p></td>
+<td><p>Montaño López 2024 FIRST genome-wide isobutanol-biosensor YKO screen (Table S2, n=1).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.lopez2024.IsobutanolValidatedLopez2024Dataset.html#torchcell.datasets.scerevisiae.lopez2024.IsobutanolValidatedLopez2024Dataset" title="torchcell.datasets.scerevisiae.lopez2024.IsobutanolValidatedLopez2024Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lopez2024.IsobutanolValidatedLopez2024Dataset</span></code></a></p></td>
+<td><p>Montaño López 2024 VALIDATED isobutanol-biosensor re-screen (Table S3, triplicate).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.messner2023.ProteomeMessner2023Dataset.html#torchcell.datasets.scerevisiae.messner2023.ProteomeMessner2023Dataset" title="torchcell.datasets.scerevisiae.messner2023.ProteomeMessner2023Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">messner2023.ProteomeMessner2023Dataset</span></code></a></p></td>
+<td><p>Microflow-SWATH-MS proteome of the yeast gene-KO collection (4,699 strains).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.mormino2022.CrispriMormino2022Dataset.html#torchcell.datasets.scerevisiae.mormino2022.CrispriMormino2022Dataset" title="torchcell.datasets.scerevisiae.mormino2022.CrispriMormino2022Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mormino2022.CrispriMormino2022Dataset</span></code></a></p></td>
+<td><p>Mormino 2022 CRISPRi acetic-acid biosensor screen (12 isolated strains).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.mota2024.EnvChemgenMota2024Dataset.html#torchcell.datasets.scerevisiae.mota2024.EnvChemgenMota2024Dataset" title="torchcell.datasets.scerevisiae.mota2024.EnvChemgenMota2024Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mota2024.EnvChemgenMota2024Dataset</span></code></a></p></td>
+<td><p>Acetic/butyric/octanoic acid chemogenomic env x geno -&gt; ordinal susceptibility.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.mulleder2016.AminoAcidMulleder2016Dataset.html#torchcell.datasets.scerevisiae.mulleder2016.AminoAcidMulleder2016Dataset" title="torchcell.datasets.scerevisiae.mulleder2016.AminoAcidMulleder2016Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mulleder2016.AminoAcidMulleder2016Dataset</span></code></a></p></td>
+<td><p>Genome-wide intracellular amino-acid metabolome of the yeast deletion collection.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.nadal_ribelles2025.NadalRibellesPerturbSeq2025Dataset.html#torchcell.datasets.scerevisiae.nadal_ribelles2025.NadalRibellesPerturbSeq2025Dataset" title="torchcell.datasets.scerevisiae.nadal_ribelles2025.NadalRibellesPerturbSeq2025Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nadal_ribelles2025.NadalRibellesPerturbSeq2025Dataset</span></code></a></p></td>
+<td><p>Nadal-Ribelles 2025 pseudobulk Perturb-seq: one record per (genotype, condition).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.oduibhir2014.SmfODuibhir2014Dataset.html#torchcell.datasets.scerevisiae.oduibhir2014.SmfODuibhir2014Dataset" title="torchcell.datasets.scerevisiae.oduibhir2014.SmfODuibhir2014Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">oduibhir2014.SmfODuibhir2014Dataset</span></code></a></p></td>
+<td><p>O'Duibhir 2014 single-deletion relative-growth-rate -&gt; fitness dataset.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.ohnuki2018.ScmdOhnuki2018Dataset.html#torchcell.datasets.scerevisiae.ohnuki2018.ScmdOhnuki2018Dataset" title="torchcell.datasets.scerevisiae.ohnuki2018.ScmdOhnuki2018Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ohnuki2018.ScmdOhnuki2018Dataset</span></code></a></p></td>
+<td><p>CalMorph morphology of essential-gene heterozygous diploid deletions (Ohnuki 2018).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.ohnuki2022.ScmdOhnuki2022Dataset.html#torchcell.datasets.scerevisiae.ohnuki2022.ScmdOhnuki2022Dataset" title="torchcell.datasets.scerevisiae.ohnuki2022.ScmdOhnuki2022Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ohnuki2022.ScmdOhnuki2022Dataset</span></code></a></p></td>
+<td><p>CalMorph morphology for 1979 quadruple (target + 3Delta) deletion strains.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.html#torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset" title="torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ohya2005.ScmdOhya2005Dataset</span></code></a></p></td>
+<td><p>CalMorph morphology for haploid non-essential single-gene deletions (Ohya 2005).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.ozaydin2013.CarotenoidOzaydin2013Dataset.html#torchcell.datasets.scerevisiae.ozaydin2013.CarotenoidOzaydin2013Dataset" title="torchcell.datasets.scerevisiae.ozaydin2013.CarotenoidOzaydin2013Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ozaydin2013.CarotenoidOzaydin2013Dataset</span></code></a></p></td>
+<td><p>Beta-carotene colony-color visual screen of the yeast deletion collection.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.sameith2015.DmMicroarraySameith2015Dataset.html#torchcell.datasets.scerevisiae.sameith2015.DmMicroarraySameith2015Dataset" title="torchcell.datasets.scerevisiae.sameith2015.DmMicroarraySameith2015Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sameith2015.DmMicroarraySameith2015Dataset</span></code></a></p></td>
+<td><p>Double mutant GSTF expression profiling from Sameith et al. 2015.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.sameith2015.SmMicroarraySameith2015Dataset.html#torchcell.datasets.scerevisiae.sameith2015.SmMicroarraySameith2015Dataset" title="torchcell.datasets.scerevisiae.sameith2015.SmMicroarraySameith2015Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sameith2015.SmMicroarraySameith2015Dataset</span></code></a></p></td>
+<td><p>Single mutant GSTF expression profiling from Sameith et al. 2015.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset.html#torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset" title="torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sgd.GeneEssentialitySgdDataset</span></code></a></p></td>
+<td><p>Gene essentiality experiments built from SGD inviable null phenotypes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.smith2006.FattyAcidSmith2006Dataset.html#torchcell.datasets.scerevisiae.smith2006.FattyAcidSmith2006Dataset" title="torchcell.datasets.scerevisiae.smith2006.FattyAcidSmith2006Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">smith2006.FattyAcidSmith2006Dataset</span></code></a></p></td>
+<td><p>Smith 2006 fatty-acid clear-zone env x geno -&gt; ordinal response dataset.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.smith2016.CrispriChemgenSmith2016Dataset.html#torchcell.datasets.scerevisiae.smith2016.CrispriChemgenSmith2016Dataset" title="torchcell.datasets.scerevisiae.smith2016.CrispriChemgenSmith2016Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">smith2016.CrispriChemgenSmith2016Dataset</span></code></a></p></td>
+<td><p>Smith 2016 per-guide dCas9-Mxi1 CRISPRi chemical-genetic env x geno dataset.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset.html#torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset" title="torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">synth_leth_db.SynthLethalityYeastSynthLethDbDataset</span></code></a></p></td>
+<td><p>Yeast synthetic lethality gene-pair experiments from SynLethDB.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.synth_leth_db.SynthRescueYeastSynthLethDbDataset.html#torchcell.datasets.scerevisiae.synth_leth_db.SynthRescueYeastSynthLethDbDataset" title="torchcell.datasets.scerevisiae.synth_leth_db.SynthRescueYeastSynthLethDbDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">synth_leth_db.SynthRescueYeastSynthLethDbDataset</span></code></a></p></td>
+<td><p>Yeast synthetic rescue gene-pair experiments from SynLethDB.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.vanacloig2022.EnvChemgenVanacloig2022Dataset.html#torchcell.datasets.scerevisiae.vanacloig2022.EnvChemgenVanacloig2022Dataset" title="torchcell.datasets.scerevisiae.vanacloig2022.EnvChemgenVanacloig2022Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vanacloig2022.EnvChemgenVanacloig2022Dataset</span></code></a></p></td>
+<td><p>Anaerobic chemical-genomic env x geno -&gt; log2(inhibitor/control) response screen.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.wildenhain2015.EnvChemgenWildenhain2015Dataset.html#torchcell.datasets.scerevisiae.wildenhain2015.EnvChemgenWildenhain2015Dataset" title="torchcell.datasets.scerevisiae.wildenhain2015.EnvChemgenWildenhain2015Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">wildenhain2015.EnvChemgenWildenhain2015Dataset</span></code></a></p></td>
+<td><p>Wildenhain 2015 chemical-genetic matrix: env x geno -&gt; growth-inhibition z-score.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.xue2025.FattyAcidXue2025Dataset.html#torchcell.datasets.scerevisiae.xue2025.FattyAcidXue2025Dataset" title="torchcell.datasets.scerevisiae.xue2025.FattyAcidXue2025Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">xue2025.FattyAcidXue2025Dataset</span></code></a></p></td>
+<td><p>Xue 2025 in-house FFA combinatorial-deletion titer dataset (5 FFAs/strain).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.yeastphenome.YeastPhenomeDataset.html#torchcell.datasets.scerevisiae.yeastphenome.YeastPhenomeDataset" title="torchcell.datasets.scerevisiae.yeastphenome.YeastPhenomeDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">yeastphenome.YeastPhenomeDataset</span></code></a></p></td>
+<td><p>Curated YeastPhenome growth-phenome env x geno -&gt; NPV z-score screens.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.yoshida2012.OrganicAcidYoshida2012Dataset.html#torchcell.datasets.scerevisiae.yoshida2012.OrganicAcidYoshida2012Dataset" title="torchcell.datasets.scerevisiae.yoshida2012.OrganicAcidYoshida2012Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">yoshida2012.OrganicAcidYoshida2012Dataset</span></code></a></p></td>
+<td><p>HPLC organic-acid titers of 17 yeast deletion mutants (Yoshida 2012, Table 3).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.zelezniak2018.MetaboliteZelezniak2018Dataset.html#torchcell.datasets.scerevisiae.zelezniak2018.MetaboliteZelezniak2018Dataset" title="torchcell.datasets.scerevisiae.zelezniak2018.MetaboliteZelezniak2018Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">zelezniak2018.MetaboliteZelezniak2018Dataset</span></code></a></p></td>
+<td><p>SRM-MS/MS targeted metabolome of the yeast kinase-knockout collection (95 strains).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datasets.scerevisiae.zelezniak2018.ProteomeZelezniak2018Dataset.html#torchcell.datasets.scerevisiae.zelezniak2018.ProteomeZelezniak2018Dataset" title="torchcell.datasets.scerevisiae.zelezniak2018.ProteomeZelezniak2018Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">zelezniak2018.ProteomeZelezniak2018Dataset</span></code></a></p></td>
+<td><p>SWATH-MS proteome of the yeast kinase-knockout collection (97 strains).</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="not-documented">
+<h2><a class="toc-backref" href="#id4" role="doc-backlink">Not documented</a><a class="headerlink" href="#not-documented" title="Link to this heading"></a></h2>
+<p>Submodules left out of this page:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">scerevisiae.mechanisitc_aware</span></code> (import fails: ModuleNotFoundError)</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../generated/torchcell.dataset_readers.LmdbDatasetReader.html" class="btn btn-neutral float-left" title="torchcell.dataset_readers.LmdbDatasetReader" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../generated/torchcell.datasets.NucleotideTransformerDataset.html" class="btn btn-neutral float-right" title="torchcell.datasets.NucleotideTransformerDataset" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

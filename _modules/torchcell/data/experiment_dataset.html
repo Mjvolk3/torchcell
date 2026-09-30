@@ -1,0 +1,842 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.data.experiment_dataset &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/data/experiment_dataset.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.data.experiment_dataset</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.data.experiment_dataset</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Abstract LMDB-backed experiment dataset and reference-index utilities."""</span>
+
+<span class="c1"># torchcell/dataset/experiment_dataset</span>
+<span class="c1"># [[torchcell.dataset.experiment_dataset]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/dataset/experiment_dataset</span>
+<span class="c1"># Test file: tests/torchcell/dataset/test_experiment_dataset.py</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell</span><span class="w"> </span><span class="kn">import</span> <span class="n">__version__</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentReferenceIndex</span><span class="p">,</span> <span class="n">compute_sha256_hash</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Experiment</span><span class="p">,</span>
+    <span class="n">ExperimentReference</span><span class="p">,</span>
+    <span class="n">ExperimentReferenceType</span><span class="p">,</span>
+    <span class="n">Publication</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">CpuExperimentLoaderMultiprocessing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.provenance.build_manifest</span><span class="w"> </span><span class="kn">import</span> <span class="n">MANIFEST_FILENAME</span><span class="p">,</span> <span class="n">write_build_manifest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeneSet</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">TC_DATA_URL_VAR</span> <span class="o">=</span> <span class="s2">"TC_DATA_URL"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">process_reference_batch</span><span class="p">(</span><span class="n">batch</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Compute SHA-256 reference hashes for each item in a batch."""</span>
+    <span class="c1"># This function will process a batch of data to compute reference hashes.</span>
+    <span class="c1"># Adjust the implementation based on your data structure.</span>
+    <span class="n">reference_hashes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">:</span>
+        <span class="n">reference_hash</span> <span class="o">=</span> <span class="n">compute_sha256_hash</span><span class="p">(</span><span class="n">serialize_for_hashing</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">]))</span>
+        <span class="n">reference_hashes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">reference_hash</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">reference_hashes</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_compute_reference_hash_parallel</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the SHA-256 hash of a single item's reference."""</span>
+    <span class="c1"># Parallel processing function for computing reference hash</span>
+    <span class="n">reference</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">compute_sha256_hash</span><span class="p">(</span><span class="n">serialize_for_hashing</span><span class="p">(</span><span class="n">reference</span><span class="p">))</span>
+
+
+<span class="c1"># return reference_indices</span>
+<span class="c1"># TODO FitnessExperimentReference Will need to generalize away from fitness</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">serialize_for_hashing</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return a deterministic JSON string for hashing a reference or object."""</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ExperimentReferenceType</span><span class="p">):</span>
+        <span class="c1"># Convert FitnessExperimentReference to a dictionary</span>
+        <span class="n">obj_dict</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
+        <span class="c1"># Sort the dictionary keys for consistent serialization</span>
+        <span class="n">sorted_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">obj_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">sorted_dict</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Content-addressed interning of constant sub-objects.</span>
+<span class="c1">#</span>
+<span class="c1"># The component-based Environment (~7.9 KB with Media components + SourcedValue</span>
+<span class="c1"># provenance) is constant across a dataset yet was stored inline on every record</span>
+<span class="c1"># (twice: experiment.environment + reference.environment_reference, plus the</span>
+<span class="c1"># constant reference/publication), ballooning dmi_costanzo2016 45 GB -&gt; 159 GB.</span>
+<span class="c1"># We store each DISTINCT constant sub-object ONCE in a SEPARATE sibling LMDB env</span>
+<span class="c1"># ``processed/interned/`` (NOT a named sub-db: a named sub-db registers its name as</span>
+<span class="c1"># a key in the records db, poisoning compute_gene_set's raw cursor and the txn.stat</span>
+<span class="c1"># entry count) keyed by a content hash, and replace the inline value in a record</span>
+<span class="c1"># with a tiny ``{"$ref": &lt;hash&gt;, "name": &lt;hint&gt;}`` pointer. ``resolve_interned``</span>
+<span class="c1"># splices the full object back on read, so ``get_single_item`` returns the whole</span>
+<span class="c1"># record unchanged (public API preserved). Raw readers that bypass get_single_item</span>
+<span class="c1"># (e.g. verification runners, neo4j adapters) must call ``resolve_interned`` too.</span>
+<span class="c1"># A record with no ``$ref`` (legacy inline store) passes through untouched --</span>
+<span class="c1"># backward compatible.</span>
+<span class="c1"># Design: ``[[plan.experiment-dataset-interning.2026.07.15]]``.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">INTERN_MIN_BYTES</span> <span class="o">=</span> <span class="mi">512</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">canonical_json</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Deterministic JSON for content-hashing (mode=json -&gt; stable enum strings)."""</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">):</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_interned</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">interned</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Recursively splice interned sub-objects back into a record dict.</span>
+
+<span class="sd">    A dict carrying a ``$ref`` key is replaced by the interned object it points</span>
+<span class="sd">    to; every other value is returned unchanged -- so a legacy record (no</span>
+<span class="sd">    ``$ref`` anywhere) is a byte-for-byte no-op. Reusable by any raw LMDB reader</span>
+<span class="sd">    (e.g. neo4j adapters) that bypasses ``get_single_item``.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"$ref"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ref</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">interned</span><span class="p">[</span><span class="n">ref</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">resolve_interned</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">interned</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">resolve_interned</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">interned</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">obj</span>
+
+
+<div class="viewcode-block" id="compute_experiment_reference_index_sequential">
+<a class="viewcode-back" href="../../../generated/torchcell.data.compute_experiment_reference_index_sequential.html#torchcell.data.compute_experiment_reference_index_sequential">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_experiment_reference_index_sequential</span><span class="p">(</span>
+    <span class="n">dataset</span><span class="p">:</span> <span class="n">Dataset</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ExperimentReferenceIndex</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Build the reference index in ONE streaming grouping pass (memory-bounded).</span>
+
+<span class="sd">    Streams every record in TRUE dataset-index order, hashes its reference, and appends</span>
+<span class="sd">    the record's index to that reference's bucket -- keeping each unique reference object</span>
+<span class="sd">    exactly once (first sighting). Time is O(N); memory is O(unique references) + the O(N)</span>
+<span class="sd">    output (member indices sum to N), never the former O(references x N) dense masks. This</span>
+<span class="sd">    is what makes genome-scale datasets (Hoepfner ~30M records) buildable. First-sighting</span>
+<span class="sd">    order is preserved so the output is deterministic.</span>
+<span class="sd">    """</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Computing experiment_reference_index (streaming)..."</span><span class="p">)</span>
+    <span class="n">buckets</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">references</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">order</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">))):</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">"reference"</span><span class="p">]</span>
+        <span class="n">ref_hash</span> <span class="o">=</span> <span class="n">compute_sha256_hash</span><span class="p">(</span><span class="n">serialize_for_hashing</span><span class="p">(</span><span class="n">reference</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">ref_hash</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">buckets</span><span class="p">:</span>
+            <span class="n">buckets</span><span class="p">[</span><span class="n">ref_hash</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">references</span><span class="p">[</span><span class="n">ref_hash</span><span class="p">]</span> <span class="o">=</span> <span class="n">reference</span>
+            <span class="n">order</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ref_hash</span><span class="p">)</span>
+        <span class="n">buckets</span><span class="p">[</span><span class="n">ref_hash</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">ExperimentReferenceIndex</span><span class="p">(</span>
+            <span class="n">reference</span><span class="o">=</span><span class="n">references</span><span class="p">[</span><span class="n">ref_hash</span><span class="p">],</span> <span class="n">member_indices</span><span class="o">=</span><span class="n">buckets</span><span class="p">[</span><span class="n">ref_hash</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">ref_hash</span> <span class="ow">in</span> <span class="n">order</span>
+    <span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="compute_experiment_reference_index_parallel">
+<a class="viewcode-back" href="../../../generated/torchcell.data.compute_experiment_reference_index_parallel.html#torchcell.data.compute_experiment_reference_index_parallel">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_experiment_reference_index_parallel</span><span class="p">(</span>
+    <span class="n">dataset</span><span class="p">:</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1e4</span><span class="p">),</span> <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ExperimentReferenceIndex</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Build the reference index (streaming member-index grouping).</span>
+
+<span class="sd">    Delegates to the sequential streaming build: the sparse member-index representation</span>
+<span class="sd">    requires each record's TRUE dataset index, but the multiprocessing loader's workers</span>
+<span class="sd">    return batches out of order, so consumption-order positions cannot be trusted. The</span>
+<span class="sd">    former hash-parallelism gave marginal benefit (the build is LMDB-I/O-bound, not</span>
+<span class="sd">    hash-CPU-bound) and silently depended on in-order delivery; a single streaming pass is</span>
+<span class="sd">    both correct and sufficient. Signature kept for API compatibility.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">compute_experiment_reference_index_sequential</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="post_process">
+<a class="viewcode-back" href="../../../generated/torchcell.data.post_process.html#torchcell.data.post_process">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">post_process</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Decorate ``process`` to rebuild the gene set/reference index and validate."""</span>
+
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="c1"># Execute the original process method</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># Perform the original post-processing tasks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gene_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_gene_set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">experiment_reference_index</span>
+
+        <span class="c1"># Coverage check: mark each reference's member indices into ONE length-N bool</span>
+        <span class="c1"># array (O(N) total, one pass), NOT a dense mask per reference (which would</span>
+        <span class="c1"># reintroduce the O(references x N) blowup the sparse representation removes).</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">covered</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">eri</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment_reference_index</span><span class="p">:</span>
+            <span class="n">covered</span><span class="p">[</span><span class="n">eri</span><span class="o">.</span><span class="n">member_indices</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">assert</span> <span class="n">torch</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">covered</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">,</span> <span class="p">(</span>
+            <span class="s2">"Each item in the dataset must be covered by exactly one reference."</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Record the schema contract this LMDB was built against (schema-dependency tracking):</span>
+        <span class="c1"># writes preprocess/build_manifest.json with the contract fingerprint of every schema</span>
+        <span class="c1"># symbol in this loader's closure, so the dataset can be flagged for rebuild when a</span>
+        <span class="c1"># depended-on symbol changes. See torchcell/provenance/.</span>
+        <span class="n">write_build_manifest</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">return</span> <span class="n">wrapper</span></div>
+
+
+
+<div class="viewcode-block" id="ExperimentDataset">
+<a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentDataset.html#torchcell.data.ExperimentDataset">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExperimentDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>  <span class="c1"># type: ignore[misc]  # Dataset is untyped (Any) in torch_geometric</span>
+<span class="w">    </span><span class="sd">"""Abstract PyG dataset storing experiment items in an LMDB store."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">skip_process_file_exist</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Set up paths/state and trigger PyG download/process via super().__init__."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">io_workers</span> <span class="o">=</span> <span class="n">io_workers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"preprocess"</span><span class="p">)</span>
+        <span class="c1"># TODO This is part of our custom Dataset to speed things up but should be removed when using pure pyg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">skip_process_file_exist</span> <span class="o">=</span> <span class="n">skip_process_file_exist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gene_set</span><span class="p">:</span> <span class="n">GeneSet</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_experiment_reference_index</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ExperimentReferenceIndex</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># Interned constant sub-objects, loaded once from the sibling `interned`</span>
+        <span class="c1"># env. Kept on its OWN attribute (NOT cleared by close_lmdb, which</span>
+        <span class="c1"># nulls self.env and re-runs _init_db many times) so it loads exactly once.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_interned</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Automatically set the name based on the class name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Experiment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the Experiment subclass produced by this dataset."""</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reference_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">ExperimentReference</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the ExperimentReference subclass produced by this dataset."""</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the raw file names expected under the raw directory."""</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">processed_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the processed artifact name (the LMDB directory)."""</span>
+        <span class="k">return</span> <span class="s2">"lmdb"</span>
+
+<div class="viewcode-block" id="ExperimentDataset.process">
+<a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentDataset.html#torchcell.data.ExperimentDataset.process">[docs]</a>
+    <span class="nd">@post_process</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build the processed LMDB store from raw data (implemented by subclasses)."""</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Skip PyG's raw download when the processed LMDB already exists.</span>
+
+<span class="sd">        Consumers -- the BioCypher KG build and any training run -- read the</span>
+<span class="sd">        processed ``lmdb`` store, not the raw files, so once it is present the</span>
+<span class="sd">        raw data is not needed. PyG's default ``_download`` re-fetches whenever</span>
+<span class="sd">        ``raw_file_names`` are absent/incomplete, which for a dataset restored</span>
+<span class="sd">        from a built LMDB (raw pruned, or a partially-extracted leftover) means</span>
+<span class="sd">        an unnecessary network download that either 403s or collides on move.</span>
+
+<span class="sd">        With ``TC_DATA_URL`` set, an un-built dataset is fetched as a packaged</span>
+<span class="sd">        artifact from the ``tc-data`` endpoint instead (``_download_artifact``),</span>
+<span class="sd">        which fills ``processed/`` so PyG then skips ``process()``. With the</span>
+<span class="sd">        variable unset, a genuinely un-built dataset (no ``lmdb``) downloads its</span>
+<span class="sd">        raw files from the publisher as before.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">)):</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">TC_DATA_URL_VAR</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_download_artifact</span><span class="p">()</span>
+            <span class="k">return</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_download</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_download_artifact</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Fetch, verify and unpack this dataset's artifact from the ``tc-data`` endpoint.</span>
+
+<span class="sd">        Selects the newest ``supported`` artifact for this root's slug whose</span>
+<span class="sd">        ``torchcell_version`` shares the installed ``major.minor``; the endpoint</span>
+<span class="sd">        being set and having nothing compatible is an error, never a silent fall</span>
+<span class="sd">        back to the publisher download. The unpacked tree must carry</span>
+<span class="sd">        ``preprocess/build_manifest.json`` (the schema contract of the LMDB).</span>
+<span class="sd">        """</span>
+        <span class="c1"># Local import: ``torchcell.datasets`` eagerly imports the loader modules,</span>
+        <span class="c1"># which import this module, so a top-level import would be circular.</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.client</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetClient</span><span class="p">,</span> <span class="n">unpack_artifact</span>
+
+        <span class="n">client</span> <span class="o">=</span> <span class="n">DatasetClient</span><span class="o">.</span><span class="n">from_env</span><span class="p">()</span>
+        <span class="n">slug</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">))</span>
+        <span class="n">artifact</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">slug</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">artifact</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">client</span><span class="o">.</span><span class="n">url</span><span class="si">}</span><span class="s2"> has no supported artifact for </span><span class="si">{</span><span class="n">slug</span><span class="si">!r}</span><span class="s2"> compatible "</span>
+                <span class="sa">f</span><span class="s2">"with torchcell </span><span class="si">{</span><span class="n">__version__</span><span class="si">}</span><span class="s2">; unset </span><span class="si">{</span><span class="n">TC_DATA_URL_VAR</span><span class="si">}</span><span class="s2"> to build "</span>
+                <span class="s2">"from the publisher files instead"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">artifact</span><span class="o">.</span><span class="n">dataset_class</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"artifact </span><span class="si">{</span><span class="n">artifact</span><span class="o">.</span><span class="n">rel_path</span><span class="si">}</span><span class="s2"> was built by "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">artifact</span><span class="o">.</span><span class="n">dataset_class</span><span class="si">}</span><span class="s2">, not </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">archive</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">download</span><span class="p">(</span>
+            <span class="n">artifact</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"artifacts"</span> <span class="o">/</span> <span class="n">artifact</span><span class="o">.</span><span class="n">archive</span>
+        <span class="p">)</span>
+        <span class="n">unpack_artifact</span><span class="p">(</span><span class="n">archive</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">))</span>
+        <span class="n">manifest</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">)</span> <span class="o">/</span> <span class="n">MANIFEST_FILENAME</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">manifest</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">artifact</span><span class="o">.</span><span class="n">rel_path</span><span class="si">}</span><span class="s2"> unpacked without preprocess/</span><span class="si">{</span><span class="n">MANIFEST_FILENAME</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"unpacked </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%d</span><span class="s2"> records)"</span><span class="p">,</span> <span class="n">artifact</span><span class="o">.</span><span class="n">rel_path</span><span class="p">,</span> <span class="n">artifact</span><span class="o">.</span><span class="n">n_experiments</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ExperimentDataset.download">
+<a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentDataset.html#torchcell.data.ExperimentDataset.download">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Download raw data into the raw directory (implemented by subclasses)."""</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_init_db</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize the records LMDB environment (interned lives in a sibling env)."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span>
+            <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">lock</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">readahead</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">meminit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_interned_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Path to the sibling `interned` env (separate from the records `lmdb`)."""</span>
+        <span class="k">return</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"interned"</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_interned</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Load the whole `interned` env into a RAM dict once (idempotent).</span>
+
+<span class="sd">        A SEPARATE env (sibling of the records `lmdb`), NOT a named sub-db: a named</span>
+<span class="sd">        sub-db registers its name as a key in the main db, which would pollute the</span>
+<span class="sd">        records cursor (``compute_gene_set``) and the ``txn.stat`` entry count.</span>
+<span class="sd">        A legacy store with no `interned` dir -&gt; empty dict, so pre-existing inline</span>
+<span class="sd">        LMDBs read unchanged.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interned</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">interned</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">interned_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interned_dir</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">interned_dir</span><span class="p">):</span>
+            <span class="n">ienv</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span>
+                <span class="n">interned_dir</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">lock</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">readahead</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">meminit</span><span class="o">=</span><span class="kc">False</span>
+            <span class="p">)</span>
+            <span class="k">with</span> <span class="n">ienv</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">txn</span><span class="o">.</span><span class="n">cursor</span><span class="p">():</span>
+                    <span class="n">interned</span><span class="p">[</span><span class="n">key</span><span class="o">.</span><span class="n">decode</span><span class="p">()]</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="n">ienv</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_interned</span> <span class="o">=</span> <span class="n">interned</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_open_write_lmdb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Open the records WRITE env and a SEPARATE `interned` WRITE env (sibling).</span>
+
+<span class="sd">        Crash-safety invariant: callers MUST commit the interned txn BEFORE the records</span>
+<span class="sd">        txn -- write ``with env.begin() as txn, interned_env.begin() as itxn:`` so the</span>
+<span class="sd">        context managers exit LIFO (itxn commits first). A crash between the two commits</span>
+<span class="sd">        then leaves only orphan interned rows (harmless), never a record with a dangling</span>
+<span class="sd">        ``$ref``.</span>
+<span class="sd">        """</span>
+        <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e12</span><span class="p">))</span>
+        <span class="n">interned_env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="s2">"interned"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e10</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">env</span><span class="p">,</span> <span class="n">interned_env</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_maybe_intern</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">container</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">hint</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">itxn</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Intern ``container[key]`` if its canonical JSON is &gt;= INTERN_MIN_BYTES.</span>
+
+<span class="sd">        Put-if-absent into the `interned` env (LMDB serializes write txns per env,</span>
+<span class="sd">        so a `txn.get` sees all previously-committed interned rows -&gt; no shared</span>
+<span class="sd">        dedup state needed), then replace the inline value with a `{"$ref", "name"}`</span>
+<span class="sd">        pointer. Small sub-objects stay inline.</span>
+<span class="sd">        """</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="n">canonical_json</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">INTERN_MIN_BYTES</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">digest</span> <span class="o">=</span> <span class="n">compute_sha256_hash</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+        <span class="n">digest_key</span> <span class="o">=</span> <span class="n">digest</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">itxn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">digest_key</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">itxn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">digest_key</span><span class="p">,</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">container</span><span class="p">[</span><span class="n">key</span><span class="p">]))</span>
+        <span class="n">container</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"$ref"</span><span class="p">:</span> <span class="n">digest</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">hint</span><span class="p">)}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_intern_record</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">experiment</span><span class="p">:</span> <span class="n">Experiment</span><span class="p">,</span>
+        <span class="n">reference</span><span class="p">:</span> <span class="n">ExperimentReference</span><span class="p">,</span>
+        <span class="n">publication</span><span class="p">:</span> <span class="n">Publication</span><span class="p">,</span>
+        <span class="n">itxn</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Serialize one record, interning the constant sub-objects.</span>
+
+<span class="sd">        Interns `experiment.environment`, the whole `reference`, and `publication`</span>
+<span class="sd">        (each when &gt;= INTERN_MIN_BYTES) into the sibling `interned` env via ``itxn``.</span>
+<span class="sd">        `genotype`/`phenotype`/`experiment_type` stay inline (they vary per record /</span>
+<span class="sd">        drive reconstruction).</span>
+<span class="sd">        """</span>
+        <span class="n">rec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+            <span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+            <span class="s2">"publication"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_maybe_intern</span><span class="p">(</span>
+            <span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">],</span>
+            <span class="s2">"environment"</span><span class="p">,</span>
+            <span class="n">experiment</span><span class="o">.</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">experiment</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">media</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">itxn</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_maybe_intern</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="s2">"reference"</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">reference</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">itxn</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_maybe_intern</span><span class="p">(</span>
+            <span class="n">rec</span><span class="p">,</span>
+            <span class="s2">"publication"</span><span class="p">,</span>
+            <span class="n">publication</span><span class="p">,</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="n">publication</span><span class="p">,</span> <span class="s2">"pubmed_id"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"publication"</span><span class="p">,</span>
+            <span class="n">itxn</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ExperimentDataset.close_lmdb">
+<a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentDataset.html#torchcell.data.ExperimentDataset.close_lmdb">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">close_lmdb</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Close the LMDB environment if it is open."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">df</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the preprocessed data CSV as a DataFrame, if present."""</span>
+        <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_df</span>
+
+<div class="viewcode-block" id="ExperimentDataset.preprocess_raw">
+<a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentDataset.html#torchcell.data.ExperimentDataset.preprocess_raw">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Clean/normalize the raw DataFrame (implemented by subclasses)."""</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="ExperimentDataset.create_experiment">
+<a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentDataset.html#torchcell.data.ExperimentDataset.create_experiment">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Construct experiment records from preprocessed data (subclasses)."""</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="ExperimentDataset.len">
+<a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentDataset.html#torchcell.data.ExperimentDataset.len">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the number of entries stored in the LMDB database."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_init_db</span><span class="p">()</span>
+
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="n">length</span> <span class="o">=</span> <span class="n">txn</span><span class="o">.</span><span class="n">stat</span><span class="p">()[</span><span class="s2">"entries"</span><span class="p">]</span>
+
+        <span class="c1"># Must be closed for dataloader io_workers &gt; 0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close_lmdb</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ExperimentDataset.get">
+<a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentDataset.html#torchcell.data.ExperimentDataset.get">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return one item, or a list of items for list/array/boolean indices."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_init_db</span><span class="p">()</span>
+
+        <span class="c1"># Handling boolean index arrays or numpy arrays</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
+            <span class="n">indices</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">indices</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">bool_</span><span class="p">:</span>
+                <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">indices</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="c1"># If idx is a list/array of indices, return a list of data objects</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_single_item</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Single item retrieval</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_single_item</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ExperimentDataset.get_single_item">
+<a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentDataset.html#torchcell.data.ExperimentDataset.get_single_item">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_single_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the deserialized item at ``idx``, or None if absent.</span>
+
+<span class="sd">        Resolves any interned ``$ref`` pointers back to the full sub-objects, so</span>
+<span class="sd">        the returned three-key dict is identical to the pre-interning format (a</span>
+<span class="sd">        no-op for legacy inline stores).</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_init_db</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interned</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_load_interned</span><span class="p">()</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="n">serialized_data</span> <span class="o">=</span> <span class="n">txn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">serialized_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+
+            <span class="n">deserialized_data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">serialized_data</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">resolve_interned</span><span class="p">(</span>
+                <span class="n">deserialized_data</span><span class="p">,</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"dict[str, Any]"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interned</span><span class="p">)</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ExperimentDataset.extract_systematic_gene_names">
+<a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentDataset.html#torchcell.data.ExperimentDataset.extract_systematic_gene_names">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extract_systematic_gene_names</span><span class="p">(</span><span class="n">genotype</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the systematic gene names of all perturbations in a genotype."""</span>
+        <span class="n">gene_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">genotype</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbations"</span><span class="p">)):</span>
+            <span class="n">gene_name</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">))</span>
+            <span class="n">gene_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gene_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">gene_names</span></div>
+
+
+<div class="viewcode-block" id="ExperimentDataset.compute_gene_set">
+<a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentDataset.html#torchcell.data.ExperimentDataset.compute_gene_set">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_gene_set</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GeneSet</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Compute the dataset gene set sequentially or in parallel."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_workers</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Computing gene set in parallel..."</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_gene_set_parallel</span><span class="p">(</span><span class="n">io_workers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">io_workers</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Computing gene set sequentially..."</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_gene_set_sequential</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ExperimentDataset.compute_gene_set_sequential">
+<a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentDataset.html#torchcell.data.ExperimentDataset.compute_gene_set_sequential">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_gene_set_sequential</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GeneSet</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Compute the gene set by scanning every LMDB entry in order."""</span>
+        <span class="n">gene_set</span> <span class="o">=</span> <span class="n">GeneSet</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_init_db</span><span class="p">()</span>
+
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="n">cursor</span> <span class="o">=</span> <span class="n">txn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Computing gene set..."</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">cursor</span><span class="p">):</span>
+                <span class="n">deserialized_data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="n">experiment</span> <span class="o">=</span> <span class="n">deserialized_data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span>
+
+                <span class="n">extracted_gene_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_systematic_gene_names</span><span class="p">(</span>
+                    <span class="n">experiment</span><span class="p">[</span><span class="s2">"genotype"</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">gene_name</span> <span class="ow">in</span> <span class="n">extracted_gene_names</span><span class="p">:</span>
+                    <span class="n">gene_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">gene_name</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">close_lmdb</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">gene_set</span></div>
+
+
+<div class="viewcode-block" id="ExperimentDataset.compute_gene_set_parallel">
+<a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentDataset.html#torchcell.data.ExperimentDataset.compute_gene_set_parallel">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_gene_set_parallel</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1e4</span><span class="p">),</span> <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GeneSet</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Compute the gene set using a multiprocessing batch loader."""</span>
+        <span class="n">gene_set</span> <span class="o">=</span> <span class="n">GeneSet</span><span class="p">()</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Computing gene set in parallel..."</span><span class="p">)</span>
+        <span class="n">data_loader</span> <span class="o">=</span> <span class="n">CpuExperimentLoaderMultiprocessing</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">num_workers</span><span class="o">=</span><span class="n">io_workers</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">data_loader</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">data_loader</span><span class="p">)):</span>
+            <span class="n">gene_names_batch</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">:</span>
+                <span class="n">gene_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_systematic_gene_names</span><span class="p">(</span>
+                    <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"genotype"</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="n">gene_names_batch</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">gene_names</span><span class="p">)</span>
+            <span class="n">gene_set</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">gene_names_batch</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">gene_set</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">experiment_reference_index</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ExperimentReferenceIndex</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Load or compute (and cache) the experiment reference index."""</span>
+        <span class="n">index_file_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"experiment_reference_index.json"</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">index_file_path</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">index_file_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_experiment_reference_index</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">ExperimentReferenceIndex</span><span class="o">.</span><span class="n">from_stored</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">data</span>
+                <span class="p">]</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_experiment_reference_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_workers</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Computing experiment reference index in parallel..."</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_experiment_reference_index</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">compute_experiment_reference_index_parallel</span><span class="p">(</span>
+                        <span class="n">dataset</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">io_workers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">io_workers</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Computing experiment reference index sequentially..."</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_experiment_reference_index</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">compute_experiment_reference_index_sequential</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+                <span class="p">)</span>
+
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">index_file_path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">eri</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span> <span class="k">for</span> <span class="n">eri</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_experiment_reference_index</span><span class="p">],</span>
+                    <span class="n">file</span><span class="p">,</span>
+                    <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+                <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">close_lmdb</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_experiment_reference_index</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gene_set</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GeneSet</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the gene set, loading the cached JSON or computing it."""</span>
+        <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"gene_set.json"</span><span class="p">)):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"gene_set.json"</span><span class="p">))</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_gene_set</span> <span class="o">=</span> <span class="n">GeneSet</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_gene_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_gene_set</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gene_set</span>
+
+    <span class="nd">@gene_set</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gene_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">GeneSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Persist the sorted gene set to JSON and cache it in memory."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Cannot set an empty or None value for gene_set"</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"gene_set.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">value</span><span class="p">)),</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gene_set</span> <span class="o">=</span> <span class="n">value</span>
+
+<div class="viewcode-block" id="ExperimentDataset.transform_item">
+<a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentDataset.html#torchcell.data.ExperimentDataset.transform_item">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Rebuild typed experiment/reference/publication objects from a raw item."""</span>
+        <span class="n">experiment_data</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span>
+        <span class="n">reference_data</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">]</span>
+        <span class="n">publication_data</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s2">"publication"</span><span class="p">]</span>
+        <span class="n">experiment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment_class</span><span class="p">(</span><span class="o">**</span><span class="n">experiment_data</span><span class="p">)</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference_class</span><span class="p">(</span><span class="o">**</span><span class="n">reference_data</span><span class="p">)</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference_class</span><span class="p">(</span><span class="o">**</span><span class="n">reference_data</span><span class="p">)</span>
+        <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span><span class="o">**</span><span class="n">publication_data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="p">,</span>
+            <span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="p">,</span>
+            <span class="s2">"publication"</span><span class="p">:</span> <span class="n">publication</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return ``ClassName(&lt;length&gt;)``."""</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

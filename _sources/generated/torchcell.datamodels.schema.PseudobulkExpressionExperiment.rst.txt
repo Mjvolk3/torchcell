@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.PseudobulkExpressionExperiment
+==========================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: PseudobulkExpressionExperiment
+   :show-inheritance:
+   :members:

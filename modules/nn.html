@@ -1,0 +1,354 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.nn &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/modules/nn.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="torchcell.nn.aggr.set_transformer.SetTransformerAggregation" href="../generated/torchcell.nn.aggr.set_transformer.SetTransformerAggregation.html" />
+    <link rel="prev" title="torchcell.models.self_attention_sag.SelfAttentionSAG" href="../generated/torchcell.models.self_attention_sag.SelfAttentionSAG.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">torchcell.models</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">torchcell.nn</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#aggr-set-transformer"><code class="docutils literal notranslate"><span class="pre">aggr.set_transformer</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#flex-attention-graph-nsa"><code class="docutils literal notranslate"><span class="pre">flex_attention_graph_nsa</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hetero-nsa"><code class="docutils literal notranslate"><span class="pre">hetero_nsa</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#masked-attention-block"><code class="docutils literal notranslate"><span class="pre">masked_attention_block</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#masked-gin-conv"><code class="docutils literal notranslate"><span class="pre">masked_gin_conv</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#nsa-encoder"><code class="docutils literal notranslate"><span class="pre">nsa_encoder</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#self-attention-block"><code class="docutils literal notranslate"><span class="pre">self_attention_block</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#stoichiometric-hypergraph-conv"><code class="docutils literal notranslate"><span class="pre">stoichiometric_hypergraph_conv</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#not-documented">Not documented</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">torchcell.nn</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/modules/nn.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-torchcell.nn">
+<span id="torchcell-nn"></span><h1>torchcell.nn<a class="headerlink" href="#module-torchcell.nn" title="Link to this heading"></a></h1>
+<p>Neural-network layers shared by the models. <code class="docutils literal notranslate"><span class="pre">aggr.set_transformer</span></code> provides Set Transformer aggregation (SAB and ISAB encoders with PMA pooling) for PyG; <code class="docutils literal notranslate"><span class="pre">hetero_nsa</span></code>, <code class="docutils literal notranslate"><span class="pre">nsa_encoder</span></code>, <code class="docutils literal notranslate"><span class="pre">masked_attention_block</span></code> and <code class="docutils literal notranslate"><span class="pre">self_attention_block</span></code> build node-set attention over graphs with FlexAttention adjacency masks; <code class="docutils literal notranslate"><span class="pre">masked_gin_conv</span></code> is a GIN convolution for the lazy, masked subgraph representation; and <code class="docutils literal notranslate"><span class="pre">stoichiometric_hypergraph_conv</span></code> is a stoichiometry-aware hypergraph convolution over metabolic networks.</p>
+<nav class="contents local" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#aggr-set-transformer" id="id8"><code class="docutils literal notranslate"><span class="pre">aggr.set_transformer</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#classes" id="id9">Classes</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#flex-attention-graph-nsa" id="id10"><code class="docutils literal notranslate"><span class="pre">flex_attention_graph_nsa</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id1" id="id11">Classes</a></p></li>
+<li><p><a class="reference internal" href="#functions" id="id12">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#hetero-nsa" id="id13"><code class="docutils literal notranslate"><span class="pre">hetero_nsa</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id2" id="id14">Classes</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#masked-attention-block" id="id15"><code class="docutils literal notranslate"><span class="pre">masked_attention_block</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id3" id="id16">Classes</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#masked-gin-conv" id="id17"><code class="docutils literal notranslate"><span class="pre">masked_gin_conv</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id4" id="id18">Classes</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#nsa-encoder" id="id19"><code class="docutils literal notranslate"><span class="pre">nsa_encoder</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id5" id="id20">Classes</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#self-attention-block" id="id21"><code class="docutils literal notranslate"><span class="pre">self_attention_block</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id6" id="id22">Classes</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#stoichiometric-hypergraph-conv" id="id23"><code class="docutils literal notranslate"><span class="pre">stoichiometric_hypergraph_conv</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id7" id="id24">Classes</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#not-documented" id="id25">Not documented</a></p></li>
+</ul>
+</nav>
+<section id="aggr-set-transformer">
+<h2><a class="toc-backref" href="#id8" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">aggr.set_transformer</span></code></a><a class="headerlink" href="#aggr-set-transformer" title="Link to this heading"></a></h2>
+<p>Set Transformer aggregation (SAB/ISAB encoders + PMA pooling) for PyG.</p>
+<section id="classes">
+<h3><a class="toc-backref" href="#id9" role="doc-backlink">Classes</a><a class="headerlink" href="#classes" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.nn.aggr.set_transformer.SetTransformerAggregation.html#torchcell.nn.aggr.set_transformer.SetTransformerAggregation" title="torchcell.nn.aggr.set_transformer.SetTransformerAggregation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aggr.set_transformer.SetTransformerAggregation</span></code></a></p></td>
+<td><p>Permutation-invariant set aggregation via Set Transformer encoders and PMA.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="flex-attention-graph-nsa">
+<h2><a class="toc-backref" href="#id10" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">flex_attention_graph_nsa</span></code></a><a class="headerlink" href="#flex-attention-graph-nsa" title="Link to this heading"></a></h2>
+<p>Graph node-set attention encoder using FlexAttention with adjacency masking.</p>
+<section id="id1">
+<h3><a class="toc-backref" href="#id11" role="doc-backlink">Classes</a><a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.nn.flex_attention_graph_nsa.AttentionBlock.html#torchcell.nn.flex_attention_graph_nsa.AttentionBlock" title="torchcell.nn.flex_attention_graph_nsa.AttentionBlock"><code class="xref py py-obj docutils literal notranslate"><span class="pre">flex_attention_graph_nsa.AttentionBlock</span></code></a></p></td>
+<td><p>Base attention block with common components for both MAB and SAB.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.nn.flex_attention_graph_nsa.MAB.html#torchcell.nn.flex_attention_graph_nsa.MAB" title="torchcell.nn.flex_attention_graph_nsa.MAB"><code class="xref py py-obj docutils literal notranslate"><span class="pre">flex_attention_graph_nsa.MAB</span></code></a></p></td>
+<td><p>Masked attention block that uses graph structure to mask attention.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.nn.flex_attention_graph_nsa.SAB.html#torchcell.nn.flex_attention_graph_nsa.SAB" title="torchcell.nn.flex_attention_graph_nsa.SAB"><code class="xref py py-obj docutils literal notranslate"><span class="pre">flex_attention_graph_nsa.SAB</span></code></a></p></td>
+<td><p>Self-attention block that uses standard self-attention with no masking.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.nn.flex_attention_graph_nsa.NSAEncoder.html#torchcell.nn.flex_attention_graph_nsa.NSAEncoder" title="torchcell.nn.flex_attention_graph_nsa.NSAEncoder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">flex_attention_graph_nsa.NSAEncoder</span></code></a></p></td>
+<td><p>Node-set attention encoder with a customizable pattern of MAB/SAB blocks.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3><a class="toc-backref" href="#id12" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.nn.flex_attention_graph_nsa.test_nsa_implementation.html#torchcell.nn.flex_attention_graph_nsa.test_nsa_implementation" title="torchcell.nn.flex_attention_graph_nsa.test_nsa_implementation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">flex_attention_graph_nsa.test_nsa_implementation</span></code></a></p></td>
+<td><p>Build an NSAEncoder, run a forward pass on the data, and return output.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="hetero-nsa">
+<h2><a class="toc-backref" href="#id13" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_nsa</span></code></a><a class="headerlink" href="#hetero-nsa" title="Link to this heading"></a></h2>
+<p>Heterogeneous Node-Set Attention blocks and encoder over HeteroData graphs.</p>
+<section id="id2">
+<h3><a class="toc-backref" href="#id14" role="doc-backlink">Classes</a><a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.nn.hetero_nsa.HeteroNSA.html#torchcell.nn.hetero_nsa.HeteroNSA" title="torchcell.nn.hetero_nsa.HeteroNSA"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_nsa.HeteroNSA</span></code></a></p></td>
+<td><p>Heterogeneous Node-Set Attention module stacking per-pattern blocks.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.nn.hetero_nsa.HeteroNSAEncoder.html#torchcell.nn.hetero_nsa.HeteroNSAEncoder" title="torchcell.nn.hetero_nsa.HeteroNSAEncoder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_nsa.HeteroNSAEncoder</span></code></a></p></td>
+<td><p>Full HeteroNSA encoder with input projections and stacked layers.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="masked-attention-block">
+<h2><a class="toc-backref" href="#id15" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">masked_attention_block</span></code></a><a class="headerlink" href="#masked-attention-block" title="Link to this heading"></a></h2>
+<p>Masked attention blocks using FlexAttention with adjacency and edge masks.</p>
+<section id="id3">
+<h3><a class="toc-backref" href="#id16" role="doc-backlink">Classes</a><a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.nn.masked_attention_block.MaskedAttentionBlock.html#torchcell.nn.masked_attention_block.MaskedAttentionBlock" title="torchcell.nn.masked_attention_block.MaskedAttentionBlock"><code class="xref py py-obj docutils literal notranslate"><span class="pre">masked_attention_block.MaskedAttentionBlock</span></code></a></p></td>
+<td><p>Memory-efficient Masked Attention Block that uses FlexAttention on GPU.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.nn.masked_attention_block.NodeSelfAttention.html#torchcell.nn.masked_attention_block.NodeSelfAttention" title="torchcell.nn.masked_attention_block.NodeSelfAttention"><code class="xref py py-obj docutils literal notranslate"><span class="pre">masked_attention_block.NodeSelfAttention</span></code></a></p></td>
+<td><p>Masked attention block with learned edge attribute projections.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="masked-gin-conv">
+<h2><a class="toc-backref" href="#id17" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">masked_gin_conv</span></code></a><a class="headerlink" href="#masked-gin-conv" title="Link to this heading"></a></h2>
+<p>Masked GIN convolution for lazy subgraph representation.</p>
+<section id="id4">
+<h3><a class="toc-backref" href="#id18" role="doc-backlink">Classes</a><a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.nn.masked_gin_conv.MaskedGINConv.html#torchcell.nn.masked_gin_conv.MaskedGINConv" title="torchcell.nn.masked_gin_conv.MaskedGINConv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">masked_gin_conv.MaskedGINConv</span></code></a></p></td>
+<td><p>Graph Isomorphism Network with masked message passing.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="nsa-encoder">
+<h2><a class="toc-backref" href="#id19" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">nsa_encoder</span></code></a><a class="headerlink" href="#nsa-encoder" title="Link to this heading"></a></h2>
+<p>Node self-attention encoder stacking masked and self-attention blocks.</p>
+<section id="id5">
+<h3><a class="toc-backref" href="#id20" role="doc-backlink">Classes</a><a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.nn.nsa_encoder.NSAEncoder.html#torchcell.nn.nsa_encoder.NSAEncoder" title="torchcell.nn.nsa_encoder.NSAEncoder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nsa_encoder.NSAEncoder</span></code></a></p></td>
+<td><p>NSA encoder applying an input projection then masked/self-attention blocks.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="self-attention-block">
+<h2><a class="toc-backref" href="#id21" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">self_attention_block</span></code></a><a class="headerlink" href="#self-attention-block" title="Link to this heading"></a></h2>
+<p>Device-adaptive self-attention block used across torchcell models.</p>
+<section id="id6">
+<h3><a class="toc-backref" href="#id22" role="doc-backlink">Classes</a><a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.nn.self_attention_block.SelfAttentionBlock.html#torchcell.nn.self_attention_block.SelfAttentionBlock" title="torchcell.nn.self_attention_block.SelfAttentionBlock"><code class="xref py py-obj docutils literal notranslate"><span class="pre">self_attention_block.SelfAttentionBlock</span></code></a></p></td>
+<td><p>Self-Attention Block (SAB) with device-adaptive implementation.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="stoichiometric-hypergraph-conv">
+<h2><a class="toc-backref" href="#id23" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">stoichiometric_hypergraph_conv</span></code></a><a class="headerlink" href="#stoichiometric-hypergraph-conv" title="Link to this heading"></a></h2>
+<p>Stoichiometry-aware hypergraph convolution layer for metabolic networks.</p>
+<section id="id7">
+<h3><a class="toc-backref" href="#id24" role="doc-backlink">Classes</a><a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.nn.stoichiometric_hypergraph_conv.StoichHypergraphConv.html#torchcell.nn.stoichiometric_hypergraph_conv.StoichHypergraphConv" title="torchcell.nn.stoichiometric_hypergraph_conv.StoichHypergraphConv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">stoichiometric_hypergraph_conv.StoichHypergraphConv</span></code></a></p></td>
+<td><p>Hypergraph convolution with optional stoichiometric gating and attention.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="not-documented">
+<h2><a class="toc-backref" href="#id25" role="doc-backlink">Not documented</a><a class="headerlink" href="#not-documented" title="Link to this heading"></a></h2>
+<p>Submodules left out of this page:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">flex_attention_graph</span></code> (scratch, demo or deprecated)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">flex_attention_graph_adj</span></code> (scratch, demo or deprecated)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sort_adj_block_model</span></code> (scratch, demo or deprecated)</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../generated/torchcell.models.self_attention_sag.SelfAttentionSAG.html" class="btn btn-neutral float-left" title="torchcell.models.self_attention_sag.SelfAttentionSAG" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../generated/torchcell.nn.aggr.set_transformer.SetTransformerAggregation.html" class="btn btn-neutral float-right" title="torchcell.nn.aggr.set_transformer.SetTransformerAggregation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

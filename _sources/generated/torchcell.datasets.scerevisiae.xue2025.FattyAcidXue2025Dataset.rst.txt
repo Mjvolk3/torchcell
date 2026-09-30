@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.xue2025.FattyAcidXue2025Dataset
+==============================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.xue2025
+
+.. autoclass:: FattyAcidXue2025Dataset
+   :show-inheritance:
+   :members:

@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.MicroarrayExpressionExperimentReference
+===================================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: MicroarrayExpressionExperimentReference
+   :show-inheritance:
+   :members:

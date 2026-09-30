@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.compound\_identity.CompoundResolutionStatus
+================================================================
+
+.. currentmodule:: torchcell.datamodels.compound_identity
+
+.. autoclass:: CompoundResolutionStatus
+   :show-inheritance:
+   :members:

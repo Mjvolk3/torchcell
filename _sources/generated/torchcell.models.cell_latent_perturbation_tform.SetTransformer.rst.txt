@@ -1,0 +1,8 @@
+﻿torchcell.models.cell\_latent\_perturbation\_tform.SetTransformer
+=================================================================
+
+.. currentmodule:: torchcell.models.cell_latent_perturbation_tform
+
+.. autoclass:: SetTransformer
+   :show-inheritance:
+   :members:

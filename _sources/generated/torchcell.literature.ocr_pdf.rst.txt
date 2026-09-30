@@ -1,0 +1,6 @@
+﻿torchcell.literature.ocr\_pdf
+=============================
+
+.. currentmodule:: torchcell.literature
+
+.. autofunction:: ocr_pdf

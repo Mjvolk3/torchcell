@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.SgaDampPerturbation
+===============================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: SgaDampPerturbation
+   :show-inheritance:
+   :members:

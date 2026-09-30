@@ -1,0 +1,8 @@
+﻿torchcell.trainers.int\_transformer\_cell.RegressionTask
+========================================================
+
+.. currentmodule:: torchcell.trainers.int_transformer_cell
+
+.. autoclass:: RegressionTask
+   :show-inheritance:
+   :members:

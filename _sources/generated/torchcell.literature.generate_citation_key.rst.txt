@@ -1,0 +1,6 @@
+﻿torchcell.literature.generate\_citation\_key
+============================================
+
+.. currentmodule:: torchcell.literature
+
+.. autofunction:: generate_citation_key

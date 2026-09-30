@@ -1,0 +1,8 @@
+﻿torchcell.models.hetero\_cell.HeteroCell
+========================================
+
+.. currentmodule:: torchcell.models.hetero_cell
+
+.. autoclass:: HeteroCell
+   :show-inheritance:
+   :members:

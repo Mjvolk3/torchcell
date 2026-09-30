@@ -1,0 +1,8 @@
+﻿torchcell.adapters.ScmdOhya2005Adapter
+======================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: ScmdOhya2005Adapter
+   :show-inheritance:
+   :members:

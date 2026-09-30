@@ -1,0 +1,6 @@
+﻿torchcell.sga.quantify\_plate\_image\_cellpose
+==============================================
+
+.. currentmodule:: torchcell.sga
+
+.. autofunction:: quantify_plate_image_cellpose

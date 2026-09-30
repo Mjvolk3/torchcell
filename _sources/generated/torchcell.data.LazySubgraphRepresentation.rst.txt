@@ -1,0 +1,8 @@
+﻿torchcell.data.LazySubgraphRepresentation
+=========================================
+
+.. currentmodule:: torchcell.data
+
+.. autoclass:: LazySubgraphRepresentation
+   :show-inheritance:
+   :members:

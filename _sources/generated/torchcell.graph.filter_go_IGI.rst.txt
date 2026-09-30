@@ -1,0 +1,6 @@
+﻿torchcell.graph.filter\_go\_IGI
+===============================
+
+.. currentmodule:: torchcell.graph
+
+.. autofunction:: filter_go_IGI

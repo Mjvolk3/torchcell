@@ -1,0 +1,8 @@
+﻿torchcell.adapters.OrganicAcidYoshida2012Adapter
+================================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: OrganicAcidYoshida2012Adapter
+   :show-inheritance:
+   :members:

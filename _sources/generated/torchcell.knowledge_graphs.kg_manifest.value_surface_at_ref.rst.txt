@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.value\_surface\_at\_ref
+================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autofunction:: value_surface_at_ref

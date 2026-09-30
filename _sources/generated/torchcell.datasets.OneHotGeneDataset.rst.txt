@@ -1,0 +1,8 @@
+﻿torchcell.datasets.OneHotGeneDataset
+====================================
+
+.. currentmodule:: torchcell.datasets
+
+.. autoclass:: OneHotGeneDataset
+   :show-inheritance:
+   :members:

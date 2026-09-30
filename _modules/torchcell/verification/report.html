@@ -1,0 +1,344 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.verification.report &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/verification/report.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.verification.report</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.verification.report</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/verification/report</span>
+<span class="c1"># [[torchcell.verification.report]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/verification/report</span>
+<span class="sd">"""Provenance + L0-L4 verification report models (roadmap WS3).</span>
+
+<span class="sd">These are pure data models describing WHERE a dataset came from (``Provenance``)</span>
+<span class="sd">and WHETHER it passed the universal L0-L4 record-level gate (``VerificationReport``</span>
+<span class="sd">of ``LevelResult``). The level-check building blocks that produce ``LevelResult``s</span>
+<span class="sd">live in ``torchcell.verification.levels``.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntEnum</span><span class="p">,</span> <span class="n">StrEnum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">model_validator</span>
+
+
+<div class="viewcode-block" id="Level">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.Level.html#torchcell.verification.Level">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Level</span><span class="p">(</span><span class="n">IntEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The five universal verification levels (ordered: a gate, not a set)."""</span>
+
+    <span class="n">L0</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># structural: record instantiates its schema model</span>
+    <span class="n">L1</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># completeness: count / known-keys / contiguity vs an oracle</span>
+    <span class="n">L2</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># value fidelity: cross-method agreement, type/range/NaN</span>
+    <span class="n">L3</span> <span class="o">=</span> <span class="mi">3</span>  <span class="c1"># semantic: units/conventions (fitness = ko/wt; log2(sample/ref))</span>
+    <span class="n">L4</span> <span class="o">=</span> <span class="mi">4</span>  <span class="c1"># cross-source consistency: overlapping entities agree</span></div>
+
+
+
+<div class="viewcode-block" id="Provenance">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.Provenance.html#torchcell.verification.Provenance">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Provenance</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Where a dataset's records came from, recorded alongside verification."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">source_uri</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"URL, DOI, or file path of the source artifact."</span>
+    <span class="p">)</span>
+    <span class="n">citation_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Zotero/library identity (e.g. authorTitleYear)."</span>
+    <span class="p">)</span>
+    <span class="n">sha256</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Hex sha256 of the source artifact, if hashed."</span>
+    <span class="p">)</span>
+    <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Extraction method (e.g. 'pdftotext -layout')."</span>
+    <span class="p">)</span>
+    <span class="n">page</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Page/table/sheet reference within the source."</span>
+    <span class="p">)</span>
+    <span class="n">retrieved</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"ISO date the artifact was retrieved (caller-supplied)."</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="DerivationMethod">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.DerivationMethod.html#torchcell.verification.DerivationMethod">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DerivationMethod</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""How a non-sourced statistic's value was fixed (ordered by preference).</span>
+
+<span class="sd">    ``back_solve`` and the range fallbacks apply only when the source does NOT</span>
+<span class="sd">    state the value per-record. Policy (CLAUDE.md "Adding Datasets"): prefer</span>
+<span class="sd">    ``back_solve`` from another reported statistic; else ``conservative_low``;</span>
+<span class="sd">    ``median`` only if a central estimate is explicitly wanted over conservatism.</span>
+<span class="sd">    """</span>
+
+    <span class="n">sourced</span> <span class="o">=</span> <span class="s2">"sourced"</span>  <span class="c1"># stated explicitly in the source (constant + citation)</span>
+    <span class="n">back_solve</span> <span class="o">=</span> <span class="s2">"back_solve"</span>  <span class="c1"># inferred from another reported statistic</span>
+    <span class="n">conservative_low</span> <span class="o">=</span> <span class="s2">"conservative_low"</span>  <span class="c1"># lower end of a stated range</span>
+    <span class="n">median</span> <span class="o">=</span> <span class="s2">"median"</span>  <span class="c1"># median of a stated range</span></div>
+
+
+
+<div class="viewcode-block" id="StatDerivation">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.StatDerivation.html#torchcell.verification.StatDerivation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">StatDerivation</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""How a derived (non-per-record-sourced) statistic was fixed, as data.</span>
+
+<span class="sd">    For values the source does not give per record (e.g. an effective</span>
+<span class="sd">    ``n_samples`` that only appears as a range): records the method, chosen value,</span>
+<span class="sd">    the source range, and diagnostics, so the number and its justification travel</span>
+<span class="sd">    together and stay re-checkable. Intended to be emitted as a post-process</span>
+<span class="sd">    artifact alongside ``experiment_reference_index.json`` (roadmap WS3), and to</span>
+<span class="sd">    back the loader constant (e.g. Kuzmin ``N_SAMPLES_COMBINED_MUTANT``).</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Statistic derived, e.g. 'combined_mutant_n_samples'."</span>
+    <span class="p">)</span>
+    <span class="n">method</span><span class="p">:</span> <span class="n">DerivationMethod</span>
+    <span class="n">value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"The chosen value the loader uses."</span><span class="p">)</span>
+    <span class="n">range_low</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Low end of the source range (range methods)."</span>
+    <span class="p">)</span>
+    <span class="n">range_high</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"High end of the source range (range methods)."</span>
+    <span class="p">)</span>
+    <span class="n">statistic</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"For back_solve: the reported statistic matched "</span>
+        <span class="s2">"(e.g. 'reported interaction p-value median')."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">diagnostics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Supporting numbers (e.g. per-candidate match, spearman)."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="n">Provenance</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Source of the range/statistic (citation + sha256)."</span>
+    <span class="p">)</span>
+    <span class="n">rationale</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Human-readable why."</span><span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_method_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StatDerivation</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Enforce that each method carries the inputs that justify it."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="ow">in</span> <span class="p">(</span><span class="n">DerivationMethod</span><span class="o">.</span><span class="n">conservative_low</span><span class="p">,</span> <span class="n">DerivationMethod</span><span class="o">.</span><span class="n">median</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">range_low</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">range_high</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="si">}</span><span class="s2"> requires range_low and range_high"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">range_low</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">range_high</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"value must lie within [range_low, range_high]"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="ow">is</span> <span class="n">DerivationMethod</span><span class="o">.</span><span class="n">back_solve</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">statistic</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"back_solve requires a `statistic` (what was matched)"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+
+<div class="viewcode-block" id="LevelResult">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.LevelResult.html#torchcell.verification.LevelResult">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LevelResult</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The outcome of a single L-level check."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">level</span><span class="p">:</span> <span class="n">Level</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">passed</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">details</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="VerificationReport">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.VerificationReport.html#torchcell.verification.VerificationReport">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">VerificationReport</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Provenance + the L-level results for one dataset."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="n">Provenance</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">LevelResult</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">passed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""True only if every recorded level passed (empty report is NOT passed)."""</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">passed</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">levels_covered</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="n">Level</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The set of L-levels that have a recorded result."""</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">r</span><span class="o">.</span><span class="n">level</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="p">}</span>
+
+<div class="viewcode-block" id="VerificationReport.add">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.VerificationReport.html#torchcell.verification.VerificationReport.add">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">LevelResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VerificationReport</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Append a result and return self (chainable)."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="VerificationReport.summary">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.VerificationReport.html#torchcell.verification.VerificationReport.summary">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""One-line-per-level human-readable summary of the report."""</span>
+        <span class="n">head</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="s1">'PASS'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">passed</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'FAIL'</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">head</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">level</span><span class="p">):</span>
+            <span class="n">mark</span> <span class="o">=</span> <span class="s2">"ok"</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">passed</span> <span class="k">else</span> <span class="s2">"XX"</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  [</span><span class="si">{</span><span class="n">mark</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">level</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="sha256_file">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.sha256_file.html#torchcell.verification.sha256_file">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sha256_file</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">20</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the hex sha256 of a file, read in chunks (large artifacts)."""</span>
+    <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">handle</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">chunk_size</span><span class="p">),</span> <span class="sa">b</span><span class="s2">""</span><span class="p">):</span>
+            <span class="n">digest</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">digest</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

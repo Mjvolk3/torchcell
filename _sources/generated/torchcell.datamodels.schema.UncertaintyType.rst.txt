@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.UncertaintyType
+===========================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: UncertaintyType
+   :show-inheritance:
+   :members:

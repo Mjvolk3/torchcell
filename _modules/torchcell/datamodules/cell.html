@@ -1,0 +1,885 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datamodules.cell &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/datamodules/cell.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.datamodules.cell</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.datamodules.cell</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Lightning data module and split-index models for cell datasets."""</span>
+
+<span class="c1"># torchcell/datamodules/cell.py</span>
+<span class="c1"># [[torchcell.datamodules.cell]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodules/cell.py</span>
+<span class="c1"># Test file: torchcell/datamodules/test_cell.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">lightning</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">L</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">model_validator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span><span class="p">,</span> <span class="n">PrefetchLoader</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelStrict</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="IndexSplit">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodules.IndexSplit.html#torchcell.datamodules.IndexSplit">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">IndexSplit</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A sorted list of indices together with its element count."""</span>
+
+    <span class="n">indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Must be sorted in ascending order"</span><span class="p">)</span>
+    <span class="n">count</span><span class="p">:</span> <span class="nb">int</span>
+
+<div class="viewcode-block" id="IndexSplit.check_sorted_indices">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodules.IndexSplit.html#torchcell.datamodules.IndexSplit.check_sorted_indices">[docs]</a>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_sorted_indices</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Validate that the indices list is sorted in ascending order."""</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"indices"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">indices</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span>
+            <span class="n">indices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">indices</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Indices must be sorted in ascending order"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">values</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a truncated representation showing the first few indices."""</span>
+        <span class="n">max_indices</span> <span class="o">=</span> <span class="mi">3</span>
+        <span class="n">indices_str</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">[:</span><span class="n">max_indices</span><span class="p">]))</span><span class="si">}</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">', ...'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">max_indices</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">]"</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"IndexSplit(indices=</span><span class="si">{</span><span class="n">indices_str</span><span class="si">}</span><span class="s2">, count=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="si">}</span><span class="s2">)"</span></div>
+
+
+
+<div class="viewcode-block" id="DatasetSplit">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodules.DatasetSplit.html#torchcell.datamodules.DatasetSplit">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DatasetSplit</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Per-split index groupings keyed by phenotype, perturbation count, or dataset."""</span>
+
+    <span class="n">phenotype_label_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">IndexSplit</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">perturbation_count_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">IndexSplit</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">dataset_name_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">IndexSplit</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="DataModuleIndexDetails">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodules.DataModuleIndexDetails.html#torchcell.datamodules.DataModuleIndexDetails">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DataModuleIndexDetails</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Detailed per-split index breakdown with summary reporting."""</span>
+
+    <span class="n">methods</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">train</span><span class="p">:</span> <span class="n">DatasetSplit</span>
+    <span class="n">val</span><span class="p">:</span> <span class="n">DatasetSplit</span>
+    <span class="n">test</span><span class="p">:</span> <span class="n">DatasetSplit</span>
+
+<div class="viewcode-block" id="DataModuleIndexDetails.df_summary">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodules.DataModuleIndexDetails.html#torchcell.datamodules.DataModuleIndexDetails.df_summary">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">df_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a DataFrame summarizing counts and ratios per split and index key."""</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">defaultdict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">totals</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"train"</span><span class="p">,</span> <span class="s2">"val"</span><span class="p">,</span> <span class="s2">"test"</span><span class="p">]:</span>
+            <span class="n">split_data</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">split</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">index_type</span><span class="p">,</span> <span class="n">index_data</span> <span class="ow">in</span> <span class="n">split_data</span><span class="o">.</span><span class="n">dict</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">index_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">index_split</span> <span class="ow">in</span> <span class="n">index_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                        <span class="c1"># Handle both IndexSplit objects and dictionaries</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index_split</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                            <span class="n">count</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">index_split</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"count"</span><span class="p">))</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">count</span> <span class="o">=</span> <span class="n">index_split</span><span class="o">.</span><span class="n">count</span>
+
+                        <span class="n">data</span><span class="p">[(</span><span class="n">index_type</span><span class="p">,</span> <span class="n">key</span><span class="p">)][</span><span class="n">split</span><span class="p">]</span> <span class="o">=</span> <span class="n">count</span>
+                        <span class="n">totals</span><span class="p">[(</span><span class="n">index_type</span><span class="p">,</span> <span class="n">key</span><span class="p">)]</span> <span class="o">+=</span> <span class="n">count</span>
+
+        <span class="n">summary_data</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">index_type</span><span class="p">,</span> <span class="n">key</span><span class="p">),</span> <span class="n">splits</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">total</span> <span class="o">=</span> <span class="n">totals</span><span class="p">[(</span><span class="n">index_type</span><span class="p">,</span> <span class="n">key</span><span class="p">)]</span>
+            <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"train"</span><span class="p">,</span> <span class="s2">"val"</span><span class="p">,</span> <span class="s2">"test"</span><span class="p">]:</span>
+                <span class="n">count</span> <span class="o">=</span> <span class="n">splits</span><span class="p">[</span><span class="n">split</span><span class="p">]</span>
+                <span class="n">ratio</span> <span class="o">=</span> <span class="n">count</span> <span class="o">/</span> <span class="n">total</span> <span class="k">if</span> <span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+                <span class="n">summary_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">"split"</span><span class="p">:</span> <span class="n">split</span><span class="p">,</span>
+                        <span class="s2">"index_type"</span><span class="p">:</span> <span class="n">index_type</span><span class="p">,</span>
+                        <span class="s2">"key"</span><span class="p">:</span> <span class="n">key</span><span class="p">,</span>
+                        <span class="s2">"count"</span><span class="p">:</span> <span class="n">count</span><span class="p">,</span>
+                        <span class="s2">"ratio"</span><span class="p">:</span> <span class="n">ratio</span><span class="p">,</span>
+                        <span class="s2">"total"</span><span class="p">:</span> <span class="n">total</span><span class="p">,</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">summary_data</span><span class="p">)</span>
+
+        <span class="c1"># Create a categorical column for 'split' with the desired order</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"split"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span>
+            <span class="n">df</span><span class="p">[</span><span class="s2">"split"</span><span class="p">],</span> <span class="n">categories</span><span class="o">=</span><span class="p">[</span><span class="s2">"train"</span><span class="p">,</span> <span class="s2">"val"</span><span class="p">,</span> <span class="s2">"test"</span><span class="p">],</span> <span class="n">ordered</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Sort the DataFrame</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">([</span><span class="s2">"split"</span><span class="p">,</span> <span class="s2">"index_type"</span><span class="p">,</span> <span class="s2">"key"</span><span class="p">])</span>
+
+        <span class="n">df</span><span class="p">[</span><span class="s2">"ratio"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"ratio"</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the summary DataFrame rendered as a string."""</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df_summary</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">"DataModuleIndexDetails(empty)"</span>
+        <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="DataModuleIndex">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodules.DataModuleIndex.html#torchcell.datamodules.DataModuleIndex">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DataModuleIndex</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Train/val/test index lists that are sorted and mutually non-overlapping."""</span>
+
+    <span class="n">train</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Must be sorted in ascending order"</span><span class="p">)</span>
+    <span class="n">val</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Must be sorted in ascending order"</span><span class="p">)</span>
+    <span class="n">test</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Must be sorted in ascending order"</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DataModuleIndex.check_sorted_and_unique_indices">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodules.DataModuleIndex.html#torchcell.datamodules.DataModuleIndex.check_sorted_and_unique_indices">[docs]</a>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_sorted_and_unique_indices</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Validate each split is sorted and the splits do not overlap."""</span>
+        <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"train"</span><span class="p">,</span> <span class="s2">"val"</span><span class="p">,</span> <span class="s2">"test"</span><span class="p">]:</span>
+            <span class="n">indices</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">split</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">indices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">indices</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s2"> indices must be sorted in ascending order"</span><span class="p">)</span>
+
+        <span class="n">all_indices</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"train"</span><span class="p">,</span> <span class="p">[])</span> <span class="o">+</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"val"</span><span class="p">,</span> <span class="p">[])</span> <span class="o">+</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"test"</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">all_indices</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_indices</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Indices in train, val, and test must not overlap"</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">values</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a truncated representation of the train/val/test indices."""</span>
+        <span class="n">max_indices</span> <span class="o">=</span> <span class="mi">3</span>
+        <span class="n">train_str_index</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="p">[:</span><span class="n">max_indices</span><span class="p">]))</span><span class="si">}{</span><span class="s1">', ...'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">max_indices</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">]"</span>
+        <span class="n">val_str_index</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">val</span><span class="p">[:</span><span class="n">max_indices</span><span class="p">]))</span><span class="si">}{</span><span class="s1">', ...'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">val</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">max_indices</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">]"</span>
+        <span class="n">test_str_index</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">[:</span><span class="n">max_indices</span><span class="p">]))</span><span class="si">}{</span><span class="s1">', ...'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">max_indices</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">]"</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"DataModuleIndex(train=</span><span class="si">{</span><span class="n">train_str_index</span><span class="si">}</span><span class="s2">, val=</span><span class="si">{</span><span class="n">val_str_index</span><span class="si">}</span><span class="s2">, test=</span><span class="si">{</span><span class="n">test_str_index</span><span class="si">}</span><span class="s2">)"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a truncated representation with per-split index counts."""</span>
+        <span class="n">max_indices</span> <span class="o">=</span> <span class="mi">3</span>
+        <span class="n">train_str_index</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="p">[:</span><span class="n">max_indices</span><span class="p">]))</span><span class="si">}{</span><span class="s1">', ...'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">max_indices</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">]"</span>
+        <span class="n">val_str_index</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">val</span><span class="p">[:</span><span class="n">max_indices</span><span class="p">]))</span><span class="si">}{</span><span class="s1">', ...'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">val</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">max_indices</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">]"</span>
+        <span class="n">test_str_index</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">[:</span><span class="n">max_indices</span><span class="p">]))</span><span class="si">}{</span><span class="s1">', ...'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">max_indices</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">]"</span>
+        <span class="n">train_str</span> <span class="o">=</span> <span class="n">train_str_index</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="p">)</span><span class="si">}</span><span class="s2"> indices)"</span>
+        <span class="n">val_str</span> <span class="o">=</span> <span class="n">val_str_index</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">val</span><span class="p">)</span><span class="si">}</span><span class="s2"> indices)"</span>
+        <span class="n">test_str</span> <span class="o">=</span> <span class="n">test_str_index</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">)</span><span class="si">}</span><span class="s2"> indices)"</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"DataModuleIndex(train=</span><span class="si">{</span><span class="n">train_str</span><span class="si">}</span><span class="s2">, val=</span><span class="si">{</span><span class="n">val_str</span><span class="si">}</span><span class="s2">, test=</span><span class="si">{</span><span class="n">test_str</span><span class="si">}</span><span class="s2">)"</span></div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DatasetIndexSplit</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Per-dataset index lists grouped by train/val/test split."""</span>
+
+    <span class="n">train</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]  # pydantic field: keep declared type + None default (changing either alters validation/runtime)</span>
+    <span class="n">val</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]  # pydantic field: keep declared type + None default (changing either alters validation/runtime)</span>
+    <span class="n">test</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]  # pydantic field: keep declared type + None default (changing either alters validation/runtime)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">overlap_dataset_index_split</span><span class="p">(</span>
+    <span class="n">dataset_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">data_module_index</span><span class="p">:</span> <span class="n">DataModuleIndex</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatasetIndexSplit</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Intersect each dataset's indices with the train/val/test split indices."""</span>
+    <span class="n">train_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">data_module_index</span><span class="o">.</span><span class="n">train</span><span class="p">)</span>
+    <span class="n">val_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">data_module_index</span><span class="o">.</span><span class="n">val</span><span class="p">)</span>
+    <span class="n">test_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">data_module_index</span><span class="o">.</span><span class="n">test</span><span class="p">)</span>
+
+    <span class="n">train_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">val_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">test_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">dataset_name</span><span class="p">,</span> <span class="n">indices</span> <span class="ow">in</span> <span class="n">dataset_index</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">train_indices</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">train_set</span><span class="p">))</span>
+        <span class="n">val_indices</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">val_set</span><span class="p">))</span>
+        <span class="n">test_indices</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">test_set</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">train_indices</span><span class="p">:</span>
+            <span class="n">train_dict</span><span class="p">[</span><span class="n">dataset_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">train_indices</span>
+        <span class="k">if</span> <span class="n">val_indices</span><span class="p">:</span>
+            <span class="n">val_dict</span><span class="p">[</span><span class="n">dataset_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">val_indices</span>
+        <span class="k">if</span> <span class="n">test_indices</span><span class="p">:</span>
+            <span class="n">test_dict</span><span class="p">[</span><span class="n">dataset_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">test_indices</span>
+
+    <span class="k">return</span> <span class="n">DatasetIndexSplit</span><span class="p">(</span>
+        <span class="n">train</span><span class="o">=</span><span class="n">train_dict</span> <span class="k">if</span> <span class="n">train_dict</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]  # field accepts None default (see DatasetIndexSplit); type kept as-is</span>
+        <span class="n">val</span><span class="o">=</span><span class="n">val_dict</span> <span class="k">if</span> <span class="n">val_dict</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]  # field accepts None default (see DatasetIndexSplit); type kept as-is</span>
+        <span class="n">test</span><span class="o">=</span><span class="n">test_dict</span> <span class="k">if</span> <span class="n">test_dict</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]  # field accepts None default (see DatasetIndexSplit); type kept as-is</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="CellDataModule">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodules.CellDataModule.html#torchcell.datamodules.CellDataModule">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CellDataModule</span><span class="p">(</span><span class="n">L</span><span class="o">.</span><span class="n">LightningDataModule</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Lightning data module that splits a cell dataset and builds dataloaders."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dataset</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>  <span class="c1"># dynamic cell dataset duck-typed by split-index attrs</span>
+        <span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"cache"</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
+        <span class="n">random_seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">,</span>
+        <span class="n">num_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">pin_memory</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">prefetch</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">prefetch_factor</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">persistent_workers</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">split_indices</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">follow_batch</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">train_shuffle</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">collate_fn</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">val_batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pinned_test_indices</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pinned_split_indices</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">index_subset</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Store dataloader/split configuration and compute the split indices.</span>
+
+<span class="sd">        ``pinned_test_indices`` forces those record indices into the TEST split, overriding</span>
+<span class="sd">        the random assignment. It reproduces an EXTERNAL split inside ours -- e.g. Merzbacher</span>
+<span class="sd">        2025's betaxanthin test ORFs, so their published numbers and ours are computed on the</span>
+<span class="sd">        same genes. The remaining records are split train/val/test by ``random_seed`` as</span>
+<span class="sd">        usual, so sweeping the seed still re-rolls train/val while the pinned comparison set</span>
+<span class="sd">        stays fixed.</span>
+
+<span class="sd">        ``pinned_split_indices`` generalizes that to ALL THREE splits: a mapping like</span>
+<span class="sd">        ``{"train": [...], "val": [...], "test": [...]}`` whose records are forced into</span>
+<span class="sd">        the named split. It reproduces a PRIOR experiment's full assignment inside a</span>
+<span class="sd">        larger dataset -- e.g. 010's tmi train/val/test carried into 025 by genotype</span>
+<span class="sd">        identity -- so a comparison across datasets is computed on identical splits of</span>
+<span class="sd">        the shared records while everything new is seed-assigned around them. A record</span>
+<span class="sd">        may appear in at most one pinned split; overlap raises at construction.</span>
+
+<span class="sd">        ``index_subset`` restricts the RECORD POOL before any splitting, so a record</span>
+<span class="sd">        outside it lands in no split at all. Pinning assigns but never excludes, which is</span>
+<span class="sd">        why it cannot express a subset on its own: 025 holds 13,525,071 records of which</span>
+<span class="sd">        376,732 are the trigenic triples, and an arm training on triples only needs the</span>
+<span class="sd">        other 13.1M gone, not placed somewhere. The subset is intersected into each split</span>
+<span class="sd">        index key BEFORE shuffling rather than filtered out afterwards, so an arm over</span>
+<span class="sd">        376k records costs 376k of work on a 13.5M-record dataset.</span>
+
+<span class="sd">        Both the pinned splits and the subset are hashed into the split-cache filename, so</span>
+<span class="sd">        changing either selects a different cache file rather than silently loading the</span>
+<span class="sd">        previous arm's index.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache_dir</span> <span class="o">=</span> <span class="n">cache_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">val_batch_size</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">val_batch_size</span> <span class="k">if</span> <span class="n">val_batch_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">batch_size</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">random_seed</span> <span class="o">=</span> <span class="n">random_seed</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_workers</span> <span class="o">=</span> <span class="n">num_workers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pin_memory</span> <span class="o">=</span> <span class="n">pin_memory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prefetch</span> <span class="o">=</span> <span class="n">prefetch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prefetch_factor</span> <span class="o">=</span> <span class="n">prefetch_factor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">persistent_workers</span> <span class="o">=</span> <span class="n">persistent_workers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_shuffle</span> <span class="o">=</span> <span class="n">train_shuffle</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_ratio</span> <span class="o">=</span> <span class="mf">0.8</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">val_ratio</span> <span class="o">=</span> <span class="mf">0.1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pinned_test_indices</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">set</span><span class="p">(</span><span class="n">pinned_test_indices</span><span class="p">)</span> <span class="k">if</span> <span class="n">pinned_test_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index_subset</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">set</span><span class="p">(</span><span class="n">index_subset</span><span class="p">)</span> <span class="k">if</span> <span class="n">index_subset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_subset</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_subset</span><span class="p">,</span> <span class="p">(</span>
+            <span class="s2">"index_subset is empty; pass None to use every record"</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pinned_split_indices</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">split</span><span class="p">:</span> <span class="nb">set</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">split</span><span class="p">,</span> <span class="n">indices</span> <span class="ow">in</span> <span class="p">(</span><span class="n">pinned_split_indices</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="n">unknown</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pinned_split_indices</span><span class="p">)</span> <span class="o">-</span> <span class="p">{</span><span class="s2">"train"</span><span class="p">,</span> <span class="s2">"val"</span><span class="p">,</span> <span class="s2">"test"</span><span class="p">}</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">unknown</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"pinned_split_indices has unknown splits: </span><span class="si">{</span><span class="n">unknown</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">pinned_sets</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pinned_split_indices</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pinned_sets</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">pinned_sets</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]:</span>
+                <span class="n">overlap</span> <span class="o">=</span> <span class="n">a</span> <span class="o">&amp;</span> <span class="n">b</span>
+                <span class="k">assert</span> <span class="ow">not</span> <span class="n">overlap</span><span class="p">,</span> <span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"pinned_split_indices overlap across splits: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">overlap</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">..."</span>
+                <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">split_indices</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">split_indices</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">split_indices</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+            <span class="k">else</span> <span class="p">[</span><span class="n">split_indices</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">split_indices</span>
+            <span class="k">else</span> <span class="p">[]</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_index</span><span class="p">:</span> <span class="n">DataModuleIndex</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_index_details</span><span class="p">:</span> <span class="n">DataModuleIndexDetails</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">follow_batch</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">follow_batch</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"x"</span><span class="p">,</span> <span class="s2">"x_pert"</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">follow_batch</span> <span class="o">=</span> <span class="n">follow_batch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">collate_fn</span> <span class="o">=</span> <span class="n">collate_fn</span>
+
+        <span class="c1"># Compute index during initialization</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index_details</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">index</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataModuleIndex</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the train/val/test split index, computing or loading it if needed."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_files_exist</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_load_or_compute_index</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index</span>  <span class="c1"># type: ignore[return-value]  # _load_or_compute_index() always populates _index</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">index_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataModuleIndexDetails</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the detailed split-index breakdown, computing or loading if needed."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index_details</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_files_exist</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_load_or_compute_index</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index_details</span>  <span class="c1"># type: ignore[return-value]  # _load_or_compute_index() always populates _index_details</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_pin_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Cache-key suffix identifying the pinned test set, empty when there is none.</span>
+
+<span class="sd">        The cached index is keyed by seed alone, so WITHOUT this a pinned run would silently</span>
+<span class="sd">        load an UNPINNED `index_seed_42.json` left by an earlier run and train on the wrong</span>
+<span class="sd">        split -- with no error, and with the pinned genes back in train. The tag hashes the</span>
+<span class="sd">        pinned index set so any change to it (or removing the pin) selects a different file.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">pinned_test_indices</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">pinned_split_indices</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">""</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pinned_test_indices</span><span class="p">)))]</span>
+        <span class="n">n_pinned</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pinned_test_indices</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"train"</span><span class="p">,</span> <span class="s2">"val"</span><span class="p">,</span> <span class="s2">"test"</span><span class="p">):</span>
+            <span class="n">indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pinned_split_indices</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">split</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s2">:"</span> <span class="o">+</span> <span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">indices</span><span class="p">))))</span>
+            <span class="n">n_pinned</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="s2">"|"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"_pin</span><span class="si">{</span><span class="n">n_pinned</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">8</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_subset_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Cache-key suffix identifying the record subset, empty when there is none.</span>
+
+<span class="sd">        Separate from ``_pin_tag`` because the two vary independently: the 025 ladder holds</span>
+<span class="sd">        the split fixed (R or Q) while the training pool changes S0 -&gt; S2 -&gt; S3, and holds</span>
+<span class="sd">        the pool fixed while the split regime changes. Without this an S2 run would load</span>
+<span class="sd">        S0's cached index and train on 376,732 records while reporting 382,426.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_subset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">""</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index_subset</span><span class="p">)))</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"_sub</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index_subset</span><span class="p">)</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">8</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cache_files</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Paths of the cached index and index-details files for this configuration."""</span>
+        <span class="n">tag</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_pin_tag</span><span class="p">()</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">_subset_tag</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"index_seed_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">random_seed</span><span class="si">}{</span><span class="n">tag</span><span class="si">}</span><span class="s2">.json"</span><span class="p">),</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"index_details_seed_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">random_seed</span><span class="si">}{</span><span class="n">tag</span><span class="si">}</span><span class="s2">.json"</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_restrict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indices</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Drop indices outside ``index_subset``; a no-op when no subset is configured."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_subset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_subset</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_or_compute_index</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">index_file</span><span class="p">,</span> <span class="n">details_file</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache_files</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">index_file</span><span class="p">)</span> <span class="ow">and</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">details_file</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">index_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Loading index from </span><span class="si">{</span><span class="n">index_file</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                    <span class="n">index_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_index</span> <span class="o">=</span> <span class="n">DataModuleIndex</span><span class="p">(</span><span class="o">**</span><span class="n">index_dict</span><span class="p">)</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">details_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Loading index details from </span><span class="si">{</span><span class="n">details_file</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                    <span class="n">details_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_index_details</span> <span class="o">=</span> <span class="n">DataModuleIndexDetails</span><span class="p">(</span><span class="o">**</span><span class="n">details_dict</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error loading index or details: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">. Regenerating..."</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_compute_and_save_index</span><span class="p">(</span><span class="n">index_file</span><span class="p">,</span> <span class="n">details_file</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_and_save_index</span><span class="p">(</span><span class="n">index_file</span><span class="p">,</span> <span class="n">details_file</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_and_save_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">details_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Generating detailed index..."</span><span class="p">)</span>
+        <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">random_seed</span><span class="p">)</span>
+
+        <span class="n">all_indices</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_subset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">outside</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index_subset</span> <span class="o">-</span> <span class="n">all_indices</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="ow">not</span> <span class="n">outside</span><span class="p">,</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"index_subset names </span><span class="si">{</span><span class="n">outside</span><span class="si">}</span><span class="s2"> indices outside the "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span><span class="si">}</span><span class="s2">-record dataset"</span>
+            <span class="p">)</span>
+            <span class="n">all_indices</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index_subset</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"index_subset restricts the pool to </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">all_indices</span><span class="p">)</span><span class="si">}</span><span class="s2"> of "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span><span class="si">}</span><span class="s2"> records before splitting."</span>
+            <span class="p">)</span>
+        <span class="n">split_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">defaultdict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"train"</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">),</span>
+            <span class="s2">"val"</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">),</span>
+            <span class="s2">"test"</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">),</span>
+        <span class="p">}</span>
+
+        <span class="c1"># First, split each index independently</span>
+        <span class="k">for</span> <span class="n">index_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_indices</span><span class="p">:</span>
+            <span class="n">original_index</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span> <span class="n">index_name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">indices</span> <span class="ow">in</span> <span class="n">original_index</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="c1"># Narrow to the subset HERE, not after assignment. Filtering afterwards</span>
+                <span class="c1"># would still shuffle and ratio-split all 13.5M records of the 025 build</span>
+                <span class="c1"># to keep 376k of them, and would draw the 80/10/10 boundaries on the full</span>
+                <span class="c1"># key rather than on the part of it the arm actually trains on.</span>
+                <span class="n">indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_restrict</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">indices</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+                <span class="n">num_samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+                <span class="n">num_train</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_ratio</span> <span class="o">*</span> <span class="n">num_samples</span><span class="p">)</span>
+                <span class="n">num_val</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">val_ratio</span> <span class="o">*</span> <span class="n">num_samples</span><span class="p">)</span>
+
+                <span class="n">split_data</span><span class="p">[</span><span class="s2">"train"</span><span class="p">][</span><span class="n">index_name</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">indices</span><span class="p">[:</span><span class="n">num_train</span><span class="p">])</span>
+                <span class="n">split_data</span><span class="p">[</span><span class="s2">"val"</span><span class="p">][</span><span class="n">index_name</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                    <span class="n">indices</span><span class="p">[</span><span class="n">num_train</span> <span class="p">:</span> <span class="n">num_train</span> <span class="o">+</span> <span class="n">num_val</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="n">split_data</span><span class="p">[</span><span class="s2">"test"</span><span class="p">][</span><span class="n">index_name</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">indices</span><span class="p">[</span><span class="n">num_train</span> <span class="o">+</span> <span class="n">num_val</span> <span class="p">:])</span>
+
+        <span class="c1"># Then, create initial final splits</span>
+        <span class="n">final_splits</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"train"</span><span class="p">:</span> <span class="n">all_indices</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span>
+                <span class="o">*</span><span class="p">[</span><span class="n">split_data</span><span class="p">[</span><span class="s2">"train"</span><span class="p">][</span><span class="n">index</span><span class="p">]</span> <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_indices</span><span class="p">]</span>
+            <span class="p">),</span>
+            <span class="s2">"val"</span><span class="p">:</span> <span class="n">all_indices</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span>
+                <span class="o">*</span><span class="p">[</span><span class="n">split_data</span><span class="p">[</span><span class="s2">"val"</span><span class="p">][</span><span class="n">index</span><span class="p">]</span> <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_indices</span><span class="p">]</span>
+            <span class="p">),</span>
+            <span class="s2">"test"</span><span class="p">:</span> <span class="n">all_indices</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span>
+                <span class="o">*</span><span class="p">[</span><span class="n">split_data</span><span class="p">[</span><span class="s2">"test"</span><span class="p">][</span><span class="n">index</span><span class="p">]</span> <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_indices</span><span class="p">]</span>
+            <span class="p">),</span>
+        <span class="p">}</span>
+
+        <span class="c1"># A record may appear under SEVERAL keys of the same split index, and those keys</span>
+        <span class="c1"># are shuffled independently -- so it can be drawn into train under one key and</span>
+        <span class="c1"># into val under another, landing in two of the intersections above. That is a</span>
+        <span class="c1"># train/val/test leak, and `DataModuleIndex` rightly refuses it.</span>
+        <span class="c1">#</span>
+        <span class="c1"># It is not hypothetical: under deletion-keyed aggregation one genotype group</span>
+        <span class="c1"># holds records with DIFFERENT perturbation counts (a betaxanthin record carries</span>
+        <span class="c1"># its 4-gene cassette + the deletion = 5, a beta-carotene record 4, a metabolome</span>
+        <span class="c1"># record 1), so `perturbation_count_index` files that single record under three</span>
+        <span class="c1"># keys. The same happens in `phenotype_label_index` for any multi-modality</span>
+        <span class="c1"># genotype.</span>
+        <span class="c1">#</span>
+        <span class="c1"># Conflicts are pulled OUT of every split and returned to `remaining`, so the</span>
+        <span class="c1"># ratio-balancing assignment below places each conflicted record exactly once.</span>
+        <span class="c1"># When no record is multiply-keyed this is a no-op and the split is unchanged.</span>
+        <span class="n">conflicted</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">final_splits</span><span class="p">[</span><span class="s2">"train"</span><span class="p">]</span> <span class="o">&amp;</span> <span class="n">final_splits</span><span class="p">[</span><span class="s2">"val"</span><span class="p">])</span>
+            <span class="o">|</span> <span class="p">(</span><span class="n">final_splits</span><span class="p">[</span><span class="s2">"train"</span><span class="p">]</span> <span class="o">&amp;</span> <span class="n">final_splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">])</span>
+            <span class="o">|</span> <span class="p">(</span><span class="n">final_splits</span><span class="p">[</span><span class="s2">"val"</span><span class="p">]</span> <span class="o">&amp;</span> <span class="n">final_splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">])</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">conflicted</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">conflicted</span><span class="p">)</span><span class="si">}</span><span class="s2"> records were assigned to more than one split by "</span>
+                <span class="s2">"independently-shuffled index keys; reassigning them exactly once."</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"train"</span><span class="p">,</span> <span class="s2">"val"</span><span class="p">,</span> <span class="s2">"test"</span><span class="p">):</span>
+                <span class="n">final_splits</span><span class="p">[</span><span class="n">split</span><span class="p">]</span> <span class="o">-=</span> <span class="n">conflicted</span>
+
+        <span class="c1"># Sophisticated assignment of remaining indices</span>
+        <span class="n">remaining</span> <span class="o">=</span> <span class="n">all_indices</span> <span class="o">-</span> <span class="p">(</span>
+            <span class="n">final_splits</span><span class="p">[</span><span class="s2">"train"</span><span class="p">]</span> <span class="o">|</span> <span class="n">final_splits</span><span class="p">[</span><span class="s2">"val"</span><span class="p">]</span> <span class="o">|</span> <span class="n">final_splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">target_ratios</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"train"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_ratio</span><span class="p">,</span>
+            <span class="s2">"val"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">val_ratio</span><span class="p">,</span>
+            <span class="s2">"test"</span><span class="p">:</span> <span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_ratio</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">val_ratio</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">index_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_indices</span><span class="p">:</span>
+            <span class="n">original_index</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span> <span class="n">index_name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">indices</span> <span class="ow">in</span> <span class="n">original_index</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">key_indices</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_restrict</span><span class="p">(</span><span class="n">indices</span><span class="p">))</span>
+                <span class="n">key_remaining</span> <span class="o">=</span> <span class="n">key_indices</span> <span class="o">&amp;</span> <span class="n">remaining</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">key_remaining</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+                <span class="n">current_counts</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="n">split</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">key_indices</span> <span class="o">&amp;</span> <span class="n">final_splits</span><span class="p">[</span><span class="n">split</span><span class="p">])</span>
+                    <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"train"</span><span class="p">,</span> <span class="s2">"val"</span><span class="p">,</span> <span class="s2">"test"</span><span class="p">]</span>
+                <span class="p">}</span>
+                <span class="n">total_count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">current_counts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">key_remaining</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">key_remaining</span><span class="p">:</span>
+                    <span class="n">target_counts</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="n">split</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">total_count</span> <span class="o">*</span> <span class="n">ratio</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">split</span><span class="p">,</span> <span class="n">ratio</span> <span class="ow">in</span> <span class="n">target_ratios</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                    <span class="p">}</span>
+                    <span class="n">best_split</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                        <span class="p">[</span><span class="s2">"train"</span><span class="p">,</span> <span class="s2">"val"</span><span class="p">,</span> <span class="s2">"test"</span><span class="p">],</span>
+                        <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span>
+                            <span class="p">(</span><span class="n">current_counts</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">-</span> <span class="n">target_counts</span><span class="p">[</span><span class="n">x</span><span class="p">])</span> <span class="o">/</span> <span class="n">target_counts</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
+                        <span class="p">),</span>
+                    <span class="p">)</span>
+                    <span class="n">final_splits</span><span class="p">[</span><span class="n">best_split</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+                    <span class="n">current_counts</span><span class="p">[</span><span class="n">best_split</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">remaining</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+
+        <span class="c1"># PINNED TEST SET, applied last so it overrides every ratio-driven assignment above.</span>
+        <span class="c1"># Reproduces an EXTERNAL split inside ours: the pinned records go to test and are</span>
+        <span class="c1"># removed from train/val, and everything else keeps its seed-driven assignment. That</span>
+        <span class="c1"># is what makes a head-to-head comparison possible -- their metric and ours are then</span>
+        <span class="c1"># computed on the same genes -- while sweeping `random_seed` still re-rolls train/val</span>
+        <span class="c1"># around a comparison set that never moves.</span>
+        <span class="c1">#</span>
+        <span class="c1"># Test therefore ends up LARGER than `1 - train_ratio - val_ratio`, by design; the</span>
+        <span class="c1"># ratios govern the remaining pool, not the pinned block.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pinned_test_indices</span><span class="p">:</span>
+            <span class="n">pinned</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pinned_test_indices</span> <span class="o">&amp;</span> <span class="n">all_indices</span>
+            <span class="n">missing</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pinned_test_indices</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">pinned</span><span class="p">)</span>
+            <span class="n">final_splits</span><span class="p">[</span><span class="s2">"train"</span><span class="p">]</span> <span class="o">-=</span> <span class="n">pinned</span>
+            <span class="n">final_splits</span><span class="p">[</span><span class="s2">"val"</span><span class="p">]</span> <span class="o">-=</span> <span class="n">pinned</span>
+            <span class="n">final_splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">]</span> <span class="o">|=</span> <span class="n">pinned</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Pinned </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pinned</span><span class="p">)</span><span class="si">}</span><span class="s2"> records into test "</span>
+                <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2"> requested indices are outside the record pool). "</span>
+                <span class="sa">f</span><span class="s2">"Splits: train=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">final_splits</span><span class="p">[</span><span class="s1">'train'</span><span class="p">])</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"val=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">final_splits</span><span class="p">[</span><span class="s1">'val'</span><span class="p">])</span><span class="si">}</span><span class="s2"> test=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">final_splits</span><span class="p">[</span><span class="s1">'test'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+
+        <span class="c1"># FULL PINNED SPLITS, applied last of all so they override both the ratio-driven</span>
+        <span class="c1"># assignment and the test-only pin above. Each pinned record is removed from every</span>
+        <span class="c1"># split and placed exactly where the mapping says, reproducing a prior experiment's</span>
+        <span class="c1"># complete train/val/test assignment (e.g. 010's tmi splits inside 025) while the</span>
+        <span class="c1"># unpinned remainder keeps its seed-driven assignment.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pinned_split_indices</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">requested</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pinned_split_indices</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">pinned</span> <span class="o">=</span> <span class="n">requested</span> <span class="o">&amp;</span> <span class="n">all_indices</span>
+                <span class="k">for</span> <span class="n">other</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"train"</span><span class="p">,</span> <span class="s2">"val"</span><span class="p">,</span> <span class="s2">"test"</span><span class="p">):</span>
+                    <span class="n">final_splits</span><span class="p">[</span><span class="n">other</span><span class="p">]</span> <span class="o">-=</span> <span class="n">pinned</span>
+                <span class="n">final_splits</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">|=</span> <span class="n">pinned</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Pinned </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pinned</span><span class="p">)</span><span class="si">}</span><span class="s2"> records into </span><span class="si">{</span><span class="n">split_name</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">requested</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">pinned</span><span class="p">)</span><span class="si">}</span><span class="s2"> requested indices are outside "</span>
+                    <span class="s2">"the record pool)."</span>
+                <span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Splits after full pinning: train=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">final_splits</span><span class="p">[</span><span class="s1">'train'</span><span class="p">])</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"val=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">final_splits</span><span class="p">[</span><span class="s1">'val'</span><span class="p">])</span><span class="si">}</span><span class="s2"> test=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">final_splits</span><span class="p">[</span><span class="s1">'test'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Create DataModuleIndexDetails object</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_index_details</span> <span class="o">=</span> <span class="n">DataModuleIndexDetails</span><span class="p">(</span>
+            <span class="n">methods</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">split_indices</span><span class="p">,</span>
+            <span class="n">train</span><span class="o">=</span><span class="n">DatasetSplit</span><span class="p">(),</span>
+            <span class="n">val</span><span class="o">=</span><span class="n">DatasetSplit</span><span class="p">(),</span>
+            <span class="n">test</span><span class="o">=</span><span class="n">DatasetSplit</span><span class="p">(),</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"train"</span><span class="p">,</span> <span class="s2">"val"</span><span class="p">,</span> <span class="s2">"test"</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">index_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_indices</span><span class="p">:</span>
+                <span class="n">original_index</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span> <span class="n">index_name</span><span class="p">)</span>
+                <span class="n">split_index_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span> <span class="n">IndexSplit</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">indices</span> <span class="ow">in</span> <span class="n">original_index</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">intersect</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+                        <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_restrict</span><span class="p">(</span><span class="n">indices</span><span class="p">))</span> <span class="o">&amp;</span> <span class="n">final_splits</span><span class="p">[</span><span class="n">split</span><span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="n">split_index_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">IndexSplit</span><span class="p">(</span>
+                        <span class="n">indices</span><span class="o">=</span><span class="n">intersect</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">intersect</span><span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="nb">setattr</span><span class="p">(</span>
+                    <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_index_details</span><span class="p">,</span> <span class="n">split</span><span class="p">),</span> <span class="n">index_name</span><span class="p">,</span> <span class="n">split_index_data</span>
+                <span class="p">)</span>
+
+        <span class="c1"># Create DataModuleIndex object</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_index</span> <span class="o">=</span> <span class="n">DataModuleIndex</span><span class="p">(</span>
+            <span class="n">train</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">final_splits</span><span class="p">[</span><span class="s2">"train"</span><span class="p">])),</span>
+            <span class="n">val</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">final_splits</span><span class="p">[</span><span class="s2">"val"</span><span class="p">])),</span>
+            <span class="n">test</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">final_splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">])),</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Save the index and details separately</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">index_file</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_index</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">details_file</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_index_details</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cached_files_exist</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">index_file</span><span class="p">,</span> <span class="n">details_file</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache_files</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">index_file</span><span class="p">)</span> <span class="ow">and</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">details_file</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CellDataModule.setup">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodules.CellDataModule.html#torchcell.datamodules.CellDataModule.setup">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build train/val/test Subset datasets from the computed split indices.</span>
+
+<span class="sd">        IDEMPOTENT BY DESIGN. Lightning calls ``setup()`` again inside ``trainer.fit()``</span>
+<span class="sd">        even when the caller already invoked it, so an unconditional rebuild silently</span>
+<span class="sd">        discarded any post-setup narrowing of ``Subset.indices`` (e.g. the</span>
+<span class="sd">        ``require_modalities`` filter in experiments/019, which logged "4074 -&gt; 1161 rows"</span>
+<span class="sd">        while every epoch still ran 128 batches = 4074/32). Rebuilding only when the</span>
+<span class="sd">        subsets do not yet exist makes the caller's filter survive the second call.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"train_dataset"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"val_dataset"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"test_dataset"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_dataset</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Subset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">train</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">val_dataset</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Subset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">val</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_dataset</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Subset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">test</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_dataloader</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dataset</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>  <span class="c1"># dynamic dataset/Subset passed through to the loaders</span>
+        <span class="n">shuffle</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataLoader</span> <span class="o">|</span> <span class="n">PrefetchLoader</span><span class="p">:</span>
+        <span class="c1"># Use provided batch_size or fall back to self.batch_size</span>
+        <span class="k">if</span> <span class="n">batch_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">batch_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span>
+
+        <span class="n">dataloader_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"batch_size"</span><span class="p">:</span> <span class="n">batch_size</span><span class="p">,</span>
+            <span class="s2">"shuffle"</span><span class="p">:</span> <span class="n">shuffle</span><span class="p">,</span>
+            <span class="s2">"num_workers"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_workers</span><span class="p">,</span>
+            <span class="s2">"persistent_workers"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">persistent_workers</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_workers</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="k">else</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s2">"pin_memory"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pin_memory</span><span class="p">,</span>
+            <span class="s2">"follow_batch"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">follow_batch</span><span class="p">,</span>
+            <span class="c1"># THE SAME GUARD AS `prefetch_factor` BELOW, and for the same reason -- this one</span>
+            <span class="c1"># was missed when that fix landed (commit 2cca6d83), so num_workers=0 was still</span>
+            <span class="c1"># unconstructible afterwards. `timeout` is a WORKER-QUEUE timeout, so at</span>
+            <span class="c1"># num_workers=0 torch asserts outright:</span>
+            <span class="c1">#   AssertionError: _SingleProcessDataLoaderIter requires timeout == 0</span>
+            <span class="c1"># raised from `iter(dataloader)`, i.e. during sanity-check, AFTER the dataset and</span>
+            <span class="c1"># embeddings have been loaded. A trial therefore burns its full startup cost and</span>
+            <span class="c1"># then dies, which is why 119 of them could fail in a job that still exited</span>
+            <span class="c1"># COMPLETED 0:0.</span>
+            <span class="s2">"timeout"</span><span class="p">:</span> <span class="p">(</span><span class="mi">10800</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_workers</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span><span class="p">),</span>
+            <span class="s2">"multiprocessing_context"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"spawn"</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_workers</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="c1"># Torch REJECTS a non-None prefetch_factor at num_workers=0 ("could only be</span>
+            <span class="c1"># specified in multiprocessing"), so this needs the same guard its two</span>
+            <span class="c1"># neighbours already carry. Without it num_workers=0 is not merely slow, it is</span>
+            <span class="c1"># unconstructible -- every DataLoader raises ValueError before the first batch.</span>
+            <span class="c1">#</span>
+            <span class="c1"># That is not hypothetical: on 2026-07-28 Delta job 20556837 ran NUM_WORKERS=0</span>
+            <span class="c1"># and all 119 optuna trials died here, ~15s apiece, while the job still exited</span>
+            <span class="c1"># COMPLETED 0:0. num_workers=0 is worth supporting because on a parallel</span>
+            <span class="c1"># filesystem the spawn path is the expensive one -- each worker re-imports the</span>
+            <span class="c1"># whole stack off /work/hdd.</span>
+            <span class="s2">"prefetch_factor"</span><span class="p">:</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefetch_factor</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_workers</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Add collate_fn if provided</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">collate_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dataloader_kwargs</span><span class="p">[</span><span class="s2">"collate_fn"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">collate_fn</span>
+
+        <span class="n">loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="o">**</span><span class="n">dataloader_kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefetch</span><span class="p">:</span>
+            <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"cuda"</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">"cpu"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">PrefetchLoader</span><span class="p">(</span><span class="n">loader</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">loader</span>
+
+<div class="viewcode-block" id="CellDataModule.train_dataloader">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodules.CellDataModule.html#torchcell.datamodules.CellDataModule.train_dataloader">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataLoader</span> <span class="o">|</span> <span class="n">PrefetchLoader</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a dataloader over the training subset."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_dataset</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">train_shuffle</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CellDataModule.val_dataloader">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodules.CellDataModule.html#torchcell.datamodules.CellDataModule.val_dataloader">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">val_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataLoader</span> <span class="o">|</span> <span class="n">PrefetchLoader</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a dataloader over the validation subset."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">val_dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">val_batch_size</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CellDataModule.test_dataloader">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodules.CellDataModule.html#torchcell.datamodules.CellDataModule.test_dataloader">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataLoader</span> <span class="o">|</span> <span class="n">PrefetchLoader</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a dataloader over the test subset."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test_dataset</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CellDataModule.all_dataloader">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodules.CellDataModule.html#torchcell.datamodules.CellDataModule.all_dataloader">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">all_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataLoader</span> <span class="o">|</span> <span class="n">PrefetchLoader</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a dataloader over the entire dataset."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="k">pass</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

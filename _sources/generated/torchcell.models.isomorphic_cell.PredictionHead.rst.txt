@@ -1,0 +1,8 @@
+﻿torchcell.models.isomorphic\_cell.PredictionHead
+================================================
+
+.. currentmodule:: torchcell.models.isomorphic_cell
+
+.. autoclass:: PredictionHead
+   :show-inheritance:
+   :members:

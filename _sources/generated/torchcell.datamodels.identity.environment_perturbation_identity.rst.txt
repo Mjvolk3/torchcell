@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.identity.environment\_perturbation\_identity
+=================================================================
+
+.. currentmodule:: torchcell.datamodels.identity
+
+.. autofunction:: environment_perturbation_identity

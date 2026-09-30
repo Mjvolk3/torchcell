@@ -1,0 +1,6 @@
+﻿torchcell.metabolism.yeast\_GEM.test\_bipartite\_attributes
+===========================================================
+
+.. currentmodule:: torchcell.metabolism.yeast_GEM
+
+.. autofunction:: test_bipartite_attributes

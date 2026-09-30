@@ -1,0 +1,6 @@
+﻿torchcell.provenance.forward\_closure
+=====================================
+
+.. currentmodule:: torchcell.provenance
+
+.. autofunction:: forward_closure

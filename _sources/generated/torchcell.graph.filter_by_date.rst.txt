@@ -1,0 +1,6 @@
+﻿torchcell.graph.filter\_by\_date
+================================
+
+.. currentmodule:: torchcell.graph
+
+.. autofunction:: filter_by_date

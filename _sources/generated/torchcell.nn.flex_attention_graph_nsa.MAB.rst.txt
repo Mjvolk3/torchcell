@@ -1,0 +1,8 @@
+﻿torchcell.nn.flex\_attention\_graph\_nsa.MAB
+============================================
+
+.. currentmodule:: torchcell.nn.flex_attention_graph_nsa
+
+.. autoclass:: MAB
+   :show-inheritance:
+   :members:

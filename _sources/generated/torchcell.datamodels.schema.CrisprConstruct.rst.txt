@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.CrisprConstruct
+===========================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: CrisprConstruct
+   :show-inheritance:
+   :members:

@@ -1,0 +1,6 @@
+﻿torchcell.literature.fetch\_si\_data
+====================================
+
+.. currentmodule:: torchcell.literature
+
+.. autofunction:: fetch_si_data

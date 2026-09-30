@@ -1,0 +1,8 @@
+﻿torchcell.transforms.hetero\_to\_dense\_mask.HeteroToDenseMask
+==============================================================
+
+.. currentmodule:: torchcell.transforms.hetero_to_dense_mask
+
+.. autoclass:: HeteroToDenseMask
+   :show-inheritance:
+   :members:

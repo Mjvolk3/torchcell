@@ -1,0 +1,6 @@
+﻿torchcell.paper.tables.phenotype\_descriptor
+============================================
+
+.. currentmodule:: torchcell.paper.tables
+
+.. autofunction:: phenotype_descriptor

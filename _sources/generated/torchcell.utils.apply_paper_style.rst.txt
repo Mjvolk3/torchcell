@@ -1,0 +1,6 @@
+﻿torchcell.utils.apply\_paper\_style
+===================================
+
+.. currentmodule:: torchcell.utils
+
+.. autofunction:: apply_paper_style

@@ -1,0 +1,8 @@
+﻿torchcell.models.dango.MetaEmbedding
+====================================
+
+.. currentmodule:: torchcell.models.dango
+
+.. autoclass:: MetaEmbedding
+   :show-inheritance:
+   :members:

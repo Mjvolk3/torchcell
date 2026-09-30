@@ -1,0 +1,994 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.models.dcell &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/models/dcell.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.models.dcell</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.models.dcell</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/models/dcell</span>
+<span class="c1"># [[torchcell.models.dcell]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/dcell</span>
+<span class="c1"># Test file: tests/torchcell/models/test_dcell.py</span>
+<span class="sd">"""DCell model: a GO-ontology-structured neural network over gene perturbations."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hydra</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">DictConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">HeteroData</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.timestamp</span><span class="w"> </span><span class="kn">import</span> <span class="n">timestamp</span>
+
+
+<div class="viewcode-block" id="DCell">
+<a class="viewcode-back" href="../../../generated/torchcell.models.dcell.DCell.html#torchcell.models.dcell.DCell">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DCell</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""DCell network mirroring the GO ontology as a hierarchy of subsystems."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">hetero_data</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">,</span>
+        <span class="n">min_subsystem_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+        <span class="n">subsystem_ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">,</span>
+        <span class="n">output_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Build the subsystem hierarchy from the GO ontology in ``hetero_data``.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            hetero_data: HeteroData carrying the gene/GO graph and strata.</span>
+<span class="sd">            min_subsystem_size: Minimum number of neurons per subsystem.</span>
+<span class="sd">            subsystem_ratio: Neurons per subsystem as a fraction of its gene count.</span>
+<span class="sd">            output_size: Dimension of each subsystem's output prediction.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="c1"># Store parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_subsystem_size</span> <span class="o">=</span> <span class="n">min_subsystem_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subsystem_ratio</span> <span class="o">=</span> <span class="n">subsystem_ratio</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_size</span> <span class="o">=</span> <span class="n">output_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hetero_data</span> <span class="o">=</span> <span class="n">hetero_data</span>  <span class="c1"># Store reference for dimension calculations</span>
+
+        <span class="c1"># Extract GO ontology information</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_genes</span> <span class="o">=</span> <span class="n">hetero_data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span> <span class="o">=</span> <span class="n">hetero_data</span><span class="p">[</span><span class="s2">"gene_ontology"</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">strata</span> <span class="o">=</span> <span class="n">hetero_data</span><span class="p">[</span><span class="s2">"gene_ontology"</span><span class="p">]</span><span class="o">.</span><span class="n">strata</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stratum_to_terms</span> <span class="o">=</span> <span class="n">hetero_data</span><span class="p">[</span><span class="s2">"gene_ontology"</span><span class="p">]</span><span class="o">.</span><span class="n">stratum_to_terms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">term_gene_counts</span> <span class="o">=</span> <span class="n">hetero_data</span><span class="p">[</span><span class="s2">"gene_ontology"</span><span class="p">]</span><span class="o">.</span><span class="n">term_gene_counts</span>
+
+        <span class="c1"># Build hierarchy and gene mappings</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">child_to_parents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_hierarchy</span><span class="p">(</span><span class="n">hetero_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent_to_children</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_parent_to_children</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">term_to_genes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_term_gene_mapping</span><span class="p">(</span><span class="n">hetero_data</span><span class="p">)</span>
+
+        <span class="c1"># Pre-compute input/output dimensions and create modules</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">term_input_dims</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">term_output_dims</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subsystems</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">linear_heads</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span><span class="p">()</span>
+
+        <span class="c1"># Get strata in descending order (leaves to root: high strata to low strata)</span>
+        <span class="c1"># Strata 0 = root, higher numbers = more specific/leaf terms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_stratum</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stratum_to_terms</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">strata_order</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stratum_to_terms</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Build modules for each GO term</span>
+        <span class="k">for</span> <span class="n">term_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_build_term_module</span><span class="p">(</span><span class="n">term_idx</span><span class="p">)</span>
+
+        <span class="c1"># Pre-compute gene state extraction indices</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_precompute_gene_indices</span><span class="p">(</span><span class="n">hetero_data</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"DCell model initialized:"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  GO terms: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Genes: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_genes</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Strata: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strata_order</span><span class="p">)</span><span class="si">}</span><span class="s2"> (max: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">max_stratum</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Total subsystems: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subsystems</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">num_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Count parameters in different parts of the model."""</span>
+        <span class="n">subsystem_params</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subsystems</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>
+        <span class="n">linear_head_params</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear_heads</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>
+        <span class="n">total_params</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"subsystems"</span><span class="p">:</span> <span class="n">subsystem_params</span><span class="p">,</span>
+            <span class="s2">"dcell_linear"</span><span class="p">:</span> <span class="n">linear_head_params</span><span class="p">,</span>
+            <span class="s2">"dcell"</span><span class="p">:</span> <span class="n">subsystem_params</span> <span class="o">+</span> <span class="n">linear_head_params</span><span class="p">,</span>
+            <span class="s2">"total"</span><span class="p">:</span> <span class="n">total_params</span><span class="p">,</span>
+            <span class="s2">"num_go_terms"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="p">,</span>
+            <span class="s2">"num_subsystems"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subsystems</span><span class="p">),</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_hierarchy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hetero_data</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Build child -&gt; parents mapping from edge_index."""</span>
+        <span class="n">child_to_parents</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="s2">"gene_ontology"</span><span class="p">,</span> <span class="s2">"is_child_of"</span><span class="p">,</span> <span class="s2">"gene_ontology"</span><span class="p">)</span> <span class="ow">in</span> <span class="n">hetero_data</span><span class="o">.</span><span class="n">edge_types</span><span class="p">:</span>
+            <span class="n">edge_index</span> <span class="o">=</span> <span class="n">hetero_data</span><span class="p">[</span>
+                <span class="s2">"gene_ontology"</span><span class="p">,</span> <span class="s2">"is_child_of"</span><span class="p">,</span> <span class="s2">"gene_ontology"</span>
+            <span class="p">]</span><span class="o">.</span><span class="n">edge_index</span>
+
+            <span class="k">for</span> <span class="n">child</span><span class="p">,</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">edge_index</span><span class="o">.</span><span class="n">t</span><span class="p">():</span>
+                <span class="n">child_idx</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                <span class="n">parent_idx</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+                <span class="k">if</span> <span class="n">child_idx</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">child_to_parents</span><span class="p">:</span>
+                    <span class="n">child_to_parents</span><span class="p">[</span><span class="n">child_idx</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">child_to_parents</span><span class="p">[</span><span class="n">child_idx</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">parent_idx</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">child_to_parents</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_parent_to_children</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Build parent -&gt; children mapping from child_to_parents."""</span>
+        <span class="n">parent_to_children</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">child</span><span class="p">,</span> <span class="n">parents</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">child_to_parents</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">parents</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">parent</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">parent_to_children</span><span class="p">:</span>
+                    <span class="n">parent_to_children</span><span class="p">[</span><span class="n">parent</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">parent_to_children</span><span class="p">[</span><span class="n">parent</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">parent_to_children</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_term_gene_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hetero_data</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Build term -&gt; genes mapping from go_gene_strata_state."""</span>
+        <span class="n">term_to_genes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">go_gene_state</span> <span class="o">=</span> <span class="n">hetero_data</span><span class="p">[</span><span class="s2">"gene_ontology"</span><span class="p">]</span><span class="o">.</span><span class="n">go_gene_strata_state</span>
+        <span class="c1"># Columns: [go_idx, gene_idx, stratum, state]</span>
+
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">go_gene_state</span><span class="p">:</span>
+            <span class="n">go_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="n">gene_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+
+            <span class="k">if</span> <span class="n">go_idx</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">term_to_genes</span><span class="p">:</span>
+                <span class="n">term_to_genes</span><span class="p">[</span><span class="n">go_idx</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">term_to_genes</span><span class="p">[</span><span class="n">go_idx</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gene_idx</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">term_to_genes</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_input_dim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">term_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Calculate input dimension for a GO term."""</span>
+        <span class="n">input_dim</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># Add dimensions from child subsystems</span>
+        <span class="n">children</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_to_children</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">term_idx</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">for</span> <span class="n">child_idx</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
+            <span class="n">input_dim</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_output_dim</span><span class="p">(</span><span class="n">child_idx</span><span class="p">)</span>
+
+        <span class="c1"># Add dimension for gene perturbation states - must match _extract_gene_states_for_term</span>
+        <span class="c1"># Count genes associated with this GO term from template go_gene_strata_state</span>
+        <span class="n">go_gene_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hetero_data</span><span class="p">[</span><span class="s2">"gene_ontology"</span><span class="p">]</span><span class="o">.</span><span class="n">go_gene_strata_state</span>
+        <span class="n">term_mask</span> <span class="o">=</span> <span class="n">go_gene_state</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">term_idx</span>
+        <span class="n">num_genes_for_term</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">term_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+
+        <span class="c1"># _extract_gene_states_for_term always returns at least dimension 1 (even for terms with no genes)</span>
+        <span class="c1"># So we must match this behavior during initialization</span>
+        <span class="n">gene_dim</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">num_genes_for_term</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">input_dim</span> <span class="o">+=</span> <span class="n">gene_dim</span>
+
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># Ensure at least 1 input</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_output_dim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">term_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Calculate output dimension for a GO term based on DCell paper formula."""</span>
+        <span class="n">num_genes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">term_gene_counts</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min_subsystem_size</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subsystem_ratio</span> <span class="o">*</span> <span class="n">num_genes</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_term_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">term_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build subsystem and linear head for a specific GO term."""</span>
+        <span class="n">input_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_input_dim</span><span class="p">(</span><span class="n">term_idx</span><span class="p">)</span>
+        <span class="n">output_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_output_dim</span><span class="p">(</span><span class="n">term_idx</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">term_input_dims</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">term_output_dims</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">output_dim</span>
+
+        <span class="c1"># Create subsystem module</span>
+        <span class="n">subsystem</span> <span class="o">=</span> <span class="n">DCellSubsystem</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subsystems</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">term_idx</span><span class="p">)]</span> <span class="o">=</span> <span class="n">subsystem</span>
+
+        <span class="c1"># Create linear head for auxiliary supervision</span>
+        <span class="n">linear_head</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">output_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">linear_heads</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">term_idx</span><span class="p">)]</span> <span class="o">=</span> <span class="n">linear_head</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_precompute_gene_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hetero_data</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Pre-compute indices for efficient gene state extraction.</span>
+
+<span class="sd">        This runs once at model initialization and stores indices in RAM.</span>
+<span class="sd">        When GO versions change, a new model instance will recompute these.</span>
+<span class="sd">        """</span>
+        <span class="n">go_gene_state</span> <span class="o">=</span> <span class="n">hetero_data</span><span class="p">[</span><span class="s2">"gene_ontology"</span><span class="p">]</span><span class="o">.</span><span class="n">go_gene_strata_state</span>
+
+        <span class="c1"># Store the template structure info</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rows_per_sample</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">go_gene_state</span><span class="p">)</span>
+
+        <span class="c1"># Create a mapping from GO term to row indices in go_gene_strata_state</span>
+        <span class="c1"># This avoids the expensive linear search through 59986 rows for each term</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">term_row_indices</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">term_num_genes</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Pre-computing gene indices for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="si">}</span><span class="s2"> GO terms..."</span><span class="p">)</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">term_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="p">):</span>
+            <span class="c1"># Find all rows for this GO term (column 0 contains term indices)</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">go_gene_state</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">term_idx</span>
+            <span class="n">row_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="c1"># Store the indices for fast lookup during forward pass</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">term_row_indices</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">row_indices</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+            <span class="p">)</span>  <span class="c1"># Store on CPU to save GPU memory</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">term_num_genes</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">row_indices</span><span class="p">)</span>
+
+        <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Pre-computed indices in </span><span class="si">{</span><span class="n">elapsed</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Total rows per sample: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">rows_per_sample</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"  Average genes per GO term: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">term_num_genes</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_gene_states_for_term</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">term_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">HeteroData</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Extract gene states for a specific GO term using pre-computed indices.</span>
+
+<span class="sd">        This optimized version uses pre-computed row indices to avoid expensive</span>
+<span class="sd">        linear searches through the entire go_gene_strata_state tensor.</span>
+<span class="sd">        """</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">batch</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">device</span>
+
+        <span class="c1"># Early exit for terms with no genes</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">term_num_genes</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Get pre-computed indices for this term (move to device if needed)</span>
+        <span class="n">row_indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">term_row_indices</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="n">go_gene_state</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene_ontology"</span><span class="p">]</span><span class="o">.</span><span class="n">go_gene_strata_state</span>
+        <span class="n">ptr</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene_ontology"</span><span class="p">]</span><span class="o">.</span><span class="n">go_gene_strata_state_ptr</span>
+
+        <span class="c1"># Use ptr to determine rows per sample (should match self.rows_per_sample)</span>
+        <span class="n">rows_per_sample</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ptr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ptr</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># Reshape: [total_rows, 4] -&gt; [batch_size, rows_per_sample, 4]</span>
+        <span class="n">go_gene_state_batched</span> <span class="o">=</span> <span class="n">go_gene_state</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">rows_per_sample</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+
+        <span class="c1"># Use pre-computed indices to extract gene states directly</span>
+        <span class="c1"># Since the structure is the same for each batch sample, we can use the same indices</span>
+        <span class="n">gene_states_batch</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">batch_size</span><span class="p">):</span>
+            <span class="c1"># Use pre-computed indices to extract rows for this term directly</span>
+            <span class="c1"># No need for mask comparison - just index directly!</span>
+            <span class="n">sample_data</span> <span class="o">=</span> <span class="n">go_gene_state_batched</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># [rows_per_sample, 4]</span>
+            <span class="n">term_rows</span> <span class="o">=</span> <span class="n">sample_data</span><span class="p">[</span><span class="n">row_indices</span><span class="p">]</span>  <span class="c1"># [num_genes_for_term, 4]</span>
+            <span class="n">gene_states</span> <span class="o">=</span> <span class="n">term_rows</span><span class="p">[</span>
+                <span class="p">:,</span> <span class="mi">3</span>
+            <span class="p">]</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>  <span class="c1"># Extract states (column 3) and convert to float</span>
+            <span class="n">gene_states_batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gene_states</span><span class="p">)</span>
+
+        <span class="c1"># Stack into batch tensor - no need for padding since all have same number of genes</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">gene_states_batch</span><span class="p">)</span>  <span class="c1"># [batch_size, num_genes_for_term]</span>
+
+<div class="viewcode-block" id="DCell.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.models.dcell.DCell.html#torchcell.models.dcell.DCell.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">cell_graph</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">HeteroData</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Forward pass through DCell hierarchy.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cell_graph: Cell graph (not used by DCell, included for compatibility with trainer)</span>
+<span class="sd">            batch: The batch data containing gene states and GO information</span>
+<span class="sd">        """</span>
+        <span class="c1"># DCell doesn't use cell_graph in forward pass, it was used during initialization</span>
+        <span class="c1"># The trainer expects this signature for consistency across models</span>
+
+        <span class="c1"># Store term activations and linear outputs</span>
+        <span class="n">term_activations</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">linear_outputs</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Process each stratum in descending order (leaves to root: high strata → low strata)</span>
+        <span class="c1"># This processes leaf terms first, then their parents, up to root (stratum 0)</span>
+        <span class="k">for</span> <span class="n">stratum</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">strata_order</span><span class="p">:</span>
+            <span class="c1"># All strata should exist in stratum_to_terms - if not, it's a bug</span>
+            <span class="k">if</span> <span class="n">stratum</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stratum_to_terms</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Stratum </span><span class="si">{</span><span class="n">stratum</span><span class="si">}</span><span class="s2"> not found in stratum_to_terms. This indicates a bug in GO graph processing."</span>
+                <span class="p">)</span>
+
+            <span class="n">stratum_terms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stratum_to_terms</span><span class="p">[</span><span class="n">stratum</span><span class="p">]</span>
+
+            <span class="c1"># Process all terms in this stratum</span>
+            <span class="k">for</span> <span class="n">term_idx</span> <span class="ow">in</span> <span class="n">stratum_terms</span><span class="p">:</span>
+                <span class="c1"># Convert to int if it's a tensor, otherwise assume it's already an int</span>
+                <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">term_idx</span><span class="p">):</span>
+                    <span class="n">term_idx_int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">term_idx</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">term_idx_int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+                        <span class="n">term_idx</span>
+                    <span class="p">)</span>  <span class="c1"># Ensure it's an int, not numpy scalar or other type</span>
+
+                <span class="c1"># Prepare input for this term</span>
+                <span class="n">term_input</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_term_input</span><span class="p">(</span>
+                    <span class="n">term_idx_int</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">term_activations</span>
+                <span class="p">)</span>
+
+                <span class="n">subsystem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subsystems</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">term_idx_int</span><span class="p">)]</span>
+
+                <span class="c1"># Forward through subsystem</span>
+                <span class="n">term_output</span> <span class="o">=</span> <span class="n">subsystem</span><span class="p">(</span><span class="n">term_input</span><span class="p">)</span>
+                <span class="n">term_activations</span><span class="p">[</span><span class="n">term_idx_int</span><span class="p">]</span> <span class="o">=</span> <span class="n">term_output</span>
+
+                <span class="c1"># Get linear output for auxiliary supervision</span>
+                <span class="n">linear_head</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear_heads</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">term_idx_int</span><span class="p">)]</span>
+                <span class="n">linear_output</span> <span class="o">=</span> <span class="n">linear_head</span><span class="p">(</span><span class="n">term_output</span><span class="p">)</span>
+                <span class="n">linear_outputs</span><span class="p">[</span><span class="sa">f</span><span class="s2">"GO:</span><span class="si">{</span><span class="n">term_idx_int</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">linear_output</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Main prediction from root terms (stratum 0)</span>
+        <span class="k">if</span> <span class="mi">0</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stratum_to_terms</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"No root terms found in stratum 0. Check GO hierarchy processing."</span>
+            <span class="p">)</span>
+
+        <span class="n">root_terms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stratum_to_terms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">root_terms</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"Root terms tensor is empty. Check GO term filtering - root terms may have been filtered out."</span>
+            <span class="p">)</span>
+
+        <span class="n">root_term_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">root_terms</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="sa">f</span><span class="s2">"GO:</span><span class="si">{</span><span class="n">root_term_idx</span><span class="si">}</span><span class="s2">"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">linear_outputs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Root term </span><span class="si">{</span><span class="n">root_term_idx</span><span class="si">}</span><span class="s2"> was not processed. Check strata processing order."</span>
+            <span class="p">)</span>
+
+        <span class="n">predictions</span> <span class="o">=</span> <span class="n">linear_outputs</span><span class="p">[</span><span class="sa">f</span><span class="s2">"GO:</span><span class="si">{</span><span class="n">root_term_idx</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span>
+
+        <span class="c1"># Mark root output for DCellLoss</span>
+        <span class="n">linear_outputs</span><span class="p">[</span><span class="s2">"GO:ROOT"</span><span class="p">]</span> <span class="o">=</span> <span class="n">predictions</span>
+
+        <span class="c1"># Prepare outputs dictionary</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"linear_outputs"</span><span class="p">:</span> <span class="n">linear_outputs</span><span class="p">,</span>
+            <span class="s2">"term_activations"</span><span class="p">:</span> <span class="n">term_activations</span><span class="p">,</span>
+            <span class="s2">"stratum_outputs"</span><span class="p">:</span> <span class="p">{},</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">outputs</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_term_input</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">term_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">batch</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">,</span>
+        <span class="n">term_activations</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Prepare input for a specific GO term."""</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Add inputs from child subsystems (children are processed first due to leaves-&gt;root order)</span>
+        <span class="n">children</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_to_children</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">term_idx</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">for</span> <span class="n">child_idx</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">child_idx</span> <span class="ow">in</span> <span class="n">term_activations</span><span class="p">:</span>
+                <span class="n">inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">term_activations</span><span class="p">[</span><span class="n">child_idx</span><span class="p">])</span>
+
+        <span class="c1"># Add gene perturbation states for this GO term</span>
+        <span class="n">gene_states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_gene_states_for_term</span><span class="p">(</span><span class="n">term_idx</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">gene_states</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">gene_states</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gene_states</span><span class="p">)</span>
+
+        <span class="c1"># Concatenate all inputs along feature dimension</span>
+        <span class="k">if</span> <span class="n">inputs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># If no inputs, this indicates a bug - every GO term should have either children or genes</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"GO term </span><span class="si">{</span><span class="n">term_idx</span><span class="si">}</span><span class="s2"> has no children and no genes. This should not happen in a well-formed GO hierarchy."</span>
+            <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="DCellSubsystem">
+<a class="viewcode-back" href="../../../generated/torchcell.models.dcell.DCellSubsystem.html#torchcell.models.dcell.DCellSubsystem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DCellSubsystem</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Individual subsystem module as described in DCell paper."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Build a linear-batchnorm-tanh subsystem with DCell weight init."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">linear</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_norm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm1d</span><span class="p">(</span><span class="n">output_dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Tanh</span><span class="p">()</span>
+
+        <span class="c1"># DCell paper weight initialization: uniform random between -0.001 and 0.001</span>
+        <span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">uniform_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">linear</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.001</span><span class="p">)</span>
+        <span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">uniform_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">linear</span><span class="o">.</span><span class="n">bias</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.001</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DCellSubsystem.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.models.dcell.DCellSubsystem.html#torchcell.models.dcell.DCellSubsystem.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Apply linear, batch norm, and tanh to the input."""</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_norm</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span></div>
+</div>
+
+
+
+<span class="nd">@hydra</span><span class="o">.</span><span class="n">main</span><span class="p">(</span>
+    <span class="n">version_base</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">config_path</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s2">"experiments/005-kuzmin2018-tmi/conf"</span><span class="p">),</span>
+    <span class="n">config_name</span><span class="o">=</span><span class="s2">"dcell_kuzmin2018_tmi"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">DictConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">"""Test the DCell model by overfitting it on a single batch."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">torch.optim</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">optim</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.losses.dcell</span><span class="w"> </span><span class="kn">import</span> <span class="n">DCellLoss</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.scratch.load_batch_005</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sample_data_batch</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+
+    <span class="c1"># Set device based on config</span>
+    <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span>
+        <span class="s2">"cuda"</span>
+        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="ow">and</span> <span class="n">cfg</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">accelerator</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">"cpu"</span>
+        <span class="k">else</span> <span class="s2">"cpu"</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Using device: </span><span class="si">{</span><span class="n">device</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># Setup directories for plots</span>
+    <span class="n">ASSET_IMAGES_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"ASSET_IMAGES_DIR"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ASSET_IMAGES_DIR</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ASSET_IMAGES_DIR</span> <span class="o">=</span> <span class="s2">"assets/images"</span>
+
+    <span class="n">plot_dir</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ASSET_IMAGES_DIR</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"dcell_training_</span><span class="si">{</span><span class="n">timestamp</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">plot_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_intermediate_plot</span><span class="p">(</span>
+        <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">all_losses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">primary_losses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">auxiliary_losses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">weighted_auxiliary_losses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">learning_rates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">DCell</span><span class="p">,</span>
+        <span class="n">batch</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Save intermediate training plot every print interval."""</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+
+        <span class="c1"># Loss curves</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epoch</span> <span class="o">+</span> <span class="mi">2</span><span class="p">),</span> <span class="n">all_losses</span><span class="p">,</span> <span class="s2">"b-"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Total Loss"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Epoch"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Loss Value"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Training Loss Curve"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">yscale</span><span class="p">(</span><span class="s2">"log"</span><span class="p">)</span>
+
+        <span class="c1"># Loss components</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epoch</span> <span class="o">+</span> <span class="mi">2</span><span class="p">),</span> <span class="n">primary_losses</span><span class="p">,</span> <span class="s2">"r-"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Primary Loss"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epoch</span> <span class="o">+</span> <span class="mi">2</span><span class="p">),</span> <span class="n">auxiliary_losses</span><span class="p">,</span> <span class="s2">"g-"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Auxiliary Loss"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epoch</span> <span class="o">+</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="n">weighted_auxiliary_losses</span><span class="p">,</span>
+            <span class="s2">"orange"</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">"Weighted Auxiliary Loss"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Epoch"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Loss Value"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Loss Components"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">yscale</span><span class="p">(</span><span class="s2">"log"</span><span class="p">)</span>
+
+        <span class="c1"># Get current model predictions for correlation plot</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">current_predictions</span><span class="p">,</span> <span class="n">current_outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+            <span class="n">true_scores</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_values</span>
+
+            <span class="c1"># Convert to numpy for plotting</span>
+            <span class="n">true_np</span> <span class="o">=</span> <span class="n">true_scores</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+            <span class="n">pred_np</span> <span class="o">=</span> <span class="n">current_predictions</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+            <span class="c1"># Calculate correlation</span>
+            <span class="n">correlation</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">true_np</span><span class="p">,</span> <span class="n">pred_np</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">true_np</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mf">0.0</span>
+            <span class="p">)</span>
+            <span class="n">mse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">pred_np</span> <span class="o">-</span> <span class="n">true_np</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>  <span class="c1"># Back to training mode</span>
+
+        <span class="c1"># Correlation</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">true_np</span><span class="p">,</span> <span class="n">pred_np</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+        <span class="n">min_val</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">true_np</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">pred_np</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+        <span class="n">max_val</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">true_np</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">pred_np</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">],</span> <span class="p">[</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">],</span> <span class="s2">"r--"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"True Phenotype Values"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Predicted Values"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Correlation (r=</span><span class="si">{</span><span class="n">correlation</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Error distribution</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="n">pred_np</span> <span class="o">-</span> <span class="n">true_np</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">errors</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Prediction Error"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Frequency"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error Distribution (MSE=</span><span class="si">{</span><span class="n">mse</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Learning rate evolution</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epoch</span> <span class="o">+</span> <span class="mi">2</span><span class="p">),</span> <span class="n">learning_rates</span><span class="p">,</span> <span class="s2">"purple"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Epoch"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Learning Rate"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Learning Rate Schedule"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">yscale</span><span class="p">(</span><span class="s2">"log"</span><span class="p">)</span>
+
+        <span class="c1"># Subsystem analysis</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+        <span class="n">linear_outputs</span> <span class="o">=</span> <span class="n">current_outputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"linear_outputs"</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">subsystem_activities</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">linear_outputs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">"GO:ROOT"</span><span class="p">:</span>
+                <span class="n">subsystem_activities</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">subsystem_activities</span><span class="p">:</span>
+            <span class="n">subsystem_activations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">subsystem_activities</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span>
+                <span class="n">subsystem_activations</span><span class="p">,</span>
+                <span class="n">bins</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">subsystem_activations</span><span class="p">)),</span>
+                <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Mean Absolute Activation"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Number of Subsystems"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Subsystem Activation Distribution"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">plot_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"dcell_epoch_</span><span class="si">{</span><span class="n">epoch</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">:</span><span class="s2">04d</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">timestamp</span><span class="p">()</span><span class="si">}</span><span class="s2">.png"</span><span class="p">),</span>
+            <span class="n">dpi</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span>
+            <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">"tight"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>  <span class="c1"># Close to free memory</span>
+
+    <span class="c1"># Load sample data - modified for DCell with GO ontology</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Loading sample data with GO ontology..."</span><span class="p">)</span>
+
+    <span class="n">dataset</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">input_channels</span><span class="p">,</span> <span class="n">max_num_nodes</span> <span class="o">=</span> <span class="n">load_sample_data_batch</span><span class="p">(</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">data_module</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
+        <span class="n">num_workers</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">data_module</span><span class="o">.</span><span class="n">num_workers</span><span class="p">,</span>
+        <span class="n">config</span><span class="o">=</span><span class="s2">"dcell"</span><span class="p">,</span>
+        <span class="n">is_dense</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Move data to device</span>
+    <span class="n">cell_graph</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">cell_graph</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="c1"># Print batch information</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Batch size: </span><span class="si">{</span><span class="n">batch</span><span class="o">.</span><span class="n">num_graphs</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Gene nodes: </span><span class="si">{</span><span class="n">batch</span><span class="p">[</span><span class="s1">'gene'</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"GO nodes: </span><span class="si">{</span><span class="n">batch</span><span class="p">[</span><span class="s1">'gene_ontology'</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Perturbation indices shape: </span><span class="si">{</span><span class="n">batch</span><span class="p">[</span><span class="s1">'gene'</span><span class="p">]</span><span class="o">.</span><span class="n">perturbation_indices</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"GO gene strata state shape: </span><span class="si">{</span><span class="n">batch</span><span class="p">[</span><span class="s1">'gene_ontology'</span><span class="p">]</span><span class="o">.</span><span class="n">go_gene_strata_state</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Phenotype values shape: </span><span class="si">{</span><span class="n">batch</span><span class="p">[</span><span class="s1">'gene'</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_values</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># Initialize DCell model</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Initializing DCell model..."</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">DCell</span><span class="p">(</span>
+        <span class="n">cell_graph</span><span class="p">,</span>
+        <span class="n">min_subsystem_size</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">subsystem_output_min</span><span class="p">,</span>
+        <span class="n">subsystem_ratio</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">subsystem_output_max_mult</span><span class="p">,</span>
+        <span class="n">output_size</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">output_size</span><span class="p">,</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="n">total_params</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total parameters: </span><span class="si">{</span><span class="n">total_params</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># Initialize DCellLoss</span>
+    <span class="n">loss_func</span> <span class="o">=</span> <span class="n">DCellLoss</span><span class="p">(</span>
+        <span class="n">alpha</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">dcell_loss</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span>
+        <span class="n">use_auxiliary_losses</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">dcell_loss</span><span class="o">.</span><span class="n">use_auxiliary_losses</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Create optimizer</span>
+    <span class="n">optimizer</span><span class="p">:</span> <span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span>
+    <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"AdamW"</span><span class="p">:</span>
+        <span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">AdamW</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+            <span class="n">lr</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">lr</span><span class="p">,</span>
+            <span class="n">weight_decay</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">weight_decay</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+            <span class="n">lr</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">lr</span><span class="p">,</span>
+            <span class="n">weight_decay</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">weight_decay</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Setup learning rate scheduler if specified</span>
+    <span class="n">scheduler</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">lr_scheduler</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"ReduceLROnPlateau"</span><span class="p">:</span>
+        <span class="n">scheduler</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">lr_scheduler</span><span class="o">.</span><span class="n">ReduceLROnPlateau</span><span class="p">(</span>
+            <span class="n">optimizer</span><span class="p">,</span>
+            <span class="n">mode</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">lr_scheduler</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span>
+            <span class="n">factor</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">lr_scheduler</span><span class="o">.</span><span class="n">factor</span><span class="p">,</span>
+            <span class="n">patience</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">lr_scheduler</span><span class="o">.</span><span class="n">patience</span><span class="p">,</span>
+            <span class="n">threshold</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">lr_scheduler</span><span class="o">.</span><span class="n">threshold</span><span class="p">,</span>
+            <span class="n">min_lr</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">lr_scheduler</span><span class="o">.</span><span class="n">min_lr</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Training parameters</span>
+    <span class="n">epochs</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">max_epochs</span>
+    <span class="n">plot_interval</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">plot_every_n_epochs</span>
+
+    <span class="c1"># Lists to track metrics</span>
+    <span class="n">all_losses</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">primary_losses</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">auxiliary_losses</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">weighted_auxiliary_losses</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">learning_rates</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Training loop</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Training DCell to overfit on batch..."</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+        <span class="n">epoch_start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+
+        <span class="c1"># Forward pass</span>
+        <span class="n">predictions</span><span class="p">,</span> <span class="n">outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+
+        <span class="c1"># Get targets</span>
+        <span class="n">targets</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_values</span>
+
+        <span class="c1"># Compute loss using DCellLoss</span>
+        <span class="n">total_loss</span><span class="p">,</span> <span class="n">loss_components</span> <span class="o">=</span> <span class="n">loss_func</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+
+        <span class="c1"># Extract individual loss components</span>
+        <span class="n">primary_loss</span> <span class="o">=</span> <span class="n">loss_components</span><span class="p">[</span><span class="s2">"primary_loss"</span><span class="p">]</span>
+        <span class="n">auxiliary_loss</span> <span class="o">=</span> <span class="n">loss_components</span><span class="p">[</span><span class="s2">"auxiliary_loss"</span><span class="p">]</span>
+        <span class="n">weighted_auxiliary_loss</span> <span class="o">=</span> <span class="n">loss_components</span><span class="p">[</span><span class="s2">"weighted_auxiliary_loss"</span><span class="p">]</span>
+
+        <span class="c1"># Record losses</span>
+        <span class="n">all_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">total_loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="n">primary_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">primary_loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="n">auxiliary_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">auxiliary_loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="n">weighted_auxiliary_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">weighted_auxiliary_loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="n">learning_rates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">optimizer</span><span class="o">.</span><span class="n">param_groups</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"lr"</span><span class="p">])</span>
+
+        <span class="c1"># Backward pass and optimization</span>
+        <span class="n">total_loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+
+        <span class="c1"># Gradient clipping if specified</span>
+        <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">clip_grad_norm</span><span class="p">:</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">clip_grad_norm_max_norm</span>
+            <span class="p">)</span>
+
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+        <span class="c1"># Update learning rate scheduler</span>
+        <span class="k">if</span> <span class="n">scheduler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">total_loss</span><span class="p">)</span>
+
+        <span class="c1"># Calculate epoch time</span>
+        <span class="n">epoch_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">epoch_start_time</span>
+
+        <span class="c1"># Get GPU memory stats if using CUDA</span>
+        <span class="n">gpu_memory_str</span> <span class="o">=</span> <span class="s2">""</span>
+        <span class="k">if</span> <span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"cuda"</span><span class="p">:</span>
+            <span class="n">allocated_gb</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">memory_allocated</span><span class="p">(</span><span class="n">device</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1024</span><span class="o">**</span><span class="mi">3</span>
+            <span class="n">reserved_gb</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">memory_reserved</span><span class="p">(</span><span class="n">device</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1024</span><span class="o">**</span><span class="mi">3</span>
+            <span class="n">gpu_memory_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">", GPU: </span><span class="si">{</span><span class="n">allocated_gb</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">reserved_gb</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">GB"</span>
+
+        <span class="c1"># Print stats every epoch</span>
+        <span class="n">current_batch_size</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">batch</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Epoch </span><span class="si">{</span><span class="n">epoch</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">epochs</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"Total Loss: </span><span class="si">{</span><span class="n">total_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"Primary Loss: </span><span class="si">{</span><span class="n">primary_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"Aux Loss: </span><span class="si">{</span><span class="n">auxiliary_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"Weighted Aux Loss: </span><span class="si">{</span><span class="n">weighted_auxiliary_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"LR: </span><span class="si">{</span><span class="n">optimizer</span><span class="o">.</span><span class="n">param_groups</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">'lr'</span><span class="p">]</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"Time: </span><span class="si">{</span><span class="n">epoch_time</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">s, "</span>
+            <span class="sa">f</span><span class="s2">"Time/instance: </span><span class="si">{</span><span class="n">epoch_time</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">current_batch_size</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">s"</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">gpu_memory_str</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Save intermediate plot at intervals</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">epoch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">plot_interval</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">epoch</span> <span class="o">==</span> <span class="n">epochs</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">save_intermediate_plot</span><span class="p">(</span>
+                <span class="n">epoch</span><span class="p">,</span>
+                <span class="n">all_losses</span><span class="p">,</span>
+                <span class="n">primary_losses</span><span class="p">,</span>
+                <span class="n">auxiliary_losses</span><span class="p">,</span>
+                <span class="n">weighted_auxiliary_losses</span><span class="p">,</span>
+                <span class="n">learning_rates</span><span class="p">,</span>
+                <span class="n">model</span><span class="p">,</span>
+                <span class="n">batch</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="c1"># Final evaluation</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="n">final_predictions</span><span class="p">,</span> <span class="n">final_outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Final DCell training results:"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">final_predictions</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">true_scores</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_values</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"True Phenotype Values:"</span><span class="p">,</span> <span class="n">true_scores</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()[:</span><span class="mi">5</span><span class="p">])</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Predicted Values:"</span><span class="p">,</span> <span class="n">final_predictions</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()[:</span><span class="mi">5</span><span class="p">])</span>
+
+            <span class="c1"># Calculate final metrics</span>
+            <span class="n">mse</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">mse_loss</span><span class="p">(</span><span class="n">final_predictions</span><span class="p">,</span> <span class="n">true_scores</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="n">mae</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">l1_loss</span><span class="p">(</span><span class="n">final_predictions</span><span class="p">,</span> <span class="n">true_scores</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+            <span class="c1"># Calculate correlation coefficient</span>
+            <span class="n">true_np</span> <span class="o">=</span> <span class="n">true_scores</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+            <span class="n">pred_np</span> <span class="o">=</span> <span class="n">final_predictions</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+            <span class="n">correlation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">true_np</span><span class="p">,</span> <span class="n">pred_np</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">true_np</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Final Mean Squared Error: </span><span class="si">{</span><span class="n">mse</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Final Mean Absolute Error: </span><span class="si">{</span><span class="n">mae</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Correlation Coefficient: </span><span class="si">{</span><span class="n">correlation</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+            <span class="c1"># Create final plot</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+
+            <span class="c1"># Loss curves</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epochs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">all_losses</span><span class="p">,</span> <span class="s2">"b-"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Total Loss"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Epoch"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Loss Value"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Training Loss Curve"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">yscale</span><span class="p">(</span><span class="s2">"log"</span><span class="p">)</span>
+
+            <span class="c1"># Loss components</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epochs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">primary_losses</span><span class="p">,</span> <span class="s2">"r-"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Primary Loss"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epochs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">auxiliary_losses</span><span class="p">,</span> <span class="s2">"g-"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Auxiliary Loss"</span>
+            <span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epochs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+                <span class="n">weighted_auxiliary_losses</span><span class="p">,</span>
+                <span class="s2">"orange"</span><span class="p">,</span>
+                <span class="n">label</span><span class="o">=</span><span class="s2">"Weighted Auxiliary Loss"</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Epoch"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Loss Value"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Loss Components"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">yscale</span><span class="p">(</span><span class="s2">"log"</span><span class="p">)</span>
+
+            <span class="c1"># Correlation</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">true_np</span><span class="p">,</span> <span class="n">pred_np</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+            <span class="n">min_val</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">true_np</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">pred_np</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+            <span class="n">max_val</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">true_np</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">pred_np</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">],</span> <span class="p">[</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">],</span> <span class="s2">"r--"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"True Phenotype Values"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Predicted Values"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Final Correlation (r=</span><span class="si">{</span><span class="n">correlation</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="c1"># Error distribution</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+            <span class="n">errors</span> <span class="o">=</span> <span class="n">pred_np</span> <span class="o">-</span> <span class="n">true_np</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">errors</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Prediction Error"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Frequency"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error Distribution (MSE=</span><span class="si">{</span><span class="n">mse</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="c1"># Learning rate evolution</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epochs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">learning_rates</span><span class="p">,</span> <span class="s2">"purple"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Epoch"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Learning Rate"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Learning Rate Schedule"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">yscale</span><span class="p">(</span><span class="s2">"log"</span><span class="p">)</span>
+
+            <span class="c1"># Subsystem analysis</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+            <span class="n">linear_outputs</span> <span class="o">=</span> <span class="n">final_outputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"linear_outputs"</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">subsystem_activities</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">linear_outputs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">"GO:ROOT"</span><span class="p">:</span>
+                    <span class="n">subsystem_activities</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">subsystem_activities</span><span class="p">:</span>
+                <span class="n">subsystem_activations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">subsystem_activities</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span>
+                    <span class="n">subsystem_activations</span><span class="p">,</span>
+                    <span class="n">bins</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">subsystem_activations</span><span class="p">)),</span>
+                    <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Mean Absolute Activation"</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Number of Subsystems"</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Subsystem Activation Distribution"</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">plot_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"dcell_results_</span><span class="si">{</span><span class="n">timestamp</span><span class="p">()</span><span class="si">}</span><span class="s2">.png"</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Results plot saved to '</span><span class="si">{</span><span class="n">plot_dir</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"No predictions were generated. Check model and data setup."</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">DCell training demonstration complete!"</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="p">(</span><span class="n">final_predictions</span><span class="p">,</span> <span class="n">final_outputs</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">multiprocessing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mp</span>
+
+    <span class="n">mp</span><span class="o">.</span><span class="n">set_start_method</span><span class="p">(</span><span class="s2">"spawn"</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

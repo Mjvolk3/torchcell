@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.compound\_identity.CompoundIdentityRecord
+==============================================================
+
+.. currentmodule:: torchcell.datamodels.compound_identity
+
+.. autoclass:: CompoundIdentityRecord
+   :show-inheritance:
+   :members:

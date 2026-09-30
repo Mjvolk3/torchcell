@@ -1,0 +1,6 @@
+﻿torchcell.metabolism.parameters.uniprot\_for\_genes
+===================================================
+
+.. currentmodule:: torchcell.metabolism.parameters
+
+.. autofunction:: uniprot_for_genes

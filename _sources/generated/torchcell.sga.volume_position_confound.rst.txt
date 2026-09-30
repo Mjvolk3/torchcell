@@ -1,0 +1,6 @@
+﻿torchcell.sga.volume\_position\_confound
+========================================
+
+.. currentmodule:: torchcell.sga
+
+.. autofunction:: volume_position_confound

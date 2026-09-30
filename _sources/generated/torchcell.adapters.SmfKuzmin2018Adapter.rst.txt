@@ -1,0 +1,8 @@
+﻿torchcell.adapters.SmfKuzmin2018Adapter
+=======================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: SmfKuzmin2018Adapter
+   :show-inheritance:
+   :members:

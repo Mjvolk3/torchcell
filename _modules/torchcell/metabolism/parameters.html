@@ -1,0 +1,611 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.metabolism.parameters &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/metabolism/parameters.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.metabolism.parameters</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.metabolism.parameters</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/metabolism/parameters</span>
+<span class="c1"># [[torchcell.metabolism.parameters]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/metabolism/parameters</span>
+<span class="c1"># Test file: tests/torchcell/metabolism/test_parameters.py</span>
+
+<span class="sa">r</span><span class="sd">"""Kinetic and physical parameters for a GEM, database-first and provenance-tagged.</span>
+
+<span class="sd">WHY THIS IS THE PORTABILITY LAYER</span>
+<span class="sd">---------------------------------</span>
+<span class="sd">An enzyme-constrained model needs three numbers per catalytic edge -- :math:`k_{cat}`,</span>
+<span class="sd">:math:`K_M`, and the gene product's molecular weight -- and only the third is reliably</span>
+<span class="sd">tabulated. For *S. cerevisiae*, the best-curated organism there is, the Open Enzyme</span>
+<span class="sd">Database slice holds **1,126 rows** against **1,161 metabolic genes** and **4,131</span>
+<span class="sd">reactions**. For a non-model yeast or a new bacterial chassis it holds essentially</span>
+<span class="sd">nothing.</span>
+
+<span class="sd">That is the actual barrier to running this model on another organism, and it is why the</span>
+<span class="sd">resolution order below is a **policy** rather than a lookup:</span>
+
+<span class="sd">1. **experimental** -- BRENDA / Open Enzyme Database, matched on UniProt accession and</span>
+<span class="sd">   substrate, selected at the assay temperature closest to the phenotype's;</span>
+<span class="sd">2. **predicted** -- a sequence-based model fills the gap;</span>
+<span class="sd">3. **default** -- a single organism-level constant, used only where both fail, and</span>
+<span class="sd">   reported as coverage rather than presented as a measurement.</span>
+
+<span class="sd">**Database-first is not a preference, it is a correctness requirement.** A predictor</span>
+<span class="sd">trained on BRENDA will happily reproduce a value it memorized, so using a prediction where</span>
+<span class="sd">a measurement exists both discards information and inflates any apparent agreement between</span>
+<span class="sd">the two.</span>
+
+<span class="sd">THE PREDICTORS</span>
+<span class="sd">--------------</span>
+<span class="sd">Three sequence-based models, registered here by capability rather than hardcoded, because</span>
+<span class="sd">which one is appropriate depends on what the organism has:</span>
+
+<span class="sd">======================  =================================  ==========================</span>
+<span class="sd">predictor               inputs                             emits</span>
+<span class="sd">======================  =================================  ==========================</span>
+<span class="sd">**KcatNet**             protein sequence + substrate SMILES :math:`k_{cat}`</span>
+<span class="sd">**RealKcat**            protein sequence + substrate SMILES :math:`k_{cat}`, :math:`K_M`</span>
+<span class="sd">**DEKP**                sequence + optional structure file  :math:`k_{cat}`</span>
+<span class="sd">======================  =================================  ==========================</span>
+
+<span class="sd">RealKcat is the one that closes the :math:`K_M` gap, which matters because promiscuity is</span>
+<span class="sd">a :math:`K_M` effect: Wu et al. (2026) measured underground reactions at ~2x higher</span>
+<span class="sd">:math:`K_M` with **indistinguishable** :math:`k_{cat}`, so a :math:`k_{cat}`-only model</span>
+<span class="sd">routes promiscuous flux at full native capacity for free. DEKP is structure-aware, which is</span>
+<span class="sd">the right choice when a predicted structure exists and the sequence is far from anything in</span>
+<span class="sd">the training set -- the usual situation for a novel chassis.</span>
+
+<span class="sd">None of the three is invoked from this module. :class:`KcatPredictor` is a protocol with a</span>
+<span class="sd">registry, so a run records **which predictor produced which value** and a</span>
+<span class="sd">"published-only vs published-plus-predicted" ablation is a filter on the provenance tag</span>
+<span class="sd">rather than a re-run of retrieval. Wiring an actual checkpoint in is deliberately a</span>
+<span class="sd">separate, GPU-bearing step.</span>
+
+<span class="sd">WHAT IS REAL TODAY, MEASURED</span>
+<span class="sd">----------------------------</span>
+<span class="sd">* **Molecular weight: complete.** ``data/databases/swissprot.tsv`` ships MW for all 6,721</span>
+<span class="sd">  proteins, joined on the systematic ORF name. Nothing is defaulted.</span>
+<span class="sd">* **Metabolite concentrations: partial and real.** ``YMDBconcentrations.csv`` holds 867</span>
+<span class="sd">  measured intracellular concentrations in uM with a mean/max/min, which anchor the learned</span>
+<span class="sd">  :math:`\ln c` of the thermodynamic term instead of letting it float in its box.</span>
+<span class="sd">* **k_cat: thin.** The OED slice is the only source, and its coverage against the GEM's</span>
+<span class="sd">  catalytic units is computed by :func:`resolve_kcat_table` and must be reported.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrEnum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">runtime_checkable</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.metabolism.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="n">CatalyticUnits</span><span class="p">,</span> <span class="n">TableCoverage</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>  <span class="c1"># pragma: no cover - typing only</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">cobra</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.metabolism.enzyme_kinetics</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">KineticKind</span><span class="p">,</span>
+    <span class="n">OedKineticRecord</span><span class="p">,</span>
+    <span class="n">index_by_uniprot</span><span class="p">,</span>
+    <span class="n">load_mirrored_records</span><span class="p">,</span>
+    <span class="n">resolve_parameter</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: Canonical on-disk home of the Open Enzyme Database organism slice.</span>
+<span class="n">DEFAULT_OED_MIRROR</span> <span class="o">=</span> <span class="s2">"data/enzyme_kinetics/open_enzyme_database"</span>
+
+<span class="c1">#: Median k_cat of the OED S. cerevisiae slice is computed at load time; this is only the</span>
+<span class="c1">#: floor used when the slice itself is empty, i.e. for an organism with no measurements.</span>
+<span class="n">FALLBACK_KCAT_PER_S</span> <span class="o">=</span> <span class="mf">13.7</span>
+
+
+<div class="viewcode-block" id="ParameterProvenance">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.parameters.ParameterProvenance.html#torchcell.metabolism.parameters.ParameterProvenance">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ParameterProvenance</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Where one parameter value came from. Every value carries exactly one of these."""</span>
+
+    <span class="n">BRENDA</span> <span class="o">=</span> <span class="s2">"brenda"</span>
+    <span class="n">OPEN_ENZYME_DATABASE</span> <span class="o">=</span> <span class="s2">"open_enzyme_database"</span>
+    <span class="n">KCATNET</span> <span class="o">=</span> <span class="s2">"kcatnet"</span>
+    <span class="n">REALKCAT</span> <span class="o">=</span> <span class="s2">"realkcat"</span>
+    <span class="n">DEKP</span> <span class="o">=</span> <span class="s2">"dekp"</span>
+    <span class="n">ORGANISM_DEFAULT</span> <span class="o">=</span> <span class="s2">"organism_default"</span>
+    <span class="n">SWISSPROT</span> <span class="o">=</span> <span class="s2">"swissprot"</span>
+    <span class="n">YMDB</span> <span class="o">=</span> <span class="s2">"ymdb"</span></div>
+
+
+
+<span class="c1">#: Which provenance tags are measurements rather than model output. The</span>
+<span class="c1">#: published-only ablation is exactly a filter on this set.</span>
+<span class="n">EXPERIMENTAL_SOURCES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="n">ParameterProvenance</span><span class="o">.</span><span class="n">BRENDA</span><span class="p">,</span>
+        <span class="n">ParameterProvenance</span><span class="o">.</span><span class="n">OPEN_ENZYME_DATABASE</span><span class="p">,</span>
+        <span class="n">ParameterProvenance</span><span class="o">.</span><span class="n">SWISSPROT</span><span class="p">,</span>
+        <span class="n">ParameterProvenance</span><span class="o">.</span><span class="n">YMDB</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="KcatPredictor">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.parameters.KcatPredictor.html#torchcell.metabolism.parameters.KcatPredictor">[docs]</a>
+<span class="nd">@runtime_checkable</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">KcatPredictor</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A sequence-based turnover predictor.</span>
+
+<span class="sd">    Deliberately minimal. Any of KcatNet, RealKcat or DEKP satisfies it, and a predictor</span>
+<span class="sd">    that also emits :math:`K_M` advertises that through :attr:`emits_km` so the caller can</span>
+<span class="sd">    close the affinity gap in the same pass rather than running two models.</span>
+<span class="sd">    """</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">emits_km</span><span class="p">:</span> <span class="nb">bool</span>
+
+<div class="viewcode-block" id="KcatPredictor.predict">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.parameters.KcatPredictor.html#torchcell.metabolism.parameters.KcatPredictor.predict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">sequence</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">substrate_smiles</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return ``(kcat_per_s, km_mM_or_None)`` for one (protein, substrate) pair."""</span>
+        <span class="o">...</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="PredictorRegistry">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.parameters.PredictorRegistry.html#torchcell.metabolism.parameters.PredictorRegistry">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PredictorRegistry</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The predictors a run is allowed to use, in priority order.</span>
+
+<span class="sd">    Empty by default: a run that fills gaps with predictions has to say so, and the</span>
+<span class="sd">    resulting parameter table records which predictor supplied each value.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">arbitrary_types_allowed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">predictors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PredictorRegistry.first_emitting_km">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.parameters.PredictorRegistry.html#torchcell.metabolism.parameters.PredictorRegistry.first_emitting_km">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">first_emitting_km</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The highest-priority registered predictor that also produces ``K_M``."""</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">predictors</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s2">"emits_km"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">p</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ParameterTable">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.parameters.ParameterTable.html#torchcell.metabolism.parameters.ParameterTable">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ParameterTable</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One resolved parameter per entity, with a per-entity provenance tag.</span>
+
+<span class="sd">    The provenance array is the point of this class. A capacity constraint where 95 % of</span>
+<span class="sd">    turnover numbers are an organism default is a uniform rescaling of the flux box, not an</span>
+<span class="sd">    enzyme constraint, and the two are indistinguishable from a loss curve.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">arbitrary_types_allowed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">values</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"[n] resolved values."</span><span class="p">)</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ParameterProvenance</span><span class="p">]</span>
+    <span class="n">known_mask</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"[n] bool, True where the value is NOT an organism default."</span>
+    <span class="p">)</span>
+    <span class="n">experimental_mask</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"[n] bool, True where the value is a measurement, not a prediction."</span>
+    <span class="p">)</span>
+    <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">coverage</span><span class="p">:</span> <span class="n">TableCoverage</span>
+    <span class="n">experimental_coverage</span><span class="p">:</span> <span class="n">TableCoverage</span>
+    <span class="n">notes</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+
+<div class="viewcode-block" id="ParameterTable.build">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.parameters.ParameterTable.html#torchcell.metabolism.parameters.ParameterTable.build">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">values</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ParameterProvenance</span><span class="p">],</span>
+        <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">notes</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParameterTable</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Derive both masks and both coverages from the provenance list."""</span>
+        <span class="n">known</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">ParameterProvenance</span><span class="o">.</span><span class="n">ORGANISM_DEFAULT</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">provenance</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">experimental</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">p</span> <span class="ow">in</span> <span class="n">EXPERIMENTAL_SOURCES</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">provenance</span><span class="p">])</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="n">provenance</span><span class="p">,</span>
+            <span class="n">known_mask</span><span class="o">=</span><span class="n">known</span><span class="p">,</span>
+            <span class="n">experimental_mask</span><span class="o">=</span><span class="n">experimental</span><span class="p">,</span>
+            <span class="n">unit</span><span class="o">=</span><span class="n">unit</span><span class="p">,</span>
+            <span class="n">coverage</span><span class="o">=</span><span class="n">TableCoverage</span><span class="o">.</span><span class="n">of</span><span class="p">(</span><span class="n">known</span><span class="o">.</span><span class="n">numpy</span><span class="p">()),</span>
+            <span class="n">experimental_coverage</span><span class="o">=</span><span class="n">TableCoverage</span><span class="o">.</span><span class="n">of</span><span class="p">(</span><span class="n">experimental</span><span class="o">.</span><span class="n">numpy</span><span class="p">()),</span>
+            <span class="n">notes</span><span class="o">=</span><span class="n">notes</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1">#: A *S. cerevisiae* systematic ORF name: nuclear ``YKL019W`` / ``YDR034C-A``, or a</span>
+<span class="c1">#: mitochondrial ``Q0045``. Matching this pattern is what distinguishes the systematic name</span>
+<span class="c1">#: from the standard name and the ordered-locus aliases in the same column.</span>
+<span class="n">SYSTEMATIC_NAME_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^(Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](?:-[A-Z])?|Q\d</span><span class="si">{4}</span><span class="s2">)$"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="load_swissprot">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.parameters.load_swissprot.html#torchcell.metabolism.parameters.load_swissprot">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_swissprot</span><span class="p">(</span><span class="n">model_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Read ``data/databases/swissprot.tsv``, keyed by systematic ORF name.</span>
+
+<span class="sd">    **The ``gene_id`` column is an alias LIST, not a two-field pair**, and reading it as a</span>
+<span class="sd">    pair is a quiet 63 % data loss. It holds every name UniProt knows for the locus, space</span>
+<span class="sd">    separated and in no fixed order or length -- ``"RAM2 YKL019W"`` is two tokens, but</span>
+<span class="sd">    ``"ERG20 BOT3 FDS1 FPP1 YJL167W J0525"`` is six, with the systematic name fifth and an</span>
+<span class="sd">    ordered-locus alias last. Token counts across the file run from 1 to 11.</span>
+
+<span class="sd">    Taking the last token therefore matches only **430 of the GEM's 1,161 genes (37 %)**,</span>
+<span class="sd">    and taking the first matches 38. Selecting the token that *is* a systematic ORF name</span>
+<span class="sd">    matches **1,161 of 1,161**. The lesson is the general one: a column whose separator is</span>
+<span class="sd">    a space is a list until proven otherwise, and the check that catches it is joining</span>
+<span class="sd">    against a known key set and looking at the hit rate rather than at the first few rows.</span>
+<span class="sd">    """</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span> <span class="s2">"data"</span><span class="p">,</span> <span class="s2">"databases"</span><span class="p">,</span> <span class="s2">"swissprot.tsv"</span><span class="p">)</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"gene_id"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">SYSTEMATIC_NAME_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">token</span><span class="p">):</span>
+                    <span class="n">out</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="molecular_weight_table">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.parameters.molecular_weight_table.html#torchcell.metabolism.parameters.molecular_weight_table">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">molecular_weight_table</span><span class="p">(</span>
+    <span class="n">model_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">gene_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">default_da</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">40000.0</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParameterTable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Per-gene molecular weight in kDa, from SwissProt.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model_dir: GEM checkout root.</span>
+<span class="sd">        gene_ids: GEM gene ids in tensor-index order.</span>
+<span class="sd">        default_da: Fallback in daltons for a gene SwissProt does not carry. ~40 kDa is</span>
+<span class="sd">            the median yeast protein; it is a default and is tagged as one.</span>
+<span class="sd">    """</span>
+    <span class="n">swissprot</span> <span class="o">=</span> <span class="n">load_swissprot</span><span class="p">(</span><span class="n">model_dir</span><span class="p">)</span>
+    <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ParameterProvenance</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">gid</span> <span class="ow">in</span> <span class="n">gene_ids</span><span class="p">:</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">swissprot</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gid</span><span class="p">)</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="p">(</span><span class="n">row</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MW"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">raw</span><span class="p">:</span>
+            <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1000.0</span><span class="p">)</span>
+            <span class="n">provenance</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ParameterProvenance</span><span class="o">.</span><span class="n">SWISSPROT</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">default_da</span> <span class="o">/</span> <span class="mf">1000.0</span><span class="p">)</span>
+            <span class="n">provenance</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ParameterProvenance</span><span class="o">.</span><span class="n">ORGANISM_DEFAULT</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ParameterTable</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+        <span class="n">provenance</span><span class="p">,</span>
+        <span class="n">unit</span><span class="o">=</span><span class="s2">"kDa"</span><span class="p">,</span>
+        <span class="n">notes</span><span class="o">=</span><span class="s2">"yeast-GEM data/databases/swissprot.tsv, joined on systematic ORF name."</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="uniprot_for_genes">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.parameters.uniprot_for_genes.html#torchcell.metabolism.parameters.uniprot_for_genes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">uniprot_for_genes</span><span class="p">(</span><span class="n">model_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">gene_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Systematic ORF name -&gt; UniProt accession, the join key into any kinetics database."""</span>
+    <span class="n">swissprot</span> <span class="o">=</span> <span class="n">load_swissprot</span><span class="p">(</span><span class="n">model_dir</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="n">gid</span><span class="p">:</span> <span class="n">swissprot</span><span class="p">[</span><span class="n">gid</span><span class="p">][</span><span class="s2">"uniprot"</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">gid</span> <span class="ow">in</span> <span class="n">gene_ids</span>
+        <span class="k">if</span> <span class="n">gid</span> <span class="ow">in</span> <span class="n">swissprot</span> <span class="ow">and</span> <span class="n">swissprot</span><span class="p">[</span><span class="n">gid</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"uniprot"</span><span class="p">)</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="resolve_kcat_table">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.parameters.resolve_kcat_table.html#torchcell.metabolism.parameters.resolve_kcat_table">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_kcat_table</span><span class="p">(</span>
+    <span class="n">units</span><span class="p">:</span> <span class="n">CatalyticUnits</span><span class="p">,</span>
+    <span class="n">model_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">oed_mirror_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">registry</span><span class="p">:</span> <span class="n">PredictorRegistry</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">target_temperature_c</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">30.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParameterTable</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""One :math:`k_{cat}` per catalytic unit, database-first.</span>
+
+<span class="sd">    A catalytic unit is an AND-term of genes: a complex has several, an isozyme one. The</span>
+<span class="sd">    unit's turnover is taken as the **minimum** over its member genes' resolved values,</span>
+<span class="sd">    because a complex cannot turn over faster than its slowest constituent, and this is the</span>
+<span class="sd">    same "scarcest subunit limits" logic the availability softmin uses one level up.</span>
+
+<span class="sd">    Resolution per gene: UniProt accession from SwissProt -&gt; Open Enzyme Database rows for</span>
+<span class="sd">    that accession -&gt; the existing temperature-aware selection cascade</span>
+<span class="sd">    (:func:`~torchcell.metabolism.enzyme_kinetics.resolve_parameter`) -&gt; a registered</span>
+<span class="sd">    sequence predictor if one is present -&gt; the organism default. The organism default is</span>
+<span class="sd">    the **median of whatever the database did supply**, not a literature constant, so it is</span>
+<span class="sd">    at least on the right scale for the organism at hand; with an empty slice it falls back</span>
+<span class="sd">    to :data:`FALLBACK_KCAT_PER_S`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A :class:`ParameterTable` of length ``units.n_units``, in units of 1/s.</span>
+<span class="sd">    """</span>
+    <span class="n">records</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">OedKineticRecord</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">records</span> <span class="o">=</span> <span class="n">load_mirrored_records</span><span class="p">(</span><span class="n">oed_mirror_dir</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+        <span class="n">records</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">by_uniprot</span> <span class="o">=</span> <span class="n">index_by_uniprot</span><span class="p">(</span><span class="n">records</span><span class="p">)</span>
+    <span class="n">gene_to_uniprot</span> <span class="o">=</span> <span class="n">uniprot_for_genes</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span> <span class="n">units</span><span class="o">.</span><span class="n">gene_ids</span><span class="p">)</span>
+    <span class="n">sequences</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">gid</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s2">"sequence"</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">gid</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">load_swissprot</span><span class="p">(</span><span class="n">model_dir</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sequence"</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="n">per_gene</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">ParameterProvenance</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">gid</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">units</span><span class="o">.</span><span class="n">gene_ids</span><span class="p">):</span>
+        <span class="n">accession</span> <span class="o">=</span> <span class="n">gene_to_uniprot</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gid</span><span class="p">)</span>
+        <span class="n">resolved</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">accession</span> <span class="ow">and</span> <span class="n">accession</span> <span class="ow">in</span> <span class="n">by_uniprot</span><span class="p">:</span>
+            <span class="n">resolved</span> <span class="o">=</span> <span class="n">resolve_parameter</span><span class="p">(</span>
+                <span class="n">by_uniprot</span><span class="p">[</span><span class="n">accession</span><span class="p">],</span>
+                <span class="n">KineticKind</span><span class="o">.</span><span class="n">KCAT</span><span class="p">,</span>
+                <span class="n">uniprot</span><span class="o">=</span><span class="n">accession</span><span class="p">,</span>
+                <span class="n">target_temperature_c</span><span class="o">=</span><span class="n">target_temperature_c</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">resolved</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">per_gene</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">float</span><span class="p">(</span><span class="n">resolved</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+                <span class="n">ParameterProvenance</span><span class="o">.</span><span class="n">OPEN_ENZYME_DATABASE</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">registry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">registry</span><span class="o">.</span><span class="n">predictors</span> <span class="ow">and</span> <span class="n">gid</span> <span class="ow">in</span> <span class="n">sequences</span><span class="p">:</span>
+            <span class="n">predictor</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">predictors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">kcat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">predictor</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">sequences</span><span class="p">[</span><span class="n">gid</span><span class="p">])</span>  <span class="c1"># type: ignore[attr-defined]</span>
+            <span class="n">per_gene</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">float</span><span class="p">(</span><span class="n">kcat</span><span class="p">),</span>
+                <span class="n">ParameterProvenance</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">predictor</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">,</span> <span class="s2">"kcatnet"</span><span class="p">)),</span>
+            <span class="p">)</span>
+
+    <span class="n">measured</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">per_gene</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">float</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">measured</span><span class="p">)</span><span class="o">.</span><span class="n">median</span><span class="p">())</span> <span class="k">if</span> <span class="n">measured</span> <span class="k">else</span> <span class="n">FALLBACK_KCAT_PER_S</span>
+    <span class="p">)</span>
+
+    <span class="n">unit_genes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">u</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+        <span class="n">units</span><span class="o">.</span><span class="n">unit_gene_index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">units</span><span class="o">.</span><span class="n">unit_gene_index</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="p">):</span>
+        <span class="n">unit_genes</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+
+    <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ParameterProvenance</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">units</span><span class="o">.</span><span class="n">n_units</span><span class="p">):</span>
+        <span class="n">hits</span> <span class="o">=</span> <span class="p">[</span><span class="n">per_gene</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">unit_genes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="p">[])</span> <span class="k">if</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">per_gene</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">hits</span><span class="p">:</span>
+            <span class="n">value</span><span class="p">,</span> <span class="n">source</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">hits</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="n">provenance</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">default</span><span class="p">)</span>
+            <span class="n">provenance</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ParameterProvenance</span><span class="o">.</span><span class="n">ORGANISM_DEFAULT</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ParameterTable</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+        <span class="n">provenance</span><span class="p">,</span>
+        <span class="n">unit</span><span class="o">=</span><span class="s2">"1/s"</span><span class="p">,</span>
+        <span class="n">notes</span><span class="o">=</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Open Enzyme Database first (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">)</span><span class="si">}</span><span class="s2"> organism rows), then registered "</span>
+            <span class="sa">f</span><span class="s2">"sequence predictors, then the organism default </span><span class="si">{</span><span class="n">default</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2"> 1/s = the "</span>
+            <span class="s2">"median of the resolved values. A complex takes the min over its subunits."</span>
+        <span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="n">_CONC_ID_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"CHEBI:(\d+)"</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="load_measured_concentrations">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.parameters.load_measured_concentrations.html#torchcell.metabolism.parameters.load_measured_concentrations">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_measured_concentrations</span><span class="p">(</span><span class="n">model_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""ChEBI id -&gt; measured intracellular concentration in molar, from YMDB.</span>
+
+<span class="sd">    ``YMDBconcentrations.csv`` reports uM with a mean, max and min plus the verbatim</span>
+<span class="sd">    per-study string. The mean is used; the spread is kept in the file and is the obvious</span>
+<span class="sd">    place to draw an uncertainty from later. These anchor the learned :math:`\ln c` of the</span>
+<span class="sd">    anchored thermodynamic mode, which otherwise floats anywhere in its six-order-of-</span>
+<span class="sd">    magnitude box.</span>
+<span class="sd">    """</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span> <span class="s2">"data"</span><span class="p">,</span> <span class="s2">"databases"</span><span class="p">,</span> <span class="s2">"YMDBconcentrations.csv"</span><span class="p">)</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+            <span class="n">chebi</span> <span class="o">=</span> <span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"chebi"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">mean</span> <span class="o">=</span> <span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mean"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">chebi</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">mean</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">match</span> <span class="o">=</span> <span class="n">_CONC_ID_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">chebi</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mean</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e-6</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="concentration_prior">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.parameters.concentration_prior.html#torchcell.metabolism.parameters.concentration_prior">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">concentration_prior</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">cobra</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span> <span class="n">met_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">model_dir</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Per-metabolite measured concentration prior, in molar, plus its coverage mask.</span>
+
+<span class="sd">    Matches on the ChEBI annotation the GEM already carries per metabolite, so no external</span>
+<span class="sd">    identifier mapping is involved. Returns ``(concentration, mask)``; the concentration is</span>
+<span class="sd">    meaningless where the mask is False and must not be read there.</span>
+<span class="sd">    """</span>
+    <span class="n">measured</span> <span class="o">=</span> <span class="n">load_measured_concentrations</span><span class="p">(</span><span class="n">model_dir</span><span class="p">)</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">met_ids</span><span class="p">))</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">met_ids</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">mid</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">met_ids</span><span class="p">):</span>
+        <span class="n">annotation</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">metabolites</span><span class="o">.</span><span class="n">get_by_id</span><span class="p">(</span><span class="n">mid</span><span class="p">)</span><span class="o">.</span><span class="n">annotation</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">chebi</span> <span class="o">=</span> <span class="n">annotation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"chebi"</span><span class="p">)</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="n">chebi</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chebi</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">chebi</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">c</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">match</span> <span class="o">=</span> <span class="n">_CONC_ID_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">match</span> <span class="ow">and</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="ow">in</span> <span class="n">measured</span><span class="p">:</span>
+                <span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">measured</span><span class="p">[</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span>
+                <span class="n">mask</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">break</span>
+    <span class="k">return</span> <span class="n">values</span><span class="p">,</span> <span class="n">mask</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

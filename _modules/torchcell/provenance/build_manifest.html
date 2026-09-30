@@ -1,0 +1,450 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.provenance.build_manifest &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/provenance/build_manifest.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.provenance.build_manifest</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.provenance.build_manifest</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/provenance/build_manifest.py</span>
+<span class="c1"># [[torchcell.provenance.build_manifest]]</span>
+<span class="sd">"""Per-dataset build manifests: the authoritative "which built LMDB is now stale" record.</span>
+
+<span class="sd">When a dataset's ``process()`` finishes, :func:`write_build_manifest` drops a</span>
+<span class="sd">``build_manifest.json`` into that dataset's ``preprocess/`` directory (beside</span>
+<span class="sd">``verification_report.json``) recording the contract fingerprint of every schema symbol the</span>
+<span class="sd">loader transitively depends on. A later :func:`check_all` recomputes those fingerprints from</span>
+<span class="sd">the *local* schema and flags any dataset whose stored fingerprints no longer match.</span>
+
+<span class="sd">Multi-machine design:</span>
+<span class="sd">  - Fingerprints are content-addressed (see ``schema_deps``), so a manifest is meaningful on</span>
+<span class="sd">    any machine; staleness is judged against each machine's LOCAL schema, no network needed.</span>
+<span class="sd">  - Manifests live under ``DATA_ROOT`` (per-machine, next to the LMDB), NOT in git -- so each</span>
+<span class="sd">    machine tracks its own built artifacts with zero cross-machine git contention.</span>
+<span class="sd">  - ``torchcell_commit`` is recorded for provenance only and is NEVER used for the staleness</span>
+<span class="sd">    decision (a schema commit that doesn't touch a loader's closure leaves it fresh). It is</span>
+<span class="sd">    ``None`` when the built code is not a git checkout (e.g. an installed wheel).</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">socket</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.provenance.schema_deps</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SchemaSurface</span><span class="p">,</span>
+    <span class="n">load_default_surface</span><span class="p">,</span>
+    <span class="n">loader_closure</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"BuildManifest"</span><span class="p">,</span>
+    <span class="s2">"SymbolDrift"</span><span class="p">,</span>
+    <span class="s2">"StaleResult"</span><span class="p">,</span>
+    <span class="s2">"DatasetCheck"</span><span class="p">,</span>
+    <span class="s2">"compute_manifest"</span><span class="p">,</span>
+    <span class="s2">"write_build_manifest"</span><span class="p">,</span>
+    <span class="s2">"check_manifest"</span><span class="p">,</span>
+    <span class="s2">"check_all"</span><span class="p">,</span>
+    <span class="s2">"MANIFEST_FILENAME"</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">MANIFEST_FILENAME</span> <span class="o">=</span> <span class="s2">"build_manifest.json"</span>
+<span class="n">MANIFEST_SCHEMA_VERSION</span> <span class="o">=</span> <span class="mi">1</span>
+
+
+<div class="viewcode-block" id="BuildManifest">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.BuildManifest.html#torchcell.provenance.BuildManifest">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BuildManifest</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Records the schema contract a built LMDB was produced against."""</span>
+
+    <span class="n">manifest_schema_version</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">MANIFEST_SCHEMA_VERSION</span>
+    <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># slug, e.g. "env_chemgen_hoepfner2014"</span>
+    <span class="n">loader_class</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># e.g. "EnvChemgenHoepfner2014Dataset"</span>
+    <span class="n">loader_module</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># e.g. "torchcell.datasets.scerevisiae.hoepfner2014"</span>
+    <span class="n">surface_modules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span>
+        <span class="nb">str</span>
+    <span class="p">]</span>  <span class="c1"># basenames of the schema-surface files, e.g. ["schema.py", ...]</span>
+    <span class="n">closure</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+        <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span>
+    <span class="p">]</span>  <span class="c1"># symbol -&gt; contract fingerprint (THE staleness key), sorted</span>
+    <span class="n">built_at</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># ISO-8601 UTC</span>
+    <span class="n">hostname</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">torchcell_commit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># provenance only; NOT used for staleness</span>
+    <span class="n">torchcell_dirty</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="SymbolDrift">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.SymbolDrift.html#torchcell.provenance.SymbolDrift">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SymbolDrift</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One schema symbol whose contract fingerprint no longer matches the manifest."""</span>
+
+    <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">stored_fingerprint</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">current_fingerprint</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>  <span class="c1"># None == symbol removed from the schema entirely</span></div>
+
+
+
+<div class="viewcode-block" id="StaleResult">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.StaleResult.html#torchcell.provenance.StaleResult">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">StaleResult</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Result of checking one manifest against the current schema surface."""</span>
+
+    <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">preprocess_dir</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">is_stale</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">drift</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SymbolDrift</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="DatasetCheck">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.DatasetCheck.html#torchcell.provenance.DatasetCheck">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DatasetCheck</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Per-dataset outcome of a fleet-wide staleness scan."""</span>
+
+    <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">status</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"fresh"</span><span class="p">,</span> <span class="s2">"stale"</span><span class="p">,</span> <span class="s2">"unmanifested"</span><span class="p">]</span>
+    <span class="n">drift</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SymbolDrift</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_git_info</span><span class="p">(</span><span class="n">repo_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Best-effort (commit, dirty) for provenance; ``(None, None)`` if not a git checkout.</span>
+
+<span class="sd">    Uses explicit return-code checks (never ``check=True``), so a non-checkout is modeled as</span>
+<span class="sd">    absent metadata rather than a masked error -- consistent with the no-fallback rule since</span>
+<span class="sd">    the commit is provenance-only and never gates staleness.</span>
+<span class="sd">    """</span>
+    <span class="n">head</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="p">[</span><span class="s2">"git"</span><span class="p">,</span> <span class="s2">"-C"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">repo_dir</span><span class="p">),</span> <span class="s2">"rev-parse"</span><span class="p">,</span> <span class="s2">"HEAD"</span><span class="p">],</span>
+        <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">head</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="p">[</span><span class="s2">"git"</span><span class="p">,</span> <span class="s2">"-C"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">repo_dir</span><span class="p">),</span> <span class="s2">"status"</span><span class="p">,</span> <span class="s2">"--porcelain"</span><span class="p">],</span>
+        <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">dirty</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">status</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">if</span> <span class="n">status</span><span class="o">.</span><span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">head</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="n">dirty</span>
+
+
+<div class="viewcode-block" id="compute_manifest">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.compute_manifest.html#torchcell.provenance.compute_manifest">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_manifest</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">loader_module</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">loader_class</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">loader_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">surface</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">,</span>
+    <span class="n">built_at</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">hostname</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">torchcell_commit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">torchcell_dirty</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BuildManifest</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build a :class:`BuildManifest` from a loader's transitive schema closure."""</span>
+    <span class="n">closure</span> <span class="o">=</span> <span class="n">loader_closure</span><span class="p">(</span><span class="n">loader_path</span><span class="p">,</span> <span class="n">surface</span><span class="p">)</span>
+    <span class="n">surface_modules</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="p">{</span><span class="n">osp</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">surface</span><span class="o">.</span><span class="n">module_of</span><span class="o">.</span><span class="n">values</span><span class="p">()}</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">BuildManifest</span><span class="p">(</span>
+        <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+        <span class="n">loader_class</span><span class="o">=</span><span class="n">loader_class</span><span class="p">,</span>
+        <span class="n">loader_module</span><span class="o">=</span><span class="n">loader_module</span><span class="p">,</span>
+        <span class="n">surface_modules</span><span class="o">=</span><span class="n">surface_modules</span><span class="p">,</span>
+        <span class="n">closure</span><span class="o">=</span><span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">surface</span><span class="o">.</span><span class="n">fingerprints</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">closure</span><span class="p">)},</span>
+        <span class="n">built_at</span><span class="o">=</span><span class="n">built_at</span><span class="p">,</span>
+        <span class="n">hostname</span><span class="o">=</span><span class="n">hostname</span><span class="p">,</span>
+        <span class="n">torchcell_commit</span><span class="o">=</span><span class="n">torchcell_commit</span><span class="p">,</span>
+        <span class="n">torchcell_dirty</span><span class="o">=</span><span class="n">torchcell_dirty</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="write_build_manifest">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.write_build_manifest.html#torchcell.provenance.write_build_manifest">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_build_manifest</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Compute and write ``build_manifest.json`` for a freshly built dataset instance.</span>
+
+<span class="sd">    Called from the ``post_process`` build hook (``torchcell/data/experiment_dataset.py``),</span>
+<span class="sd">    so every dataset build records its schema contract automatically. ``dataset`` is typed</span>
+<span class="sd">    ``Any`` to avoid importing ``ExperimentDataset`` here (which would create an import cycle,</span>
+<span class="sd">    since that module imports this one).</span>
+<span class="sd">    """</span>
+    <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+    <span class="n">module</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="p">]</span>
+    <span class="n">module_file</span> <span class="o">=</span> <span class="n">module</span><span class="o">.</span><span class="vm">__file__</span>
+    <span class="k">assert</span> <span class="n">module_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"loader module </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2"> has no __file__"</span>
+    <span class="n">loader_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">module_file</span><span class="p">)</span>
+    <span class="n">surface</span> <span class="o">=</span> <span class="n">load_default_surface</span><span class="p">()</span>
+    <span class="n">commit</span><span class="p">,</span> <span class="n">dirty</span> <span class="o">=</span> <span class="n">_git_info</span><span class="p">(</span><span class="n">loader_path</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
+    <span class="n">manifest</span> <span class="o">=</span> <span class="n">compute_manifest</span><span class="p">(</span>
+        <span class="n">dataset_name</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">root</span><span class="p">)),</span>
+        <span class="n">loader_module</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+        <span class="n">loader_class</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+        <span class="n">loader_path</span><span class="o">=</span><span class="n">loader_path</span><span class="p">,</span>
+        <span class="n">surface</span><span class="o">=</span><span class="n">surface</span><span class="p">,</span>
+        <span class="n">built_at</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+        <span class="n">hostname</span><span class="o">=</span><span class="n">socket</span><span class="o">.</span><span class="n">gethostname</span><span class="p">(),</span>
+        <span class="n">torchcell_commit</span><span class="o">=</span><span class="n">commit</span><span class="p">,</span>
+        <span class="n">torchcell_dirty</span><span class="o">=</span><span class="n">dirty</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">)</span> <span class="o">/</span> <span class="n">MANIFEST_FILENAME</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="check_manifest">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.check_manifest.html#torchcell.provenance.check_manifest">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_manifest</span><span class="p">(</span>
+    <span class="n">manifest</span><span class="p">:</span> <span class="n">BuildManifest</span><span class="p">,</span> <span class="n">surface</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">,</span> <span class="n">preprocess_dir</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StaleResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Compare a manifest's stored fingerprints against the current local schema surface."""</span>
+    <span class="n">drift</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">SymbolDrift</span><span class="p">(</span>
+            <span class="n">symbol</span><span class="o">=</span><span class="n">symbol</span><span class="p">,</span>
+            <span class="n">stored_fingerprint</span><span class="o">=</span><span class="n">stored</span><span class="p">,</span>
+            <span class="n">current_fingerprint</span><span class="o">=</span><span class="n">surface</span><span class="o">.</span><span class="n">fingerprints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">symbol</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">stored</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">closure</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">surface</span><span class="o">.</span><span class="n">fingerprints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span> <span class="o">!=</span> <span class="n">stored</span>
+    <span class="p">]</span>
+    <span class="k">return</span> <span class="n">StaleResult</span><span class="p">(</span>
+        <span class="n">dataset_name</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span>
+        <span class="n">preprocess_dir</span><span class="o">=</span><span class="n">preprocess_dir</span><span class="p">,</span>
+        <span class="n">is_stale</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">drift</span><span class="p">),</span>
+        <span class="n">drift</span><span class="o">=</span><span class="n">drift</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_built_dataset_dirs</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Directories under DATA_ROOT that hold a built LMDB (``&lt;slug&gt;/processed/lmdb``)."""</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="n">lmdb</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span>
+            <span class="k">for</span> <span class="n">lmdb</span> <span class="ow">in</span> <span class="n">data_root</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">"data/torchcell/*/processed/lmdb"</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="check_all">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.check_all.html#torchcell.provenance.check_all">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_all</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">surface</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">DatasetCheck</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Check every built dataset under DATA_ROOT for schema staleness."""</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DatasetCheck</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">slug_dir</span> <span class="ow">in</span> <span class="n">_built_dataset_dirs</span><span class="p">(</span><span class="n">data_root</span><span class="p">):</span>
+        <span class="n">manifest_path</span> <span class="o">=</span> <span class="n">slug_dir</span> <span class="o">/</span> <span class="s2">"preprocess"</span> <span class="o">/</span> <span class="n">MANIFEST_FILENAME</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">manifest_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">DatasetCheck</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="n">slug_dir</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="s2">"unmanifested"</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">manifest</span> <span class="o">=</span> <span class="n">BuildManifest</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span>
+            <span class="n">manifest_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">check_manifest</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">surface</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">slug_dir</span> <span class="o">/</span> <span class="s2">"preprocess"</span><span class="p">))</span>
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">DatasetCheck</span><span class="p">(</span>
+                <span class="n">dataset_name</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span>
+                <span class="n">status</span><span class="o">=</span><span class="s2">"stale"</span> <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">is_stale</span> <span class="k">else</span> <span class="s2">"fresh"</span><span class="p">,</span>
+                <span class="n">drift</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">drift</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">results</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_format_report</span><span class="p">(</span><span class="n">checks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DatasetCheck</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">stale</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">checks</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"stale"</span><span class="p">]</span>
+    <span class="n">unmanifested</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">checks</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"unmanifested"</span><span class="p">]</span>
+    <span class="n">fresh</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">checks</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"fresh"</span><span class="p">]</span>
+    <span class="n">lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">"Built datasets: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">checks</span><span class="p">)</span><span class="si">}</span><span class="s2">  "</span>
+        <span class="sa">f</span><span class="s2">"(fresh </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">fresh</span><span class="p">)</span><span class="si">}</span><span class="s2">, stale </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">stale</span><span class="p">)</span><span class="si">}</span><span class="s2">, unmanifested </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">unmanifested</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
+        <span class="s2">""</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="n">stale</span><span class="p">:</span>
+        <span class="n">symbols</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">symbol</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">check</span><span class="o">.</span><span class="n">drift</span><span class="p">))</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  [STALE] </span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">  -&gt; rebuild; changed: </span><span class="si">{</span><span class="n">symbols</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="n">unmanifested</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"  [no manifest] </span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">  -&gt; written on next rebuild"</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">stale</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">unmanifested</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"  All built datasets are fresh against the local schema."</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="n">prog</span><span class="o">=</span><span class="s2">"python -m torchcell.provenance.build_manifest"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Check built datasets under DATA_ROOT for schema-contract staleness."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--data-root"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"root holding data/torchcell/&lt;slug&gt;/ (default: $DATA_ROOT from the environment)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">data_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">data_root</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">])</span>
+    <span class="n">checks</span> <span class="o">=</span> <span class="n">check_all</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="n">load_default_surface</span><span class="p">())</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">_format_report</span><span class="p">(</span><span class="n">checks</span><span class="p">))</span>
+    <span class="k">return</span> <span class="mi">1</span> <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"stale"</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">checks</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.wildenhain2015.EnvChemgenWildenhain2015Dataset
+=============================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.wildenhain2015
+
+.. autoclass:: EnvChemgenWildenhain2015Dataset
+   :show-inheritance:
+   :members:

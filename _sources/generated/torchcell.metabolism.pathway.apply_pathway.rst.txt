@@ -1,0 +1,6 @@
+﻿torchcell.metabolism.pathway.apply\_pathway
+===========================================
+
+.. currentmodule:: torchcell.metabolism.pathway
+
+.. autofunction:: apply_pathway

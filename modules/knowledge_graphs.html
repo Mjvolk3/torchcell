@@ -1,0 +1,729 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.knowledge_graphs &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/modules/knowledge_graphs.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="torchcell.knowledge_graphs.build_time_projection.AdapterTiming" href="../generated/torchcell.knowledge_graphs.build_time_projection.AdapterTiming.html" />
+    <link rel="prev" title="torchcell.graph.build_gene_multigraph" href="../generated/torchcell.graph.build_gene_multigraph.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="graph.html">torchcell.graph</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">torchcell.knowledge_graphs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#build-time-projection"><code class="docutils literal notranslate"><span class="pre">build_time_projection</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#create-kg"><code class="docutils literal notranslate"><span class="pre">create_kg</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#create-scerevisiae-kg"><code class="docutils literal notranslate"><span class="pre">create_scerevisiae_kg</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#create-scerevisiae-kg-small"><code class="docutils literal notranslate"><span class="pre">create_scerevisiae_kg_small</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gene-interactions-scerevisae-kg"><code class="docutils literal notranslate"><span class="pre">gene_interactions_scerevisae_kg</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gene-interactions-scerevisae-kg-small"><code class="docutils literal notranslate"><span class="pre">gene_interactions_scerevisae_kg_small</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#incremental-import"><code class="docutils literal notranslate"><span class="pre">incremental_import</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#kg-manifest"><code class="docutils literal notranslate"><span class="pre">kg_manifest</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#releases"><code class="docutils literal notranslate"><span class="pre">releases</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#smf-kg"><code class="docutils literal notranslate"><span class="pre">smf_kg</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#smf-tmi-combine-kg"><code class="docutils literal notranslate"><span class="pre">smf_tmi_combine_kg</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#subset"><code class="docutils literal notranslate"><span class="pre">subset</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#not-documented">Not documented</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">torchcell.knowledge_graphs</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/modules/knowledge_graphs.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-torchcell.knowledge_graphs">
+<span id="torchcell-knowledge-graphs"></span><h1>torchcell.knowledge_graphs<a class="headerlink" href="#module-torchcell.knowledge_graphs" title="Link to this heading"></a></h1>
+<p>Builders for the BioCypher knowledge graph and the manifest that governs changes to the served graph. <code class="docutils literal notranslate"><span class="pre">dataset_adapter_map</span></code> pairs each dataset class with its adapter, and the <code class="docutils literal notranslate"><span class="pre">create_*</span></code> modules run a BioCypher build over a configured set of datasets. <code class="docutils literal notranslate"><span class="pre">kg_manifest</span></code> records, per served dataset, the schema fingerprints and adapter code the graph was built under, and decides whether a new dataset can be admitted by incremental import or requires a full rebuild; <code class="docutils literal notranslate"><span class="pre">incremental_import</span></code> turns one BioCypher output directory into a Neo4j incremental import; <code class="docutils literal notranslate"><span class="pre">releases</span></code> names and lists served releases. The package resolves its two listed submodules lazily, because each imports every dataset loader and adapter.</p>
+<nav class="contents local" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#build-time-projection" id="id16"><code class="docutils literal notranslate"><span class="pre">build_time_projection</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#classes" id="id17">Classes</a></p></li>
+<li><p><a class="reference internal" href="#functions" id="id18">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#create-kg" id="id19"><code class="docutils literal notranslate"><span class="pre">create_kg</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id1" id="id20">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#create-scerevisiae-kg" id="id21"><code class="docutils literal notranslate"><span class="pre">create_scerevisiae_kg</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id2" id="id22">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#create-scerevisiae-kg-small" id="id23"><code class="docutils literal notranslate"><span class="pre">create_scerevisiae_kg_small</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id3" id="id24">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#gene-interactions-scerevisae-kg" id="id25"><code class="docutils literal notranslate"><span class="pre">gene_interactions_scerevisae_kg</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id4" id="id26">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#gene-interactions-scerevisae-kg-small" id="id27"><code class="docutils literal notranslate"><span class="pre">gene_interactions_scerevisae_kg_small</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id5" id="id28">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#incremental-import" id="id29"><code class="docutils literal notranslate"><span class="pre">incremental_import</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id6" id="id30">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id7" id="id31">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#kg-manifest" id="id32"><code class="docutils literal notranslate"><span class="pre">kg_manifest</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id8" id="id33">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id9" id="id34">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#releases" id="id35"><code class="docutils literal notranslate"><span class="pre">releases</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id10" id="id36">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id11" id="id37">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#smf-kg" id="id38"><code class="docutils literal notranslate"><span class="pre">smf_kg</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id12" id="id39">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#smf-tmi-combine-kg" id="id40"><code class="docutils literal notranslate"><span class="pre">smf_tmi_combine_kg</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id13" id="id41">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#subset" id="id42"><code class="docutils literal notranslate"><span class="pre">subset</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id14" id="id43">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id15" id="id44">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#not-documented" id="id45">Not documented</a></p></li>
+</ul>
+</nav>
+<section id="build-time-projection">
+<h2><a class="toc-backref" href="#id16" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">build_time_projection</span></code></a><a class="headerlink" href="#build-time-projection" title="Link to this heading"></a></h2>
+<p>Project the tcdb knowledge-graph BUILD (CSV-generation) time for any subset config.</p>
+<section id="classes">
+<h3><a class="toc-backref" href="#id17" role="doc-backlink">Classes</a><a class="headerlink" href="#classes" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.AdapterTiming.html#torchcell.knowledge_graphs.build_time_projection.AdapterTiming" title="torchcell.knowledge_graphs.build_time_projection.AdapterTiming"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_time_projection.AdapterTiming</span></code></a></p></td>
+<td><p>One adapter's measured CSV-generation timing from a calibration build.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.CalibrationTimings.html#torchcell.knowledge_graphs.build_time_projection.CalibrationTimings" title="torchcell.knowledge_graphs.build_time_projection.CalibrationTimings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_time_projection.CalibrationTimings</span></code></a></p></td>
+<td><p>Parsed calibration file (per-adapter timings + the measured total).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.SubsetConfig.html#torchcell.knowledge_graphs.build_time_projection.SubsetConfig" title="torchcell.knowledge_graphs.build_time_projection.SubsetConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_time_projection.SubsetConfig</span></code></a></p></td>
+<td><p>A KG-build subset config, mirroring the hydra <code class="docutils literal notranslate"><span class="pre">kg_*.yaml</span></code> <code class="docutils literal notranslate"><span class="pre">subset</span></code> block.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.DatasetSize.html#torchcell.knowledge_graphs.build_time_projection.DatasetSize" title="torchcell.knowledge_graphs.build_time_projection.DatasetSize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_time_projection.DatasetSize</span></code></a></p></td>
+<td><p>Full (uncapped) record count for one dataset, with its provenance source.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.AdapterRate.html#torchcell.knowledge_graphs.build_time_projection.AdapterRate" title="torchcell.knowledge_graphs.build_time_projection.AdapterRate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_time_projection.AdapterRate</span></code></a></p></td>
+<td><p>Per-adapter calibrated generation rate (seconds per record processed).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.AdapterContribution.html#torchcell.knowledge_graphs.build_time_projection.AdapterContribution" title="torchcell.knowledge_graphs.build_time_projection.AdapterContribution"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_time_projection.AdapterContribution</span></code></a></p></td>
+<td><p>One adapter's projected contribution to a build under some subset config.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.BuildTimeProjection.html#torchcell.knowledge_graphs.build_time_projection.BuildTimeProjection" title="torchcell.knowledge_graphs.build_time_projection.BuildTimeProjection"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_time_projection.BuildTimeProjection</span></code></a></p></td>
+<td><p>Projected build (CSV-generation) time for a subset config, with a breakdown.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3><a class="toc-backref" href="#id18" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.load_timings.html#torchcell.knowledge_graphs.build_time_projection.load_timings" title="torchcell.knowledge_graphs.build_time_projection.load_timings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_time_projection.load_timings</span></code></a></p></td>
+<td><p>Load and validate a calibration-timings JSON file (e.g. job 966).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.dataset_sizes.html#torchcell.knowledge_graphs.build_time_projection.dataset_sizes" title="torchcell.knowledge_graphs.build_time_projection.dataset_sizes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_time_projection.dataset_sizes</span></code></a></p></td>
+<td><p>Return the committed full record counts as typed <code class="xref py py-class docutils literal notranslate"><span class="pre">DatasetSize</span></code> rows.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.calibrate.html#torchcell.knowledge_graphs.build_time_projection.calibrate" title="torchcell.knowledge_graphs.build_time_projection.calibrate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_time_projection.calibrate</span></code></a></p></td>
+<td><p>Fit a per-record rate for each adapter from the calibration build.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.project_build_time.html#torchcell.knowledge_graphs.build_time_projection.project_build_time" title="torchcell.knowledge_graphs.build_time_projection.project_build_time"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_time_projection.project_build_time</span></code></a></p></td>
+<td><p>Project total build time for <code class="docutils literal notranslate"><span class="pre">subset_config</span></code> from calibrated <code class="docutils literal notranslate"><span class="pre">rates</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.gather_dataset_full_records.html#torchcell.knowledge_graphs.build_time_projection.gather_dataset_full_records" title="torchcell.knowledge_graphs.build_time_projection.gather_dataset_full_records"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_time_projection.gather_dataset_full_records</span></code></a></p></td>
+<td><p>Regenerate full record counts by reading each dataset's LMDB <code class="docutils literal notranslate"><span class="pre">stat</span></code> entries.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="create-kg">
+<h2><a class="toc-backref" href="#id19" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">create_kg</span></code></a><a class="headerlink" href="#create-kg" title="Link to this heading"></a></h2>
+<p>Build a S. cerevisiae BioCypher knowledge graph from configured datasets.</p>
+<section id="id1">
+<h3><a class="toc-backref" href="#id20" role="doc-backlink">Functions</a><a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.create_kg.get_num_workers.html#torchcell.knowledge_graphs.create_kg.get_num_workers" title="torchcell.knowledge_graphs.create_kg.get_num_workers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_kg.get_num_workers</span></code></a></p></td>
+<td><p>Get the number of CPUs allocated by SLURM.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="create-scerevisiae-kg">
+<h2><a class="toc-backref" href="#id21" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">create_scerevisiae_kg</span></code></a><a class="headerlink" href="#create-scerevisiae-kg" title="Link to this heading"></a></h2>
+<p>Build the S. cerevisiae BioCypher knowledge graph from torchcell datasets.</p>
+<section id="id2">
+<h3><a class="toc-backref" href="#id22" role="doc-backlink">Functions</a><a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.create_scerevisiae_kg.get_num_workers.html#torchcell.knowledge_graphs.create_scerevisiae_kg.get_num_workers" title="torchcell.knowledge_graphs.create_scerevisiae_kg.get_num_workers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_scerevisiae_kg.get_num_workers</span></code></a></p></td>
+<td><p>Get the number of CPUs allocated by SLURM.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="create-scerevisiae-kg-small">
+<h2><a class="toc-backref" href="#id23" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">create_scerevisiae_kg_small</span></code></a><a class="headerlink" href="#create-scerevisiae-kg-small" title="Link to this heading"></a></h2>
+<p>Build a small S. cerevisiae BioCypher knowledge graph from Costanzo/Kuzmin data.</p>
+<section id="id3">
+<h3><a class="toc-backref" href="#id24" role="doc-backlink">Functions</a><a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.create_scerevisiae_kg_small.get_num_workers.html#torchcell.knowledge_graphs.create_scerevisiae_kg_small.get_num_workers" title="torchcell.knowledge_graphs.create_scerevisiae_kg_small.get_num_workers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_scerevisiae_kg_small.get_num_workers</span></code></a></p></td>
+<td><p>Get the number of CPUs allocated by SLURM.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="gene-interactions-scerevisae-kg">
+<h2><a class="toc-backref" href="#id25" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">gene_interactions_scerevisae_kg</span></code></a><a class="headerlink" href="#gene-interactions-scerevisae-kg" title="Link to this heading"></a></h2>
+<p>Build the S. cerevisiae gene-interaction BioCypher knowledge graph.</p>
+<section id="id4">
+<h3><a class="toc-backref" href="#id26" role="doc-backlink">Functions</a><a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.gene_interactions_scerevisae_kg.get_num_workers.html#torchcell.knowledge_graphs.gene_interactions_scerevisae_kg.get_num_workers" title="torchcell.knowledge_graphs.gene_interactions_scerevisae_kg.get_num_workers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gene_interactions_scerevisae_kg.get_num_workers</span></code></a></p></td>
+<td><p>Get the number of CPUs allocated by SLURM.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="gene-interactions-scerevisae-kg-small">
+<h2><a class="toc-backref" href="#id27" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">gene_interactions_scerevisae_kg_small</span></code></a><a class="headerlink" href="#gene-interactions-scerevisae-kg-small" title="Link to this heading"></a></h2>
+<p>Build a small S. cerevisiae gene-interaction BioCypher knowledge graph.</p>
+<section id="id5">
+<h3><a class="toc-backref" href="#id28" role="doc-backlink">Functions</a><a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.gene_interactions_scerevisae_kg_small.get_num_workers.html#torchcell.knowledge_graphs.gene_interactions_scerevisae_kg_small.get_num_workers" title="torchcell.knowledge_graphs.gene_interactions_scerevisae_kg_small.get_num_workers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gene_interactions_scerevisae_kg_small.get_num_workers</span></code></a></p></td>
+<td><p>Get the number of CPUs allocated by SLURM.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="incremental-import">
+<h2><a class="toc-backref" href="#id29" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">incremental_import</span></code></a><a class="headerlink" href="#incremental-import" title="Link to this heading"></a></h2>
+<p>Turn one BioCypher output directory into a Neo4j <em>incremental</em> import.</p>
+<section id="id6">
+<h3><a class="toc-backref" href="#id30" role="doc-backlink">Classes</a><a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.CsvGroup.html#torchcell.knowledge_graphs.incremental_import.CsvGroup" title="torchcell.knowledge_graphs.incremental_import.CsvGroup"><code class="xref py py-obj docutils literal notranslate"><span class="pre">incremental_import.CsvGroup</span></code></a></p></td>
+<td><p>One BioCypher label's files: a header plus its <code class="docutils literal notranslate"><span class="pre">-partNNN.csv</span></code> data files.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.ReferenceAnalysis.html#torchcell.knowledge_graphs.incremental_import.ReferenceAnalysis" title="torchcell.knowledge_graphs.incremental_import.ReferenceAnalysis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">incremental_import.ReferenceAnalysis</span></code></a></p></td>
+<td><p>What this increment's relationships point at, split by where the nodes live.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.IncrementalImportPlan.html#torchcell.knowledge_graphs.incremental_import.IncrementalImportPlan" title="torchcell.knowledge_graphs.incremental_import.IncrementalImportPlan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">incremental_import.IncrementalImportPlan</span></code></a></p></td>
+<td><p>Everything written into a BioCypher output directory to make it incremental.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.ExistingEdgeFilter.html#torchcell.knowledge_graphs.incremental_import.ExistingEdgeFilter" title="torchcell.knowledge_graphs.incremental_import.ExistingEdgeFilter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">incremental_import.ExistingEdgeFilter</span></code></a></p></td>
+<td><p>Outcome of dropping relationship rows that the served store already holds.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id7">
+<h3><a class="toc-backref" href="#id31" role="doc-backlink">Functions</a><a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.discover_csv_groups.html#torchcell.knowledge_graphs.incremental_import.discover_csv_groups" title="torchcell.knowledge_graphs.incremental_import.discover_csv_groups"><code class="xref py py-obj docutils literal notranslate"><span class="pre">incremental_import.discover_csv_groups</span></code></a></p></td>
+<td><p>Group a BioCypher output directory's files by label, sorted by label.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.incremental_node_header.html#torchcell.knowledge_graphs.incremental_import.incremental_node_header" title="torchcell.knowledge_graphs.incremental_import.incremental_node_header"><code class="xref py py-obj docutils literal notranslate"><span class="pre">incremental_import.incremental_node_header</span></code></a></p></td>
+<td><p>Rewrite a BioCypher node header for incremental import.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.write_incremental_headers.html#torchcell.knowledge_graphs.incremental_import.write_incremental_headers" title="torchcell.knowledge_graphs.incremental_import.write_incremental_headers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">incremental_import.write_incremental_headers</span></code></a></p></td>
+<td><p>Write <code class="docutils literal notranslate"><span class="pre">&lt;Label&gt;-header.incremental.csv</span></code> beside every node header; return them.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.constraints_cypher.html#torchcell.knowledge_graphs.incremental_import.constraints_cypher" title="torchcell.knowledge_graphs.incremental_import.constraints_cypher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">incremental_import.constraints_cypher</span></code></a></p></td>
+<td><p>Cypher creating THE uniqueness constraint keying the global id space.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.analyze_references.html#torchcell.knowledge_graphs.incremental_import.analyze_references" title="torchcell.knowledge_graphs.incremental_import.analyze_references"><code class="xref py py-obj docutils literal notranslate"><span class="pre">incremental_import.analyze_references</span></code></a></p></td>
+<td><p>Count nodes/edges and find endpoints that lie outside this increment.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.incremental_import_call.html#torchcell.knowledge_graphs.incremental_import.incremental_import_call" title="torchcell.knowledge_graphs.incremental_import.incremental_import_call"><code class="xref py py-obj docutils literal notranslate"><span class="pre">incremental_import.incremental_import_call</span></code></a></p></td>
+<td><p>The <code class="docutils literal notranslate"><span class="pre">neo4j-admin</span> <span class="pre">database</span> <span class="pre">import</span> <span class="pre">incremental</span></code> command for this increment.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.prepare_incremental_import.html#torchcell.knowledge_graphs.incremental_import.prepare_incremental_import" title="torchcell.knowledge_graphs.incremental_import.prepare_incremental_import"><code class="xref py py-obj docutils literal notranslate"><span class="pre">incremental_import.prepare_incremental_import</span></code></a></p></td>
+<td><p>Write headers, constraints, the call script and the analysis into <code class="docutils literal notranslate"><span class="pre">out_dir</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.query_existing_edges.html#torchcell.knowledge_graphs.incremental_import.query_existing_edges" title="torchcell.knowledge_graphs.incremental_import.query_existing_edges"><code class="xref py py-obj docutils literal notranslate"><span class="pre">incremental_import.query_existing_edges</span></code></a></p></td>
+<td><p>Which <code class="docutils literal notranslate"><span class="pre">(start,</span> <span class="pre">end)</span></code> pairs already carry a relationship of this group's type.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.filter_existing_edges.html#torchcell.knowledge_graphs.incremental_import.filter_existing_edges" title="torchcell.knowledge_graphs.incremental_import.filter_existing_edges"><code class="xref py py-obj docutils literal notranslate"><span class="pre">incremental_import.filter_existing_edges</span></code></a></p></td>
+<td><p>Rewrite every edge part file without the rows <code class="docutils literal notranslate"><span class="pre">lookup</span></code> reports as existing.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="kg-manifest">
+<h2><a class="toc-backref" href="#id32" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">kg_manifest</span></code></a><a class="headerlink" href="#kg-manifest" title="Link to this heading"></a></h2>
+<p>The served knowledge graph’s build manifest, and the admission check for adding a dataset to it without rebuilding the others.</p>
+<section id="id8">
+<h3><a class="toc-backref" href="#id33" role="doc-backlink">Classes</a><a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.GraphSchemaEntry.html#torchcell.knowledge_graphs.kg_manifest.GraphSchemaEntry" title="torchcell.knowledge_graphs.kg_manifest.GraphSchemaEntry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.GraphSchemaEntry</span></code></a></p></td>
+<td><p>One BioCypher class: what the graph stores for it.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.SupersetLineage.html#torchcell.knowledge_graphs.kg_manifest.SupersetLineage" title="torchcell.knowledge_graphs.kg_manifest.SupersetLineage"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.SupersetLineage</span></code></a></p></td>
+<td><p>The entry a served dataset grew from when it was re-admitted as a superset.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.KgDatasetEntry.html#torchcell.knowledge_graphs.kg_manifest.KgDatasetEntry" title="torchcell.knowledge_graphs.kg_manifest.KgDatasetEntry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.KgDatasetEntry</span></code></a></p></td>
+<td><p>A dataset as it exists in the served store.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.KgEvent.html#torchcell.knowledge_graphs.kg_manifest.KgEvent" title="torchcell.knowledge_graphs.kg_manifest.KgEvent"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.KgEvent</span></code></a></p></td>
+<td><p>One change to the served store.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.KgBuildManifest.html#torchcell.knowledge_graphs.kg_manifest.KgBuildManifest" title="torchcell.knowledge_graphs.kg_manifest.KgBuildManifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.KgBuildManifest</span></code></a></p></td>
+<td><p>What the served knowledge graph was built from, dataset by dataset.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.ServedDrift.html#torchcell.knowledge_graphs.kg_manifest.ServedDrift" title="torchcell.knowledge_graphs.kg_manifest.ServedDrift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.ServedDrift</span></code></a></p></td>
+<td><p>A served dataset whose schema closure no longer matches the store.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.AdapterDrift.html#torchcell.knowledge_graphs.kg_manifest.AdapterDrift" title="torchcell.knowledge_graphs.kg_manifest.AdapterDrift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.AdapterDrift</span></code></a></p></td>
+<td><p>Adapter code changes that could move ids or properties of SERVED nodes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.SupersetCheck.html#torchcell.knowledge_graphs.kg_manifest.SupersetCheck" title="torchcell.knowledge_graphs.kg_manifest.SupersetCheck"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.SupersetCheck</span></code></a></p></td>
+<td><p>Proof that a served dataset's records are all still produced by its dev LMDB.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.AdmissionReport.html#torchcell.knowledge_graphs.kg_manifest.AdmissionReport" title="torchcell.knowledge_graphs.kg_manifest.AdmissionReport"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.AdmissionReport</span></code></a></p></td>
+<td><p>Verdict on adding one dataset to the served store incrementally.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.BatchAdmissionReport.html#torchcell.knowledge_graphs.kg_manifest.BatchAdmissionReport" title="torchcell.knowledge_graphs.kg_manifest.BatchAdmissionReport"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.BatchAdmissionReport</span></code></a></p></td>
+<td><p>Verdict on adding SEVERAL datasets to the served store in ONE increment.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id9">
+<h3><a class="toc-backref" href="#id34" role="doc-backlink">Functions</a><a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.graph_schema_from_yaml.html#torchcell.knowledge_graphs.kg_manifest.graph_schema_from_yaml" title="torchcell.knowledge_graphs.kg_manifest.graph_schema_from_yaml"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.graph_schema_from_yaml</span></code></a></p></td>
+<td><p>Parse <code class="docutils literal notranslate"><span class="pre">torchcell_schema_config.yaml</span></code> into per-class entries.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.cell_adapter_surface.html#torchcell.knowledge_graphs.kg_manifest.cell_adapter_surface" title="torchcell.knowledge_graphs.kg_manifest.cell_adapter_surface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.cell_adapter_surface</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(method</span> <span class="pre">fingerprints,</span> <span class="pre">conf-name</span> <span class="pre">-&gt;</span> <span class="pre">method)</span></code> of <code class="docutils literal notranslate"><span class="pre">CellAdapter</span></code> from its source.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.adapter_file_relpaths.html#torchcell.knowledge_graphs.kg_manifest.adapter_file_relpaths" title="torchcell.knowledge_graphs.kg_manifest.adapter_file_relpaths"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.adapter_file_relpaths</span></code></a></p></td>
+<td><p>Every per-dataset adapter module and conf yaml in the working tree.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.dataset_adapter_files.html#torchcell.knowledge_graphs.kg_manifest.dataset_adapter_files" title="torchcell.knowledge_graphs.kg_manifest.dataset_adapter_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.dataset_adapter_files</span></code></a></p></td>
+<td><p>Repo-relative adapter module + conf yaml serving <code class="docutils literal notranslate"><span class="pre">dataset_class</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.dataset_conf_methods.html#torchcell.knowledge_graphs.kg_manifest.dataset_conf_methods" title="torchcell.knowledge_graphs.kg_manifest.dataset_conf_methods"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.dataset_conf_methods</span></code></a></p></td>
+<td><p>Conf method names (node + edge) the dataset's adapter enables.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.loader_relpath.html#torchcell.knowledge_graphs.kg_manifest.loader_relpath" title="torchcell.knowledge_graphs.kg_manifest.loader_relpath"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.loader_relpath</span></code></a></p></td>
+<td><p>Repo-relative path of the module that defines <code class="docutils literal notranslate"><span class="pre">dataset_class</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.surface_at_ref.html#torchcell.knowledge_graphs.kg_manifest.surface_at_ref" title="torchcell.knowledge_graphs.kg_manifest.surface_at_ref"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.surface_at_ref</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.surface_in_worktree.html#torchcell.knowledge_graphs.kg_manifest.surface_in_worktree" title="torchcell.knowledge_graphs.kg_manifest.surface_in_worktree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.surface_in_worktree</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.value_surface_from_sources.html#torchcell.knowledge_graphs.kg_manifest.value_surface_from_sources" title="torchcell.knowledge_graphs.kg_manifest.value_surface_from_sources"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.value_surface_from_sources</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">relpath</span> <span class="pre">-&gt;</span> <span class="pre">sha256</span></code> of shared value-file CONTENT.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.value_surface_in_worktree.html#torchcell.knowledge_graphs.kg_manifest.value_surface_in_worktree" title="torchcell.knowledge_graphs.kg_manifest.value_surface_in_worktree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.value_surface_in_worktree</span></code></a></p></td>
+<td><p>The value surface of the working tree (files that exist).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.value_surface_at_ref.html#torchcell.knowledge_graphs.kg_manifest.value_surface_at_ref" title="torchcell.knowledge_graphs.kg_manifest.value_surface_at_ref"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.value_surface_at_ref</span></code></a></p></td>
+<td><p>The value surface as it was at <code class="docutils literal notranslate"><span class="pre">ref</span></code> (files that existed at that commit).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.value_surface_drift.html#torchcell.knowledge_graphs.kg_manifest.value_surface_drift" title="torchcell.knowledge_graphs.kg_manifest.value_surface_drift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.value_surface_drift</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(changed,</span> <span class="pre">added)</span></code> between a recorded value surface and the current one.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.closure_at_ref.html#torchcell.knowledge_graphs.kg_manifest.closure_at_ref" title="torchcell.knowledge_graphs.kg_manifest.closure_at_ref"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.closure_at_ref</span></code></a></p></td>
+<td><p>Symbol -&gt; fingerprint for a loader's closure, both taken at <code class="docutils literal notranslate"><span class="pre">ref</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.closure_in_worktree.html#torchcell.knowledge_graphs.kg_manifest.closure_in_worktree" title="torchcell.knowledge_graphs.kg_manifest.closure_in_worktree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.closure_in_worktree</span></code></a></p></td>
+<td><p>Symbol -&gt; fingerprint for a loader's closure, from the working tree.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.load_manifest.html#torchcell.knowledge_graphs.kg_manifest.load_manifest" title="torchcell.knowledge_graphs.kg_manifest.load_manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.load_manifest</span></code></a></p></td>
+<td><p>Read a manifest JSON file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.save_manifest.html#torchcell.knowledge_graphs.kg_manifest.save_manifest" title="torchcell.knowledge_graphs.kg_manifest.save_manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.save_manifest</span></code></a></p></td>
+<td><p>Write the manifest, stamping <code class="docutils literal notranslate"><span class="pre">updated_at</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.bootstrap_manifest.html#torchcell.knowledge_graphs.kg_manifest.bootstrap_manifest" title="torchcell.knowledge_graphs.kg_manifest.bootstrap_manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.bootstrap_manifest</span></code></a></p></td>
+<td><p>Reconstruct the manifest of a store built by a FULL build at <code class="docutils literal notranslate"><span class="pre">commit</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.experiment_node_id.html#torchcell.knowledge_graphs.kg_manifest.experiment_node_id" title="torchcell.knowledge_graphs.kg_manifest.experiment_node_id"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.experiment_node_id</span></code></a></p></td>
+<td><p>The content-addressed id <code class="docutils literal notranslate"><span class="pre">CellAdapter._experiment_node</span></code> gives an experiment.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.dev_experiment_ids.html#torchcell.knowledge_graphs.kg_manifest.dev_experiment_ids" title="torchcell.knowledge_graphs.kg_manifest.dev_experiment_ids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.dev_experiment_ids</span></code></a></p></td>
+<td><p>Experiment node ids the dev-tree LMDB of <code class="docutils literal notranslate"><span class="pre">dataset_class</span></code> produces, in order.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.superset_check.html#torchcell.knowledge_graphs.kg_manifest.superset_check" title="torchcell.knowledge_graphs.kg_manifest.superset_check"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.superset_check</span></code></a></p></td>
+<td><p>Compare the ids a store holds for a dataset with the ids its dev LMDB produces.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.live_experiment_ids.html#torchcell.knowledge_graphs.kg_manifest.live_experiment_ids" title="torchcell.knowledge_graphs.kg_manifest.live_experiment_ids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.live_experiment_ids</span></code></a></p></td>
+<td><p>Experiment node ids under one Dataset node of a running store.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.adapter_drift_against.html#torchcell.knowledge_graphs.kg_manifest.adapter_drift_against" title="torchcell.knowledge_graphs.kg_manifest.adapter_drift_against"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.adapter_drift_against</span></code></a></p></td>
+<td><p>Adapter changes since the build that touch served datasets; plus new methods.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.check_admission.html#torchcell.knowledge_graphs.kg_manifest.check_admission" title="torchcell.knowledge_graphs.kg_manifest.check_admission"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.check_admission</span></code></a></p></td>
+<td><p>Decide whether <code class="docutils literal notranslate"><span class="pre">dataset_class_name</span></code> can be added to the store incrementally.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.batch_report_from_members.html#torchcell.knowledge_graphs.kg_manifest.batch_report_from_members" title="torchcell.knowledge_graphs.kg_manifest.batch_report_from_members"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.batch_report_from_members</span></code></a></p></td>
+<td><p>Aggregate per-dataset admission reports into one batch verdict.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.check_batch_admission.html#torchcell.knowledge_graphs.kg_manifest.check_batch_admission" title="torchcell.knowledge_graphs.kg_manifest.check_batch_admission"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.check_batch_admission</span></code></a></p></td>
+<td><p>Decide whether every named dataset can be added in ONE incremental import.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.record_admission.html#torchcell.knowledge_graphs.kg_manifest.record_admission" title="torchcell.knowledge_graphs.kg_manifest.record_admission"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.record_admission</span></code></a></p></td>
+<td><p>Append an admitted dataset to the manifest (call after the import succeeded).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.record_batch_admission.html#torchcell.knowledge_graphs.kg_manifest.record_batch_admission" title="torchcell.knowledge_graphs.kg_manifest.record_batch_admission"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.record_batch_admission</span></code></a></p></td>
+<td><p>Record every member of an admitted batch under ONE event.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.live_dataset_counts.html#torchcell.knowledge_graphs.kg_manifest.live_dataset_counts" title="torchcell.knowledge_graphs.kg_manifest.live_dataset_counts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.live_dataset_counts</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Dataset.id</span> <span class="pre">-&gt;</span> <span class="pre">number</span> <span class="pre">of</span> <span class="pre">ExperimentMemberOf</span> <span class="pre">edges</span></code> from a running store.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.live_neo4j_version.html#torchcell.knowledge_graphs.kg_manifest.live_neo4j_version" title="torchcell.knowledge_graphs.kg_manifest.live_neo4j_version"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.live_neo4j_version</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.format_report.html#torchcell.knowledge_graphs.kg_manifest.format_report" title="torchcell.knowledge_graphs.kg_manifest.format_report"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.format_report</span></code></a></p></td>
+<td><p>One dataset's verdict, with the evidence each blocker is decided from.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.format_batch_report.html#torchcell.knowledge_graphs.kg_manifest.format_batch_report" title="torchcell.knowledge_graphs.kg_manifest.format_batch_report"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.format_batch_report</span></code></a></p></td>
+<td><p>The batch verdict, every member's report, and the two cross-member views.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.load_report.html#torchcell.knowledge_graphs.kg_manifest.load_report" title="torchcell.knowledge_graphs.kg_manifest.load_report"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.load_report</span></code></a></p></td>
+<td><p>Read an admission report; a BATCH report is the one carrying <code class="docutils literal notranslate"><span class="pre">members</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.split_dataset_args.html#torchcell.knowledge_graphs.kg_manifest.split_dataset_args" title="torchcell.knowledge_graphs.kg_manifest.split_dataset_args"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.split_dataset_args</span></code></a></p></td>
+<td><p>Dataset names from repeated <code class="docutils literal notranslate"><span class="pre">--dataset</span></code> values, each optionally a comma list.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.parse_n_experiments.html#torchcell.knowledge_graphs.kg_manifest.parse_n_experiments" title="torchcell.knowledge_graphs.kg_manifest.parse_n_experiments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.parse_n_experiments</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">--n-experiments</span></code> values as <code class="docutils literal notranslate"><span class="pre">dataset</span> <span class="pre">-&gt;</span> <span class="pre">count</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="releases">
+<h2><a class="toc-backref" href="#id35" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">releases</span></code></a><a class="headerlink" href="#releases" title="Link to this heading"></a></h2>
+<p>Knowledge-graph releases: what version a served store is, which datasets it holds, and whether a dataset’s bytes changed between two versions.</p>
+<section id="id10">
+<h3><a class="toc-backref" href="#id36" role="doc-backlink">Classes</a><a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.ReleaseDataset.html#torchcell.knowledge_graphs.releases.ReleaseDataset" title="torchcell.knowledge_graphs.releases.ReleaseDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.ReleaseDataset</span></code></a></p></td>
+<td><p>One dataset as one release serves it.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.KgRelease.html#torchcell.knowledge_graphs.releases.KgRelease" title="torchcell.knowledge_graphs.releases.KgRelease"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.KgRelease</span></code></a></p></td>
+<td><p>The self-description a served store carries as its <code class="docutils literal notranslate"><span class="pre">KgRelease</span></code> node.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.ServedDatabase.html#torchcell.knowledge_graphs.releases.ServedDatabase" title="torchcell.knowledge_graphs.releases.ServedDatabase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.ServedDatabase</span></code></a></p></td>
+<td><p>One database of a DBMS as <code class="docutils literal notranslate"><span class="pre">SHOW</span> <span class="pre">DATABASES</span></code> and its release node describe it.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.ReleaseDiff.html#torchcell.knowledge_graphs.releases.ReleaseDiff" title="torchcell.knowledge_graphs.releases.ReleaseDiff"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.ReleaseDiff</span></code></a></p></td>
+<td><p>Datasets by what happened to their bytes between two releases.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.DatasetDrift.html#torchcell.knowledge_graphs.releases.DatasetDrift" title="torchcell.knowledge_graphs.releases.DatasetDrift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.DatasetDrift</span></code></a></p></td>
+<td><p>A served dataset the local code would serialize under a different contract.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.ReleaseCompatibility.html#torchcell.knowledge_graphs.releases.ReleaseCompatibility" title="torchcell.knowledge_graphs.releases.ReleaseCompatibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.ReleaseCompatibility</span></code></a></p></td>
+<td><p>Whether the local schema surface matches the contracts a release was built under.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id11">
+<h3><a class="toc-backref" href="#id37" role="doc-backlink">Functions</a><a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.release_id.html#torchcell.knowledge_graphs.releases.release_id" title="torchcell.knowledge_graphs.releases.release_id"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.release_id</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&lt;YYYY.MM.DD&gt;-&lt;commit[:8]&gt;</span></code>: the build date and the generation commit.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.next_version.html#torchcell.knowledge_graphs.releases.next_version" title="torchcell.knowledge_graphs.releases.next_version"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.next_version</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">major.minor</span></code> after a full build (major + 1, minor 0) or an admission (minor + 1).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.content_sha256.html#torchcell.knowledge_graphs.releases.content_sha256" title="torchcell.knowledge_graphs.releases.content_sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.content_sha256</span></code></a></p></td>
+<td><p>sha256 of the sorted, newline-joined ids (trailing newline).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.content_hashes_from_csv.html#torchcell.knowledge_graphs.releases.content_hashes_from_csv" title="torchcell.knowledge_graphs.releases.content_hashes_from_csv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.content_hashes_from_csv</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Dataset.id</span> <span class="pre">-&gt;</span> <span class="pre">content_sha256</span></code> from a BioCypher output directory.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.content_hashes_from_store.html#torchcell.knowledge_graphs.releases.content_hashes_from_store" title="torchcell.knowledge_graphs.releases.content_hashes_from_store"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.content_hashes_from_store</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Dataset.id</span> <span class="pre">-&gt;</span> <span class="pre">content_sha256</span></code> streamed from a running store, one dataset at a time.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.read_release.html#torchcell.knowledge_graphs.releases.read_release" title="torchcell.knowledge_graphs.releases.read_release"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.read_release</span></code></a></p></td>
+<td><p>The store's release node, or None when the store predates release nodes.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.write_release.html#torchcell.knowledge_graphs.releases.write_release" title="torchcell.knowledge_graphs.releases.write_release"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.write_release</span></code></a></p></td>
+<td><p>Write (or replace) the store's single release node; the database must be writable.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.release_from_manifest.html#torchcell.knowledge_graphs.releases.release_from_manifest" title="torchcell.knowledge_graphs.releases.release_from_manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.release_from_manifest</span></code></a></p></td>
+<td><p>The release record a manifest describes, with the measured content hashes.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.stamp_manifest.html#torchcell.knowledge_graphs.releases.stamp_manifest" title="torchcell.knowledge_graphs.releases.stamp_manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.stamp_manifest</span></code></a></p></td>
+<td><p>Give a manifest its version, release id, package version, and content hashes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.list_databases.html#torchcell.knowledge_graphs.releases.list_databases" title="torchcell.knowledge_graphs.releases.list_databases"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.list_databases</span></code></a></p></td>
+<td><p>Every user database of the DBMS at <code class="docutils literal notranslate"><span class="pre">uri</span></code> with its aliases, release, and health.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.list_databases_bounded.html#torchcell.knowledge_graphs.releases.list_databases_bounded" title="torchcell.knowledge_graphs.releases.list_databases_bounded"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.list_databases_bounded</span></code></a></p></td>
+<td><p><code class="xref py py-func docutils literal notranslate"><span class="pre">list_databases()</span></code> with a wall-clock bound; a hung host yields one row.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.resolve_database.html#torchcell.knowledge_graphs.releases.resolve_database" title="torchcell.knowledge_graphs.releases.resolve_database"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.resolve_database</span></code></a></p></td>
+<td><p>The database name to open for <code class="docutils literal notranslate"><span class="pre">version</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.datasets.html#torchcell.knowledge_graphs.releases.datasets" title="torchcell.knowledge_graphs.releases.datasets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.datasets</span></code></a></p></td>
+<td><p>The datasets a version serves, with record counts and content hashes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.diff.html#torchcell.knowledge_graphs.releases.diff" title="torchcell.knowledge_graphs.releases.diff"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.diff</span></code></a></p></td>
+<td><p>Datasets unchanged (byte-identical), changed, added, and removed from <code class="docutils literal notranslate"><span class="pre">a</span></code> to <code class="docutils literal notranslate"><span class="pre">b</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.compatibility.html#torchcell.knowledge_graphs.releases.compatibility" title="torchcell.knowledge_graphs.releases.compatibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.compatibility</span></code></a></p></td>
+<td><p>Which served datasets the checkout at <code class="docutils literal notranslate"><span class="pre">repo_root</span></code> would serialize differently.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.commit_index.html#torchcell.knowledge_graphs.releases.commit_index" title="torchcell.knowledge_graphs.releases.commit_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.commit_index</span></code></a></p></td>
+<td><p>Position of <code class="docutils literal notranslate"><span class="pre">sha</span></code> on linear main, <code class="docutils literal notranslate"><span class="pre">(off-main)</span></code>, or <code class="docutils literal notranslate"><span class="pre">(unknown)</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.commit_date.html#torchcell.knowledge_graphs.releases.commit_date" title="torchcell.knowledge_graphs.releases.commit_date"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.commit_date</span></code></a></p></td>
+<td><p>Committer date of <code class="docutils literal notranslate"><span class="pre">sha</span></code> as <code class="docutils literal notranslate"><span class="pre">YYYY.MM.DD</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.behind_main.html#torchcell.knowledge_graphs.releases.behind_main" title="torchcell.knowledge_graphs.releases.behind_main"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.behind_main</span></code></a></p></td>
+<td><p>How far a served commit lags local main.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.status_rows.html#torchcell.knowledge_graphs.releases.status_rows" title="torchcell.knowledge_graphs.releases.status_rows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.status_rows</span></code></a></p></td>
+<td><p>Table rows for one host: HOST DATABASE VERSION RELEASE PKG COMMIT# DATE DATASETS NODES ALIASES STATUS.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.format_table.html#torchcell.knowledge_graphs.releases.format_table" title="torchcell.knowledge_graphs.releases.format_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.format_table</span></code></a></p></td>
+<td><p>Fixed-width table with the header row.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="smf-kg">
+<h2><a class="toc-backref" href="#id38" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">smf_kg</span></code></a><a class="headerlink" href="#smf-kg" title="Link to this heading"></a></h2>
+<p>Build a BioCypher knowledge graph from S. cerevisiae single-mutant fitness data.</p>
+<section id="id12">
+<h3><a class="toc-backref" href="#id39" role="doc-backlink">Functions</a><a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.smf_kg.get_num_workers.html#torchcell.knowledge_graphs.smf_kg.get_num_workers" title="torchcell.knowledge_graphs.smf_kg.get_num_workers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">smf_kg.get_num_workers</span></code></a></p></td>
+<td><p>Get the number of CPUs allocated by SLURM.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="smf-tmi-combine-kg">
+<h2><a class="toc-backref" href="#id40" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">smf_tmi_combine_kg</span></code></a><a class="headerlink" href="#smf-tmi-combine-kg" title="Link to this heading"></a></h2>
+<p>Build a combined BioCypher knowledge graph from SMF Costanzo and TMI Kuzmin data.</p>
+<section id="id13">
+<h3><a class="toc-backref" href="#id41" role="doc-backlink">Functions</a><a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.smf_tmi_combine_kg.get_num_workers.html#torchcell.knowledge_graphs.smf_tmi_combine_kg.get_num_workers" title="torchcell.knowledge_graphs.smf_tmi_combine_kg.get_num_workers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">smf_tmi_combine_kg.get_num_workers</span></code></a></p></td>
+<td><p>Get the number of CPUs allocated by SLURM.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="subset">
+<h2><a class="toc-backref" href="#id42" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">subset</span></code></a><a class="headerlink" href="#subset" title="Link to this heading"></a></h2>
+<p>Prefilter and subsample datasets for KG builds.</p>
+<section id="id14">
+<h3><a class="toc-backref" href="#id43" role="doc-backlink">Classes</a><a class="headerlink" href="#id14" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.subset.RecordFilter.html#torchcell.knowledge_graphs.subset.RecordFilter" title="torchcell.knowledge_graphs.subset.RecordFilter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">subset.RecordFilter</span></code></a></p></td>
+<td><p>Declarative prefilter over raw dataset records, applied before sampling.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id15">
+<h3><a class="toc-backref" href="#id44" role="doc-backlink">Functions</a><a class="headerlink" href="#id15" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.subset.load_gene_sets.html#torchcell.knowledge_graphs.subset.load_gene_sets" title="torchcell.knowledge_graphs.subset.load_gene_sets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">subset.load_gene_sets</span></code></a></p></td>
+<td><p>Load gene sets from a text file: one set per line, whitespace-separated genes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.subset.select_indices.html#torchcell.knowledge_graphs.subset.select_indices" title="torchcell.knowledge_graphs.subset.select_indices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">subset.select_indices</span></code></a></p></td>
+<td><p>Return the indices of records satisfying <code class="docutils literal notranslate"><span class="pre">record_filter</span></code>, in one LMDB pass.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.subset.subset_dataset.html#torchcell.knowledge_graphs.subset.subset_dataset" title="torchcell.knowledge_graphs.subset.subset_dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">subset.subset_dataset</span></code></a></p></td>
+<td><p>Return the dataset narrowed to a prefiltered pool, then randomly sampled.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="not-documented">
+<h2><a class="toc-backref" href="#id45" role="doc-backlink">Not documented</a><a class="headerlink" href="#not-documented" title="Link to this heading"></a></h2>
+<p>Submodules left out of this page:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">conf</span></code> (configuration files only)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">create_pypy_scerevisiae_kg</span></code> (import fails: ImportError)</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../generated/torchcell.graph.build_gene_multigraph.html" class="btn btn-neutral float-left" title="torchcell.graph.build_gene_multigraph" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../generated/torchcell.knowledge_graphs.build_time_projection.AdapterTiming.html" class="btn btn-neutral float-right" title="torchcell.knowledge_graphs.build_time_projection.AdapterTiming" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

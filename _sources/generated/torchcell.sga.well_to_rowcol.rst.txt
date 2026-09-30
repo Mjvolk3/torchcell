@@ -1,0 +1,6 @@
+﻿torchcell.sga.well\_to\_rowcol
+==============================
+
+.. currentmodule:: torchcell.sga
+
+.. autofunction:: well_to_rowcol

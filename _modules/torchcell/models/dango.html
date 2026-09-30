@@ -1,0 +1,1148 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.models.dango &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/models/dango.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.models.dango</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.models.dango</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/models/dango</span>
+<span class="c1"># [[torchcell.models.dango]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/dango</span>
+<span class="c1"># Test file: tests/torchcell/models/test_dango.py</span>
+
+<span class="sd">"""DANGO model: PPI-network pretraining, embedding integration, and HyperSAGNN."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hydra</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">DictConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">HeteroData</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">SAGEConv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_scatter</span><span class="w"> </span><span class="kn">import</span> <span class="n">scatter_mean</span>
+
+
+<div class="viewcode-block" id="DangoPreTrain">
+<a class="viewcode-back" href="../../../generated/torchcell.models.dango.DangoPreTrain.html#torchcell.models.dango.DangoPreTrain">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DangoPreTrain</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    GNN pre-training component of DANGO model that learns node embeddings from</span>
+<span class="sd">    protein-protein interaction networks in S. cerevisiae.</span>
+
+<span class="sd">    As described in the paper, this module:</span>
+<span class="sd">    1. Processes PPI networks from the STRING database</span>
+<span class="sd">    2. Uses a 2-layer GNN for each network to reconstruct graph structure</span>
+<span class="sd">    3. Shares an initial embedding layer across all networks</span>
+<span class="sd">    4. Uses the output embeddings for downstream tasks</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gene_num</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">edge_types</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">hidden_channels</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Build the shared embedding and per-network GNN and reconstruction layers.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            gene_num: Number of genes (embedding table size).</span>
+<span class="sd">            edge_types: PPI network edge types, one GNN stack per type.</span>
+<span class="sd">            hidden_channels: Embedding and hidden dimension.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="c1"># Initialize model parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gene_num</span> <span class="o">=</span> <span class="n">gene_num</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hidden_channels</span> <span class="o">=</span> <span class="n">hidden_channels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">edge_types</span> <span class="o">=</span> <span class="n">edge_types</span>
+
+        <span class="c1"># Shared embedding layer across all GNNs (H^(0))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gene_embedding</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">gene_num</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="p">)</span>
+
+        <span class="c1"># Two layers of GNN for each network</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layer1_convs</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layer2_convs</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span><span class="p">()</span>
+
+        <span class="c1"># Reconstruction layers for each network</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recon_layers</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span><span class="p">()</span>
+
+        <span class="c1"># Lambda values for weighted MSE</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_values</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Initialize GNN layers and reconstruction layers for each edge type</span>
+        <span class="k">for</span> <span class="n">edge_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">edge_types</span><span class="p">:</span>
+            <span class="c1"># First layer GNN</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">layer1_convs</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">SAGEConv</span><span class="p">(</span>
+                <span class="n">hidden_channels</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="kc">False</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Second layer GNN</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">layer2_convs</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">SAGEConv</span><span class="p">(</span>
+                <span class="n">hidden_channels</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="kc">False</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Reconstruction layer to predict adjacency matrix row</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">recon_layers</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_channels</span><span class="p">,</span> <span class="n">gene_num</span><span class="p">)</span>
+
+            <span class="c1"># Set lambda value for weighted MSE based on network type</span>
+            <span class="c1"># For STRING v9.1 networks (as in the paper)</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">edge_type</span> <span class="o">==</span> <span class="s2">"string9_1_neighborhood"</span>
+                <span class="ow">or</span> <span class="n">edge_type</span> <span class="o">==</span> <span class="s2">"string11_0_neighborhood"</span>
+            <span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">lambda_values</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># &gt; 1% zeros decreased</span>
+            <span class="k">elif</span> <span class="p">(</span>
+                <span class="n">edge_type</span> <span class="o">==</span> <span class="s2">"string9_1_coexpression"</span>
+                <span class="ow">or</span> <span class="n">edge_type</span> <span class="o">==</span> <span class="s2">"string11_0_coexpression"</span>
+            <span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">lambda_values</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># &gt; 1% zeros decreased</span>
+            <span class="k">elif</span> <span class="p">(</span>
+                <span class="n">edge_type</span> <span class="o">==</span> <span class="s2">"string9_1_experimental"</span>
+                <span class="ow">or</span> <span class="n">edge_type</span> <span class="o">==</span> <span class="s2">"string11_0_experimental"</span>
+            <span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">lambda_values</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># &gt; 1% zeros decreased</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># fusion, cooccurence, database (≤ 1% zeros decreased)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">lambda_values</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+        <span class="c1"># Initialize weights</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset_parameters</span><span class="p">()</span>
+
+<div class="viewcode-block" id="DangoPreTrain.reset_parameters">
+<a class="viewcode-back" href="../../../generated/torchcell.models.dango.DangoPreTrain.html#torchcell.models.dango.DangoPreTrain.reset_parameters">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize model parameters"""</span>
+        <span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">normal_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gene_embedding</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">std</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">edge_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">edge_types</span><span class="p">:</span>
+            <span class="n">cast</span><span class="p">(</span><span class="n">SAGEConv</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer1_convs</span><span class="p">[</span><span class="n">edge_type</span><span class="p">])</span><span class="o">.</span><span class="n">reset_parameters</span><span class="p">()</span>
+            <span class="n">cast</span><span class="p">(</span><span class="n">SAGEConv</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer2_convs</span><span class="p">[</span><span class="n">edge_type</span><span class="p">])</span><span class="o">.</span><span class="n">reset_parameters</span><span class="p">()</span>
+            <span class="n">recon</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">recon_layers</span><span class="p">[</span><span class="n">edge_type</span><span class="p">])</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">normal_</span><span class="p">(</span><span class="n">recon</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">std</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">zeros_</span><span class="p">(</span><span class="n">recon</span><span class="o">.</span><span class="n">bias</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DangoPreTrain.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.models.dango.DangoPreTrain.html#torchcell.models.dango.DangoPreTrain.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">cell_graph</span><span class="p">:</span> <span class="n">HeteroData</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Forward pass for the DangoPreTrain model</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cell_graph: The cell graph containing multiple edge types</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary containing:</span>
+<span class="sd">                - 'embeddings': Node embeddings for each edge type (H_i^(2))</span>
+<span class="sd">                - 'reconstructions': Reconstructed adjacency matrix rows for each edge type (FC(H_i^(2)))</span>
+<span class="sd">        """</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gene_embedding</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">device</span>
+
+        <span class="c1"># Get gene node indices</span>
+        <span class="n">gene_data</span> <span class="o">=</span> <span class="n">cell_graph</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span>
+        <span class="n">num_nodes</span> <span class="o">=</span> <span class="n">gene_data</span><span class="o">.</span><span class="n">num_nodes</span>
+        <span class="n">node_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_nodes</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Get initial node embeddings (H^(0)) - shared across all networks</span>
+        <span class="n">x_init</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gene_embedding</span><span class="p">(</span><span class="n">node_indices</span><span class="p">)</span>
+
+        <span class="c1"># Process each network separately</span>
+        <span class="n">embeddings</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">reconstructions</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">edge_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">edge_types</span><span class="p">:</span>
+            <span class="n">edge_key</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"gene"</span><span class="p">,</span> <span class="n">edge_type</span><span class="p">,</span> <span class="s2">"gene"</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">edge_key</span> <span class="ow">in</span> <span class="n">cell_graph</span><span class="o">.</span><span class="n">edge_types</span><span class="p">:</span>
+                <span class="n">edge_index</span> <span class="o">=</span> <span class="n">cell_graph</span><span class="p">[</span><span class="n">edge_key</span><span class="p">]</span><span class="o">.</span><span class="n">edge_index</span>
+
+                <span class="c1"># First layer (H^(1))</span>
+                <span class="c1"># SAGEConv internally handles the neighborhood aggregation and concatenation</span>
+                <span class="n">h1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer1_convs</span><span class="p">[</span><span class="n">edge_type</span><span class="p">](</span><span class="n">x_init</span><span class="p">,</span> <span class="n">edge_index</span><span class="p">)</span>
+                <span class="n">h1</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">h1</span><span class="p">)</span>
+
+                <span class="c1"># Second layer (H^(2))</span>
+                <span class="n">h2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer2_convs</span><span class="p">[</span><span class="n">edge_type</span><span class="p">](</span><span class="n">h1</span><span class="p">,</span> <span class="n">edge_index</span><span class="p">)</span>
+                <span class="n">h2</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">h2</span><span class="p">)</span>
+
+                <span class="c1"># Store final embeddings (H^(2))</span>
+                <span class="n">embeddings</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">h2</span>
+
+                <span class="c1"># Reconstruction to predict adjacency matrix row</span>
+                <span class="n">recon</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">recon_layers</span><span class="p">[</span><span class="n">edge_type</span><span class="p">](</span><span class="n">h2</span><span class="p">)</span>
+                <span class="n">reconstructions</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">recon</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># If edge type not in graph, use zeros</span>
+                <span class="n">embeddings</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x_init</span><span class="p">)</span>
+                <span class="n">reconstructions</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                    <span class="n">num_nodes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gene_num</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span>
+                <span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"embeddings"</span><span class="p">:</span> <span class="n">embeddings</span><span class="p">,</span>
+            <span class="s2">"reconstructions"</span><span class="p">:</span> <span class="n">reconstructions</span><span class="p">,</span>
+            <span class="s2">"initial_embeddings"</span><span class="p">:</span> <span class="n">x_init</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MetaEmbedding">
+<a class="viewcode-back" href="../../../generated/torchcell.models.dango.MetaEmbedding.html#torchcell.models.dango.MetaEmbedding">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MetaEmbedding</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Meta-embedding module to integrate embeddings from multiple networks.</span>
+
+<span class="sd">    As described in the paper, this module:</span>
+<span class="sd">    1. Takes embeddings from 6 different PPI networks for each node</span>
+<span class="sd">    2. Uses an MLP to compute attention weights for each embedding</span>
+<span class="sd">    3. Combines embeddings using a weighted sum based on learned attention</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Build the attention MLP used to weight per-network embeddings.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            hidden_channels: Input embedding dimension.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="c1"># MLP for attention weights (two fully-connected layers)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attention_mlp</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_channels</span><span class="p">,</span> <span class="n">hidden_channels</span> <span class="o">//</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_channels</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_weights</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize weights for better training stability"""</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">attention_mlp</span><span class="o">.</span><span class="n">modules</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">):</span>
+                <span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">xavier_uniform_</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">calculate_gain</span><span class="p">(</span><span class="s2">"relu"</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">bias</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">zeros_</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">bias</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MetaEmbedding.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.models.dango.MetaEmbedding.html#torchcell.models.dango.MetaEmbedding.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">embeddings_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Forward pass to integrate embeddings from multiple networks</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            embeddings_dict: Dictionary mapping edge types to node embeddings</span>
+<span class="sd">                             Each value has shape [num_nodes, hidden_channels]</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Integrated embeddings with shape [num_nodes, hidden_channels]</span>
+<span class="sd">        """</span>
+        <span class="c1"># Get list of embeddings from the dictionary</span>
+        <span class="n">embeddings_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">embeddings_dict</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+        <span class="c1"># Stack embeddings along new dimension</span>
+        <span class="c1"># Shape: [num_nodes, num_networks, hidden_channels]</span>
+        <span class="n">stacked_embeddings</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">embeddings_list</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Compute attention scores for each embedding</span>
+        <span class="c1"># First, reshape for the MLP</span>
+        <span class="n">num_nodes</span><span class="p">,</span> <span class="n">num_networks</span><span class="p">,</span> <span class="n">hidden_channels</span> <span class="o">=</span> <span class="n">stacked_embeddings</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">reshaped_embeddings</span> <span class="o">=</span> <span class="n">stacked_embeddings</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="p">)</span>
+
+        <span class="c1"># Apply MLP</span>
+        <span class="n">attention_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attention_mlp</span><span class="p">(</span><span class="n">reshaped_embeddings</span><span class="p">)</span>
+        <span class="n">attention_scores</span> <span class="o">=</span> <span class="n">attention_scores</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">num_nodes</span><span class="p">,</span> <span class="n">num_networks</span><span class="p">)</span>
+
+        <span class="c1"># Apply softmax to get normalized weights</span>
+        <span class="n">attention_weights</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">attention_scores</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Expand weights for broadcasting</span>
+        <span class="c1"># Shape: [num_nodes, num_networks, 1]</span>
+        <span class="n">attention_weights</span> <span class="o">=</span> <span class="n">attention_weights</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Compute weighted sum</span>
+        <span class="c1"># Shape: [num_nodes, hidden_channels]</span>
+        <span class="n">meta_embeddings</span> <span class="o">=</span> <span class="p">(</span><span class="n">stacked_embeddings</span> <span class="o">*</span> <span class="n">attention_weights</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">meta_embeddings</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="HyperSAGNN">
+<a class="viewcode-back" href="../../../generated/torchcell.models.dango.HyperSAGNN.html#torchcell.models.dango.HyperSAGNN">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HyperSAGNN</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Fully vectorized Hypergraph Self-Attention Graph Neural Network</span>
+<span class="sd">    that handles all perturbation sets in a single forward pass.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">num_heads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Build the static embedding and two multi-head self-attention layers.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            hidden_channels: Embedding and hidden dimension.</span>
+<span class="sd">            num_heads: Number of attention heads.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hidden_channels</span> <span class="o">=</span> <span class="n">hidden_channels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span> <span class="o">=</span> <span class="n">num_heads</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">head_dim</span> <span class="o">=</span> <span class="n">hidden_channels</span> <span class="o">//</span> <span class="n">num_heads</span>
+
+        <span class="c1"># Static embedding layer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">static_embedding</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_channels</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="p">),</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Attention layer parameters</span>
+        <span class="c1"># Layer 1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Q1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_channels</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">K1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_channels</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">V1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_channels</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">O1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_channels</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">beta1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="c1"># Layer 2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Q2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_channels</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">K2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_channels</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">V2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_channels</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">O2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_channels</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">beta2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="c1"># Final prediction layer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prediction_layer</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_channels</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<div class="viewcode-block" id="HyperSAGNN.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.models.dango.HyperSAGNN.html#torchcell.models.dango.HyperSAGNN.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">batch_indices</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Forward pass processing all nodes at once with masked attention.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            embeddings: Tensor of shape [total_nodes, hidden_channels]</span>
+<span class="sd">            batch_indices: Tensor of shape [total_nodes] indicating set membership</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Predicted interaction scores with shape [num_batches]</span>
+<span class="sd">        """</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">device</span>
+        <span class="n">total_nodes</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Get unique batches for score aggregation</span>
+        <span class="n">unique_batches</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">batch_indices</span><span class="p">)</span>
+        <span class="n">num_batches</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_batches</span><span class="p">)</span>
+
+        <span class="c1"># Compute static embeddings for all nodes</span>
+        <span class="n">static_embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">static_embedding</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span>
+
+        <span class="c1"># Create attention mask where nodes can only attend to others in same set</span>
+        <span class="c1"># mask[i,j] = True if nodes i and j are in the same set, False otherwise</span>
+        <span class="n">same_set_mask</span> <span class="o">=</span> <span class="n">batch_indices</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="n">batch_indices</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Add self-mask to prevent nodes from attending to themselves</span>
+        <span class="n">self_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">total_nodes</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">valid_attention_mask</span> <span class="o">=</span> <span class="n">same_set_mask</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">self_mask</span>
+
+        <span class="c1"># Apply first attention layer with masked attention</span>
+        <span class="n">dynamic_embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_attention_layer</span><span class="p">(</span>
+            <span class="n">embeddings</span><span class="p">,</span>
+            <span class="n">valid_attention_mask</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Q1</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">K1</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">V1</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">O1</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">beta1</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Apply second attention layer</span>
+        <span class="n">dynamic_embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_attention_layer</span><span class="p">(</span>
+            <span class="n">dynamic_embeddings</span><span class="p">,</span>
+            <span class="n">valid_attention_mask</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Q2</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">K2</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">V2</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">O2</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">beta2</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Compute element-wise squared differences</span>
+        <span class="n">squared_diff</span> <span class="o">=</span> <span class="p">(</span><span class="n">dynamic_embeddings</span> <span class="o">-</span> <span class="n">static_embeddings</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+
+        <span class="c1"># Compute node scores</span>
+        <span class="n">node_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prediction_layer</span><span class="p">(</span><span class="n">squared_diff</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Aggregate scores for each set using scatter_mean</span>
+        <span class="n">interaction_scores</span> <span class="o">=</span> <span class="n">scatter_mean</span><span class="p">(</span>
+            <span class="n">node_scores</span><span class="p">,</span> <span class="n">batch_indices</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dim_size</span><span class="o">=</span><span class="n">num_batches</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">interaction_scores</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_global_attention_layer</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">attention_mask</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">Q_proj</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">,</span>
+        <span class="n">K_proj</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">,</span>
+        <span class="n">V_proj</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">,</span>
+        <span class="n">O_proj</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">,</span>
+        <span class="n">beta</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Apply global masked multi-head attention.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x: Input tensor with shape [total_nodes, hidden_dim]</span>
+<span class="sd">            attention_mask: Binary mask with shape [total_nodes, total_nodes]</span>
+<span class="sd">                           True where attention is allowed, False elsewhere</span>
+<span class="sd">            Q_proj: Query linear projection.</span>
+<span class="sd">            K_proj: Key linear projection.</span>
+<span class="sd">            V_proj: Value linear projection.</span>
+<span class="sd">            O_proj: Output linear projection.</span>
+<span class="sd">            beta: ReZero parameter</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Output tensor with shape [total_nodes, hidden_dim]</span>
+<span class="sd">        """</span>
+        <span class="n">total_nodes</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Linear projections</span>
+        <span class="n">Q</span> <span class="o">=</span> <span class="n">Q_proj</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># [total_nodes, hidden_dim]</span>
+        <span class="n">K</span> <span class="o">=</span> <span class="n">K_proj</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># [total_nodes, hidden_dim]</span>
+        <span class="n">V</span> <span class="o">=</span> <span class="n">V_proj</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># [total_nodes, hidden_dim]</span>
+
+        <span class="c1"># Reshape for multi-head attention</span>
+        <span class="n">Q</span> <span class="o">=</span> <span class="n">Q</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">total_nodes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">head_dim</span><span class="p">)</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">K</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">total_nodes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">head_dim</span><span class="p">)</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">V</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">total_nodes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">head_dim</span><span class="p">)</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="c1"># Shape: [num_heads, total_nodes, head_dim]</span>
+
+        <span class="c1"># Calculate attention scores</span>
+        <span class="n">attention</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">K</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">head_dim</span><span class="o">**</span><span class="mf">0.5</span><span class="p">)</span>
+        <span class="c1"># Shape: [num_heads, total_nodes, total_nodes]</span>
+
+        <span class="c1"># Expand attention_mask for multi-head attention</span>
+        <span class="n">expanded_mask</span> <span class="o">=</span> <span class="n">attention_mask</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Apply attention mask - set masked-out values to -inf before softmax</span>
+        <span class="n">attention</span><span class="o">.</span><span class="n">masked_fill_</span><span class="p">(</span><span class="o">~</span><span class="n">expanded_mask</span><span class="p">,</span> <span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">))</span>
+
+        <span class="c1"># Apply softmax to get attention weights</span>
+        <span class="n">attention_weights</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">attention</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Handle potential NaNs from empty rows (if a node can't attend to any others)</span>
+        <span class="n">attention_weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">attention_weights</span><span class="p">,</span> <span class="n">nan</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+        <span class="c1"># Apply attention to values</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">attention_weights</span><span class="p">,</span> <span class="n">V</span><span class="p">)</span>
+        <span class="c1"># Shape: [num_heads, total_nodes, head_dim]</span>
+
+        <span class="c1"># Reshape back to [total_nodes, hidden_dim]</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">total_nodes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_channels</span><span class="p">)</span>
+
+        <span class="c1"># Apply output projection</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">O_proj</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+        <span class="c1"># Apply ReZero connection</span>
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">beta</span> <span class="o">*</span> <span class="n">out</span> <span class="o">+</span> <span class="n">x</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Dango">
+<a class="viewcode-back" href="../../../generated/torchcell.models.dango.Dango.html#torchcell.models.dango.Dango">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Dango</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    DANGO model for predicting higher-order genetic interactions</span>
+
+<span class="sd">    Implements:</span>
+<span class="sd">    1. GNN pre-training component</span>
+<span class="sd">    2. Meta-embedding integration</span>
+<span class="sd">    3. Hypergraph self-attention for prediction</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">gene_num</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">edge_types</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">hidden_channels</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
+        <span class="n">num_heads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Assemble the pretraining, integration, and HyperSAGNN submodules.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            gene_num: Number of genes.</span>
+<span class="sd">            edge_types: PPI network edge types.</span>
+<span class="sd">            hidden_channels: Embedding and hidden dimension.</span>
+<span class="sd">            num_heads: Number of attention heads in the HyperSAGNN.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hidden_channels</span> <span class="o">=</span> <span class="n">hidden_channels</span>
+
+        <span class="c1"># GNN pre-training component</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pretrain_model</span> <span class="o">=</span> <span class="n">DangoPreTrain</span><span class="p">(</span>
+            <span class="n">gene_num</span><span class="o">=</span><span class="n">gene_num</span><span class="p">,</span> <span class="n">edge_types</span><span class="o">=</span><span class="n">edge_types</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="o">=</span><span class="n">hidden_channels</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Meta-embedding integration module</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">meta_embedding</span> <span class="o">=</span> <span class="n">MetaEmbedding</span><span class="p">(</span><span class="n">hidden_channels</span><span class="o">=</span><span class="n">hidden_channels</span><span class="p">)</span>
+
+        <span class="c1"># Hypergraph self-attention network</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hyper_sagnn</span> <span class="o">=</span> <span class="n">HyperSAGNN</span><span class="p">(</span>
+            <span class="n">hidden_channels</span><span class="o">=</span><span class="n">hidden_channels</span><span class="p">,</span> <span class="n">num_heads</span><span class="o">=</span><span class="n">num_heads</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Initialize weights with better defaults</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_weights</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize model weights for better training stability"""</span>
+        <span class="c1"># Initialize HyperSAGNN linear layers</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hyper_sagnn</span><span class="o">.</span><span class="n">named_modules</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">):</span>
+                <span class="c1"># Xavier uniform initialization for linear layers</span>
+                <span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">xavier_uniform_</span><span class="p">(</span>
+                    <span class="n">module</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">calculate_gain</span><span class="p">(</span><span class="s2">"relu"</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">module</span><span class="o">.</span><span class="n">bias</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">zeros_</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">bias</span><span class="p">)</span>
+
+        <span class="c1"># Initialize ReZero parameters to small positive values instead of zero</span>
+        <span class="c1"># This can help with better gradient flow early in training</span>
+        <span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">constant_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hyper_sagnn</span><span class="o">.</span><span class="n">beta1</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">)</span>
+        <span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">constant_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hyper_sagnn</span><span class="o">.</span><span class="n">beta2</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Dango.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.models.dango.Dango.html#torchcell.models.dango.Dango.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">cell_graph</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">HeteroData</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Forward pass for the DANGO model</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cell_graph: The cell graph containing multiple edge types</span>
+<span class="sd">            batch: HeteroDataBatch containing perturbation information</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple containing:</span>
+<span class="sd">                - predictions: Predicted interaction scores</span>
+<span class="sd">                - outputs: Dictionary containing node embeddings and intermediate values</span>
+<span class="sd">        """</span>
+        <span class="c1"># Get embeddings from pre-training component</span>
+        <span class="n">pretrain_outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pretrain_model</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">)</span>
+
+        <span class="c1"># Extract node embeddings for each network</span>
+        <span class="n">network_embeddings</span> <span class="o">=</span> <span class="n">pretrain_outputs</span><span class="p">[</span><span class="s2">"embeddings"</span><span class="p">]</span>
+
+        <span class="c1"># Integrate embeddings using meta-embedding module</span>
+        <span class="n">integrated_embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta_embedding</span><span class="p">(</span><span class="n">network_embeddings</span><span class="p">)</span>
+
+        <span class="c1"># Base outputs dictionary</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"network_embeddings"</span><span class="p">:</span> <span class="n">network_embeddings</span><span class="p">,</span>
+            <span class="s2">"integrated_embeddings"</span><span class="p">:</span> <span class="n">integrated_embeddings</span><span class="p">,</span>
+            <span class="s2">"reconstructions"</span><span class="p">:</span> <span class="n">pretrain_outputs</span><span class="p">[</span><span class="s2">"reconstructions"</span><span class="p">],</span>
+            <span class="s2">"initial_embeddings"</span><span class="p">:</span> <span class="n">pretrain_outputs</span><span class="p">[</span><span class="s2">"initial_embeddings"</span><span class="p">],</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Directly index into integrated_embeddings to get perturbed gene embeddings</span>
+        <span class="n">perturbed_embeddings</span> <span class="o">=</span> <span class="n">integrated_embeddings</span><span class="p">[</span><span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">perturbation_indices</span><span class="p">]</span>
+
+        <span class="c1"># Pass the perturbed embeddings and batch indices to HyperSAGNN</span>
+        <span class="n">interaction_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hyper_sagnn</span><span class="p">(</span>
+            <span class="n">perturbed_embeddings</span><span class="p">,</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">perturbation_indices_batch</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Store results in the outputs dictionary</span>
+        <span class="n">outputs</span><span class="p">[</span><span class="s2">"interaction_scores"</span><span class="p">]</span> <span class="o">=</span> <span class="n">interaction_scores</span>
+
+        <span class="c1"># Return both the predictions and the outputs dictionary</span>
+        <span class="k">return</span> <span class="n">interaction_scores</span><span class="p">,</span> <span class="n">outputs</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">num_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Count the number of trainable parameters in the model."""</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">count_params</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">)</span>
+
+        <span class="n">counts</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"pretrain_model"</span><span class="p">:</span> <span class="n">count_params</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pretrain_model</span><span class="p">),</span>
+            <span class="s2">"meta_embedding"</span><span class="p">:</span> <span class="n">count_params</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">meta_embedding</span><span class="p">),</span>
+            <span class="s2">"hyper_sagnn"</span><span class="p">:</span> <span class="n">count_params</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hyper_sagnn</span><span class="p">),</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Calculate overall total</span>
+        <span class="n">counts</span><span class="p">[</span><span class="s2">"total"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="n">counts</span></div>
+
+
+
+<span class="nd">@hydra</span><span class="o">.</span><span class="n">main</span><span class="p">(</span>
+    <span class="n">version_base</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">config_path</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s2">"experiments/005-kuzmin2018-tmi/conf"</span><span class="p">),</span>
+    <span class="n">config_name</span><span class="o">=</span><span class="s2">"dango_kuzmin2018_tmi"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span>
+    <span class="n">cfg</span><span class="p">:</span> <span class="n">DictConfig</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="s2">"Dango"</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">"""Test the DANGO model by overfitting on a single batch."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+    <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">torch.optim</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">optim</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+    <span class="c1"># Import all scheduler types for easy toggling</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.losses.dango</span><span class="w"> </span><span class="kn">import</span> <span class="n">DangoLoss</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.scratch.load_batch_005</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sample_data_batch</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+
+    <span class="c1"># Set device based on config</span>
+    <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span>
+        <span class="s2">"cuda"</span>
+        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="ow">and</span> <span class="n">cfg</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">accelerator</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">"cpu"</span>
+        <span class="k">else</span> <span class="s2">"cpu"</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Using device: </span><span class="si">{</span><span class="n">device</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># Setup directories for plots</span>
+    <span class="n">timestamp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y%m</span><span class="si">%d</span><span class="s2">_%H%M%S"</span><span class="p">)</span>
+    <span class="n">plot_dir</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"dango_training_plots_</span><span class="si">{</span><span class="n">timestamp</span><span class="si">}</span><span class="s2">"</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">plot_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Create subdirectories for different plot types</span>
+    <span class="n">loss_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">plot_dir</span><span class="p">,</span> <span class="s2">"loss_plots"</span><span class="p">)</span>
+    <span class="n">correlation_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">plot_dir</span><span class="p">,</span> <span class="s2">"correlation_plots"</span><span class="p">)</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">loss_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">correlation_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Load sample data</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Loading sample data..."</span><span class="p">)</span>
+    <span class="n">dataset</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">input_channels</span><span class="p">,</span> <span class="n">max_num_nodes</span> <span class="o">=</span> <span class="n">load_sample_data_batch</span><span class="p">(</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">num_workers</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="s2">"dango_string9_1"</span><span class="p">,</span> <span class="n">is_dense</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Move data to device</span>
+    <span class="n">cell_graph</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">cell_graph</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="c1"># Print batch information</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Batch size: </span><span class="si">{</span><span class="n">batch</span><span class="o">.</span><span class="n">num_graphs</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Perturbation indices shape: </span><span class="si">{</span><span class="n">batch</span><span class="p">[</span><span class="s1">'gene'</span><span class="p">]</span><span class="o">.</span><span class="n">perturbation_indices</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">],</span> <span class="s2">"perturbation_indices_batch"</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Perturbation batch indices shape: </span><span class="si">{</span><span class="n">batch</span><span class="p">[</span><span class="s1">'gene'</span><span class="p">]</span><span class="o">.</span><span class="n">perturbation_indices_batch</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Phenotype values shape: </span><span class="si">{</span><span class="n">batch</span><span class="p">[</span><span class="s1">'gene'</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_values</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># Initialize model</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Initializing DANGO model..."</span><span class="p">)</span>
+    <span class="c1"># Define default STRING v9.1 edge types for demo</span>
+    <span class="n">edge_types</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">"string9_1_neighborhood"</span><span class="p">,</span>
+        <span class="s2">"string9_1_fusion"</span><span class="p">,</span>
+        <span class="s2">"string9_1_cooccurence"</span><span class="p">,</span>
+        <span class="s2">"string9_1_coexpression"</span><span class="p">,</span>
+        <span class="s2">"string9_1_experimental"</span><span class="p">,</span>
+        <span class="s2">"string9_1_database"</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Dango</span><span class="p">(</span>
+        <span class="n">gene_num</span><span class="o">=</span><span class="n">max_num_nodes</span><span class="p">,</span>
+        <span class="n">edge_types</span><span class="o">=</span><span class="n">edge_types</span><span class="p">,</span>
+        <span class="n">hidden_channels</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">hidden_channels</span><span class="p">,</span>
+        <span class="n">num_heads</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">num_heads</span><span class="p">,</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total parameters: </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Num parameters: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">num_parameters</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Using </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">hyper_sagnn</span><span class="o">.</span><span class="n">num_heads</span><span class="si">}</span><span class="s2"> attention heads in HyperSAGNN"</span><span class="p">)</span>
+
+    <span class="c1"># Use lambda values directly from the model's pretrain component</span>
+    <span class="n">lambda_values</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">pretrain_model</span><span class="o">.</span><span class="n">lambda_values</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="c1"># Set up training parameters from config</span>
+    <span class="n">epochs</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">max_epochs</span>
+    <span class="n">plot_interval</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">plot_every_n_epochs</span>
+    <span class="n">transition_epoch</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">loss_scheduler</span><span class="o">.</span><span class="n">transition_epoch</span>
+
+    <span class="c1"># Get scheduler class from scheduler map</span>
+    <span class="n">scheduler_type</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">loss_scheduler</span><span class="o">.</span><span class="n">type</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.losses.dango</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCHEDULER_MAP</span><span class="p">,</span> <span class="n">DangoLossSched</span>
+
+    <span class="k">if</span> <span class="n">scheduler_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">SCHEDULER_MAP</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown scheduler type: </span><span class="si">{</span><span class="n">scheduler_type</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># Create the scheduler instance with transition_epoch</span>
+    <span class="c1"># SCHEDULER_MAP values are concrete subclasses; the inferred value type is the</span>
+    <span class="c1"># abstract base DangoLossSched, so view the class as a concrete factory.</span>
+    <span class="n">scheduler_class</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">DangoLossSched</span><span class="p">],</span> <span class="n">SCHEDULER_MAP</span><span class="p">[</span><span class="n">scheduler_type</span><span class="p">])</span>
+    <span class="n">scheduler_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"transition_epoch"</span><span class="p">:</span> <span class="n">transition_epoch</span><span class="p">}</span>
+
+    <span class="c1"># No additional parameters needed for LinearUntilFlipped</span>
+
+    <span class="n">scheduler</span> <span class="o">=</span> <span class="n">scheduler_class</span><span class="p">(</span><span class="o">**</span><span class="n">scheduler_kwargs</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Using </span><span class="si">{</span><span class="n">scheduler_type</span><span class="si">}</span><span class="s2"> scheduler with transition_epoch=</span><span class="si">{</span><span class="n">transition_epoch</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># Initialize the DangoLoss module with the selected scheduler</span>
+    <span class="n">loss_func</span> <span class="o">=</span> <span class="n">DangoLoss</span><span class="p">(</span>
+        <span class="n">edge_types</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">pretrain_model</span><span class="o">.</span><span class="n">edge_types</span><span class="p">,</span>
+        <span class="n">lambda_values</span><span class="o">=</span><span class="n">lambda_values</span><span class="p">,</span>
+        <span class="n">scheduler</span><span class="o">=</span><span class="n">scheduler</span><span class="p">,</span>
+        <span class="n">reduction</span><span class="o">=</span><span class="s2">"mean"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Create optimizer</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">weight_decay</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
+
+    <span class="c1"># Lists to track metrics</span>
+    <span class="n">all_losses</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">recon_losses</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">interaction_losses</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">weighted_recon_losses</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">weighted_interaction_losses</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Initialize validation metrics</span>
+    <span class="n">best_mse</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">)</span>
+    <span class="n">best_epoch</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1"># Training loop</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Training to overfit on batch..."</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+
+        <span class="c1"># Forward pass - returns tuple of (interaction_scores, outputs)</span>
+        <span class="n">interaction_scores</span><span class="p">,</span> <span class="n">outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+
+        <span class="c1"># Compute reconstruction loss for each edge type</span>
+        <span class="n">adjacency_matrices</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">edge_type</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">pretrain_model</span><span class="o">.</span><span class="n">edge_types</span><span class="p">:</span>
+            <span class="n">edge_key</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"gene"</span><span class="p">,</span> <span class="n">edge_type</span><span class="p">,</span> <span class="s2">"gene"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">edge_key</span> <span class="ow">in</span> <span class="n">cell_graph</span><span class="o">.</span><span class="n">edge_types</span><span class="p">:</span>
+                <span class="n">adj_size</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="s2">"reconstructions"</span><span class="p">][</span><span class="n">edge_type</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+                <span class="c1"># Convert edge_index to dense adjacency matrix</span>
+                <span class="n">adjacency_matrices</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sparse_coo_tensor</span><span class="p">(</span>
+                    <span class="n">cell_graph</span><span class="p">[</span><span class="n">edge_key</span><span class="p">]</span><span class="o">.</span><span class="n">edge_index</span><span class="p">,</span>
+                    <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">[</span><span class="n">edge_key</span><span class="p">]</span><span class="o">.</span><span class="n">edge_index</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span>
+                    <span class="p">(</span><span class="n">adj_size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">adj_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span>
+
+        <span class="c1"># Use the DangoLoss to compute the combined loss</span>
+        <span class="k">if</span> <span class="n">interaction_scores</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">total_loss</span><span class="p">,</span> <span class="n">loss_dict</span> <span class="o">=</span> <span class="n">loss_func</span><span class="p">(</span>
+                <span class="n">predictions</span><span class="o">=</span><span class="n">interaction_scores</span><span class="p">,</span>
+                <span class="n">targets</span><span class="o">=</span><span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_values</span><span class="p">,</span>
+                <span class="n">reconstructions</span><span class="o">=</span><span class="n">outputs</span><span class="p">[</span><span class="s2">"reconstructions"</span><span class="p">],</span>
+                <span class="n">adjacency_matrices</span><span class="o">=</span><span class="n">adjacency_matrices</span><span class="p">,</span>
+                <span class="n">current_epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Extract individual losses from the loss dictionary</span>
+            <span class="n">recon_loss</span> <span class="o">=</span> <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"reconstruction_loss"</span><span class="p">]</span>
+            <span class="n">interaction_loss</span> <span class="o">=</span> <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"interaction_loss"</span><span class="p">]</span>
+            <span class="n">weighted_recon_loss</span> <span class="o">=</span> <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"weighted_reconstruction_loss"</span><span class="p">]</span>
+            <span class="n">weighted_interaction_loss</span> <span class="o">=</span> <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"weighted_interaction_loss"</span><span class="p">]</span>
+            <span class="n">alpha</span> <span class="o">=</span> <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"alpha"</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># If no interaction scores, just use reconstruction loss</span>
+            <span class="n">recon_loss</span> <span class="o">=</span> <span class="n">loss_func</span><span class="o">.</span><span class="n">compute_reconstruction_loss</span><span class="p">(</span>
+                <span class="n">outputs</span><span class="p">[</span><span class="s2">"reconstructions"</span><span class="p">],</span> <span class="n">adjacency_matrices</span>
+            <span class="p">)</span>
+            <span class="n">total_loss</span> <span class="o">=</span> <span class="n">recon_loss</span>
+            <span class="n">interaction_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">alpha</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">weighted_recon_loss</span> <span class="o">=</span> <span class="n">recon_loss</span>
+            <span class="n">weighted_interaction_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Record losses</span>
+        <span class="n">all_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">total_loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="n">recon_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">recon_loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="n">interaction_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">interaction_loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+
+        <span class="c1"># Record weighted losses</span>
+        <span class="n">weighted_recon_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">weighted_recon_loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="n">weighted_interaction_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">weighted_interaction_loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+
+        <span class="c1"># Backward pass and optimization</span>
+        <span class="n">total_loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+        <span class="c1"># Print progress and generate plots at intervals</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">epoch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">plot_interval</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">epoch</span> <span class="o">==</span> <span class="n">epochs</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Epoch </span><span class="si">{</span><span class="n">epoch</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">epochs</span><span class="si">}</span><span class="s2">, Total Loss: </span><span class="si">{</span><span class="n">total_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">, "</span>
+                <span class="sa">f</span><span class="s2">"Recon Loss: </span><span class="si">{</span><span class="n">recon_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">, Interaction Loss: </span><span class="si">{</span><span class="n">interaction_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">, "</span>
+                <span class="sa">f</span><span class="s2">"Alpha: </span><span class="si">{</span><span class="n">alpha</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, Weighted Recon: </span><span class="si">{</span><span class="n">weighted_recon_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">, "</span>
+                <span class="sa">f</span><span class="s2">"Weighted Interaction: </span><span class="si">{</span><span class="n">weighted_interaction_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Plot loss curves</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>  <span class="c1"># Increase height slightly</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># Change to 3x2 grid to match final plot</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epoch</span> <span class="o">+</span> <span class="mi">2</span><span class="p">),</span> <span class="n">all_losses</span><span class="p">,</span> <span class="s2">"b-"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Total Loss"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Epoch"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Loss Value"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Training Loss"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+            <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epoch</span> <span class="o">+</span> <span class="mi">2</span><span class="p">),</span> <span class="n">recon_losses</span><span class="p">,</span> <span class="s2">"r-"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Reconstruction Loss"</span>
+            <span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epoch</span> <span class="o">+</span> <span class="mi">2</span><span class="p">),</span> <span class="n">interaction_losses</span><span class="p">,</span> <span class="s2">"g-"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Interaction Loss"</span>
+            <span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Epoch"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Loss Value"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Unweighted Component Losses"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+            <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epoch</span> <span class="o">+</span> <span class="mi">2</span><span class="p">),</span>
+                <span class="n">weighted_recon_losses</span><span class="p">,</span>
+                <span class="s2">"r-"</span><span class="p">,</span>
+                <span class="n">label</span><span class="o">=</span><span class="s2">"Weighted Reconstruction Loss"</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epoch</span> <span class="o">+</span> <span class="mi">2</span><span class="p">),</span>
+                <span class="n">weighted_interaction_losses</span><span class="p">,</span>
+                <span class="s2">"g-"</span><span class="p">,</span>
+                <span class="n">label</span><span class="o">=</span><span class="s2">"Weighted Interaction Loss"</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Epoch"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Loss Value"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Weighted Component Losses (alpha=</span><span class="si">{</span><span class="n">alpha</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+            <span class="c1"># The plot saving is now handled after adding the correlation plot</span>
+
+            <span class="c1"># Evaluate on training data</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+            <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+                <span class="c1"># Updated to unpack tuple</span>
+                <span class="n">predicted_scores</span><span class="p">,</span> <span class="n">eval_outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">predicted_scores</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">true_scores</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_values</span>
+
+                    <span class="c1"># Calculate metrics</span>
+                    <span class="n">mse</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">mse_loss</span><span class="p">(</span><span class="n">predicted_scores</span><span class="p">,</span> <span class="n">true_scores</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                    <span class="n">mae</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">l1_loss</span><span class="p">(</span><span class="n">predicted_scores</span><span class="p">,</span> <span class="n">true_scores</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+                    <span class="c1"># Track best model</span>
+                    <span class="k">if</span> <span class="n">mse</span> <span class="o">&lt;</span> <span class="n">best_mse</span><span class="p">:</span>
+                        <span class="n">best_mse</span> <span class="o">=</span> <span class="n">mse</span>
+                        <span class="n">best_epoch</span> <span class="o">=</span> <span class="n">epoch</span> <span class="o">+</span> <span class="mi">1</span>
+
+                    <span class="c1"># Add correlation plot to same figure in the right column</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+                        <span class="n">true_scores</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span>
+                        <span class="n">predicted_scores</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span>
+                        <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+                    <span class="c1"># Get min/max for plot limits</span>
+                    <span class="n">min_val</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                        <span class="n">true_scores</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="n">predicted_scores</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                    <span class="p">)</span>
+                    <span class="n">max_val</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                        <span class="n">true_scores</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="n">predicted_scores</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                    <span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">],</span> <span class="p">[</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">],</span> <span class="s2">"r--"</span><span class="p">)</span>
+
+                    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"True Interaction Scores"</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Predicted Interaction Scores"</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Epoch </span><span class="si">{</span><span class="n">epoch</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">: MSE=</span><span class="si">{</span><span class="n">mse</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, MAE=</span><span class="si">{</span><span class="n">mae</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+                    <span class="c1"># Add error distribution</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+                    <span class="n">errors</span> <span class="o">=</span> <span class="n">predicted_scores</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span> <span class="o">-</span> <span class="n">true_scores</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">errors</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Prediction Error"</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Frequency"</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error Distribution (MSE=</span><span class="si">{</span><span class="n">mse</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+                    <span class="c1"># Save the combined figure</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">loss_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"loss_epoch_</span><span class="si">{</span><span class="n">epoch</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">.png"</span><span class="p">))</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+                    <span class="c1"># Also save separate correlation plot for specific directory</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+                        <span class="n">true_scores</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span>
+                        <span class="n">predicted_scores</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span>
+                        <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">],</span> <span class="p">[</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">],</span> <span class="s2">"r--"</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"True Interaction Scores"</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Predicted Interaction Scores"</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Epoch </span><span class="si">{</span><span class="n">epoch</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">: MSE=</span><span class="si">{</span><span class="n">mse</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, MAE=</span><span class="si">{</span><span class="n">mae</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                            <span class="n">correlation_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"correlation_epoch_</span><span class="si">{</span><span class="n">epoch</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">.png"</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+                    <span class="c1"># Network embedding visualization removed</span>
+
+    <span class="c1"># Final evaluation</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="c1"># Updated to unpack tuple</span>
+        <span class="n">predicted_scores</span><span class="p">,</span> <span class="n">final_outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Training results:"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">predicted_scores</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">true_scores</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_values</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"True Phenotype Values:"</span><span class="p">,</span> <span class="n">true_scores</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Predicted Scores:"</span><span class="p">,</span> <span class="n">predicted_scores</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+
+            <span class="c1"># Calculate final metrics</span>
+            <span class="n">mse</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">mse_loss</span><span class="p">(</span><span class="n">predicted_scores</span><span class="p">,</span> <span class="n">true_scores</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="n">mae</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">l1_loss</span><span class="p">(</span><span class="n">predicted_scores</span><span class="p">,</span> <span class="n">true_scores</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+            <span class="c1"># Calculate correlation coefficient</span>
+            <span class="n">true_np</span> <span class="o">=</span> <span class="n">true_scores</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+            <span class="n">pred_np</span> <span class="o">=</span> <span class="n">predicted_scores</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+            <span class="n">correlation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">true_np</span><span class="p">,</span> <span class="n">pred_np</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Final Mean Squared Error: </span><span class="si">{</span><span class="n">mse</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Final Mean Absolute Error: </span><span class="si">{</span><span class="n">mae</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Correlation Coefficient: </span><span class="si">{</span><span class="n">correlation</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Best MSE: </span><span class="si">{</span><span class="n">best_mse</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2"> at epoch </span><span class="si">{</span><span class="n">best_epoch</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+            <span class="c1"># Create a comprehensive final results plot</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">14</span><span class="p">))</span>
+
+            <span class="c1"># Plot loss curves</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epochs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">all_losses</span><span class="p">,</span> <span class="s2">"b-"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Total Loss"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Epoch"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Loss Value"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Training Loss Curve"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+            <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epochs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">recon_losses</span><span class="p">,</span> <span class="s2">"r-"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Reconstruction Loss"</span>
+            <span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epochs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">interaction_losses</span><span class="p">,</span> <span class="s2">"g-"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Interaction Loss"</span>
+            <span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Epoch"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Loss Value"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Unweighted Component Losses"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+            <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epochs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+                <span class="n">weighted_recon_losses</span><span class="p">,</span>
+                <span class="s2">"r-"</span><span class="p">,</span>
+                <span class="n">label</span><span class="o">=</span><span class="s2">"Weighted Reconstruction Loss"</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epochs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+                <span class="n">weighted_interaction_losses</span><span class="p">,</span>
+                <span class="s2">"g-"</span><span class="p">,</span>
+                <span class="n">label</span><span class="o">=</span><span class="s2">"Weighted Interaction Loss"</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Epoch"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Loss Value"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Weighted Component Losses"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+            <span class="c1"># Plot final correlation</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">true_np</span><span class="p">,</span> <span class="n">pred_np</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+            <span class="n">min_val</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">true_np</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">pred_np</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+            <span class="n">max_val</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">true_np</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">pred_np</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">],</span> <span class="p">[</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">],</span> <span class="s2">"r--"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"True Interaction Scores"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Predicted Interaction Scores"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Final Correlation (r=</span><span class="si">{</span><span class="n">correlation</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="c1"># Plot error distribution</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+            <span class="n">errors</span> <span class="o">=</span> <span class="n">pred_np</span> <span class="o">-</span> <span class="n">true_np</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">errors</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Prediction Error"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Frequency"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error Distribution (MSE=</span><span class="si">{</span><span class="n">mse</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">plot_dir</span><span class="p">,</span> <span class="s2">"final_results.png"</span><span class="p">))</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Final results plot saved to '</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">plot_dir</span><span class="p">,</span><span class="w"> </span><span class="s1">'final_results.png'</span><span class="p">)</span><span class="si">}</span><span class="s2">'"</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"No interaction scores were predicted. Check batch format."</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Demonstration complete!"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"All plots saved to directory: </span><span class="si">{</span><span class="n">plot_dir</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="p">(</span><span class="n">predicted_scores</span><span class="p">,</span> <span class="n">final_outputs</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

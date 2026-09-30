@@ -1,0 +1,8 @@
+﻿torchcell.metabolism.enzyme\_kinetics.ResolvedKineticParameter
+==============================================================
+
+.. currentmodule:: torchcell.metabolism.enzyme_kinetics
+
+.. autoclass:: ResolvedKineticParameter
+   :show-inheritance:
+   :members:

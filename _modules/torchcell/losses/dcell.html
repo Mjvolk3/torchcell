@@ -1,0 +1,251 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.losses.dcell &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/losses/dcell.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.losses.dcell</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.losses.dcell</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/losses/dcell_new.py</span>
+<span class="c1"># [[torchcell.losses.dcell_new]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/losses/dcell_new.py</span>
+<span class="c1"># Test file: torchcell/losses/test_dcell_new.py</span>
+
+<span class="sd">"""Loss for the DCell model: root MSE plus optional subsystem auxiliary losses."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+
+
+<div class="viewcode-block" id="DCellLoss">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.dcell.DCellLoss.html#torchcell.losses.dcell.DCellLoss">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DCellLoss</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Loss function for the DCellNew model implementation.</span>
+
+<span class="sd">    This loss function:</span>
+<span class="sd">    1. Takes the direct model outputs (predictions and outputs dictionary)</span>
+<span class="sd">    2. Applies the main loss to the root subsystem predictions</span>
+<span class="sd">    3. Optionally applies auxiliary losses to non-root subsystem outputs</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        alpha: Weight for auxiliary losses (default: 0.3)</span>
+<span class="sd">        use_auxiliary_losses: Whether to use losses from non-root subsystems (default: True)</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">,</span> <span class="n">use_auxiliary_losses</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Set the auxiliary-loss weight, toggle, and MSE criterion.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            alpha: Weight applied to the auxiliary subsystem losses.</span>
+<span class="sd">            use_auxiliary_losses: Whether to include non-root subsystem losses.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_auxiliary_losses</span> <span class="o">=</span> <span class="n">use_auxiliary_losses</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">()</span>
+
+<div class="viewcode-block" id="DCellLoss.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.dcell.DCellLoss.html#torchcell.losses.dcell.DCellLoss.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">predictions</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">outputs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">target</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Compute the loss for DCellNew outputs.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            predictions: Primary predictions tensor from the model (root output)</span>
+<span class="sd">            outputs: Dictionary of all model outputs including subsystem states</span>
+<span class="sd">            target: Target values to predict</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (total_loss, loss_components) where loss_components is a dictionary</span>
+<span class="sd">            containing the primary_loss, auxiliary_loss, and weighted_auxiliary_loss.</span>
+<span class="sd">        """</span>
+        <span class="c1"># Primary loss on main predictions</span>
+        <span class="n">primary_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">criterion</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+
+        <span class="c1"># Initialize auxiliary loss components</span>
+        <span class="n">auxiliary_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">primary_loss</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">weighted_auxiliary_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">primary_loss</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Create a dictionary to store all loss components</span>
+        <span class="n">loss_components</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"primary_loss"</span><span class="p">:</span> <span class="n">primary_loss</span><span class="o">.</span><span class="n">detach</span><span class="p">(),</span>
+            <span class="s2">"auxiliary_loss"</span><span class="p">:</span> <span class="n">auxiliary_loss</span><span class="o">.</span><span class="n">detach</span><span class="p">(),</span>
+            <span class="s2">"weighted_auxiliary_loss"</span><span class="p">:</span> <span class="n">weighted_auxiliary_loss</span><span class="o">.</span><span class="n">detach</span><span class="p">(),</span>
+        <span class="p">}</span>
+
+        <span class="c1"># If not using auxiliary losses, return only primary loss</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_auxiliary_losses</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">primary_loss</span><span class="p">,</span> <span class="n">loss_components</span>
+
+        <span class="c1"># Get all linear outputs from subsystems</span>
+        <span class="n">linear_outputs</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"linear_outputs"</span><span class="p">,</span> <span class="p">{})</span>
+
+        <span class="c1"># Compute auxiliary losses on non-root subsystems</span>
+        <span class="n">auxiliary_losses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">subsystem_name</span><span class="p">,</span> <span class="n">subsystem_output</span> <span class="ow">in</span> <span class="n">linear_outputs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="c1"># Skip the root output since it's the same as predictions</span>
+            <span class="c1"># The is_root check is more robust than exact equality</span>
+            <span class="n">is_root</span> <span class="o">=</span> <span class="n">subsystem_name</span> <span class="o">==</span> <span class="s2">"GO:ROOT"</span> <span class="ow">or</span> <span class="n">torch</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span>
+                <span class="n">subsystem_output</span><span class="p">,</span> <span class="n">predictions</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">is_root</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Add loss for this subsystem</span>
+            <span class="n">aux_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">criterion</span><span class="p">(</span><span class="n">subsystem_output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+            <span class="n">auxiliary_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aux_loss</span><span class="p">)</span>
+
+        <span class="c1"># If no auxiliary losses, return only primary loss</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">auxiliary_losses</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">primary_loss</span><span class="p">,</span> <span class="n">loss_components</span>
+
+        <span class="c1"># Combine losses with weight alpha</span>
+        <span class="n">auxiliary_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">auxiliary_losses</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">weighted_auxiliary_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">auxiliary_loss</span>
+        <span class="n">total_loss</span> <span class="o">=</span> <span class="n">primary_loss</span> <span class="o">+</span> <span class="n">weighted_auxiliary_loss</span>
+
+        <span class="c1"># Update loss components dictionary</span>
+        <span class="n">loss_components</span><span class="p">[</span><span class="s2">"auxiliary_loss"</span><span class="p">]</span> <span class="o">=</span> <span class="n">auxiliary_loss</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+        <span class="n">loss_components</span><span class="p">[</span><span class="s2">"weighted_auxiliary_loss"</span><span class="p">]</span> <span class="o">=</span> <span class="n">weighted_auxiliary_loss</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">total_loss</span><span class="p">,</span> <span class="n">loss_components</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

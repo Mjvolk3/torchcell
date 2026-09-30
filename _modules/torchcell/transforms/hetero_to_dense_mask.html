@@ -1,0 +1,299 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.transforms.hetero_to_dense_mask &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/transforms/hetero_to_dense_mask.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.transforms.hetero_to_dense_mask</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.transforms.hetero_to_dense_mask</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Transform converting sparse hetero adjacencies to dense boolean masks."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">HeteroData</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data.datapipes</span><span class="w"> </span><span class="kn">import</span> <span class="n">functional_transform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseTransform</span>
+
+
+<div class="viewcode-block" id="HeteroToDenseMask">
+<a class="viewcode-back" href="../../../generated/torchcell.transforms.hetero_to_dense_mask.HeteroToDenseMask.html#torchcell.transforms.hetero_to_dense_mask.HeteroToDenseMask">[docs]</a>
+<span class="nd">@functional_transform</span><span class="p">(</span><span class="s2">"hetero_to_dense_mask"</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">HeteroToDenseMask</span><span class="p">(</span><span class="n">BaseTransform</span><span class="p">):</span>  <span class="c1"># type: ignore[misc]  # BaseTransform is Any (torch_geometric untyped)</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Convert sparse hetero adjacencies to boolean dense masks.</span>
+
+<span class="sd">    Edge attributes are preserved in their original sparse format for memory</span>
+<span class="sd">    efficiency while adjacency/incidence matrices become boolean dense masks.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        num_nodes_dict (Dict[str, int], optional): Dictionary mapping node types to</span>
+<span class="sd">            their desired number of nodes. If not provided for a node type, will</span>
+<span class="sd">            use the maximum number of nodes found for that type. (default: None)</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_nodes_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Store the optional per-node-type target node counts.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_nodes_dict: Optional mapping of node type to target node count.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_nodes_dict</span> <span class="o">=</span> <span class="n">num_nodes_dict</span> <span class="ow">or</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="HeteroToDenseMask.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.transforms.hetero_to_dense_mask.HeteroToDenseMask.html#torchcell.transforms.hetero_to_dense_mask.HeteroToDenseMask.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HeteroData</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Add dense masks, pad node attributes, and return the transformed data."""</span>
+        <span class="c1"># First determine number of nodes for each node type</span>
+        <span class="n">num_nodes_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">node_type</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">node_types</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">node_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_nodes_dict</span><span class="p">:</span>
+                <span class="n">num_nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_nodes_dict</span><span class="p">[</span><span class="n">node_type</span><span class="p">]</span>
+                <span class="n">orig_num_nodes</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">node_type</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span>
+                <span class="k">assert</span> <span class="n">orig_num_nodes</span> <span class="o">&lt;=</span> <span class="n">num_nodes</span>
+                <span class="n">num_nodes_dict</span><span class="p">[</span><span class="n">node_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">num_nodes</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">num_nodes_dict</span><span class="p">[</span><span class="n">node_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">node_type</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span>
+
+        <span class="c1"># Process each edge type</span>
+        <span class="k">for</span> <span class="n">edge_type</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">edge_types</span><span class="p">:</span>
+            <span class="n">src</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">dst</span> <span class="o">=</span> <span class="n">edge_type</span>
+            <span class="n">store</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span>
+
+            <span class="c1"># Handle regular edge_index (for node-to-node relations)</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="s2">"edge_index"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">store</span><span class="o">.</span><span class="n">edge_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">src_num_nodes</span> <span class="o">=</span> <span class="n">num_nodes_dict</span><span class="p">[</span><span class="n">src</span><span class="p">]</span>
+                <span class="n">dst_num_nodes</span> <span class="o">=</span> <span class="n">num_nodes_dict</span><span class="p">[</span><span class="n">dst</span><span class="p">]</span>
+                <span class="n">edge_index</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">edge_index</span>
+
+                <span class="c1"># Create boolean dense adjacency matrix (8x memory savings)</span>
+                <span class="n">adj_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">src_num_nodes</span><span class="p">,</span> <span class="n">dst_num_nodes</span><span class="p">),</span>
+                    <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span>
+                    <span class="n">device</span><span class="o">=</span><span class="n">edge_index</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="c1"># Fill the mask with valid edges</span>
+                <span class="n">valid_edges</span> <span class="o">=</span> <span class="p">(</span><span class="n">edge_index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">src_num_nodes</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
+                    <span class="n">edge_index</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">dst_num_nodes</span>
+                <span class="p">)</span>
+                <span class="n">valid_edge_index</span> <span class="o">=</span> <span class="n">edge_index</span><span class="p">[:,</span> <span class="n">valid_edges</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="n">valid_edge_index</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">adj_mask</span><span class="p">[</span><span class="n">valid_edge_index</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">valid_edge_index</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">True</span>
+
+                <span class="c1"># Store the boolean adjacency mask</span>
+                <span class="n">store</span><span class="o">.</span><span class="n">adj_mask</span> <span class="o">=</span> <span class="n">adj_mask</span>
+
+                <span class="c1"># KEEP the original edge_index and edge_attr for attribute reference</span>
+
+            <span class="c1"># Handle hyperedge_index (for hypergraph/bipartite relations)</span>
+            <span class="k">elif</span> <span class="p">(</span>
+                <span class="nb">hasattr</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="s2">"hyperedge_index"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">store</span><span class="o">.</span><span class="n">hyperedge_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="p">):</span>
+                <span class="n">src_num_nodes</span> <span class="o">=</span> <span class="n">num_nodes_dict</span><span class="p">[</span><span class="n">src</span><span class="p">]</span>
+                <span class="n">dst_num_nodes</span> <span class="o">=</span> <span class="n">num_nodes_dict</span><span class="p">[</span><span class="n">dst</span><span class="p">]</span>
+                <span class="n">hyperedge_index</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">hyperedge_index</span>
+
+                <span class="c1"># Create a boolean bipartite incidence matrix</span>
+                <span class="n">inc_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">src_num_nodes</span><span class="p">,</span> <span class="n">dst_num_nodes</span><span class="p">),</span>
+                    <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span>
+                    <span class="n">device</span><span class="o">=</span><span class="n">hyperedge_index</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="c1"># Fill in the incidence matrix from the hyperedge_index</span>
+                <span class="n">valid_edges</span> <span class="o">=</span> <span class="p">(</span><span class="n">hyperedge_index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">src_num_nodes</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
+                    <span class="n">hyperedge_index</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">dst_num_nodes</span>
+                <span class="p">)</span>
+                <span class="n">valid_he_index</span> <span class="o">=</span> <span class="n">hyperedge_index</span><span class="p">[:,</span> <span class="n">valid_edges</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="n">valid_he_index</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">inc_mask</span><span class="p">[</span><span class="n">valid_he_index</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">valid_he_index</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">True</span>
+
+                <span class="c1"># Store the boolean incidence matrix</span>
+                <span class="n">store</span><span class="o">.</span><span class="n">inc_mask</span> <span class="o">=</span> <span class="n">inc_mask</span>
+
+                <span class="c1"># KEEP the original hyperedge_index and attributes for reference</span>
+
+        <span class="c1"># Handle node features for each node type</span>
+        <span class="k">for</span> <span class="n">node_type</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">node_types</span><span class="p">:</span>
+            <span class="n">store</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">node_type</span><span class="p">]</span>
+            <span class="n">num_nodes</span> <span class="o">=</span> <span class="n">num_nodes_dict</span><span class="p">[</span><span class="n">node_type</span><span class="p">]</span>
+            <span class="n">orig_num_nodes</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">num_nodes</span>
+
+            <span class="c1"># Create mask to indicate original vs padded nodes</span>
+            <span class="n">store</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_nodes</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span>
+            <span class="n">store</span><span class="o">.</span><span class="n">mask</span><span class="p">[:</span><span class="n">orig_num_nodes</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+            <span class="c1"># Safely pad node features if they exist</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">store</span><span class="o">.</span><span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">size</span> <span class="o">=</span> <span class="p">[</span><span class="n">num_nodes</span> <span class="o">-</span> <span class="n">store</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">store</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">())[</span><span class="mi">1</span><span class="p">:]</span>
+                <span class="n">store</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">store</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">store</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">size</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+            <span class="c1"># Safely pad node positions if they exist</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="s2">"pos"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">store</span><span class="o">.</span><span class="n">pos</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">size</span> <span class="o">=</span> <span class="p">[</span><span class="n">num_nodes</span> <span class="o">-</span> <span class="n">store</span><span class="o">.</span><span class="n">pos</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">store</span><span class="o">.</span><span class="n">pos</span><span class="o">.</span><span class="n">size</span><span class="p">())[</span><span class="mi">1</span><span class="p">:]</span>
+                <span class="n">store</span><span class="o">.</span><span class="n">pos</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">store</span><span class="o">.</span><span class="n">pos</span><span class="p">,</span> <span class="n">store</span><span class="o">.</span><span class="n">pos</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">size</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+            <span class="c1"># Safely pad all tensor attributes with proper dimensions. ``store.keys()``</span>
+            <span class="c1"># lists the stored attributes; ``dir(store)`` did not, so this loop padded</span>
+            <span class="c1"># nothing until tests/torchcell/transforms/test_hetero_to_dense_mask.py</span>
+            <span class="c1"># checked a second node tensor (2026.09.26).</span>
+            <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">store</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                <span class="c1"># Skip special attributes, non-tensor attributes, and already processed attributes</span>
+                <span class="k">if</span> <span class="n">attr</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"_"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">[</span>
+                    <span class="s2">"x"</span><span class="p">,</span>
+                    <span class="s2">"pos"</span><span class="p">,</span>
+                    <span class="s2">"mask"</span><span class="p">,</span>
+                    <span class="s2">"num_nodes"</span><span class="p">,</span>
+                    <span class="s2">"node_ids"</span><span class="p">,</span>
+                <span class="p">]:</span>
+                    <span class="k">continue</span>
+
+                <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="n">orig_num_nodes</span><span class="p">:</span>
+                    <span class="n">size</span> <span class="o">=</span> <span class="p">[</span><span class="n">num_nodes</span> <span class="o">-</span> <span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">())[</span><span class="mi">1</span><span class="p">:]</span>
+                    <span class="n">padded_value</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">value</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">size</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="nb">setattr</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">padded_value</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">data</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a string representation including the node-count overrides."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_nodes_dict</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">()"</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(num_nodes_dict=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_nodes_dict</span><span class="si">}</span><span class="s2">)"</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,8 @@
+﻿torchcell.database.browser\_style.RelationshipRule
+==================================================
+
+.. currentmodule:: torchcell.database.browser_style
+
+.. autoclass:: RelationshipRule
+   :show-inheritance:
+   :members:

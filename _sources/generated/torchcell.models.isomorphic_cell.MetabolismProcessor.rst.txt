@@ -1,0 +1,8 @@
+﻿torchcell.models.isomorphic\_cell.MetabolismProcessor
+=====================================================
+
+.. currentmodule:: torchcell.models.isomorphic_cell
+
+.. autoclass:: MetabolismProcessor
+   :show-inheritance:
+   :members:

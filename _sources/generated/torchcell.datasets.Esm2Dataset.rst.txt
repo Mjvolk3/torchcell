@@ -1,0 +1,8 @@
+﻿torchcell.datasets.Esm2Dataset
+==============================
+
+.. currentmodule:: torchcell.datasets
+
+.. autoclass:: Esm2Dataset
+   :show-inheritance:
+   :members:

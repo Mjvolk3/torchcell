@@ -1,0 +1,6 @@
+﻿torchcell.data.compute\_experiment\_reference\_index\_sequential
+================================================================
+
+.. currentmodule:: torchcell.data
+
+.. autofunction:: compute_experiment_reference_index_sequential

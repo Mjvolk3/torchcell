@@ -1,0 +1,8 @@
+﻿torchcell.adapters.MetaboliteZelezniak2018Adapter
+=================================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: MetaboliteZelezniak2018Adapter
+   :show-inheritance:
+   :members:

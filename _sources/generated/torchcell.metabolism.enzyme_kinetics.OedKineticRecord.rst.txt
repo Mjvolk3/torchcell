@@ -1,0 +1,8 @@
+﻿torchcell.metabolism.enzyme\_kinetics.OedKineticRecord
+======================================================
+
+.. currentmodule:: torchcell.metabolism.enzyme_kinetics
+
+.. autoclass:: OedKineticRecord
+   :show-inheritance:
+   :members:

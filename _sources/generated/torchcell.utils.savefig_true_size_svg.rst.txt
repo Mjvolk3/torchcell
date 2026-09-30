@@ -1,0 +1,6 @@
+﻿torchcell.utils.savefig\_true\_size\_svg
+========================================
+
+.. currentmodule:: torchcell.utils
+
+.. autofunction:: savefig_true_size_svg

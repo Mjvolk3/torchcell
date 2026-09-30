@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.incremental\_import.discover\_csv\_groups
+=====================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.incremental_import
+
+.. autofunction:: discover_csv_groups

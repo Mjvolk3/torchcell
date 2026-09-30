@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.ProteinAbundancePhenotype
+=====================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: ProteinAbundancePhenotype
+   :show-inheritance:
+   :members:

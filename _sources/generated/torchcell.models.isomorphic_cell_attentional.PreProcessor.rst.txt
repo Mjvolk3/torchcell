@@ -1,0 +1,8 @@
+﻿torchcell.models.isomorphic\_cell\_attentional.PreProcessor
+===========================================================
+
+.. currentmodule:: torchcell.models.isomorphic_cell_attentional
+
+.. autoclass:: PreProcessor
+   :show-inheritance:
+   :members:

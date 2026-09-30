@@ -1,0 +1,6 @@
+﻿torchcell.profiling.time\_method
+================================
+
+.. currentmodule:: torchcell.profiling
+
+.. autofunction:: time_method

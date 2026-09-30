@@ -1,0 +1,6 @@
+﻿torchcell.paper.tables.instance\_bytes
+======================================
+
+.. currentmodule:: torchcell.paper.tables
+
+.. autofunction:: instance_bytes

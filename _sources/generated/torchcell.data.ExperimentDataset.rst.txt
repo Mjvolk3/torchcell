@@ -1,0 +1,8 @@
+﻿torchcell.data.ExperimentDataset
+================================
+
+.. currentmodule:: torchcell.data
+
+.. autoclass:: ExperimentDataset
+   :show-inheritance:
+   :members:

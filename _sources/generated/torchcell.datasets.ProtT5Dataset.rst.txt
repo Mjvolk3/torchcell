@@ -1,0 +1,8 @@
+﻿torchcell.datasets.ProtT5Dataset
+================================
+
+.. currentmodule:: torchcell.datasets
+
+.. autoclass:: ProtT5Dataset
+   :show-inheritance:
+   :members:

@@ -1,0 +1,8 @@
+﻿torchcell.models.early\_cell\_diffpool\_dense.EarlyDenseCellDiffPool
+====================================================================
+
+.. currentmodule:: torchcell.models.early_cell_diffpool_dense
+
+.. autoclass:: EarlyDenseCellDiffPool
+   :show-inheritance:
+   :members:

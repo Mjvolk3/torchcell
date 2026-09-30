@@ -1,0 +1,8 @@
+﻿torchcell.adapters.GeneEssentialitySgdAdapter
+=============================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: GeneEssentialitySgdAdapter
+   :show-inheritance:
+   :members:

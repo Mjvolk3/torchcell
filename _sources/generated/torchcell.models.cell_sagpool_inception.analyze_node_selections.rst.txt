@@ -1,0 +1,6 @@
+﻿torchcell.models.cell\_sagpool\_inception.analyze\_node\_selections
+===================================================================
+
+.. currentmodule:: torchcell.models.cell_sagpool_inception
+
+.. autofunction:: analyze_node_selections

@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.lian2019.CrisprMagicLian2019Dataset
+==================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.lian2019
+
+.. autoclass:: CrisprMagicLian2019Dataset
+   :show-inheritance:
+   :members:

@@ -1,0 +1,8 @@
+﻿torchcell.metabolism.media.UptakePolicy
+=======================================
+
+.. currentmodule:: torchcell.metabolism.media
+
+.. autoclass:: UptakePolicy
+   :show-inheritance:
+   :members:

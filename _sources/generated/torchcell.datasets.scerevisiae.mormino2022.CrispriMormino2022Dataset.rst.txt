@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.mormino2022.CrispriMormino2022Dataset
+====================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.mormino2022
+
+.. autoclass:: CrispriMormino2022Dataset
+   :show-inheritance:
+   :members:

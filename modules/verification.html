@@ -1,0 +1,283 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.verification &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/modules/verification.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="torchcell.verification.CarrierGapCensus" href="../generated/torchcell.verification.CarrierGapCensus.html" />
+    <link rel="prev" title="torchcell.utils.PAPER_RC" href="../generated/torchcell.utils.PAPER_RC.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">torchcell.utils</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">torchcell.verification</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#classes">Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#functions">Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">torchcell.verification</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/modules/verification.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-torchcell.verification">
+<span id="torchcell-verification"></span><h1>torchcell.verification<a class="headerlink" href="#module-torchcell.verification" title="Link to this heading"></a></h1>
+<p>Record-level verification of built datasets at five levels, L0 to L4. <code class="docutils literal notranslate"><span class="pre">levels</span></code> holds the reusable checks and <code class="docutils literal notranslate"><span class="pre">common</span></code> the rules every dataset family shares; each family module (<code class="docutils literal notranslate"><span class="pre">fitness</span></code>, <code class="docutils literal notranslate"><span class="pre">expression</span></code>, <code class="docutils literal notranslate"><span class="pre">morphology</span></code>, <code class="docutils literal notranslate"><span class="pre">metabolite</span></code>, <code class="docutils literal notranslate"><span class="pre">protein</span></code> and others) applies them to one phenotype type. <code class="docutils literal notranslate"><span class="pre">report</span></code> defines the pydantic verification report, <code class="docutils literal notranslate"><span class="pre">sourced</span></code> binds a single extracted value to its source quote and sha256, and <code class="docutils literal notranslate"><span class="pre">runners</span></code> runs the verifiers over built datasets.</p>
+<nav class="contents local" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#classes" id="id1">Classes</a></p></li>
+<li><p><a class="reference internal" href="#functions" id="id2">Functions</a></p></li>
+</ul>
+</nav>
+<section id="classes">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Classes</a><a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.verification.CarrierGapCensus.html#torchcell.verification.CarrierGapCensus" title="torchcell.verification.CarrierGapCensus"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CarrierGapCensus</span></code></a></p></td>
+<td><p>The gap census, extended to every carrier and to undeclared <code class="docutils literal notranslate"><span class="pre">None</span></code> values.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.verification.SharedRecordRules.html#torchcell.verification.SharedRecordRules" title="torchcell.verification.SharedRecordRules"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SharedRecordRules</span></code></a></p></td>
+<td><p>Accumulate the family-agnostic rules over a dataset's records.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.verification.DerivationMethod.html#torchcell.verification.DerivationMethod" title="torchcell.verification.DerivationMethod"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DerivationMethod</span></code></a></p></td>
+<td><p>How a non-sourced statistic's value was fixed (ordered by preference).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.verification.Level.html#torchcell.verification.Level" title="torchcell.verification.Level"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Level</span></code></a></p></td>
+<td><p>The five universal verification levels (ordered: a gate, not a set).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.verification.LevelResult.html#torchcell.verification.LevelResult" title="torchcell.verification.LevelResult"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LevelResult</span></code></a></p></td>
+<td><p>The outcome of a single L-level check.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.verification.Provenance.html#torchcell.verification.Provenance" title="torchcell.verification.Provenance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Provenance</span></code></a></p></td>
+<td><p>Where a dataset's records came from, recorded alongside verification.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.verification.StatDerivation.html#torchcell.verification.StatDerivation" title="torchcell.verification.StatDerivation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StatDerivation</span></code></a></p></td>
+<td><p>How a derived (non-per-record-sourced) statistic was fixed, as data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.verification.VerificationReport.html#torchcell.verification.VerificationReport" title="torchcell.verification.VerificationReport"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VerificationReport</span></code></a></p></td>
+<td><p>Provenance + the L-level results for one dataset.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.verification.SourcedValue.html#torchcell.verification.SourcedValue" title="torchcell.verification.SourcedValue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SourcedValue</span></code></a></p></td>
+<td><p>A hardcoded value plus the provenance that justifies it.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.verification.ProvenanceGap.html#torchcell.verification.ProvenanceGap" title="torchcell.verification.ProvenanceGap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ProvenanceGap</span></code></a></p></td>
+<td><p>The complement of <a class="reference internal" href="../generated/torchcell.verification.SourcedValue.html#torchcell.verification.SourcedValue" title="torchcell.verification.SourcedValue"><code class="xref py py-class docutils literal notranslate"><span class="pre">SourcedValue</span></code></a>: a documented, typed ABSENCE.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.verification.ProvenanceGapReason.html#torchcell.verification.ProvenanceGapReason" title="torchcell.verification.ProvenanceGapReason"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ProvenanceGapReason</span></code></a></p></td>
+<td><p>WHERE in the provenance chain a value died -- an honest, typed absence.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.verification.ProvenanceGapCensus.html#torchcell.verification.ProvenanceGapCensus" title="torchcell.verification.ProvenanceGapCensus"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ProvenanceGapCensus</span></code></a></p></td>
+<td><p>Aggregate view of the <code class="docutils literal notranslate"><span class="pre">ProvenanceGap</span></code>s across a built dataset -- the worklist.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.verification.shared_rule_results.html#torchcell.verification.shared_rule_results" title="torchcell.verification.shared_rule_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">shared_rule_results</span></code></a></p></td>
+<td><p>Run every shared rule over a materialized record sequence.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.verification.sha256_file.html#torchcell.verification.sha256_file" title="torchcell.verification.sha256_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256_file</span></code></a></p></td>
+<td><p>Return the hex sha256 of a file, read in chunks (large artifacts).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.verification.audit_sourced_value.html#torchcell.verification.audit_sourced_value" title="torchcell.verification.audit_sourced_value"><code class="xref py py-obj docutils literal notranslate"><span class="pre">audit_sourced_value</span></code></a></p></td>
+<td><p>Verify a <code class="docutils literal notranslate"><span class="pre">SourcedValue</span></code> against its source artifact.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.verification.library_available.html#torchcell.verification.library_available" title="torchcell.verification.library_available"><code class="xref py py-obj docutils literal notranslate"><span class="pre">library_available</span></code></a></p></td>
+<td><p>True if the MinerU library root exists (audits skip when it doesn't).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.verification.provenance_gap_census.html#torchcell.verification.provenance_gap_census" title="torchcell.verification.provenance_gap_census"><code class="xref py py-obj docutils literal notranslate"><span class="pre">provenance_gap_census</span></code></a></p></td>
+<td><p>Tally the <code class="docutils literal notranslate"><span class="pre">provenance_gaps</span></code> carried by a stream of phenotype records.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.verification.provenance_gap_level_result.html#torchcell.verification.provenance_gap_level_result" title="torchcell.verification.provenance_gap_level_result"><code class="xref py py-obj docutils literal notranslate"><span class="pre">provenance_gap_level_result</span></code></a></p></td>
+<td><p>Wrap a census into the L1 <code class="docutils literal notranslate"><span class="pre">provenance_gaps</span></code> result -- ALWAYS passes.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.verification.l1_provenance_gaps.html#torchcell.verification.l1_provenance_gaps" title="torchcell.verification.l1_provenance_gaps"><code class="xref py py-obj docutils literal notranslate"><span class="pre">l1_provenance_gaps</span></code></a></p></td>
+<td><p>L1 informational census of documented provenance gaps over a phenotype stream.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.verification.l0_structural.html#torchcell.verification.l0_structural" title="torchcell.verification.l0_structural"><code class="xref py py-obj docutils literal notranslate"><span class="pre">l0_structural</span></code></a></p></td>
+<td><p>L0: every raw record validates against its schema model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.verification.l1_completeness.html#torchcell.verification.l1_completeness" title="torchcell.verification.l1_completeness"><code class="xref py py-obj docutils literal notranslate"><span class="pre">l1_completeness</span></code></a></p></td>
+<td><p>L1: observed keys cover the expected oracle set (nothing silently dropped).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.verification.l1_count.html#torchcell.verification.l1_count" title="torchcell.verification.l1_count"><code class="xref py py-obj docutils literal notranslate"><span class="pre">l1_count</span></code></a></p></td>
+<td><p>L1 variant: an exact record-count oracle (e.g. 4718 mutants + 122 WT).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.verification.l2_cross_method.html#torchcell.verification.l2_cross_method" title="torchcell.verification.l2_cross_method"><code class="xref py py-obj docutils literal notranslate"><span class="pre">l2_cross_method</span></code></a></p></td>
+<td><p>L2: two independently-derived aligned series agree within <code class="docutils literal notranslate"><span class="pre">tol</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.verification.l2_value_fidelity.html#torchcell.verification.l2_value_fidelity" title="torchcell.verification.l2_value_fidelity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">l2_value_fidelity</span></code></a></p></td>
+<td><p>L2: numeric values are finite / in range / non-NaN as required.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.verification.l3_convention.html#torchcell.verification.l3_convention" title="torchcell.verification.l3_convention"><code class="xref py py-obj docutils literal notranslate"><span class="pre">l3_convention</span></code></a></p></td>
+<td><p>L3: a named units/convention assertion (e.g. expression = log2(sample/ref)).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.verification.l4_cross_source.html#torchcell.verification.l4_cross_source" title="torchcell.verification.l4_cross_source"><code class="xref py py-obj docutils literal notranslate"><span class="pre">l4_cross_source</span></code></a></p></td>
+<td><p>L4: overlapping entities agree across two sources.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.verification.measured_gene_universe.html#torchcell.verification.measured_gene_universe" title="torchcell.verification.measured_gene_universe"><code class="xref py py-obj docutils literal notranslate"><span class="pre">measured_gene_universe</span></code></a></p></td>
+<td><p>Union of all measured genes across records (the L4 cross-source key).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.verification.verify_expression_dataset.html#torchcell.verification.verify_expression_dataset" title="torchcell.verification.verify_expression_dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">verify_expression_dataset</span></code></a></p></td>
+<td><p>Run the L0-L4 record-level gate for one microarray expression dataset.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.verification.perturbed_gene_set.html#torchcell.verification.perturbed_gene_set" title="torchcell.verification.perturbed_gene_set"><code class="xref py py-obj docutils literal notranslate"><span class="pre">perturbed_gene_set</span></code></a></p></td>
+<td><p>Union of systematic gene names deleted across records (the L4 overlap key).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.verification.verify_morphology_dataset.html#torchcell.verification.verify_morphology_dataset" title="torchcell.verification.verify_morphology_dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">verify_morphology_dataset</span></code></a></p></td>
+<td><p>Run the L0-L3 record-level gate for the Ohya2005 CalMorph dataset.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.verification.verify_visual_score_dataset.html#torchcell.verification.verify_visual_score_dataset" title="torchcell.verification.verify_visual_score_dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">verify_visual_score_dataset</span></code></a></p></td>
+<td><p>Run the L0-L3 record-level gate for a visual-score dataset.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.verification.visual_score_gene_set.html#torchcell.verification.visual_score_gene_set" title="torchcell.verification.visual_score_gene_set"><code class="xref py py-obj docutils literal notranslate"><span class="pre">visual_score_gene_set</span></code></a></p></td>
+<td><p>Union of deleted systematic gene names across records (the L4 overlap key).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.verification.metabolite_gene_set.html#torchcell.verification.metabolite_gene_set" title="torchcell.verification.metabolite_gene_set"><code class="xref py py-obj docutils literal notranslate"><span class="pre">metabolite_gene_set</span></code></a></p></td>
+<td><p>Union of deleted systematic gene names across records (the L4 overlap key).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.verification.verify_metabolite_dataset.html#torchcell.verification.verify_metabolite_dataset" title="torchcell.verification.verify_metabolite_dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">verify_metabolite_dataset</span></code></a></p></td>
+<td><p>Run the L0-L3 record-level gate for a metabolite dataset.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.verification.fitness_gene_set.html#torchcell.verification.fitness_gene_set" title="torchcell.verification.fitness_gene_set"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fitness_gene_set</span></code></a></p></td>
+<td><p>Union of screened deleted gene names -- the L4 gene-containment key.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.verification.verify_fitness_dataset.html#torchcell.verification.verify_fitness_dataset" title="torchcell.verification.verify_fitness_dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">verify_fitness_dataset</span></code></a></p></td>
+<td><p>Run the L0-L4 record-level gate for a single-mutant fitness dataset.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../generated/torchcell.utils.PAPER_RC.html" class="btn btn-neutral float-left" title="torchcell.utils.PAPER_RC" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../generated/torchcell.verification.CarrierGapCensus.html" class="btn btn-neutral float-right" title="torchcell.verification.CarrierGapCensus" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

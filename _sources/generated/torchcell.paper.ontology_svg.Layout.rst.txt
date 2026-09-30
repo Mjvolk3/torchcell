@@ -1,0 +1,8 @@
+﻿torchcell.paper.ontology\_svg.Layout
+====================================
+
+.. currentmodule:: torchcell.paper.ontology_svg
+
+.. autoclass:: Layout
+   :show-inheritance:
+   :members:

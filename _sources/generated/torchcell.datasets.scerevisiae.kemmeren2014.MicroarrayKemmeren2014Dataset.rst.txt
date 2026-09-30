@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.kemmeren2014.MicroarrayKemmeren2014Dataset
+=========================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.kemmeren2014
+
+.. autoclass:: MicroarrayKemmeren2014Dataset
+   :show-inheritance:
+   :members:

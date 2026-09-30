@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.ohnuki2018.ScmdOhnuki2018Dataset
+===============================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.ohnuki2018
+
+.. autoclass:: ScmdOhnuki2018Dataset
+   :show-inheritance:
+   :members:

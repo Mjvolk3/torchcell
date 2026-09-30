@@ -1,0 +1,8 @@
+﻿torchcell.adapters.ScmdOhnuki2022Adapter
+========================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: ScmdOhnuki2022Adapter
+   :show-inheritance:
+   :members:

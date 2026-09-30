@@ -1,0 +1,8 @@
+﻿torchcell.literature.LiteratureKeys
+===================================
+
+.. currentmodule:: torchcell.literature
+
+.. autoclass:: LiteratureKeys
+   :show-inheritance:
+   :members:

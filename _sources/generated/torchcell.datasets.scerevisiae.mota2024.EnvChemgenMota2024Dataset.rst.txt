@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.mota2024.EnvChemgenMota2024Dataset
+=================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.mota2024
+
+.. autoclass:: EnvChemgenMota2024Dataset
+   :show-inheritance:
+   :members:

@@ -1,0 +1,6 @@
+﻿torchcell.sga.resolve\_orientation
+==================================
+
+.. currentmodule:: torchcell.sga
+
+.. autofunction:: resolve_orientation

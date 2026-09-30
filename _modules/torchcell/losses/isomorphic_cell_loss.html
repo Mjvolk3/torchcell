@@ -1,0 +1,414 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.losses.isomorphic_cell_loss &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/losses/isomorphic_cell_loss.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.losses.isomorphic_cell_loss</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.losses.isomorphic_cell_loss</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/losses/isomorphic_cell_loss</span>
+<span class="c1"># [[torchcell.losses.isomorphic_cell_loss]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/losses/isomorphic_cell_loss</span>
+<span class="c1"># Test file: tests/torchcell/losses/test_isomorphic_cell_loss.py</span>
+
+
+<span class="sd">"""Isomorphic cell losses combining MSE, distribution, and SupCR terms."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.losses.multi_dim_nan_tolerant</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">WeightedDistLoss</span><span class="p">,</span>
+    <span class="n">WeightedMSELoss</span><span class="p">,</span>
+    <span class="n">WeightedSupCRCell</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="ICLoss">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.isomorphic_cell_loss.ICLoss.html#torchcell.losses.isomorphic_cell_loss.ICLoss">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ICLoss</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Weighted sum of MSE, distribution, and SupCR cell losses."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">lambda_dist</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">lambda_supcr</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">weights</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize the component losses and their lambda weights.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            lambda_dist: Weight for the dist loss.</span>
+<span class="sd">            lambda_supcr: Weight for the SupCR loss.</span>
+<span class="sd">            weights: Optional weights applied uniformly to all losses.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_dist</span> <span class="o">=</span> <span class="n">lambda_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_supcr</span> <span class="o">=</span> <span class="n">lambda_supcr</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mse_loss_fn</span> <span class="o">=</span> <span class="n">WeightedMSELoss</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dist_loss_fn</span> <span class="o">=</span> <span class="n">WeightedDistLoss</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supcr_fn</span> <span class="o">=</span> <span class="n">WeightedSupCRCell</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ICLoss.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.isomorphic_cell_loss.ICLoss.html#torchcell.losses.isomorphic_cell_loss.ICLoss.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">predictions</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">targets</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">z_P</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Return the total weighted loss and a dict of component/normalized losses."""</span>
+        <span class="n">mse_loss</span><span class="p">,</span> <span class="n">mse_dim_losses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mse_loss_fn</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+        <span class="n">dist_loss</span><span class="p">,</span> <span class="n">dist_dim_losses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dist_loss_fn</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+
+        <span class="c1"># Now only passing z_P</span>
+        <span class="n">supcr_loss</span><span class="p">,</span> <span class="n">supcr_dim_losses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">supcr_fn</span><span class="p">(</span><span class="n">z_P</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+
+        <span class="c1"># Weighted versions (using lambda multipliers)</span>
+        <span class="n">weighted_mse</span> <span class="o">=</span> <span class="n">mse_loss</span>
+        <span class="n">weighted_dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_dist</span> <span class="o">*</span> <span class="n">dist_loss</span>
+        <span class="n">weighted_supcr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_supcr</span> <span class="o">*</span> <span class="n">supcr_loss</span>
+        <span class="n">total_weighted</span> <span class="o">=</span> <span class="n">weighted_mse</span> <span class="o">+</span> <span class="n">weighted_dist</span> <span class="o">+</span> <span class="n">weighted_supcr</span>
+
+        <span class="c1"># Also compute the unweighted total (without lambda multipliers)</span>
+        <span class="n">total_unweighted</span> <span class="o">=</span> <span class="n">mse_loss</span> <span class="o">+</span> <span class="n">dist_loss</span> <span class="o">+</span> <span class="n">supcr_loss</span>
+
+        <span class="c1"># Normalized weighted losses</span>
+        <span class="k">if</span> <span class="n">total_weighted</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">norm_weighted</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"mse"</span><span class="p">:</span> <span class="n">weighted_mse</span> <span class="o">/</span> <span class="n">total_weighted</span><span class="p">,</span>
+                <span class="s2">"dist"</span><span class="p">:</span> <span class="n">weighted_dist</span> <span class="o">/</span> <span class="n">total_weighted</span><span class="p">,</span>
+                <span class="s2">"supcr"</span><span class="p">:</span> <span class="n">weighted_supcr</span> <span class="o">/</span> <span class="n">total_weighted</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">norm_weighted</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"mse"</span><span class="p">,</span> <span class="s2">"dist"</span><span class="p">,</span> <span class="s2">"supcr"</span><span class="p">]}</span>
+
+        <span class="k">if</span> <span class="n">total_unweighted</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">norm_unweighted</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"mse"</span><span class="p">:</span> <span class="n">mse_loss</span> <span class="o">/</span> <span class="n">total_unweighted</span><span class="p">,</span>
+                <span class="s2">"dist"</span><span class="p">:</span> <span class="n">dist_loss</span> <span class="o">/</span> <span class="n">total_unweighted</span><span class="p">,</span>
+                <span class="s2">"supcr"</span><span class="p">:</span> <span class="n">supcr_loss</span> <span class="o">/</span> <span class="n">total_unweighted</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">norm_unweighted</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"mse"</span><span class="p">,</span> <span class="s2">"dist"</span><span class="p">,</span> <span class="s2">"supcr"</span><span class="p">]}</span>
+
+        <span class="n">total_loss</span> <span class="o">=</span> <span class="n">total_weighted</span>
+
+        <span class="n">loss_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"mse_loss"</span><span class="p">:</span> <span class="n">mse_loss</span><span class="p">,</span>
+            <span class="s2">"mse_dim_losses"</span><span class="p">:</span> <span class="n">mse_dim_losses</span><span class="p">,</span>
+            <span class="s2">"dist_loss"</span><span class="p">:</span> <span class="n">dist_loss</span><span class="p">,</span>
+            <span class="s2">"dist_dim_losses"</span><span class="p">:</span> <span class="n">dist_dim_losses</span><span class="p">,</span>
+            <span class="s2">"supcr_loss"</span><span class="p">:</span> <span class="n">supcr_loss</span><span class="p">,</span>
+            <span class="s2">"supcr_dim_losses"</span><span class="p">:</span> <span class="n">supcr_dim_losses</span><span class="p">,</span>
+            <span class="s2">"weighted_mse"</span><span class="p">:</span> <span class="n">weighted_mse</span><span class="p">,</span>
+            <span class="s2">"weighted_dist"</span><span class="p">:</span> <span class="n">weighted_dist</span><span class="p">,</span>
+            <span class="s2">"weighted_supcr"</span><span class="p">:</span> <span class="n">weighted_supcr</span><span class="p">,</span>
+            <span class="s2">"total_weighted"</span><span class="p">:</span> <span class="n">total_weighted</span><span class="p">,</span>
+            <span class="s2">"total_loss"</span><span class="p">:</span> <span class="n">total_loss</span><span class="p">,</span>
+            <span class="s2">"norm_weighted_mse"</span><span class="p">:</span> <span class="n">norm_weighted</span><span class="p">[</span><span class="s2">"mse"</span><span class="p">],</span>
+            <span class="s2">"norm_weighted_dist"</span><span class="p">:</span> <span class="n">norm_weighted</span><span class="p">[</span><span class="s2">"dist"</span><span class="p">],</span>
+            <span class="s2">"norm_weighted_supcr"</span><span class="p">:</span> <span class="n">norm_weighted</span><span class="p">[</span><span class="s2">"supcr"</span><span class="p">],</span>
+            <span class="s2">"norm_unweighted_mse"</span><span class="p">:</span> <span class="n">norm_unweighted</span><span class="p">[</span><span class="s2">"mse"</span><span class="p">],</span>
+            <span class="s2">"norm_unweighted_dist"</span><span class="p">:</span> <span class="n">norm_unweighted</span><span class="p">[</span><span class="s2">"dist"</span><span class="p">],</span>
+            <span class="s2">"norm_unweighted_supcr"</span><span class="p">:</span> <span class="n">norm_unweighted</span><span class="p">[</span><span class="s2">"supcr"</span><span class="p">],</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">total_loss</span><span class="p">,</span> <span class="n">loss_dict</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ICLossStd">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.isomorphic_cell_loss.ICLossStd.html#torchcell.losses.isomorphic_cell_loss.ICLossStd">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ICLossStd</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""IC loss with learnable per-task standard deviations (heteroscedastic)."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">lambda_dist</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">lambda_supcr</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">lambda_reg</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
+        <span class="n">init_sigma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">task_weights</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Enhanced ICLoss with learnable per-task standard deviations.</span>
+
+<span class="sd">        Implements: L = ∑(w_t/(2σ_t²) * L_t + log σ_t) + λ∑σ_t⁻²</span>
+
+<span class="sd">        where L_t is the task-specific loss (fitness or gene interaction).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            lambda_dist: Weight for the distance preservation loss</span>
+<span class="sd">            lambda_supcr: Weight for the supervised contrastive loss</span>
+<span class="sd">            lambda_reg: Regularization parameter for the standard deviations</span>
+<span class="sd">            init_sigma: Initial value for the standard deviation parameters</span>
+<span class="sd">            task_weights: Optional fixed weights for different tasks [2]</span>
+<span class="sd">            eps: Small constant for numerical stability</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_dist</span> <span class="o">=</span> <span class="n">lambda_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_supcr</span> <span class="o">=</span> <span class="n">lambda_supcr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_reg</span> <span class="o">=</span> <span class="n">lambda_reg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eps</span> <span class="o">=</span> <span class="n">eps</span>
+
+        <span class="c1"># Task weights (if not provided, default to ones)</span>
+        <span class="k">if</span> <span class="n">task_weights</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">task_weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">task_weights</span> <span class="o">=</span> <span class="n">task_weights</span>
+
+        <span class="c1"># Learnable log standard deviations (one for fitness, one for gene interaction)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_sigma</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">init_sigma</span><span class="p">))</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Base loss functions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mse_loss_fn</span> <span class="o">=</span> <span class="n">WeightedMSELoss</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># We'll apply weights manually</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dist_loss_fn</span> <span class="o">=</span> <span class="n">WeightedDistLoss</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supcr_fn</span> <span class="o">=</span> <span class="n">WeightedSupCRCell</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ICLossStd.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.isomorphic_cell_loss.ICLossStd.html#torchcell.losses.isomorphic_cell_loss.ICLossStd.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">predictions</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">targets</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">z_P</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">z_I</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Forward pass to compute the heteroscedastic IC loss.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            predictions: Model predictions [batch_size, 2]</span>
+<span class="sd">            targets: Target values [batch_size, 2]</span>
+<span class="sd">            z_P: Perturbed difference embeddings from the model</span>
+<span class="sd">            z_I: Intact embeddings from the model</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple: (total_loss, loss_dict)</span>
+<span class="sd">        """</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">predictions</span><span class="o">.</span><span class="n">device</span>
+
+        <span class="c1"># Get standard deviations from learned parameters</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_sigma</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Calculate base losses (without applying task weights yet)</span>
+        <span class="n">mse_loss</span><span class="p">,</span> <span class="n">mse_dim_losses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mse_loss_fn</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+        <span class="n">dist_loss</span><span class="p">,</span> <span class="n">dist_dim_losses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dist_loss_fn</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+        <span class="n">supcr_loss</span><span class="p">,</span> <span class="n">supcr_dim_losses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">supcr_fn</span><span class="p">(</span><span class="n">z_P</span><span class="p">,</span> <span class="n">z_I</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+
+        <span class="c1"># Apply lambda weights to dist and supcr losses</span>
+        <span class="n">weighted_mse</span> <span class="o">=</span> <span class="n">mse_loss</span>
+        <span class="n">weighted_dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_dist</span> <span class="o">*</span> <span class="n">dist_loss</span>
+        <span class="n">weighted_supcr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_supcr</span> <span class="o">*</span> <span class="n">supcr_loss</span>
+
+        <span class="c1"># Combine to get per-task loss</span>
+        <span class="c1"># Fitness loss is index 0, gene interaction is index 1</span>
+        <span class="n">base_task_losses</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">mse_dim_losses</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_dist</span> <span class="o">*</span> <span class="n">dist_dim_losses</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_supcr</span> <span class="o">*</span> <span class="n">supcr_dim_losses</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">mse_dim_losses</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_dist</span> <span class="o">*</span> <span class="n">dist_dim_losses</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_supcr</span> <span class="o">*</span> <span class="n">supcr_dim_losses</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="p">],</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Apply heteroscedastic weighting: (w_t/(2σ_t²) * L_t + log σ_t)</span>
+        <span class="n">task_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_weights</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">weighted_losses</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">task_weights</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span>
+        <span class="p">)</span> <span class="o">*</span> <span class="n">base_task_losses</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">sigma</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span>
+
+        <span class="c1"># Calculate regularization term: λ∑σ_t⁻²</span>
+        <span class="n">reg_term</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_reg</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">sigma</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">))</span>
+
+        <span class="c1"># Final loss</span>
+        <span class="n">total_loss</span> <span class="o">=</span> <span class="n">weighted_losses</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="n">reg_term</span>
+
+        <span class="c1"># Calculate additional metrics for monitoring</span>
+        <span class="c1"># Create masks for valid (non-NaN) values</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span>
+        <span class="n">fitness_mask</span> <span class="o">=</span> <span class="n">mask</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">gi_mask</span> <span class="o">=</span> <span class="n">mask</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># Standard deviation of predictions</span>
+        <span class="n">fitness_pred</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">gi_pred</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">fitness_pred_std</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">fitness_pred</span><span class="p">[</span><span class="n">fitness_mask</span><span class="p">]</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">fitness_mask</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+            <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">gi_pred_std</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">gi_pred</span><span class="p">[</span><span class="n">gi_mask</span><span class="p">]</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">gi_mask</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+            <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Prepare output dictionary</span>
+        <span class="n">loss_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="c1"># Learned parameters</span>
+            <span class="s2">"sigma_fitness"</span><span class="p">:</span> <span class="n">sigma</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="s2">"sigma_gi"</span><span class="p">:</span> <span class="n">sigma</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="c1"># Individual losses</span>
+            <span class="s2">"mse_loss"</span><span class="p">:</span> <span class="n">mse_loss</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="s2">"dist_loss"</span><span class="p">:</span> <span class="n">dist_loss</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="s2">"supcr_loss"</span><span class="p">:</span> <span class="n">supcr_loss</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="c1"># Per-task losses</span>
+            <span class="s2">"fitness_base_loss"</span><span class="p">:</span> <span class="n">base_task_losses</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="s2">"gi_base_loss"</span><span class="p">:</span> <span class="n">base_task_losses</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="s2">"fitness_weighted_loss"</span><span class="p">:</span> <span class="n">weighted_losses</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="s2">"gi_weighted_loss"</span><span class="p">:</span> <span class="n">weighted_losses</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="c1"># Regularization</span>
+            <span class="s2">"reg_term"</span><span class="p">:</span> <span class="n">reg_term</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="c1"># Weighted components</span>
+            <span class="s2">"weighted_mse"</span><span class="p">:</span> <span class="n">weighted_mse</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="s2">"weighted_dist"</span><span class="p">:</span> <span class="n">weighted_dist</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="s2">"weighted_supcr"</span><span class="p">:</span> <span class="n">weighted_supcr</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="c1"># Prediction statistics</span>
+            <span class="s2">"fitness_pred_std"</span><span class="p">:</span> <span class="n">fitness_pred_std</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="s2">"gi_pred_std"</span><span class="p">:</span> <span class="n">gi_pred_std</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="c1"># Total loss</span>
+            <span class="s2">"total_loss"</span><span class="p">:</span> <span class="n">total_loss</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">total_loss</span><span class="p">,</span> <span class="n">loss_dict</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

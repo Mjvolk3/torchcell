@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset
+========================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.cachera2023
+
+.. autoclass:: BetaxanthinCachera2023Dataset
+   :show-inheritance:
+   :members:

@@ -1,0 +1,8 @@
+﻿torchcell.adapters.HetHillenmeyer2008Adapter
+============================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: HetHillenmeyer2008Adapter
+   :show-inheritance:
+   :members:

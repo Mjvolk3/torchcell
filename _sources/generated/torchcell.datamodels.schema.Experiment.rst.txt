@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.Experiment
+======================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: Experiment
+   :show-inheritance:
+   :members:

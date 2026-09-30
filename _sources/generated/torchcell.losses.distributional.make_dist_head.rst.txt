@@ -1,0 +1,6 @@
+﻿torchcell.losses.distributional.make\_dist\_head
+================================================
+
+.. currentmodule:: torchcell.losses.distributional
+
+.. autofunction:: make_dist_head

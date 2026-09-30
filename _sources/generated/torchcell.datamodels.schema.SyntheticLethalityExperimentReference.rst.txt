@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.SyntheticLethalityExperimentReference
+=================================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: SyntheticLethalityExperimentReference
+   :show-inheritance:
+   :members:

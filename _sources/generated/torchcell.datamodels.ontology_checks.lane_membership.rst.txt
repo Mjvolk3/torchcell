@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.ontology\_checks.lane\_membership
+======================================================
+
+.. currentmodule:: torchcell.datamodels.ontology_checks
+
+.. autofunction:: lane_membership

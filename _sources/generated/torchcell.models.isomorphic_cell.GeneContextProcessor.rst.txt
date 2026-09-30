@@ -1,0 +1,8 @@
+﻿torchcell.models.isomorphic\_cell.GeneContextProcessor
+======================================================
+
+.. currentmodule:: torchcell.models.isomorphic_cell
+
+.. autoclass:: GeneContextProcessor
+   :show-inheritance:
+   :members:

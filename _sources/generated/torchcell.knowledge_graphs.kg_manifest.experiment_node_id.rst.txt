@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.experiment\_node\_id
+=============================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autofunction:: experiment_node_id

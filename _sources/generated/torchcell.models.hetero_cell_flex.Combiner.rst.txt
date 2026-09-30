@@ -1,0 +1,8 @@
+﻿torchcell.models.hetero\_cell\_flex.Combiner
+============================================
+
+.. currentmodule:: torchcell.models.hetero_cell_flex
+
+.. autoclass:: Combiner
+   :show-inheritance:
+   :members:

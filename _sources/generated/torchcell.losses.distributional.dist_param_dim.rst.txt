@@ -1,0 +1,6 @@
+﻿torchcell.losses.distributional.dist\_param\_dim
+================================================
+
+.. currentmodule:: torchcell.losses.distributional
+
+.. autofunction:: dist_param_dim

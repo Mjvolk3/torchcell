@@ -1,0 +1,6 @@
+﻿torchcell.paper.tables.tex\_escape
+==================================
+
+.. currentmodule:: torchcell.paper.tables
+
+.. autofunction:: tex_escape

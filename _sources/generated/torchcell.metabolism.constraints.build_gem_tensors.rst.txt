@@ -1,0 +1,6 @@
+﻿torchcell.metabolism.constraints.build\_gem\_tensors
+====================================================
+
+.. currentmodule:: torchcell.metabolism.constraints
+
+.. autofunction:: build_gem_tensors

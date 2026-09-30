@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.zelezniak2018.MetaboliteZelezniak2018Dataset
+===========================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.zelezniak2018
+
+.. autoclass:: MetaboliteZelezniak2018Dataset
+   :show-inheritance:
+   :members:

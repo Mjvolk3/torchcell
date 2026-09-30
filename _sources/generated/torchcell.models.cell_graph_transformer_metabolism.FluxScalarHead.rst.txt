@@ -1,0 +1,8 @@
+﻿torchcell.models.cell\_graph\_transformer\_metabolism.FluxScalarHead
+====================================================================
+
+.. currentmodule:: torchcell.models.cell_graph_transformer_metabolism
+
+.. autoclass:: FluxScalarHead
+   :show-inheritance:
+   :members:

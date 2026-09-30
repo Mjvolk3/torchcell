@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.compound\_identity\_curate.synonyms\_url
+=============================================================
+
+.. currentmodule:: torchcell.datamodels.compound_identity_curate
+
+.. autofunction:: synonyms_url

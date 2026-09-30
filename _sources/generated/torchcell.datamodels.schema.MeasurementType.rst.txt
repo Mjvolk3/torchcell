@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.MeasurementType
+===========================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: MeasurementType
+   :show-inheritance:
+   :members:

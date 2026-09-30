@@ -1,0 +1,6 @@
+﻿torchcell.viz.fitness.box\_plot
+===============================
+
+.. currentmodule:: torchcell.viz.fitness
+
+.. autofunction:: box_plot

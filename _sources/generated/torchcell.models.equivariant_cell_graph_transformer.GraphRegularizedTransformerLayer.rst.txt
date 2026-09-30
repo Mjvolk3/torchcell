@@ -1,0 +1,8 @@
+﻿torchcell.models.equivariant\_cell\_graph\_transformer.GraphRegularizedTransformerLayer
+=======================================================================================
+
+.. currentmodule:: torchcell.models.equivariant_cell_graph_transformer
+
+.. autoclass:: GraphRegularizedTransformerLayer
+   :show-inheritance:
+   :members:

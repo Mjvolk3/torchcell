@@ -1,0 +1,8 @@
+﻿torchcell.models.fungal\_up\_down\_transformer.FungalUpDownTransformer
+======================================================================
+
+.. currentmodule:: torchcell.models.fungal_up_down_transformer
+
+.. autoclass:: FungalUpDownTransformer
+   :show-inheritance:
+   :members:

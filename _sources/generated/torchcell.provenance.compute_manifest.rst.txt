@@ -1,0 +1,6 @@
+﻿torchcell.provenance.compute\_manifest
+======================================
+
+.. currentmodule:: torchcell.provenance
+
+.. autofunction:: compute_manifest

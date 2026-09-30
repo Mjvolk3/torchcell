@@ -1,0 +1,8 @@
+﻿torchcell.losses.logcosh.LogCoshLoss
+====================================
+
+.. currentmodule:: torchcell.losses.logcosh
+
+.. autoclass:: LogCoshLoss
+   :show-inheritance:
+   :members:

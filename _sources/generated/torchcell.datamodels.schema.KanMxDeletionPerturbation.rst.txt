@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.KanMxDeletionPerturbation
+=====================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: KanMxDeletionPerturbation
+   :show-inheritance:
+   :members:

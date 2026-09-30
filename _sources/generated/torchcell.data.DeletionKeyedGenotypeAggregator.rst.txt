@@ -1,0 +1,8 @@
+﻿torchcell.data.DeletionKeyedGenotypeAggregator
+==============================================
+
+.. currentmodule:: torchcell.data
+
+.. autoclass:: DeletionKeyedGenotypeAggregator
+   :show-inheritance:
+   :members:

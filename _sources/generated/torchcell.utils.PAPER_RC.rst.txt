@@ -1,0 +1,6 @@
+﻿torchcell.utils.PAPER\_RC
+=========================
+
+.. currentmodule:: torchcell.utils
+
+.. autodata:: PAPER_RC

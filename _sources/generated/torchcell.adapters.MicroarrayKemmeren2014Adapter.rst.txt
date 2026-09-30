@@ -1,0 +1,8 @@
+﻿torchcell.adapters.MicroarrayKemmeren2014Adapter
+================================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: MicroarrayKemmeren2014Adapter
+   :show-inheritance:
+   :members:

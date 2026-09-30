@@ -1,0 +1,8 @@
+﻿torchcell.models.hetero\_cell\_nsa\_retry.HeteroCellNSA
+=======================================================
+
+.. currentmodule:: torchcell.models.hetero_cell_nsa_retry
+
+.. autoclass:: HeteroCellNSA
+   :show-inheritance:
+   :members:

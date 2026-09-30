@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.dasilveira2014.MetaboliteDaSilveira2014Dataset
+=============================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.dasilveira2014
+
+.. autoclass:: MetaboliteDaSilveira2014Dataset
+   :show-inheritance:
+   :members:

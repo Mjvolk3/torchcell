@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.releases.next\_version
+==================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.releases
+
+.. autofunction:: next_version

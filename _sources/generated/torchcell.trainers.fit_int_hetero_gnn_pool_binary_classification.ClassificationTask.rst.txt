@@ -1,0 +1,8 @@
+﻿torchcell.trainers.fit\_int\_hetero\_gnn\_pool\_binary\_classification.ClassificationTask
+=========================================================================================
+
+.. currentmodule:: torchcell.trainers.fit_int_hetero_gnn_pool_binary_classification
+
+.. autoclass:: ClassificationTask
+   :show-inheritance:
+   :members:

@@ -1,0 +1,770 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.metrics.nan_tolerant_metrics &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/metrics/nan_tolerant_metrics.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.metrics.nan_tolerant_metrics</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.metrics.nan_tolerant_metrics</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""NaN-tolerant TorchMetrics for regression and correlation under missing labels."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchmetrics.metric</span><span class="w"> </span><span class="kn">import</span> <span class="n">Metric</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_handle_nan_mask</span><span class="p">(</span><span class="n">preds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Create mask for non-NaN values and return valid predictions and targets."""</span>
+    <span class="n">valid_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+    <span class="n">valid_preds</span> <span class="o">=</span> <span class="n">preds</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+    <span class="n">valid_target</span> <span class="o">=</span> <span class="n">target</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">valid_mask</span><span class="p">,</span> <span class="n">valid_preds</span><span class="p">,</span> <span class="n">valid_target</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_nan_tolerant_mse_update</span><span class="p">(</span>
+    <span class="n">preds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_outputs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Update state with predictions and targets, handling NaN values."""</span>
+    <span class="n">valid_mask</span><span class="p">,</span> <span class="n">valid_preds</span><span class="p">,</span> <span class="n">valid_target</span> <span class="o">=</span> <span class="n">_handle_nan_mask</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">valid_mask</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">num_outputs</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">sum_squared_error</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">valid_preds</span> <span class="o">-</span> <span class="n">valid_target</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">num_observations</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">valid_mask</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">preds</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sum_squared_error</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">valid_preds</span> <span class="o">-</span> <span class="n">valid_target</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">num_observations</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+                <span class="n">valid_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="n">device</span><span class="o">=</span><span class="n">preds</span><span class="o">.</span><span class="n">device</span>
+            <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">sum_squared_error</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">preds</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">num_observations</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">preds</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">sum_squared_error</span><span class="p">,</span> <span class="n">num_observations</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_nan_tolerant_mae_update</span><span class="p">(</span>
+    <span class="n">preds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_outputs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Update state with predictions and targets, handling NaN values."""</span>
+    <span class="n">valid_mask</span><span class="p">,</span> <span class="n">valid_preds</span><span class="p">,</span> <span class="n">valid_target</span> <span class="o">=</span> <span class="n">_handle_nan_mask</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">valid_mask</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">num_outputs</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">sum_abs_error</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">valid_preds</span> <span class="o">-</span> <span class="n">valid_target</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">num_observations</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">valid_mask</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">preds</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sum_abs_error</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">valid_preds</span> <span class="o">-</span> <span class="n">valid_target</span><span class="p">))</span>
+            <span class="n">num_observations</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+                <span class="n">valid_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="n">device</span><span class="o">=</span><span class="n">preds</span><span class="o">.</span><span class="n">device</span>
+            <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">sum_abs_error</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">preds</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">num_observations</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">preds</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">sum_abs_error</span><span class="p">,</span> <span class="n">num_observations</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_nan_tolerant_error_compute</span><span class="p">(</span><span class="n">sum_error</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_observations</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Compute mean error over state."""</span>
+    <span class="k">if</span> <span class="n">num_observations</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">sum_error</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">sum_error</span> <span class="o">/</span> <span class="n">num_observations</span>
+
+
+<span class="c1"># class NaNTolerantMSE(Metric):</span>
+<span class="c1">#     is_differentiable = True</span>
+<span class="c1">#     higher_is_better = False</span>
+<span class="c1">#     full_state_update = False</span>
+
+<span class="c1">#     def __init__(self, squared: bool = True, num_outputs: int = 1, **kwargs: Any):</span>
+<span class="c1">#         super().__init__(**kwargs)</span>
+<span class="c1">#         self.squared = squared</span>
+<span class="c1">#         self.num_outputs = num_outputs</span>
+
+<span class="c1">#         self.add_state(</span>
+<span class="c1">#             "sum_squared_error", default=torch.zeros(num_outputs), dist_reduce_fx="sum"</span>
+<span class="c1">#         )</span>
+<span class="c1">#         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")</span>
+
+<span class="c1">#     def update(self, preds: Tensor, target: Tensor) -&gt; None:</span>
+<span class="c1">#         sum_squared_error, num_obs = _nan_tolerant_mse_update(</span>
+<span class="c1">#             preds, target, self.num_outputs</span>
+<span class="c1">#         )</span>
+<span class="c1">#         self.sum_squared_error += sum_squared_error</span>
+<span class="c1">#         self.total += num_obs</span>
+
+<span class="c1">#     def compute(self) -&gt; Tensor:</span>
+<span class="c1">#         mean_squared_error = _nan_tolerant_error_compute(</span>
+<span class="c1">#             self.sum_squared_error, self.total</span>
+<span class="c1">#         )</span>
+<span class="c1">#         return mean_squared_error if self.squared else torch.sqrt(mean_squared_error)</span>
+
+
+<div class="viewcode-block" id="NaNTolerantRMSE">
+<a class="viewcode-back" href="../../../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantRMSE.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantRMSE">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NaNTolerantRMSE</span><span class="p">(</span><span class="n">Metric</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Root mean squared error that ignores NaN entries in preds/target."""</span>
+
+    <span class="n">is_differentiable</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">higher_is_better</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">full_state_update</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">sum_squared_error</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="n">total</span><span class="p">:</span> <span class="n">Tensor</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_outputs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Register running squared-error and count states."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span> <span class="o">=</span> <span class="n">num_outputs</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span>
+            <span class="s2">"sum_squared_error"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">),</span> <span class="n">dist_reduce_fx</span><span class="o">=</span><span class="s2">"sum"</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span><span class="s2">"total"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">dist_reduce_fx</span><span class="o">=</span><span class="s2">"sum"</span><span class="p">)</span>
+
+<div class="viewcode-block" id="NaNTolerantRMSE.update">
+<a class="viewcode-back" href="../../../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantRMSE.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantRMSE.update">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">preds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Accumulate squared error and valid-sample count over non-NaN entries."""</span>
+        <span class="n">sum_squared_error</span><span class="p">,</span> <span class="n">num_obs</span> <span class="o">=</span> <span class="n">_nan_tolerant_mse_update</span><span class="p">(</span>
+            <span class="n">preds</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sum_squared_error</span> <span class="o">+=</span> <span class="n">sum_squared_error</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total</span> <span class="o">+=</span> <span class="n">num_obs</span></div>
+
+
+<div class="viewcode-block" id="NaNTolerantRMSE.compute">
+<a class="viewcode-back" href="../../../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantRMSE.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantRMSE.compute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the root mean squared error over accumulated state."""</span>
+        <span class="n">mean_squared_error</span> <span class="o">=</span> <span class="n">_nan_tolerant_error_compute</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sum_squared_error</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">total</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mean_squared_error</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="NaNTolerantMAE">
+<a class="viewcode-back" href="../../../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantMAE.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantMAE">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NaNTolerantMAE</span><span class="p">(</span><span class="n">Metric</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Mean absolute error that ignores NaN entries in preds/target."""</span>
+
+    <span class="n">is_differentiable</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">higher_is_better</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">full_state_update</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">sum_abs_error</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="n">total</span><span class="p">:</span> <span class="n">Tensor</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_outputs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Register running absolute-error and count states."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span> <span class="o">=</span> <span class="n">num_outputs</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span>
+            <span class="s2">"sum_abs_error"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">),</span> <span class="n">dist_reduce_fx</span><span class="o">=</span><span class="s2">"sum"</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span><span class="s2">"total"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">dist_reduce_fx</span><span class="o">=</span><span class="s2">"sum"</span><span class="p">)</span>
+
+<div class="viewcode-block" id="NaNTolerantMAE.update">
+<a class="viewcode-back" href="../../../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantMAE.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantMAE.update">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">preds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Accumulate absolute error and valid-sample count over non-NaN entries."""</span>
+        <span class="n">sum_abs_error</span><span class="p">,</span> <span class="n">num_obs</span> <span class="o">=</span> <span class="n">_nan_tolerant_mae_update</span><span class="p">(</span>
+            <span class="n">preds</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sum_abs_error</span> <span class="o">+=</span> <span class="n">sum_abs_error</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total</span> <span class="o">+=</span> <span class="n">num_obs</span></div>
+
+
+<div class="viewcode-block" id="NaNTolerantMAE.compute">
+<a class="viewcode-back" href="../../../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantMAE.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantMAE.compute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the mean absolute error over accumulated state."""</span>
+        <span class="k">return</span> <span class="n">_nan_tolerant_error_compute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sum_abs_error</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">total</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_final_aggregation</span><span class="p">(</span>
+    <span class="n">means_x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">means_y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">vars_x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">vars_y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">corrs_xy</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">nbs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Aggregate statistics from multiple devices, handling NaN values."""</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">means_x</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">means_x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">means_y</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">vars_x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">vars_y</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">corrs_xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">nbs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">mx1</span><span class="p">,</span> <span class="n">my1</span><span class="p">,</span> <span class="n">vx1</span><span class="p">,</span> <span class="n">vy1</span><span class="p">,</span> <span class="n">cxy1</span><span class="p">,</span> <span class="n">n1</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">means_x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">means_y</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">vars_x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">vars_y</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">corrs_xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">nbs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">means_x</span><span class="p">)):</span>
+        <span class="n">mx2</span><span class="p">,</span> <span class="n">my2</span><span class="p">,</span> <span class="n">vx2</span><span class="p">,</span> <span class="n">vy2</span><span class="p">,</span> <span class="n">cxy2</span><span class="p">,</span> <span class="n">n2</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">means_x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="n">means_y</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="n">vars_x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="n">vars_y</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="n">corrs_xy</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="n">nbs</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">nb</span> <span class="o">=</span> <span class="n">n1</span> <span class="o">+</span> <span class="n">n2</span>
+        <span class="n">mean_x</span> <span class="o">=</span> <span class="p">(</span><span class="n">n1</span> <span class="o">*</span> <span class="n">mx1</span> <span class="o">+</span> <span class="n">n2</span> <span class="o">*</span> <span class="n">mx2</span><span class="p">)</span> <span class="o">/</span> <span class="n">nb</span>
+        <span class="n">mean_y</span> <span class="o">=</span> <span class="p">(</span><span class="n">n1</span> <span class="o">*</span> <span class="n">my1</span> <span class="o">+</span> <span class="n">n2</span> <span class="o">*</span> <span class="n">my2</span><span class="p">)</span> <span class="o">/</span> <span class="n">nb</span>
+
+        <span class="c1"># var_x</span>
+        <span class="n">element_x1</span> <span class="o">=</span> <span class="p">(</span><span class="n">n1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">mean_x</span> <span class="o">-</span> <span class="n">n1</span> <span class="o">*</span> <span class="n">mx1</span>
+        <span class="n">vx1</span> <span class="o">+=</span> <span class="p">(</span><span class="n">element_x1</span> <span class="o">-</span> <span class="n">mx1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">element_x1</span> <span class="o">-</span> <span class="n">mean_x</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">element_x1</span> <span class="o">-</span> <span class="n">mean_x</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">element_x2</span> <span class="o">=</span> <span class="p">(</span><span class="n">n2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">mean_x</span> <span class="o">-</span> <span class="n">n2</span> <span class="o">*</span> <span class="n">mx2</span>
+        <span class="n">vx2</span> <span class="o">+=</span> <span class="p">(</span><span class="n">element_x2</span> <span class="o">-</span> <span class="n">mx2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">element_x2</span> <span class="o">-</span> <span class="n">mean_x</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">element_x2</span> <span class="o">-</span> <span class="n">mean_x</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">var_x</span> <span class="o">=</span> <span class="n">vx1</span> <span class="o">+</span> <span class="n">vx2</span>
+
+        <span class="c1"># var_y</span>
+        <span class="n">element_y1</span> <span class="o">=</span> <span class="p">(</span><span class="n">n1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">mean_y</span> <span class="o">-</span> <span class="n">n1</span> <span class="o">*</span> <span class="n">my1</span>
+        <span class="n">vy1</span> <span class="o">+=</span> <span class="p">(</span><span class="n">element_y1</span> <span class="o">-</span> <span class="n">my1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">element_y1</span> <span class="o">-</span> <span class="n">mean_y</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">element_y1</span> <span class="o">-</span> <span class="n">mean_y</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">element_y2</span> <span class="o">=</span> <span class="p">(</span><span class="n">n2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">mean_y</span> <span class="o">-</span> <span class="n">n2</span> <span class="o">*</span> <span class="n">my2</span>
+        <span class="n">vy2</span> <span class="o">+=</span> <span class="p">(</span><span class="n">element_y2</span> <span class="o">-</span> <span class="n">my2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">element_y2</span> <span class="o">-</span> <span class="n">mean_y</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">element_y2</span> <span class="o">-</span> <span class="n">mean_y</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">var_y</span> <span class="o">=</span> <span class="n">vy1</span> <span class="o">+</span> <span class="n">vy2</span>
+
+        <span class="c1"># corr</span>
+        <span class="n">cxy1</span> <span class="o">+=</span> <span class="p">(</span><span class="n">element_x1</span> <span class="o">-</span> <span class="n">mx1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">element_y1</span> <span class="o">-</span> <span class="n">mean_y</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">element_x1</span> <span class="o">-</span> <span class="n">mean_x</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="n">element_y1</span> <span class="o">-</span> <span class="n">mean_y</span>
+        <span class="p">)</span>
+        <span class="n">cxy2</span> <span class="o">+=</span> <span class="p">(</span><span class="n">element_x2</span> <span class="o">-</span> <span class="n">mx2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">element_y2</span> <span class="o">-</span> <span class="n">mean_y</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">element_x2</span> <span class="o">-</span> <span class="n">mean_x</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="n">element_y2</span> <span class="o">-</span> <span class="n">mean_y</span>
+        <span class="p">)</span>
+        <span class="n">corr_xy</span> <span class="o">=</span> <span class="n">cxy1</span> <span class="o">+</span> <span class="n">cxy2</span>
+
+        <span class="n">mx1</span><span class="p">,</span> <span class="n">my1</span><span class="p">,</span> <span class="n">vx1</span><span class="p">,</span> <span class="n">vy1</span><span class="p">,</span> <span class="n">cxy1</span><span class="p">,</span> <span class="n">n1</span> <span class="o">=</span> <span class="n">mean_x</span><span class="p">,</span> <span class="n">mean_y</span><span class="p">,</span> <span class="n">var_x</span><span class="p">,</span> <span class="n">var_y</span><span class="p">,</span> <span class="n">corr_xy</span><span class="p">,</span> <span class="n">nb</span>
+    <span class="k">return</span> <span class="n">mean_x</span><span class="p">,</span> <span class="n">mean_y</span><span class="p">,</span> <span class="n">var_x</span><span class="p">,</span> <span class="n">var_y</span><span class="p">,</span> <span class="n">corr_xy</span><span class="p">,</span> <span class="n">nb</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_nan_tolerant_pearson_update</span><span class="p">(</span>
+    <span class="n">preds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">target</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">mean_x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">mean_y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">var_x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">var_y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">corr_xy</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">n_total</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">num_outputs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Update Pearson correlation statistics, handling NaN values."""</span>
+    <span class="c1"># Handle NaN values</span>
+    <span class="n">valid_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">valid_mask</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">mean_x</span><span class="p">,</span> <span class="n">mean_y</span><span class="p">,</span> <span class="n">var_x</span><span class="p">,</span> <span class="n">var_y</span><span class="p">,</span> <span class="n">corr_xy</span><span class="p">,</span> <span class="n">n_total</span>
+
+    <span class="c1"># Get valid samples</span>
+    <span class="n">valid_preds</span> <span class="o">=</span> <span class="n">preds</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+    <span class="n">valid_target</span> <span class="o">=</span> <span class="n">target</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">valid_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="c1"># Compute means for this batch</span>
+    <span class="n">batch_mean_x</span> <span class="o">=</span> <span class="n">valid_preds</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">batch_mean_y</span> <span class="o">=</span> <span class="n">valid_target</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+    <span class="c1"># Update overall means</span>
+    <span class="n">new_n</span> <span class="o">=</span> <span class="n">n_total</span> <span class="o">+</span> <span class="n">n</span>
+    <span class="n">delta_x</span> <span class="o">=</span> <span class="n">batch_mean_x</span> <span class="o">-</span> <span class="n">mean_x</span>
+    <span class="n">delta_y</span> <span class="o">=</span> <span class="n">batch_mean_y</span> <span class="o">-</span> <span class="n">mean_y</span>
+    <span class="n">mean_x</span> <span class="o">=</span> <span class="n">mean_x</span> <span class="o">+</span> <span class="p">(</span><span class="n">delta_x</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span> <span class="o">/</span> <span class="n">new_n</span>
+    <span class="n">mean_y</span> <span class="o">=</span> <span class="n">mean_y</span> <span class="o">+</span> <span class="p">(</span><span class="n">delta_y</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span> <span class="o">/</span> <span class="n">new_n</span>
+
+    <span class="c1"># Update variances and correlation</span>
+    <span class="n">var_x</span> <span class="o">=</span> <span class="n">var_x</span> <span class="o">+</span> <span class="p">((</span><span class="n">valid_preds</span> <span class="o">-</span> <span class="n">mean_x</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">var_y</span> <span class="o">=</span> <span class="n">var_y</span> <span class="o">+</span> <span class="p">((</span><span class="n">valid_target</span> <span class="o">-</span> <span class="n">mean_y</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">corr_xy</span> <span class="o">=</span> <span class="n">corr_xy</span> <span class="o">+</span> <span class="p">((</span><span class="n">valid_preds</span> <span class="o">-</span> <span class="n">mean_x</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">valid_target</span> <span class="o">-</span> <span class="n">mean_y</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="n">n_total</span> <span class="o">=</span> <span class="n">new_n</span>
+
+    <span class="k">return</span> <span class="n">mean_x</span><span class="p">,</span> <span class="n">mean_y</span><span class="p">,</span> <span class="n">var_x</span><span class="p">,</span> <span class="n">var_y</span><span class="p">,</span> <span class="n">corr_xy</span><span class="p">,</span> <span class="n">n_total</span>
+
+
+<div class="viewcode-block" id="NaNTolerantMetricBase">
+<a class="viewcode-back" href="../../../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantMetricBase.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantMetricBase">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NaNTolerantMetricBase</span><span class="p">(</span><span class="n">Metric</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Base metric configured for DDP that tracks the input tensor device."""</span>
+
+    <span class="n">_device_buffer</span><span class="p">:</span> <span class="n">Tensor</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Configure DDP-related options and register a device-tracking buffer."""</span>
+        <span class="c1"># Configure for DDP compatibility</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"compute_on_cpu"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># Keep computation on GPU</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"sync_on_compute"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># Let Lightning handle sync</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"dist_sync_on_step"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># Sync after each step</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c1"># Register device tracking buffer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"_device_buffer"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_track_device</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Track the device of input tensors."""</span>
+        <span class="k">if</span> <span class="n">tensor</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device_buffer</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_device_buffer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device_buffer</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_tensor_on_device</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="n">shape</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create a new tensor on the tracked device."""</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_device_buffer</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="NaNTolerantPearsonCorrCoef">
+<a class="viewcode-back" href="../../../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantPearsonCorrCoef.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantPearsonCorrCoef">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NaNTolerantPearsonCorrCoef</span><span class="p">(</span><span class="n">NaNTolerantMetricBase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Pearson correlation computed from sufficient statistics, ignoring NaNs."""</span>
+
+    <span class="n">is_differentiable</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">higher_is_better</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># both -1 and 1 are optimal</span>
+    <span class="n">full_state_update</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">plot_lower_bound</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
+    <span class="n">plot_upper_bound</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+    <span class="n">sum_x</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="n">sum_y</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="n">sum_xy</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="n">sum_x2</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="n">sum_y2</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="n">n_samples</span><span class="p">:</span> <span class="n">Tensor</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_outputs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Register running sums used to compute the correlation."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span> <span class="o">=</span> <span class="n">num_outputs</span>
+
+        <span class="c1"># Track sufficient statistics</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span><span class="s2">"sum_x"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">),</span> <span class="n">dist_reduce_fx</span><span class="o">=</span><span class="s2">"sum"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span><span class="s2">"sum_y"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">),</span> <span class="n">dist_reduce_fx</span><span class="o">=</span><span class="s2">"sum"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span><span class="s2">"sum_xy"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">),</span> <span class="n">dist_reduce_fx</span><span class="o">=</span><span class="s2">"sum"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span><span class="s2">"sum_x2"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">),</span> <span class="n">dist_reduce_fx</span><span class="o">=</span><span class="s2">"sum"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span><span class="s2">"sum_y2"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">),</span> <span class="n">dist_reduce_fx</span><span class="o">=</span><span class="s2">"sum"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span>
+            <span class="s2">"n_samples"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">),</span> <span class="n">dist_reduce_fx</span><span class="o">=</span><span class="s2">"sum"</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="NaNTolerantPearsonCorrCoef.update">
+<a class="viewcode-back" href="../../../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantPearsonCorrCoef.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantPearsonCorrCoef.update">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">preds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Update state with predictions and targets."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_track_device</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span>
+
+        <span class="c1"># Handle NaN values</span>
+        <span class="n">valid_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">valid_mask</span><span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="n">preds</span> <span class="o">=</span> <span class="n">preds</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">target</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+
+        <span class="c1"># Update sufficient statistics</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sum_x</span> <span class="o">+=</span> <span class="n">preds</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sum_y</span> <span class="o">+=</span> <span class="n">target</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sum_xy</span> <span class="o">+=</span> <span class="p">(</span><span class="n">preds</span> <span class="o">*</span> <span class="n">target</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sum_x2</span> <span class="o">+=</span> <span class="p">(</span><span class="n">preds</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sum_y2</span> <span class="o">+=</span> <span class="p">(</span><span class="n">target</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span> <span class="o">+=</span> <span class="n">valid_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="NaNTolerantPearsonCorrCoef.compute">
+<a class="viewcode-back" href="../../../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantPearsonCorrCoef.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantPearsonCorrCoef.compute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Compute Pearson correlation coefficient."""</span>
+        <span class="c1"># Handle no samples case</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_tensor_on_device</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span><span class="p">)</span>
+
+        <span class="c1"># Calculate means</span>
+        <span class="n">mean_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sum_x</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span>
+        <span class="n">mean_y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sum_y</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span>
+
+        <span class="c1"># Calculate covariance and standard deviations</span>
+        <span class="n">cov_xy</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sum_xy</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">mean_x</span> <span class="o">*</span> <span class="n">mean_y</span><span class="p">)</span>
+        <span class="n">var_x</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sum_x2</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">mean_x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">var_y</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sum_y2</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">mean_y</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># Handle zero variance case</span>
+        <span class="n">denom</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">var_x</span> <span class="o">*</span> <span class="n">var_y</span><span class="p">)</span>
+        <span class="n">pearson</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">denom</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="n">cov_xy</span> <span class="o">/</span> <span class="n">denom</span><span class="p">,</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_device_buffer</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">pearson</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="NaNTolerantSpearmanCorrCoef">
+<a class="viewcode-back" href="../../../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantSpearmanCorrCoef.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantSpearmanCorrCoef">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NaNTolerantSpearmanCorrCoef</span><span class="p">(</span><span class="n">Metric</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Spearman rank correlation that buffers non-NaN values until compute."""</span>
+
+    <span class="n">is_differentiable</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">higher_is_better</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">full_state_update</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">plot_lower_bound</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
+    <span class="n">plot_upper_bound</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+    <span class="n">preds</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span>
+    <span class="n">target</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span>
+    <span class="n">num_samples</span><span class="p">:</span> <span class="n">Tensor</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_outputs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Register list buffers for predictions/targets and a sample counter."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchmetrics.utilities</span><span class="w"> </span><span class="kn">import</span> <span class="n">rank_zero_warn</span>
+
+        <span class="n">rank_zero_warn</span><span class="p">(</span>
+            <span class="s2">"Metric `SpearmanCorrcoef` will save all targets and predictions in the buffer."</span>
+            <span class="s2">" For large datasets, this may lead to large memory footprint."</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">num_outputs</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Expected argument `num_outputs` to be an int larger than 0, but got </span><span class="si">{</span><span class="n">num_outputs</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span> <span class="o">=</span> <span class="n">num_outputs</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span><span class="s2">"preds"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">dist_reduce_fx</span><span class="o">=</span><span class="s2">"cat"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span><span class="s2">"target"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">dist_reduce_fx</span><span class="o">=</span><span class="s2">"cat"</span><span class="p">)</span>
+        <span class="c1"># Add counter to track number of valid samples</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span><span class="s2">"num_samples"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">dist_reduce_fx</span><span class="o">=</span><span class="s2">"sum"</span><span class="p">)</span>
+
+<div class="viewcode-block" id="NaNTolerantSpearmanCorrCoef.update">
+<a class="viewcode-back" href="../../../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantSpearmanCorrCoef.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantSpearmanCorrCoef.update">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">preds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Update state with predictions and targets."""</span>
+        <span class="c1"># Handle NaN values</span>
+        <span class="n">valid_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">valid_mask</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">preds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">preds</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span><span class="o">.</span><span class="n">float</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">target</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span><span class="o">.</span><span class="n">float</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span> <span class="o">+=</span> <span class="n">valid_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="NaNTolerantSpearmanCorrCoef.compute">
+<a class="viewcode-back" href="../../../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantSpearmanCorrCoef.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantSpearmanCorrCoef.compute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Compute Spearman correlation coefficient over state."""</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchmetrics.utilities.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">dim_zero_cat</span>
+
+        <span class="c1"># Check if we have any valid samples</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Create nan tensor on same device as num_samples</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Concatenate all collected values</span>
+            <span class="n">preds</span> <span class="o">=</span> <span class="n">dim_zero_cat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preds</span><span class="p">)</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="n">dim_zero_cat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">RuntimeError</span><span class="p">,</span> <span class="ne">IndexError</span><span class="p">):</span>
+            <span class="c1"># Handle case where concatenation fails</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Convert to ranks</span>
+        <span class="n">preds_rank</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">preds</span><span class="p">))</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+        <span class="n">target_rank</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">target</span><span class="p">))</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+
+        <span class="c1"># Compute correlation on ranks</span>
+        <span class="n">pearson</span> <span class="o">=</span> <span class="n">NaNTolerantPearsonCorrCoef</span><span class="p">(</span><span class="n">num_outputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span><span class="p">)</span>
+        <span class="n">pearson</span> <span class="o">=</span> <span class="n">pearson</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">preds</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># Move to same device as data</span>
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">pearson</span><span class="p">(</span><span class="n">preds_rank</span><span class="p">,</span> <span class="n">target_rank</span><span class="p">))</span></div>
+</div>
+
+
+
+<span class="c1">#######</span>
+
+
+<div class="viewcode-block" id="NaNTolerantMSE">
+<a class="viewcode-back" href="../../../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantMSE.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantMSE">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NaNTolerantMSE</span><span class="p">(</span><span class="n">NaNTolerantMetricBase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Mean squared (or root mean squared) error ignoring NaN entries."""</span>
+
+    <span class="n">is_differentiable</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">higher_is_better</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">full_state_update</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">sum_squared_error</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="n">total</span><span class="p">:</span> <span class="n">Tensor</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">squared</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">num_outputs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Register squared-error and count states; squared toggles MSE vs RMSE."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">squared</span> <span class="o">=</span> <span class="n">squared</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span> <span class="o">=</span> <span class="n">num_outputs</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span>
+            <span class="s2">"sum_squared_error"</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">),</span>
+            <span class="n">dist_reduce_fx</span><span class="o">=</span><span class="s2">"sum"</span><span class="p">,</span>
+            <span class="n">persistent</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Save in state dict</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span>
+            <span class="s2">"total"</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+            <span class="n">dist_reduce_fx</span><span class="o">=</span><span class="s2">"sum"</span><span class="p">,</span>
+            <span class="n">persistent</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Save in state dict</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="NaNTolerantMSE.update">
+<a class="viewcode-back" href="../../../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantMSE.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantMSE.update">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">preds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Accumulate squared error and valid-sample count over non-NaN entries."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_track_device</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span>  <span class="c1"># Track current device</span>
+        <span class="n">sum_squared_error</span><span class="p">,</span> <span class="n">num_obs</span> <span class="o">=</span> <span class="n">_nan_tolerant_mse_update</span><span class="p">(</span>
+            <span class="n">preds</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sum_squared_error</span> <span class="o">+=</span> <span class="n">sum_squared_error</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total</span> <span class="o">+=</span> <span class="n">num_obs</span></div>
+
+
+<div class="viewcode-block" id="NaNTolerantMSE.compute">
+<a class="viewcode-back" href="../../../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantMSE.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantMSE.compute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return MSE, or RMSE when squared is False, over accumulated state."""</span>
+        <span class="c1"># Handle empty case</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">total</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_tensor_on_device</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span><span class="p">)</span>
+
+        <span class="n">mean_squared_error</span> <span class="o">=</span> <span class="n">_nan_tolerant_error_compute</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sum_squared_error</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">total</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">mean_squared_error</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">squared</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mean_squared_error</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="NaNTolerantR2Score">
+<a class="viewcode-back" href="../../../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantR2Score.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantR2Score">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NaNTolerantR2Score</span><span class="p">(</span><span class="n">NaNTolerantMetricBase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""R-squared score computed from squared error and total variance, ignoring NaNs."""</span>
+
+    <span class="n">is_differentiable</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">higher_is_better</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">full_state_update</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">sum_squared_error</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="n">sum_squared_deviation</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="n">total</span><span class="p">:</span> <span class="n">Tensor</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_outputs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Register squared-error and squared-deviation states for R-squared."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span> <span class="o">=</span> <span class="n">num_outputs</span>
+
+        <span class="c1"># For computing R², we need both squared error and total variance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span>
+            <span class="s2">"sum_squared_error"</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">),</span>
+            <span class="n">dist_reduce_fx</span><span class="o">=</span><span class="s2">"sum"</span><span class="p">,</span>
+            <span class="n">persistent</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span>
+            <span class="s2">"sum_squared_deviation"</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">),</span>
+            <span class="n">dist_reduce_fx</span><span class="o">=</span><span class="s2">"sum"</span><span class="p">,</span>
+            <span class="n">persistent</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span>
+            <span class="s2">"total"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">dist_reduce_fx</span><span class="o">=</span><span class="s2">"sum"</span><span class="p">,</span> <span class="n">persistent</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="NaNTolerantR2Score.update">
+<a class="viewcode-back" href="../../../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantR2Score.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantR2Score.update">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">preds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Update state with predictions and targets."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_track_device</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span>
+
+        <span class="c1"># Handle NaN values</span>
+        <span class="n">valid_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">valid_mask</span><span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Get valid samples</span>
+        <span class="n">valid_preds</span> <span class="o">=</span> <span class="n">preds</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+        <span class="n">valid_target</span> <span class="o">=</span> <span class="n">target</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+
+        <span class="c1"># Compute target mean for this batch</span>
+        <span class="n">target_mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">valid_target</span><span class="p">)</span>
+
+        <span class="c1"># Update squared error and total variance</span>
+        <span class="n">squared_error</span> <span class="o">=</span> <span class="p">(</span><span class="n">valid_preds</span> <span class="o">-</span> <span class="n">valid_target</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">squared_deviation</span> <span class="o">=</span> <span class="p">(</span><span class="n">valid_target</span> <span class="o">-</span> <span class="n">target_mean</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sum_squared_error</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">squared_error</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sum_squared_deviation</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">squared_deviation</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sum_squared_error</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">squared_error</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sum_squared_deviation</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">squared_deviation</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">total</span> <span class="o">+=</span> <span class="n">valid_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="NaNTolerantR2Score.compute">
+<a class="viewcode-back" href="../../../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantR2Score.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantR2Score.compute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Compute R² score."""</span>
+        <span class="c1"># Handle empty case</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">total</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_tensor_on_device</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span><span class="p">)</span>
+
+        <span class="c1"># Compute R² score: 1 - (sum squared error / sum squared deviation)</span>
+        <span class="c1"># Handle the case where deviation is 0 (constant target)</span>
+        <span class="n">r2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sum_squared_deviation</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">sum_squared_error</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">sum_squared_deviation</span><span class="p">,</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sum_squared_error</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">r2</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

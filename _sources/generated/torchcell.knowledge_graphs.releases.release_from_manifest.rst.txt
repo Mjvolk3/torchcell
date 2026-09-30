@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.releases.release\_from\_manifest
+============================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.releases
+
+.. autofunction:: release_from_manifest

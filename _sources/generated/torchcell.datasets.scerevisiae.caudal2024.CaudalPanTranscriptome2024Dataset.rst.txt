@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset
+===========================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.caudal2024
+
+.. autoclass:: CaudalPanTranscriptome2024Dataset
+   :show-inheritance:
+   :members:

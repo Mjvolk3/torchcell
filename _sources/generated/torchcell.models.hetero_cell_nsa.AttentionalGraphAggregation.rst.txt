@@ -1,0 +1,8 @@
+﻿torchcell.models.hetero\_cell\_nsa.AttentionalGraphAggregation
+==============================================================
+
+.. currentmodule:: torchcell.models.hetero_cell_nsa
+
+.. autoclass:: AttentionalGraphAggregation
+   :show-inheritance:
+   :members:

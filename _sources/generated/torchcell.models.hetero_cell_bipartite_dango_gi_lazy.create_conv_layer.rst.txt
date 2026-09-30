@@ -1,0 +1,6 @@
+﻿torchcell.models.hetero\_cell\_bipartite\_dango\_gi\_lazy.create\_conv\_layer
+=============================================================================
+
+.. currentmodule:: torchcell.models.hetero_cell_bipartite_dango_gi_lazy
+
+.. autofunction:: create_conv_layer

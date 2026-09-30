@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.releases.commit\_index
+==================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.releases
+
+.. autofunction:: commit_index

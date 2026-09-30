@@ -1,0 +1,322 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.adapters.synth_leth_db_adapter &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/adapters/synth_leth_db_adapter.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.adapters.synth_leth_db_adapter</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.adapters.synth_leth_db_adapter</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/adapters/synth_leth_db</span>
+<span class="c1"># [[torchcell.adapters.synth_leth_db]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/synth_leth_db</span>
+<span class="c1"># Test file: tests/torchcell/adapters/test_synth_leth_db.py</span>
+<span class="sd">"""BioCypher adapters for SynthLethDB synthetic lethality and rescue datasets."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">biocypher._logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConf</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">biocypher</span><span class="w"> </span><span class="kn">import</span> <span class="n">BioCypher</span>  <span class="c1"># type: ignore[attr-defined]  # biocypher untyped</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.adapters.cell_adapter</span><span class="w"> </span><span class="kn">import</span> <span class="n">CellAdapter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.synth_leth_db</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SynthLethalityYeastSynthLethDbDataset</span><span class="p">,</span>
+    <span class="n">SynthRescueYeastSynthLethDbDataset</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># logging</span>
+<span class="c1"># Get the biocypher logger</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="s2">"biocypher"</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="SynthLethalityYeastSynthLethDbAdapter">
+<a class="viewcode-back" href="../../../generated/torchcell.adapters.SynthLethalityYeastSynthLethDbAdapter.html#torchcell.adapters.SynthLethalityYeastSynthLethDbAdapter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SynthLethalityYeastSynthLethDbAdapter</span><span class="p">(</span><span class="n">CellAdapter</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""BioCypher adapter for the SynthLethDB synthetic lethality dataset."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dataset</span><span class="p">:</span> <span class="n">SynthLethalityYeastSynthLethDbDataset</span><span class="p">,</span>
+        <span class="n">process_workers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">chunk_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1e4</span><span class="p">),</span>
+        <span class="n">loader_batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1e3</span><span class="p">),</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Load the adapter config and initialize the CellAdapter base."""</span>
+        <span class="n">current_dir</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+
+        <span class="n">config_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">current_dir</span><span class="p">,</span> <span class="s2">"conf"</span><span class="p">,</span> <span class="s2">"synth_lethality_yeast_synth_leth_db_adapter.yaml"</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">config_path</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Config file not found: </span><span class="si">{</span><span class="n">config_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="n">yaml_config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+
+        <span class="n">config</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">yaml_config</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">config</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">process_workers</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">,</span> <span class="n">loader_batch_size</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"SynthLethalityYeastSynthLethDbAdapter initialized with config: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>  <span class="c1"># Debug print</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">process_workers</span> <span class="o">=</span> <span class="n">process_workers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">io_workers</span> <span class="o">=</span> <span class="n">io_workers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chunk_size</span> <span class="o">=</span> <span class="n">chunk_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loader_batch_size</span> <span class="o">=</span> <span class="n">loader_batch_size</span></div>
+
+
+
+<div class="viewcode-block" id="SynthRescueYeastSynthLethDbAdapter">
+<a class="viewcode-back" href="../../../generated/torchcell.adapters.SynthRescueYeastSynthLethDbAdapter.html#torchcell.adapters.SynthRescueYeastSynthLethDbAdapter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SynthRescueYeastSynthLethDbAdapter</span><span class="p">(</span><span class="n">CellAdapter</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""BioCypher adapter for the SynthLethDB synthetic rescue dataset."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dataset</span><span class="p">:</span> <span class="n">SynthLethalityYeastSynthLethDbDataset</span><span class="p">,</span>
+        <span class="n">process_workers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">chunk_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1e4</span><span class="p">),</span>
+        <span class="n">loader_batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1e3</span><span class="p">),</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Load the adapter config and initialize the CellAdapter base."""</span>
+        <span class="n">current_dir</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+
+        <span class="n">config_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">current_dir</span><span class="p">,</span> <span class="s2">"conf"</span><span class="p">,</span> <span class="s2">"synth_rescue_yeast_synth_leth_db_adapter.yaml"</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">config_path</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Config file not found: </span><span class="si">{</span><span class="n">config_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="n">yaml_config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+
+        <span class="n">config</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">yaml_config</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">config</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">process_workers</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">,</span> <span class="n">loader_batch_size</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"SynthRescueYeastSynthLethDbAdapter initialized with config: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>  <span class="c1"># Debug print</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">process_workers</span> <span class="o">=</span> <span class="n">process_workers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">io_workers</span> <span class="o">=</span> <span class="n">io_workers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chunk_size</span> <span class="o">=</span> <span class="n">chunk_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loader_batch_size</span> <span class="o">=</span> <span class="n">loader_batch_size</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">multiprocessing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mp</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">cast</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae.s288c</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y-%m-</span><span class="si">%d</span><span class="s2">_%H-%M-%S"</span><span class="p">)</span>
+    <span class="n">DATA_ROOT</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"DATA_ROOT"</span><span class="p">))</span>
+    <span class="n">BIOCYPHER_CONFIG_PATH</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"BIOCYPHER_CONFIG_PATH"</span><span class="p">)</span>
+    <span class="n">SCHEMA_CONFIG_PATH</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"SCHEMA_CONFIG_PATH"</span><span class="p">)</span>
+    <span class="n">num_workers</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
+    <span class="n">io_workers</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="mf">0.2</span> <span class="o">*</span> <span class="n">num_workers</span><span class="p">)</span>
+    <span class="n">process_workers</span> <span class="o">=</span> <span class="n">num_workers</span> <span class="o">-</span> <span class="n">io_workers</span>
+
+    <span class="c1">## Synth Lethality</span>
+    <span class="n">bc</span> <span class="o">=</span> <span class="n">BioCypher</span><span class="p">(</span>
+        <span class="n">output_directory</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"database/biocypher-out"</span><span class="p">,</span> <span class="n">time</span><span class="p">),</span>
+        <span class="n">biocypher_config_path</span><span class="o">=</span><span class="n">BIOCYPHER_CONFIG_PATH</span><span class="p">,</span>
+        <span class="n">schema_config_path</span><span class="o">=</span><span class="n">SCHEMA_CONFIG_PATH</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
+        <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">SynthLethalityYeastSynthLethDbDataset</span><span class="p">(</span><span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">)</span>
+    <span class="k">del</span> <span class="n">genome</span>
+
+    <span class="n">adapter</span><span class="p">:</span> <span class="n">CellAdapter</span> <span class="o">=</span> <span class="n">SynthLethalityYeastSynthLethDbAdapter</span><span class="p">(</span>
+        <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
+        <span class="n">process_workers</span><span class="o">=</span><span class="n">process_workers</span><span class="p">,</span>
+        <span class="n">io_workers</span><span class="o">=</span><span class="n">io_workers</span><span class="p">,</span>
+        <span class="n">chunk_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e4</span><span class="p">),</span>
+        <span class="n">loader_batch_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e4</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">bc</span><span class="o">.</span><span class="n">write_nodes</span><span class="p">(</span><span class="n">adapter</span><span class="o">.</span><span class="n">get_nodes</span><span class="p">())</span>
+    <span class="n">bc</span><span class="o">.</span><span class="n">write_edges</span><span class="p">(</span><span class="n">adapter</span><span class="o">.</span><span class="n">get_edges</span><span class="p">())</span>
+    <span class="n">bc</span><span class="o">.</span><span class="n">write_import_call</span><span class="p">()</span>
+    <span class="n">bc</span><span class="o">.</span><span class="n">write_schema_info</span><span class="p">(</span><span class="n">as_node</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1">## Synth Rescue</span>
+    <span class="n">bc</span> <span class="o">=</span> <span class="n">BioCypher</span><span class="p">(</span>
+        <span class="n">output_directory</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"database/biocypher-out"</span><span class="p">,</span> <span class="n">time</span><span class="p">),</span>
+        <span class="n">biocypher_config_path</span><span class="o">=</span><span class="n">BIOCYPHER_CONFIG_PATH</span><span class="p">,</span>
+        <span class="n">schema_config_path</span><span class="o">=</span><span class="n">SCHEMA_CONFIG_PATH</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
+        <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">SynthRescueYeastSynthLethDbDataset</span><span class="p">(</span><span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">)</span>
+    <span class="k">del</span> <span class="n">genome</span>
+
+    <span class="n">adapter</span> <span class="o">=</span> <span class="n">SynthRescueYeastSynthLethDbAdapter</span><span class="p">(</span>
+        <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
+        <span class="n">process_workers</span><span class="o">=</span><span class="n">process_workers</span><span class="p">,</span>
+        <span class="n">io_workers</span><span class="o">=</span><span class="n">io_workers</span><span class="p">,</span>
+        <span class="n">chunk_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e4</span><span class="p">),</span>
+        <span class="n">loader_batch_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e4</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">bc</span><span class="o">.</span><span class="n">write_nodes</span><span class="p">(</span><span class="n">adapter</span><span class="o">.</span><span class="n">get_nodes</span><span class="p">())</span>
+    <span class="n">bc</span><span class="o">.</span><span class="n">write_edges</span><span class="p">(</span><span class="n">adapter</span><span class="o">.</span><span class="n">get_edges</span><span class="p">())</span>
+    <span class="n">bc</span><span class="o">.</span><span class="n">write_import_call</span><span class="p">()</span>
+    <span class="n">bc</span><span class="o">.</span><span class="n">write_schema_info</span><span class="p">(</span><span class="n">as_node</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

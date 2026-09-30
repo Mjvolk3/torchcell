@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.synth\_leth\_db.SynthRescueYeastSynthLethDbDataset
+=================================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.synth_leth_db
+
+.. autoclass:: SynthRescueYeastSynthLethDbDataset
+   :show-inheritance:
+   :members:

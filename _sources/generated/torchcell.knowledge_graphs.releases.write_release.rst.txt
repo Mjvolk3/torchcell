@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.releases.write\_release
+===================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.releases
+
+.. autofunction:: write_release

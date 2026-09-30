@@ -1,0 +1,379 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.verification.morphology &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/verification/morphology.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.verification.morphology</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.verification.morphology</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/verification/morphology</span>
+<span class="c1"># [[torchcell.verification.morphology]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/verification/morphology</span>
+<span class="sd">"""L0-L4 record-level verifier for the Ohya2005 CalMorph morphology dataset (WS6).</span>
+
+<span class="sd">Assembles the reusable checks in :mod:`torchcell.verification.levels` into a</span>
+<span class="sd">:class:`VerificationReport` for the SCMD/Ohya2005 CalMorph deletion-mutant dataset.</span>
+
+<span class="sd">The CalMorph schema (`CalMorphPhenotype`) already enforces, at instantiation, that</span>
+<span class="sd">every `calmorph` key is one of the 281 `CALMORPH_LABELS`, every CV key is one of the</span>
+<span class="sd">220 `CALMORPH_STATISTICS`, and that no value is NaN. L0 (structural) therefore already</span>
+<span class="sd">guarantees those. This verifier adds the checks the schema does NOT encode:</span>
+
+<span class="sd">1. L1 `calmorph_completeness` -- the schema accepts any *subset* of parameters; a</span>
+<span class="sd">   correct build measures the FULL 281 base + 220 CV vocabulary in every record, so a</span>
+<span class="sd">   record short of that has silently dropped parameters.</span>
+<span class="sd">2. L2 finiteness -- the schema blocks NaN but not +/-inf.</span>
+<span class="sd">3. L2 `cv_nonnegative` -- a coefficient of variation (SD/mean of a non-negative</span>
+<span class="sd">   morphological measurement) is non-negative by definition; a negative signals a</span>
+<span class="sd">   computation bug the schema would not catch.</span>
+<span class="sd">4. L3 `vocabulary_parity` -- the label vocabulary is internally consistent</span>
+<span class="sd">   (281 + 220 == 501 == `CALMORPH_PARAMETERS`, base and CV disjoint), i.e. the</span>
+<span class="sd">   convention the records adhere to holds.</span>
+
+<span class="sd">L4 (cross-source perturbed-gene overlap with the deletion expression datasets) is</span>
+<span class="sd">asserted by the caller across datasets, not here.</span>
+
+<span class="sd">NOTE on the WT: the 122 wildtype profiles are AGGREGATED into each record's reference</span>
+<span class="sd">phenotype (a single mean-WT baseline, itself carrying the full 281+220 vocabulary),</span>
+<span class="sd">not stored as 122 separate records. So the record-count oracle is the mutant count</span>
+<span class="sd">(4718; all strains retained, ORF names reconciled to R64); the WT is verified as a populated reference, not counted from records.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.calmorph_labels</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CALMORPH_LABELS</span><span class="p">,</span>
+    <span class="n">CALMORPH_PARAMETERS</span><span class="p">,</span>
+    <span class="n">CALMORPH_STATISTICS</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.levels</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">l0_structural</span><span class="p">,</span>
+    <span class="n">l1_count</span><span class="p">,</span>
+    <span class="n">l2_value_fidelity</span><span class="p">,</span>
+    <span class="n">l3_convention</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Level</span><span class="p">,</span>
+    <span class="n">LevelResult</span><span class="p">,</span>
+    <span class="n">Provenance</span><span class="p">,</span>
+    <span class="n">VerificationReport</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># One LMDB entry: {"experiment": {...}, "reference": {...}, "publication": {...}}.</span>
+<span class="n">Record</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+
+<span class="n">_BASE_LABELS</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">CALMORPH_LABELS</span><span class="p">)</span>
+<span class="n">_CV_LABELS</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">CALMORPH_STATISTICS</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_l1_calmorph_completeness</span><span class="p">(</span><span class="n">records</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Record</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""L1: every record measures the full 281 base + 220 CV CalMorph vocabulary."""</span>
+    <span class="n">short</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">rec</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">records</span><span class="p">):</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"phenotype"</span><span class="p">]</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">phenotype</span><span class="p">[</span><span class="s2">"calmorph"</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">cv</span> <span class="o">=</span> <span class="nb">set</span><span class="p">((</span><span class="n">phenotype</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"calmorph_coefficient_of_variation"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">missing_base</span> <span class="o">=</span> <span class="n">_BASE_LABELS</span> <span class="o">-</span> <span class="n">base</span>
+        <span class="n">missing_cv</span> <span class="o">=</span> <span class="n">_CV_LABELS</span> <span class="o">-</span> <span class="n">cv</span>
+        <span class="k">if</span> <span class="n">missing_base</span> <span class="ow">or</span> <span class="n">missing_cv</span><span class="p">:</span>
+            <span class="n">short</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"index"</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span>
+                    <span class="s2">"missing_base"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing_base</span><span class="p">),</span>
+                    <span class="s2">"missing_cv"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing_cv</span><span class="p">),</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+    <span class="n">passed</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">short</span>
+    <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L1</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"calmorph_completeness"</span><span class="p">,</span>
+        <span class="n">passed</span><span class="o">=</span><span class="n">passed</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"all </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">)</span><span class="si">}</span><span class="s2"> records carry the full "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">_BASE_LABELS</span><span class="p">)</span><span class="si">}</span><span class="s2"> base + </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">_CV_LABELS</span><span class="p">)</span><span class="si">}</span><span class="s2"> CV parameters"</span>
+            <span class="k">if</span> <span class="n">passed</span>
+            <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">short</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">)</span><span class="si">}</span><span class="s2"> records missing CalMorph parameters"</span>
+        <span class="p">),</span>
+        <span class="n">details</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"n_records"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">),</span>
+            <span class="s2">"n_base_expected"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">_BASE_LABELS</span><span class="p">),</span>
+            <span class="s2">"n_cv_expected"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">_CV_LABELS</span><span class="p">),</span>
+            <span class="s2">"n_short_records"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">short</span><span class="p">),</span>
+            <span class="s2">"short"</span><span class="p">:</span> <span class="n">short</span><span class="p">[:</span><span class="mi">20</span><span class="p">],</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_l1_reference_populated</span><span class="p">(</span><span class="n">records</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Record</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""L1: every record's WT reference phenotype carries the full vocabulary.</span>
+
+<span class="sd">    The 122 WT profiles are aggregated into this reference; verifying it is populated</span>
+<span class="sd">    is how the WT is accounted for (the 122 count is not record-recoverable).</span>
+<span class="sd">    """</span>
+    <span class="n">bad</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">rec</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">records</span><span class="p">):</span>
+        <span class="n">ref_ph</span> <span class="o">=</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">][</span><span class="s2">"phenotype_reference"</span><span class="p">]</span>
+        <span class="n">n_base</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ref_ph</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"calmorph"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span>
+        <span class="n">n_cv</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ref_ph</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"calmorph_coefficient_of_variation"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span>
+        <span class="k">if</span> <span class="n">n_base</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">_BASE_LABELS</span><span class="p">)</span> <span class="ow">or</span> <span class="n">n_cv</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">_CV_LABELS</span><span class="p">):</span>
+            <span class="n">bad</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"index"</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span> <span class="s2">"n_base"</span><span class="p">:</span> <span class="n">n_base</span><span class="p">,</span> <span class="s2">"n_cv"</span><span class="p">:</span> <span class="n">n_cv</span><span class="p">})</span>
+    <span class="n">passed</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">bad</span>
+    <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L1</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"reference_populated"</span><span class="p">,</span>
+        <span class="n">passed</span><span class="o">=</span><span class="n">passed</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"WT reference carries the full </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">_BASE_LABELS</span><span class="p">)</span><span class="si">}</span><span class="s2">+</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">_CV_LABELS</span><span class="p">)</span><span class="si">}</span><span class="s2"> "</span>
+            <span class="sa">f</span><span class="s2">"vocabulary in all </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">)</span><span class="si">}</span><span class="s2"> records"</span>
+            <span class="k">if</span> <span class="n">passed</span>
+            <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bad</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">)</span><span class="si">}</span><span class="s2"> records have an under-populated WT reference"</span>
+        <span class="p">),</span>
+        <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s2">"n_bad"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">bad</span><span class="p">),</span> <span class="s2">"bad"</span><span class="p">:</span> <span class="n">bad</span><span class="p">[:</span><span class="mi">20</span><span class="p">]},</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_l3_vocabulary_parity</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""L3: the CalMorph label vocabulary is internally consistent (281+220==501)."""</span>
+    <span class="n">union_ok</span> <span class="o">=</span> <span class="n">_BASE_LABELS</span> <span class="o">|</span> <span class="n">_CV_LABELS</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">CALMORPH_PARAMETERS</span><span class="p">)</span>
+    <span class="n">disjoint_ok</span> <span class="o">=</span> <span class="ow">not</span> <span class="p">(</span><span class="n">_BASE_LABELS</span> <span class="o">&amp;</span> <span class="n">_CV_LABELS</span><span class="p">)</span>
+    <span class="n">counts_ok</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">_BASE_LABELS</span><span class="p">)</span> <span class="o">==</span> <span class="mi">281</span>
+        <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">_CV_LABELS</span><span class="p">)</span> <span class="o">==</span> <span class="mi">220</span>
+        <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">CALMORPH_PARAMETERS</span><span class="p">)</span> <span class="o">==</span> <span class="mi">501</span>
+    <span class="p">)</span>
+    <span class="n">holds</span> <span class="o">=</span> <span class="n">union_ok</span> <span class="ow">and</span> <span class="n">disjoint_ok</span> <span class="ow">and</span> <span class="n">counts_ok</span>
+    <span class="k">return</span> <span class="n">l3_convention</span><span class="p">(</span>
+        <span class="s2">"vocabulary_parity"</span><span class="p">,</span>
+        <span class="n">holds</span><span class="p">,</span>
+        <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"CALMORPH_LABELS(</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">_BASE_LABELS</span><span class="p">)</span><span class="si">}</span><span class="s2">) + "</span>
+            <span class="sa">f</span><span class="s2">"CALMORPH_STATISTICS(</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">_CV_LABELS</span><span class="p">)</span><span class="si">}</span><span class="s2">) == "</span>
+            <span class="sa">f</span><span class="s2">"CALMORPH_PARAMETERS(</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">CALMORPH_PARAMETERS</span><span class="p">)</span><span class="si">}</span><span class="s2">), disjoint=</span><span class="si">{</span><span class="n">disjoint_ok</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="verify_morphology_dataset">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.verify_morphology_dataset.html#torchcell.verification.verify_morphology_dataset">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">verify_morphology_dataset</span><span class="p">(</span>
+    <span class="n">records</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Record</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="n">Provenance</span><span class="p">,</span>
+    <span class="n">expected_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VerificationReport</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Run the L0-L3 record-level gate for the Ohya2005 CalMorph dataset.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        records: the per-LMDB-entry dicts (experiment/reference/publication).</span>
+<span class="sd">        dataset_name: dataset identity for the report.</span>
+<span class="sd">        provenance: where the records came from.</span>
+<span class="sd">        expected_count: the mutant record-count oracle (Ohya2005 = 4718).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A :class:`VerificationReport` carrying the L0-L3 results. L4 (cross-source</span>
+<span class="sd">        perturbed-gene overlap) is asserted across datasets by the caller.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeAdapter</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentType</span>
+
+    <span class="n">validate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="n">TypeAdapter</span><span class="p">(</span><span class="n">ExperimentType</span><span class="p">)</span><span class="o">.</span><span class="n">validate_python</span>
+
+    <span class="n">report</span> <span class="o">=</span> <span class="n">VerificationReport</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">provenance</span><span class="o">=</span><span class="n">provenance</span><span class="p">)</span>
+
+    <span class="c1"># L0: every experiment record validates against the schema union (this already</span>
+    <span class="c1"># enforces label-vocabulary membership + no-NaN via CalMorphPhenotype validators).</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">l0_structural</span><span class="p">((</span><span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span> <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span><span class="p">),</span> <span class="n">validate</span><span class="p">))</span>
+
+    <span class="c1"># L1: exact mutant count + full-vocabulary coverage + populated WT reference.</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">l1_count</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">),</span> <span class="n">expected_count</span><span class="p">))</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_l1_calmorph_completeness</span><span class="p">(</span><span class="n">records</span><span class="p">))</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_l1_reference_populated</span><span class="p">(</span><span class="n">records</span><span class="p">))</span>
+
+    <span class="c1"># L2: finiteness of base measurements (schema blocks NaN, not inf).</span>
+    <span class="n">base_values</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"phenotype"</span><span class="p">][</span><span class="s2">"calmorph"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+    <span class="p">]</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">l2_value_fidelity</span><span class="p">(</span><span class="n">base_values</span><span class="p">,</span> <span class="n">allow_nan</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+    <span class="c1"># L2: CV values finite and non-negative (CV is non-negative by definition).</span>
+    <span class="n">cv_values</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"phenotype"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"calmorph_coefficient_of_variation"</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="p">{}</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+    <span class="p">]</span>
+    <span class="n">cv_result</span> <span class="o">=</span> <span class="n">l2_value_fidelity</span><span class="p">(</span><span class="n">cv_values</span><span class="p">,</span> <span class="n">allow_nan</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">minimum</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+        <span class="n">LevelResult</span><span class="p">(</span>
+            <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L2</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"cv_nonnegative"</span><span class="p">,</span>
+            <span class="n">passed</span><span class="o">=</span><span class="n">cv_result</span><span class="o">.</span><span class="n">passed</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="n">cv_result</span><span class="o">.</span><span class="n">message</span><span class="p">,</span>
+            <span class="n">details</span><span class="o">=</span><span class="n">cv_result</span><span class="o">.</span><span class="n">details</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># L3: the label vocabulary the records adhere to is internally consistent.</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_l3_vocabulary_parity</span><span class="p">())</span>
+
+    <span class="k">return</span> <span class="n">report</span></div>
+
+
+
+<div class="viewcode-block" id="perturbed_gene_set">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.perturbed_gene_set.html#torchcell.verification.perturbed_gene_set">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">perturbed_gene_set</span><span class="p">(</span><span class="n">records</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Record</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Union of systematic gene names deleted across records (the L4 overlap key)."""</span>
+    <span class="n">genes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">pert</span> <span class="ow">in</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"genotype"</span><span class="p">][</span><span class="s2">"perturbations"</span><span class="p">]:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">pert</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">genes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">genes</span></div>
+
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"verify_morphology_dataset"</span><span class="p">,</span> <span class="s2">"perturbed_gene_set"</span><span class="p">,</span> <span class="s2">"Record"</span><span class="p">]</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

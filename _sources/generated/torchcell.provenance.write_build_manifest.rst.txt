@@ -1,0 +1,6 @@
+﻿torchcell.provenance.write\_build\_manifest
+===========================================
+
+.. currentmodule:: torchcell.provenance
+
+.. autofunction:: write_build_manifest

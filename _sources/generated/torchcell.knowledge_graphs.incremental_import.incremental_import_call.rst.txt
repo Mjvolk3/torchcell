@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.incremental\_import.incremental\_import\_call
+=========================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.incremental_import
+
+.. autofunction:: incremental_import_call

@@ -1,0 +1,6 @@
+﻿torchcell.utils.PLOT\_PALETTE
+=============================
+
+.. currentmodule:: torchcell.utils
+
+.. autodata:: PLOT_PALETTE

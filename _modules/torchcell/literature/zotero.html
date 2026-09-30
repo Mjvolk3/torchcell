@@ -1,0 +1,573 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.literature.zotero &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/literature/zotero.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.literature.zotero</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.literature.zotero</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/literature/zotero.py</span>
+<span class="c1"># [[torchcell.literature.zotero]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/literature/zotero.py</span>
+<span class="c1"># Test file: tests/torchcell/literature/test_zotero.py</span>
+
+<span class="sd">"""Zotero library access: collections, items, attachments, with retries."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">TypeVar</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">httpx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">SecretStr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyzotero</span><span class="w"> </span><span class="kn">import</span> <span class="n">zotero</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.literature.citation_keys</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_citation_key</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"T"</span><span class="p">)</span>
+
+<span class="c1"># Retry policy for the flaky Zotero web API. 5xx and httpx transport/timeout</span>
+<span class="c1"># errors are transient and retried; 4xx (notably 404 "missing item") is terminal.</span>
+<span class="n">RETRYABLE_STATUS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="mi">500</span><span class="p">,</span> <span class="mi">502</span><span class="p">,</span> <span class="mi">503</span><span class="p">,</span> <span class="mi">504</span><span class="p">})</span>
+<span class="n">MAX_TRIES</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">BASE_DELAY</span> <span class="o">=</span> <span class="mf">2.0</span>
+
+<span class="c1"># Supplementary-information indicators in an attachment title or filename. Whole</span>
+<span class="c1"># words ("supplement", "supporting", publisher SI tokens "moesm"/"esm") match as</span>
+<span class="c1"># substrings, but bare "si" must match only as a delimited token or prefix</span>
+<span class="c1"># (``SI-...``, ``_si1``, `` si ``) -- never inside a word like "analysis".</span>
+<span class="n">_SI_WORD_INDICATORS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"supplement"</span><span class="p">,</span> <span class="s2">"supporting"</span><span class="p">,</span> <span class="s2">"moesm"</span><span class="p">,</span> <span class="s2">"esm"</span><span class="p">)</span>
+<span class="n">_SI_TOKEN_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(^|[^a-z])si([^a-z]|$)"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ZoteroConfig">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.ZoteroConfig.html#torchcell.literature.ZoteroConfig">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ZoteroConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Credentials for a single Zotero library.</span>
+
+<span class="sd">    For the TorchCell group library only two values are needed: the group id and</span>
+<span class="sd">    an API key. ``library_type`` defaults to ``"group"`` -- the only mode we use.</span>
+<span class="sd">    The key is wrapped in ``SecretStr`` so it never leaks into logs or reprs.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"frozen"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+
+    <span class="n">library_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Zotero library id, e.g. '6582362' for the TorchCell group."</span>
+    <span class="p">)</span>
+    <span class="n">library_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"group"</span><span class="p">,</span> <span class="s2">"user"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"group"</span><span class="p">)</span>
+    <span class="n">api_key</span><span class="p">:</span> <span class="n">SecretStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"Zotero API key."</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ZoteroConfig.from_env">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.ZoteroConfig.html#torchcell.literature.ZoteroConfig.from_env">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_env</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ZoteroConfig"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build credentials from ``ZOTERO_LIBRARY_ID`` + ``ZOTERO_API_KEY``.</span>
+
+<span class="sd">        ``ZOTERO_LIBRARY_TYPE`` is honored if set but defaults to ``"group"``.</span>
+<span class="sd">        Raises ``KeyError`` if either required variable is missing -- we do not</span>
+<span class="sd">        silently degrade to an unauthenticated client.</span>
+<span class="sd">        """</span>
+        <span class="n">library_id</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"ZOTERO_LIBRARY_ID"</span><span class="p">]</span>
+        <span class="n">api_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"ZOTERO_API_KEY"</span><span class="p">]</span>
+        <span class="n">raw_type</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ZOTERO_LIBRARY_TYPE"</span><span class="p">,</span> <span class="s2">"group"</span><span class="p">)</span>
+        <span class="n">library_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"group"</span><span class="p">,</span> <span class="s2">"user"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"user"</span> <span class="k">if</span> <span class="n">raw_type</span> <span class="o">==</span> <span class="s2">"user"</span> <span class="k">else</span> <span class="s2">"group"</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">library_id</span><span class="o">=</span><span class="n">library_id</span><span class="p">,</span> <span class="n">library_type</span><span class="o">=</span><span class="n">library_type</span><span class="p">,</span> <span class="n">api_key</span><span class="o">=</span><span class="n">SecretStr</span><span class="p">(</span><span class="n">api_key</span><span class="p">)</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="make_zotero_client">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.make_zotero_client.html#torchcell.literature.make_zotero_client">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_zotero_client</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">ZoteroConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">zotero</span><span class="o">.</span><span class="n">Zotero</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Construct a pyzotero client from a :class:`ZoteroConfig`."""</span>
+    <span class="k">return</span> <span class="n">zotero</span><span class="o">.</span><span class="n">Zotero</span><span class="p">(</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">library_id</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">library_type</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">api_key</span><span class="o">.</span><span class="n">get_secret_value</span><span class="p">()</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_retryable</span><span class="p">(</span><span class="n">exc</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether a Zotero call failure is transient and worth retrying."""</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="p">(</span><span class="n">httpx</span><span class="o">.</span><span class="n">TimeoutException</span><span class="p">,</span> <span class="n">httpx</span><span class="o">.</span><span class="n">TransportError</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">httpx</span><span class="o">.</span><span class="n">HTTPStatusError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">exc</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="ow">in</span> <span class="n">RETRYABLE_STATUS</span>
+    <span class="k">return</span> <span class="kc">False</span>
+
+
+<div class="viewcode-block" id="with_zotero_retry">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.with_zotero_retry.html#torchcell.literature.with_zotero_retry">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">with_zotero_retry</span><span class="p">[</span><span class="n">T</span><span class="p">](</span>
+    <span class="n">call</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">T</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">max_tries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">MAX_TRIES</span><span class="p">,</span>
+    <span class="n">base_delay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">BASE_DELAY</span><span class="p">,</span>
+    <span class="n">sleep</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">float</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Run a zero-arg Zotero call with bounded exponential-backoff retry.</span>
+
+<span class="sd">    Wrap a single read (``lambda: zot.items(...)``, ``lambda: zot.file(k)``).</span>
+<span class="sd">    Transient failures (httpx timeout/transport, 5xx) retry up to ``max_tries``</span>
+<span class="sd">    with exponential backoff plus jitter; a 404 / other 4xx raises immediately.</span>
+<span class="sd">    """</span>
+    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_tries</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">call</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_retryable</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span> <span class="ow">or</span> <span class="n">attempt</span> <span class="o">==</span> <span class="n">max_tries</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span>
+            <span class="n">delay</span> <span class="o">=</span> <span class="n">base_delay</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">attempt</span><span class="p">)</span> <span class="o">+</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">base_delay</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">"Zotero call failed (</span><span class="si">%s</span><span class="s2">); retry </span><span class="si">%d</span><span class="s2">/</span><span class="si">%d</span><span class="s2"> in </span><span class="si">%.1f</span><span class="s2">s"</span><span class="p">,</span>
+                <span class="n">exc</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="n">attempt</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="n">max_tries</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="n">delay</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">sleep</span><span class="p">(</span><span class="n">delay</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="s2">"with_zotero_retry exhausted without raising"</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_si_attachment</span><span class="p">(</span><span class="n">attachment</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""True if a PDF attachment looks like supplementary information.</span>
+
+<span class="sd">    Matches whole-word indicators anywhere in the title/filename, plus a bare</span>
+<span class="sd">    ``si`` token only when delimited (``SI-...``, ``_si1``) so it never trips on</span>
+<span class="sd">    words like "analysis".</span>
+<span class="sd">    """</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">attachment</span><span class="p">[</span><span class="s2">"data"</span><span class="p">]</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'title'</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'filename'</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">w</span> <span class="ow">in</span> <span class="n">text</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">_SI_WORD_INDICATORS</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">_SI_TOKEN_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_main_article</span><span class="p">(</span><span class="n">attachment</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""True if a PDF attachment looks like the main article, not SI.</span>
+
+<span class="sd">    Zotero auto-imports often title the main PDF "Full Text PDF"; otherwise the</span>
+<span class="sd">    main article is simply the attachment that does not look like SI.</span>
+<span class="sd">    """</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="p">(</span><span class="n">attachment</span><span class="p">[</span><span class="s2">"data"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="s2">"full text"</span> <span class="ow">in</span> <span class="n">title</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="ow">not</span> <span class="n">_is_si_attachment</span><span class="p">(</span><span class="n">attachment</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_citation_key</span><span class="p">(</span><span class="n">item</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The citation key for an item, preferring what Zotero already stores.</span>
+
+<span class="sd">    Order: Zotero 7 native ``citationKey`` field -&gt; Better BibTeX</span>
+<span class="sd">    ``Citation Key: ...`` line in ``extra`` -&gt; deterministic generation from</span>
+<span class="sd">    metadata. Using the stored key keeps the on-disk artifact directory byte</span>
+<span class="sd">    -identical to what the user sees in Zotero.</span>
+<span class="sd">    """</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s2">"data"</span><span class="p">]</span>
+    <span class="n">native</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"citationKey"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">native</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">native</span><span class="p">)</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">"Citation Key:\s*(\S+)"</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"extra"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">creators</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'firstName'</span><span class="p">,</span><span class="w"> </span><span class="s1">''</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'lastName'</span><span class="p">,</span><span class="w"> </span><span class="s1">''</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"creators"</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"creatorType"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"author"</span>
+    <span class="p">]</span>
+    <span class="k">return</span> <span class="n">generate_citation_key</span><span class="p">(</span><span class="n">creators</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"date"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CollectionNode</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One Zotero collection within a walked tree.</span>
+
+<span class="sd">    ``path`` is the slash-joined ancestor chain (e.g.</span>
+<span class="sd">    ``torchcell/torchcell-topics/deep-set``), which is what identifies a nested</span>
+<span class="sd">    collection to a human; ``name`` alone is ambiguous across branches.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"frozen"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"Zotero collection key."</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"Collection name, without ancestors."</span><span class="p">)</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"Slash-joined path from the walked root."</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ZoteroLibrary">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.ZoteroLibrary.html#torchcell.literature.ZoteroLibrary">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ZoteroLibrary</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Synchronous handle to one Zotero library.</span>
+
+<span class="sd">    A thin, retry-hardened wrapper over a pyzotero client exposing the</span>
+<span class="sd">    operations the literature-capture pipeline needs: list/resolve collections,</span>
+<span class="sd">    look up an item by DOI, enumerate a paper's PDF attachments (main article</span>
+<span class="sd">    first, SI after), and download them into the on-disk artifact layout</span>
+
+<span class="sd">        ``&lt;data_root&gt;/torchcell-library/&lt;citation_key&gt;/``</span>
+<span class="sd">            paper.pdf</span>
+<span class="sd">            si/si1.pdf  si/si2.pdf ...</span>
+
+<span class="sd">    This mirror is a backup to the existing URL-based dataset downloads, keyed by</span>
+<span class="sd">    DOI so a dataset writer can fall back to it when an upstream source is down.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ZoteroConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Wrap a Zotero client built from ``config``."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zot</span> <span class="o">=</span> <span class="n">make_zotero_client</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ZoteroLibrary.from_env">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.ZoteroLibrary.html#torchcell.literature.ZoteroLibrary.from_env">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_env</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ZoteroLibrary"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build a library from ``ZoteroConfig.from_env()``."""</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">ZoteroConfig</span><span class="o">.</span><span class="n">from_env</span><span class="p">())</span></div>
+
+
+    <span class="c1"># -- collections ---------------------------------------------------------</span>
+
+<div class="viewcode-block" id="ZoteroLibrary.list_collections">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.ZoteroLibrary.html#torchcell.literature.ZoteroLibrary.list_collections">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_collections</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""All collections in the library (name + key dicts)."""</span>
+        <span class="n">collections</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">with_zotero_retry</span><span class="p">(</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">zot</span><span class="o">.</span><span class="n">collections</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">collections</span></div>
+
+
+<div class="viewcode-block" id="ZoteroLibrary.collection_key">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.ZoteroLibrary.html#torchcell.literature.ZoteroLibrary.collection_key">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">collection_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">create_if_missing</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Resolve a collection name to its key, optionally creating it.</span>
+
+<span class="sd">        Raises ``ValueError`` listing available collections when the name is not</span>
+<span class="sd">        found and ``create_if_missing`` is False.</span>
+<span class="sd">        """</span>
+        <span class="n">name_lower</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">collections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_collections</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">coll</span> <span class="ow">in</span> <span class="n">collections</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">coll</span><span class="p">[</span><span class="s2">"data"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">name_lower</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">coll</span><span class="p">[</span><span class="s2">"key"</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">create_if_missing</span><span class="p">:</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="n">with_zotero_retry</span><span class="p">(</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">zot</span><span class="o">.</span><span class="n">create_collections</span><span class="p">([{</span><span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span><span class="p">}])</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">resp</span><span class="p">[</span><span class="s2">"successful"</span><span class="p">][</span><span class="s2">"0"</span><span class="p">][</span><span class="s2">"data"</span><span class="p">][</span><span class="s2">"key"</span><span class="p">])</span>
+        <span class="n">available</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s2">"data"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">collections</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Zotero collection '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' not found. Available: </span><span class="si">{</span><span class="n">available</span><span class="si">}</span><span class="s2">."</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ZoteroLibrary.collection_tree">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.ZoteroLibrary.html#torchcell.literature.ZoteroLibrary.collection_tree">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">collection_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root_collection</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="s2">"CollectionNode"</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""A collection and every collection nested beneath it, with display paths.</span>
+
+<span class="sd">        ``collection_items`` returns only direct members, so a nested collection such</span>
+<span class="sd">        as ``torchcell/torchcell-topics/microbe-perturb-seq`` is invisible without</span>
+<span class="sd">        walking the tree, which is exactly where new reading is filed. Returned in</span>
+<span class="sd">        depth-first order with the root first.</span>
+<span class="sd">        """</span>
+        <span class="n">collections</span> <span class="o">=</span> <span class="n">with_zotero_retry</span><span class="p">(</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">zot</span><span class="o">.</span><span class="n">everything</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zot</span><span class="o">.</span><span class="n">collections</span><span class="p">())</span>
+        <span class="p">)</span>
+        <span class="n">by_key</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="p">[</span><span class="s2">"key"</span><span class="p">]:</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">collections</span><span class="p">}</span>
+        <span class="n">children</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">collections</span><span class="p">:</span>
+            <span class="n">children</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s2">"data"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"parentCollection"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">c</span><span class="p">[</span><span class="s2">"key"</span><span class="p">]</span>
+            <span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">path_of</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">cur</span> <span class="o">=</span> <span class="n">key</span>
+            <span class="k">while</span> <span class="n">cur</span> <span class="ow">in</span> <span class="n">by_key</span><span class="p">:</span>
+                <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">by_key</span><span class="p">[</span><span class="n">cur</span><span class="p">][</span><span class="s2">"data"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">])</span>
+                <span class="n">cur</span> <span class="o">=</span> <span class="n">by_key</span><span class="p">[</span><span class="n">cur</span><span class="p">][</span><span class="s2">"data"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"parentCollection"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span>
+            <span class="k">return</span> <span class="s2">"/"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">parts</span><span class="p">))</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">walk</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">CollectionNode</span><span class="p">]:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">CollectionNode</span><span class="p">(</span>
+                    <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">by_key</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s2">"data"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">],</span> <span class="n">path</span><span class="o">=</span><span class="n">path_of</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">kid</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">children</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">[])):</span>
+                <span class="n">out</span> <span class="o">+=</span> <span class="n">walk</span><span class="p">(</span><span class="n">kid</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">out</span>
+
+        <span class="k">return</span> <span class="n">walk</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">collection_key</span><span class="p">(</span><span class="n">root_collection</span><span class="p">))</span></div>
+
+
+    <span class="c1"># -- items by DOI --------------------------------------------------------</span>
+
+<div class="viewcode-block" id="ZoteroLibrary.find_item_by_doi">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.ZoteroLibrary.html#torchcell.literature.ZoteroLibrary.find_item_by_doi">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">find_item_by_doi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doi</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the library item whose ``data.DOI`` matches exactly, else None.</span>
+
+<span class="sd">        Zotero's ``q`` quick search indexes title/creator/year (and, with</span>
+<span class="sd">        ``qmode=everything``, attachment full text) but NOT the DOI metadata</span>
+<span class="sd">        field, so a ``q=&lt;doi&gt;`` search returns nothing here. The reliable lookup</span>
+<span class="sd">        is a full ``everything(items())`` scan matched against each item's actual</span>
+<span class="sd">        ``data["DOI"]`` -- cheap for a curated library (a few paginated GETs).</span>
+<span class="sd">        """</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">doi</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">target</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">with_zotero_retry</span><span class="p">(</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">zot</span><span class="o">.</span><span class="n">everything</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zot</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+            <span class="n">candidate</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"data"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"DOI"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">candidate</span> <span class="ow">and</span> <span class="n">candidate</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">target</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">item</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="ZoteroLibrary.doi_in_library">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.ZoteroLibrary.html#torchcell.literature.ZoteroLibrary.doi_in_library">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">doi_in_library</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doi</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""True if an item with this exact DOI already exists in the library."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_item_by_doi</span><span class="p">(</span><span class="n">doi</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
+
+
+    <span class="c1"># -- attachments ---------------------------------------------------------</span>
+
+<div class="viewcode-block" id="ZoteroLibrary.pdf_attachments">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.ZoteroLibrary.html#torchcell.literature.ZoteroLibrary.pdf_attachments">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pdf_attachments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""PDF attachments of an item, main article first then SI.</span>
+
+<span class="sd">        Auto-paginates: heavily-annotated items can accrue more than the default</span>
+<span class="sd">        100-item page, which would otherwise hide the source PDF.</span>
+<span class="sd">        """</span>
+        <span class="n">children</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">with_zotero_retry</span><span class="p">(</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">zot</span><span class="o">.</span><span class="n">everything</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zot</span><span class="o">.</span><span class="n">children</span><span class="p">(</span><span class="n">item_key</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="n">pdfs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">children</span> <span class="k">if</span> <span class="n">c</span><span class="p">[</span><span class="s2">"data"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"contentType"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"application/pdf"</span>
+        <span class="p">]</span>
+        <span class="n">pdfs</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">_is_main_article</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">else</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pdfs</span></div>
+
+
+<div class="viewcode-block" id="ZoteroLibrary.download_artifact">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.ZoteroLibrary.html#torchcell.literature.ZoteroLibrary.download_artifact">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download_artifact</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">item</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">library_dirname</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"torchcell-library"</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Download an item's PDFs into its citation-keyed artifact directory.</span>
+
+<span class="sd">        Writes the main article to ``paper.pdf`` and each SI PDF to</span>
+<span class="sd">        ``si/si1.pdf``, ``si/si2.pdf``, ... under</span>
+<span class="sd">        ``&lt;data_root&gt;/&lt;library_dirname&gt;/&lt;citation_key&gt;/``. The citation key is</span>
+<span class="sd">        taken from Zotero (native field or ``extra``) so the directory matches</span>
+<span class="sd">        the library; see :func:`_resolve_citation_key`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            item: A Zotero item dict (as returned by :meth:`find_item_by_doi`).</span>
+<span class="sd">            data_root: Root for the mirror; defaults to ``$DATA_ROOT``.</span>
+<span class="sd">            library_dirname: Name of the library subdirectory under the root.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The artifact directory path.</span>
+<span class="sd">        """</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">data_root</span> <span class="k">if</span> <span class="n">data_root</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">])</span>
+        <span class="n">citation_key</span> <span class="o">=</span> <span class="n">_resolve_citation_key</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="n">artifact_dir</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="n">library_dirname</span> <span class="o">/</span> <span class="n">citation_key</span>
+        <span class="n">artifact_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">attachments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pdf_attachments</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s2">"key"</span><span class="p">])</span>
+        <span class="n">si_dir</span> <span class="o">=</span> <span class="n">artifact_dir</span> <span class="o">/</span> <span class="s2">"si"</span>
+        <span class="n">si_index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">att</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">attachments</span><span class="p">):</span>
+            <span class="n">content</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">=</span> <span class="n">with_zotero_retry</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zot</span><span class="o">.</span><span class="n">file</span><span class="p">,</span> <span class="n">att</span><span class="p">[</span><span class="s2">"key"</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">dest</span> <span class="o">=</span> <span class="n">artifact_dir</span> <span class="o">/</span> <span class="s2">"paper.pdf"</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">si_index</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">si_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">dest</span> <span class="o">=</span> <span class="n">si_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"si</span><span class="si">{</span><span class="n">si_index</span><span class="si">}</span><span class="s2">.pdf"</span>
+            <span class="n">dest</span><span class="o">.</span><span class="n">write_bytes</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Zotero: wrote </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%d</span><span class="s2"> bytes)"</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">artifact_dir</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_smoke_test</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Connect to the configured library and print a connectivity summary.</span>
+
+<span class="sd">    Run with ``python -m torchcell.literature.zotero`` after setting</span>
+<span class="sd">    ``ZOTERO_LIBRARY_ID`` and ``ZOTERO_API_KEY`` (loaded from .env).</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">lib</span> <span class="o">=</span> <span class="n">ZoteroLibrary</span><span class="o">.</span><span class="n">from_env</span><span class="p">()</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">"Connected to Zotero </span><span class="si">%s</span><span class="s2"> library </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+        <span class="n">lib</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">library_type</span><span class="p">,</span>
+        <span class="n">lib</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">library_id</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">collections</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">list_collections</span><span class="p">()</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Found </span><span class="si">%d</span><span class="s2"> collection(s):"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">collections</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">coll</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">collections</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="s2">"data"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()):</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"  - </span><span class="si">%s</span><span class="s2"> (key=</span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span> <span class="n">coll</span><span class="p">[</span><span class="s2">"data"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">],</span> <span class="n">coll</span><span class="p">[</span><span class="s2">"key"</span><span class="p">])</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">_smoke_test</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

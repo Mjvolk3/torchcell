@@ -1,0 +1,581 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datasets.scerevisiae.ozaydin2013 &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/datasets/scerevisiae/ozaydin2013.html" />
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html">
+            
+              <img src="../../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.datasets.scerevisiae.ozaydin2013</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.datasets.scerevisiae.ozaydin2013</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/datasets/scerevisiae/ozaydin2013</span>
+<span class="c1"># [[torchcell.datasets.scerevisiae.ozaydin2013]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/ozaydin2013</span>
+<span class="c1"># Test file: tests/torchcell/datasets/scerevisiae/test_ozaydin2013.py</span>
+<span class="sd">"""Ozaydin 2013 carotenoid visual-screen dataset (beta-carotene colony color).</span>
+
+<span class="sd">Ozaydin, Bao et al. 2013 (Metabolic Engineering, doi:10.1016/j.ymben.2012.07.010)</span>
+<span class="sd">transformed the haploid yeast deletion collection (BY4741 background) with the</span>
+<span class="sd">carotenogenic plasmid **YB/I/BTS1** (`YEplac195 TDH3p-crtYB-CYC1t; TDH3p-crtI-CYC1t;</span>
+<span class="sd">TDH3p-BTS1-CYC1t`, from Verwaal et al. 2007 -- crtYB + crtI from *Xanthophyllomyces</span>
+<span class="sd">dendrorhous* plus an extra copy of the NATIVE GGPP synthase BTS1, NOT crtE). Every</span>
+<span class="sd">deletion strain then makes beta-carotene, and **colony color is a visual proxy for</span>
+<span class="sd">carotenoid flux** on a -5..+5 scale (WT carrying YB/I/BTS1 = 0; more orange = more</span>
+<span class="sd">carotenoid). This is the heterologous background a downstream constraint-based model</span>
+<span class="sd">would add on top of Yeast9; the base strain + deletion + score are captured here.</span>
+
+<span class="sd">Source: paper SI `1-s2.0-S109671761200081X-mmc1.xlsx` (Elsevier ESM). Sheet 1</span>
+<span class="sd">"Color scores of all deletions" is the whole-collection screen; Sheet 2 "Names and</span>
+<span class="sd">Functions of TOP200" is the curated high-hit subset (gene name/function/category).</span>
+
+<span class="sd">Maps to `VisualScorePhenotype` (WS4). One record per ORF that has a numeric color;</span>
+<span class="sd">text-only rows (`pet`, `tiny`, `_`) carry no usable measurement and are excluded</span>
+<span class="sd">(counted + logged, never silently dropped).</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">urllib.request</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Environment</span><span class="p">,</span>
+    <span class="n">Experiment</span><span class="p">,</span>
+    <span class="n">ExperimentReference</span><span class="p">,</span>
+    <span class="n">GeneAdditionPerturbation</span><span class="p">,</span>
+    <span class="n">Genotype</span><span class="p">,</span>
+    <span class="n">KanMxDeletionPerturbation</span><span class="p">,</span>
+    <span class="n">Media</span><span class="p">,</span>
+    <span class="n">Publication</span><span class="p">,</span>
+    <span class="n">ReferenceGenome</span><span class="p">,</span>
+    <span class="n">Temperature</span><span class="p">,</span>
+    <span class="n">VisualScoreExperiment</span><span class="p">,</span>
+    <span class="n">VisualScoreExperimentReference</span><span class="p">,</span>
+    <span class="n">VisualScorePhenotype</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># The visual color scale (Sheet 1). WT carrying YB/I/BTS1 = 0.</span>
+<span class="n">SCORE_SCALE_MIN</span> <span class="o">=</span> <span class="o">-</span><span class="mi">5</span>
+<span class="n">SCORE_SCALE_MAX</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">SCORE_SEMANTICS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"colony color -5..+5 vs WT (harboring carotenogenic plasmid YB/I/BTS1): "</span>
+    <span class="s2">"higher = more orange/red colony = more carotenoid (beta-carotene) accumulation"</span>
+<span class="p">)</span>
+<span class="n">TARGET_PRODUCT</span> <span class="o">=</span> <span class="s2">"beta-carotene"</span>
+
+<span class="c1"># Pinned sha256 of the SI spreadsheet (role si_data in the library manifest:</span>
+<span class="c1"># torchcell-library/ozaydinCarotenoidbasedPhenotypicScreen2013a/manifest.json).</span>
+<span class="c1"># The stored artifact + this hash is canonical, NOT the live URL; we verify on</span>
+<span class="c1"># download and refuse to silently follow upstream drift.</span>
+<span class="n">_SI_SHA256</span> <span class="o">=</span> <span class="s2">"4818726e352ead3cb739fd9becf08a0c04d14b8a8761732184214344447507f0"</span>
+
+
+<span class="c1"># The constant engineered background: every screened strain carries the carotenogenic</span>
+<span class="c1"># 2-micron plasmid YB/I/BTS1 (YEplac195; Ozaydin Table 2 / Verwaal et al. 2007). Two</span>
+<span class="c1"># heterologous genes from X. dendrorhous + one extra native copy of BTS1 (YPL069C).</span>
+<span class="c1"># plasmid_contig_id/locus_tag stay None until the plasmid-sequence store lands; the</span>
+<span class="c1"># raw sequence is Euroscarf P30796 (physical-only) -&gt; reconstruct-from-parts. See</span>
+<span class="c1"># [[torchcell.datamodels.gene-addition-perturbation-design]].</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_carotenogenic_cassette</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">GeneAdditionPerturbation</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Fresh YB/I/BTS1 cassette perturbations (new objects per record)."""</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">GeneAdditionPerturbation</span><span class="p">(</span>
+            <span class="n">systematic_gene_name</span><span class="o">=</span><span class="s2">"crtYB"</span><span class="p">,</span>
+            <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="s2">"crtYB"</span><span class="p">,</span>
+            <span class="n">source_organism</span><span class="o">=</span><span class="s2">"Xanthophyllomyces dendrorhous"</span><span class="p">,</span>
+            <span class="n">is_heterologous</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">localization</span><span class="o">=</span><span class="s2">"episomal_2micron"</span><span class="p">,</span>
+            <span class="n">construct_name</span><span class="o">=</span><span class="s2">"YB/I/BTS1"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">GeneAdditionPerturbation</span><span class="p">(</span>
+            <span class="n">systematic_gene_name</span><span class="o">=</span><span class="s2">"crtI"</span><span class="p">,</span>
+            <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="s2">"crtI"</span><span class="p">,</span>
+            <span class="n">source_organism</span><span class="o">=</span><span class="s2">"Xanthophyllomyces dendrorhous"</span><span class="p">,</span>
+            <span class="n">is_heterologous</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">localization</span><span class="o">=</span><span class="s2">"episomal_2micron"</span><span class="p">,</span>
+            <span class="n">construct_name</span><span class="o">=</span><span class="s2">"YB/I/BTS1"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">GeneAdditionPerturbation</span><span class="p">(</span>
+            <span class="n">systematic_gene_name</span><span class="o">=</span><span class="s2">"YPL069C"</span><span class="p">,</span>
+            <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="s2">"BTS1"</span><span class="p">,</span>
+            <span class="n">source_organism</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
+            <span class="n">is_heterologous</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">localization</span><span class="o">=</span><span class="s2">"episomal_2micron"</span><span class="p">,</span>
+            <span class="n">construct_name</span><span class="o">=</span><span class="s2">"YB/I/BTS1"</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+
+<span class="c1"># Valid S. cerevisiae systematic ORF name (optional trailing -A/-B for sub-features).</span>
+<span class="n">_SYSTEMATIC_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?$"</span><span class="p">)</span>
+
+<span class="c1"># QC / phenotype flags parsed from the free-text Comment column (case-insensitive).</span>
+<span class="n">_FLAG_PATTERNS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"flag_petite"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"petite|\bpet\b"</span><span class="p">,</span>
+    <span class="s2">"flag_tiny"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\btiny\b"</span><span class="p">,</span>
+    <span class="s2">"flag_slow_growth"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"slow grow|slow on "</span><span class="p">,</span>
+    <span class="s2">"flag_qc_failure"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"incorrect|qc failure"</span><span class="p">,</span>
+    <span class="s2">"flag_het_diploid"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"het diploid"</span><span class="p">,</span>
+    <span class="s2">"flag_sterile"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"sterile|does not mate|bi-mater"</span><span class="p">,</span>
+    <span class="s2">"flag_unusual_color"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"red colony|\bpink\b|ade mutant|ade2"</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_color</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Return (numeric_score, text) for a raw Color cell.</span>
+
+<span class="sd">    Numeric scores in [-5, 5] become the score; non-numeric annotations (``pet``,</span>
+<span class="sd">    ``tiny``, ``_``, ``?``) become the text and leave the numeric None.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">num</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">num</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">text</span> <span class="ow">or</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_comment</span><span class="p">(</span><span class="n">comment</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Parse the free-text Comment into boolean QC/phenotype flags."""</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="s2">""</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">comment</span><span class="p">)</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">comment</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">flag</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">pat</span><span class="p">,</span> <span class="n">text</span><span class="p">))</span> <span class="k">for</span> <span class="n">flag</span><span class="p">,</span> <span class="n">pat</span> <span class="ow">in</span> <span class="n">_FLAG_PATTERNS</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+
+<div class="viewcode-block" id="CarotenoidOzaydin2013Dataset">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.ozaydin2013.CarotenoidOzaydin2013Dataset.html#torchcell.datasets.scerevisiae.ozaydin2013.CarotenoidOzaydin2013Dataset">[docs]</a>
+<span class="nd">@register_dataset</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CarotenoidOzaydin2013Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Beta-carotene colony-color visual screen of the yeast deletion collection."""</span>
+
+    <span class="n">si_url</span> <span class="o">=</span> <span class="s2">"https://ars.els-cdn.com/content/image/1-s2.0-S109671761200081X-mmc1.xlsx"</span>
+    <span class="n">si_filename</span> <span class="o">=</span> <span class="s2">"1-s2.0-S109671761200081X-mmc1.xlsx"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/carotenoid_ozaydin2013"</span><span class="p">,</span>
+        <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset rooted at ``root`` with optional transforms."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Experiment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Experiment schema class produced by this dataset."""</span>
+        <span class="k">return</span> <span class="n">VisualScoreExperiment</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reference_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">ExperimentReference</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Experiment-reference schema class produced by this dataset."""</span>
+        <span class="k">return</span> <span class="n">VisualScoreExperimentReference</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The paper SI spreadsheet required before processing."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">si_filename</span><span class="p">]</span>
+
+<div class="viewcode-block" id="CarotenoidOzaydin2013Dataset.download">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.ozaydin2013.CarotenoidOzaydin2013Dataset.html#torchcell.datasets.scerevisiae.ozaydin2013.CarotenoidOzaydin2013Dataset.download">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Download the SI spreadsheet from the Elsevier ESM (scriptable direct URL).</span>
+
+<span class="sd">        The stored artifact's sha256 is canonical: an already-present file is verified</span>
+<span class="sd">        against ``_SI_SHA256`` rather than trusted, and a freshly downloaded file is</span>
+<span class="sd">        verified before use. A mismatch means upstream drift or corruption and raises</span>
+<span class="sd">        (never silently followed).</span>
+<span class="sd">        """</span>
+        <span class="n">dest</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">si_filename</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
+            <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">dest</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">digest</span> <span class="o">!=</span> <span class="n">_SI_SHA256</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Ozaydin SI sha256 mismatch for </span><span class="si">{</span><span class="n">dest</span><span class="si">}</span><span class="s2">: got </span><span class="si">{</span><span class="n">digest</span><span class="si">}</span><span class="s2">, "</span>
+                    <span class="sa">f</span><span class="s2">"expected </span><span class="si">{</span><span class="n">_SI_SHA256</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Downloading Ozaydin SI from </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">si_url</span><span class="p">)</span>
+        <span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">si_url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">"User-Agent"</span><span class="p">:</span> <span class="s2">"Mozilla/5.0"</span><span class="p">})</span>
+        <span class="k">with</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">req</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">120</span><span class="p">)</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">10000</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Ozaydin SI download too small: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2"> bytes"</span><span class="p">)</span>
+        <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">digest</span> <span class="o">!=</span> <span class="n">_SI_SHA256</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Ozaydin SI sha256 mismatch on download: got </span><span class="si">{</span><span class="n">digest</span><span class="si">}</span><span class="s2">, "</span>
+                <span class="sa">f</span><span class="s2">"expected </span><span class="si">{</span><span class="n">_SI_SHA256</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">dest</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Wrote </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%d</span><span class="s2"> bytes, sha256 verified)"</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_aggregate_by_orf</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Read Sheet 1, aggregate replicate rows to one row per ORF."""</span>
+        <span class="n">xlsx</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">si_filename</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">xlsx</span><span class="p">,</span> <span class="n">sheet_name</span><span class="o">=</span><span class="s2">"Color scores of all deletions"</span><span class="p">)</span>
+
+        <span class="c1"># TOP200 curated subset (Sheet 2): gene name / function / category + membership.</span>
+        <span class="n">top200</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">xlsx</span><span class="p">,</span> <span class="n">sheet_name</span><span class="o">=</span><span class="s2">"Names and Functions of TOP200"</span><span class="p">)</span>
+        <span class="n">top200_orfs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+            <span class="n">top200</span><span class="p">[</span><span class="s2">"ORF name"</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">top200_meta</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"ORF name"</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">():</span> <span class="p">{</span>
+                <span class="s2">"gene_name"</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Gene name"</span><span class="p">),</span>
+                <span class="s2">"gene_function"</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Gene Function"</span><span class="p">),</span>
+                <span class="s2">"assigned_category"</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Assigned Category"</span><span class="p">),</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">top200</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ORF name"</span><span class="p">))</span>
+        <span class="p">}</span>
+
+        <span class="n">records</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">malformed</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="n">orf</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ORF name"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">orf</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">orf</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+            <span class="c1"># Some SI ORF names are malformed (e.g. 'YLR287-A' missing the W/C). Do not</span>
+            <span class="c1"># guess the missing letter -- exclude non-conforming names and log them.</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">orf</span><span class="p">):</span>
+                <span class="n">malformed</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">num</span><span class="p">,</span> <span class="n">text</span> <span class="o">=</span> <span class="n">_parse_color</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Color"</span><span class="p">))</span>
+            <span class="n">flags</span> <span class="o">=</span> <span class="n">_parse_comment</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Comment"</span><span class="p">))</span>
+            <span class="n">strain</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Strain"</span><span class="p">))</span> <span class="k">else</span> <span class="s2">"BY4741"</span>
+            <span class="p">)</span>
+            <span class="n">rec</span> <span class="o">=</span> <span class="n">records</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
+                <span class="n">orf</span><span class="p">,</span>
+                <span class="p">{</span>
+                    <span class="s2">"orf"</span><span class="p">:</span> <span class="n">orf</span><span class="p">,</span>
+                    <span class="s2">"strain"</span><span class="p">:</span> <span class="n">strain</span><span class="p">,</span>
+                    <span class="s2">"numeric_scores"</span><span class="p">:</span> <span class="p">[],</span>
+                    <span class="s2">"texts"</span><span class="p">:</span> <span class="nb">set</span><span class="p">(),</span>
+                    <span class="s2">"flags"</span><span class="p">:</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">_FLAG_PATTERNS</span><span class="p">},</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">num</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">rec</span><span class="p">[</span><span class="s2">"numeric_scores"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">num</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">text</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">rec</span><span class="p">[</span><span class="s2">"texts"</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">flags</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">rec</span><span class="p">[</span><span class="s2">"flags"</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"flags"</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="ow">or</span> <span class="n">v</span>
+
+        <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">orf</span><span class="p">,</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">scores</span> <span class="o">=</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"numeric_scores"</span><span class="p">]</span>
+            <span class="n">meta</span> <span class="o">=</span> <span class="n">top200_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"orf"</span><span class="p">:</span> <span class="n">orf</span><span class="p">,</span>
+                    <span class="s2">"strain"</span><span class="p">:</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">],</span>
+                    <span class="s2">"visual_score"</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span> <span class="k">if</span> <span class="n">scores</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="s2">"visual_score_min"</span><span class="p">:</span> <span class="nb">min</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="s2">"n_replicates"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">scores</span><span class="p">),</span>
+                    <span class="s2">"score_text"</span><span class="p">:</span> <span class="s2">";"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">rec</span><span class="p">[</span><span class="s2">"texts"</span><span class="p">]))</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="s2">"comment_annotations"</span><span class="p">:</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"flags"</span><span class="p">],</span>
+                    <span class="s2">"in_top200"</span><span class="p">:</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">top200_orfs</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">meta</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">malformed</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">"Ozaydin: excluded </span><span class="si">%d</span><span class="s2"> malformed ORF names (e.g. </span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">malformed</span><span class="p">),</span>
+                <span class="nb">sorted</span><span class="p">(</span><span class="n">malformed</span><span class="p">)[:</span><span class="mi">5</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CarotenoidOzaydin2013Dataset.process">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.ozaydin2013.CarotenoidOzaydin2013Dataset.html#torchcell.datasets.scerevisiae.ozaydin2013.CarotenoidOzaydin2013Dataset.process">[docs]</a>
+    <span class="nd">@post_process</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Parse the SI into per-ORF VisualScore experiments and write LMDB."""</span>
+        <span class="n">agg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate_by_orf</span><span class="p">()</span>
+        <span class="n">n_total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">agg</span><span class="p">)</span>
+        <span class="c1"># Exclude ORFs with no numeric color (text-only / missing) -- not measurements.</span>
+        <span class="n">usable</span> <span class="o">=</span> <span class="n">agg</span><span class="p">[</span><span class="n">agg</span><span class="p">[</span><span class="s2">"visual_score"</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">n_excluded</span> <span class="o">=</span> <span class="n">n_total</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">usable</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Ozaydin: </span><span class="si">%d</span><span class="s2"> ORFs total, </span><span class="si">%d</span><span class="s2"> usable (numeric color), </span><span class="si">%d</span><span class="s2"> excluded (text-only)"</span><span class="p">,</span>
+            <span class="n">n_total</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">usable</span><span class="p">),</span>
+            <span class="n">n_excluded</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">usable</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">"comment_annotations"</span><span class="p">])</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+
+        <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e11</span><span class="p">))</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">usable</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">usable</span><span class="p">)):</span>
+                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+                    <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                        <span class="p">{</span>
+                            <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                            <span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                            <span class="s2">"publication"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                        <span class="p">}</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Ozaydin visual-score experiments to LMDB"</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CarotenoidOzaydin2013Dataset.preprocess_raw">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.ozaydin2013.CarotenoidOzaydin2013Dataset.html#torchcell.datasets.scerevisiae.ozaydin2013.CarotenoidOzaydin2013Dataset.preprocess_raw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Preprocessing is handled inside process() for this dataset."""</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="CarotenoidOzaydin2013Dataset.create_experiment">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.ozaydin2013.CarotenoidOzaydin2013Dataset.html#torchcell.datasets.scerevisiae.ozaydin2013.CarotenoidOzaydin2013Dataset.create_experiment">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span>  <span class="c1"># type: ignore[override]</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="s2">"pd.Series[Any]"</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">VisualScoreExperiment</span><span class="p">,</span> <span class="n">VisualScoreExperimentReference</span><span class="p">,</span> <span class="n">Publication</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Build the VisualScore experiment/reference/publication for one ORF."""</span>
+        <span class="n">strain</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">])</span> <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"BY4741"</span><span class="p">,</span> <span class="s2">"BY4730"</span><span class="p">)</span> <span class="k">else</span> <span class="s2">"BY4741"</span>
+        <span class="p">)</span>
+        <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="n">strain</span>
+        <span class="p">)</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">],</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">]</span>
+                <span class="p">),</span>
+                <span class="o">*</span><span class="n">_carotenogenic_cassette</span><span class="p">(),</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="c1"># Screen scored on SC-URA agar (URA-selective plasmid), 30 C.</span>
+        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
+            <span class="n">media</span><span class="o">=</span><span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"SC-URA"</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"solid"</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">30</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="n">vmin</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"visual_score_min"</span><span class="p">]</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">VisualScorePhenotype</span><span class="p">(</span>
+            <span class="n">visual_score</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"visual_score"</span><span class="p">]),</span>
+            <span class="n">visual_score_min</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">vmin</span><span class="p">)</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">vmin</span><span class="p">),</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"n_replicates"</span><span class="p">]),</span>
+            <span class="n">score_scale_min</span><span class="o">=</span><span class="n">SCORE_SCALE_MIN</span><span class="p">,</span>
+            <span class="n">score_scale_max</span><span class="o">=</span><span class="n">SCORE_SCALE_MAX</span><span class="p">,</span>
+            <span class="n">score_semantics</span><span class="o">=</span><span class="n">SCORE_SEMANTICS</span><span class="p">,</span>
+            <span class="n">target_product</span><span class="o">=</span><span class="n">TARGET_PRODUCT</span><span class="p">,</span>
+            <span class="n">target_metabolite_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">score_text</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"score_text"</span><span class="p">]</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"score_text"</span><span class="p">])</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">comment_annotations</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"comment_annotations"</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="c1"># Reference = WT carrying YB/I/BTS1, scored 0 by construction.</span>
+        <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">VisualScorePhenotype</span><span class="p">(</span>
+            <span class="n">visual_score</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">score_scale_min</span><span class="o">=</span><span class="n">SCORE_SCALE_MIN</span><span class="p">,</span>
+            <span class="n">score_scale_max</span><span class="o">=</span><span class="n">SCORE_SCALE_MAX</span><span class="p">,</span>
+            <span class="n">score_semantics</span><span class="o">=</span><span class="n">SCORE_SEMANTICS</span><span class="p">,</span>
+            <span class="n">target_product</span><span class="o">=</span><span class="n">TARGET_PRODUCT</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">experiment</span> <span class="o">=</span> <span class="n">VisualScoreExperiment</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">genotype</span><span class="o">=</span><span class="n">genotype</span><span class="p">,</span>
+            <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">phenotype</span><span class="o">=</span><span class="n">phenotype</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="n">VisualScoreExperimentReference</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="n">genome_reference</span><span class="p">,</span>
+            <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(),</span>
+            <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">phenotype_reference</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span>
+            <span class="n">pubmed_id</span><span class="o">=</span><span class="s2">"22918085"</span><span class="p">,</span>
+            <span class="n">pubmed_url</span><span class="o">=</span><span class="s2">"https://pubmed.ncbi.nlm.nih.gov/22918085/"</span><span class="p">,</span>
+            <span class="n">doi</span><span class="o">=</span><span class="s2">"10.1016/j.ymben.2012.07.010"</span><span class="p">,</span>
+            <span class="n">doi_url</span><span class="o">=</span><span class="s2">"https://doi.org/10.1016/j.ymben.2012.07.010"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build/load the dataset for interactive debugging.</span>
+
+<span class="sd">    Loads the existing LMDB if already built. To step through</span>
+<span class="sd">    ``process()``/``create_experiment`` under a debugger, delete ``&lt;root&gt;/processed``</span>
+<span class="sd">    first so the build re-runs.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">],</span> <span class="s2">"data/torchcell/carotenoid_ozaydin2013"</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">CarotenoidOzaydin2013Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"len = </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

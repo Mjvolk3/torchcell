@@ -1,0 +1,8 @@
+﻿torchcell.models.protT5.ProtT5
+==============================
+
+.. currentmodule:: torchcell.models.protT5
+
+.. autoclass:: ProtT5
+   :show-inheritance:
+   :members:

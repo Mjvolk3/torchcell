@@ -1,0 +1,209 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Guide &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/guide/index.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Installation" href="installation.html" />
+    <link rel="prev" title="TorchCell" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">User Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-model.html">Data model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.html">Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knowledge-graph.html">Knowledge graph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html">Contributing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">User Guide</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/guide/index.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="user-guide">
+<h1>User Guide<a class="headerlink" href="#user-guide" title="Link to this heading"></a></h1>
+<p>torchcell is a provenance-first experimental-data ontology and dataset substrate for the
+yeast (<em>Saccharomyces cerevisiae</em>) virtual cell. Every record is a typed experiment,
+genotype x environment -&gt; phenotype, paired with the reference it is measured against and
+traceable to the source file it was parsed from. Records are built into LMDB-backed
+dataset loaders, served together as a Neo4j knowledge graph, and queried back into
+PyTorch Geometric datasets for model training.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#create-the-environment">Create the environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#environment-variables">Environment variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#verify-the-install">Verify the install</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#load-the-reference-genome">Load the reference genome</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#load-an-experiment-dataset">Load an experiment dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#query-the-served-knowledge-graph">Query the served knowledge graph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#inspect-a-stored-record">Inspect a stored record</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="data-model.html">Data model</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="data-model.html#the-experiment-record">The experiment record</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-model.html#verification-levels">Verification levels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-model.html#provenance-of-hand-entered-values">Provenance of hand-entered values</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="datasets.html">Datasets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="datasets.html#how-a-dataset-is-built">How a dataset is built</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.html#raw-files-and-their-provenance">Raw files and their provenance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.html#supported-datasets">Supported datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="knowledge-graph.html">Knowledge graph</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="knowledge-graph.html#schema">Schema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knowledge-graph.html#writing-a-query">Writing a query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knowledge-graph.html#choosing-a-release">Choosing a release</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knowledge-graph.html#converters">Converters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knowledge-graph.html#changing-what-the-graph-serves">Changing what the graph serves</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#branches-pull-requests-and-landing">Branches, pull requests and landing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#tests">Tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#pre-commit-hooks">Pre-commit hooks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#commit-messages-and-releases">Commit messages and releases</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<p>Released versions of the served knowledge graph, and which torchcell versions they
+correspond to, are listed under <a class="reference internal" href="../database/index.html"><span class="std std-doc">Database releases</span></a>.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="TorchCell" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

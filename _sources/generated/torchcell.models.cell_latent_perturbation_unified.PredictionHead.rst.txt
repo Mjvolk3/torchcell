@@ -1,0 +1,8 @@
+﻿torchcell.models.cell\_latent\_perturbation\_unified.PredictionHead
+===================================================================
+
+.. currentmodule:: torchcell.models.cell_latent_perturbation_unified
+
+.. autoclass:: PredictionHead
+   :show-inheritance:
+   :members:

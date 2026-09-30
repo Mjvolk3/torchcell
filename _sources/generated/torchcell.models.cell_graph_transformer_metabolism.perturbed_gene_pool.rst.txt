@@ -1,0 +1,6 @@
+﻿torchcell.models.cell\_graph\_transformer\_metabolism.perturbed\_gene\_pool
+===========================================================================
+
+.. currentmodule:: torchcell.models.cell_graph_transformer_metabolism
+
+.. autofunction:: perturbed_gene_pool

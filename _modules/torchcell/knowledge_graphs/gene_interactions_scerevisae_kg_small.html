@@ -1,0 +1,350 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.knowledge_graphs.gene_interactions_scerevisae_kg_small &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/knowledge_graphs/gene_interactions_scerevisae_kg_small.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.knowledge_graphs.gene_interactions_scerevisae_kg_small</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.knowledge_graphs.gene_interactions_scerevisae_kg_small</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/knowledge_graphs/create_scerevisiae_kg</span>
+<span class="c1"># [[torchcell.knowledge_graphs.create_scerevisiae_kg]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/create_scerevisiae_kg</span>
+<span class="c1"># Test file: tests/torchcell/knowledge_graphs/test_create_scerevisiae_kg.py</span>
+<span class="sd">"""Build a small S. cerevisiae gene-interaction BioCypher knowledge graph."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">multiprocessing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">certifi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hydra</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">wandb</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="n">OmegaConf</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchcell</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">biocypher</span><span class="w"> </span><span class="kn">import</span> <span class="n">BioCypher</span>  <span class="c1"># type: ignore[attr-defined]  # untyped re-export</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.adapters</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DmiCostanzo2016Adapter</span><span class="p">,</span>
+    <span class="n">DmiKuzmin2018Adapter</span><span class="p">,</span>
+    <span class="n">TmiKuzmin2018Adapter</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.costanzo2016</span><span class="w"> </span><span class="kn">import</span> <span class="n">DmiCostanzo2016Dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.kuzmin2018</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DmiKuzmin2018Dataset</span><span class="p">,</span>
+    <span class="n">TmiKuzmin2018Dataset</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s2">"biocypher_warnings.log"</span><span class="p">)</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">captureWarnings</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"SSL_CERT_FILE"</span><span class="p">]</span> <span class="o">=</span> <span class="n">certifi</span><span class="o">.</span><span class="n">where</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="get_num_workers">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.gene_interactions_scerevisae_kg_small.get_num_workers.html#torchcell.knowledge_graphs.gene_interactions_scerevisae_kg_small.get_num_workers">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_num_workers</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Get the number of CPUs allocated by SLURM."""</span>
+    <span class="n">cpus_per_task</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"SLURM_CPUS_PER_TASK"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"SLURM_CPUS_PER_TASK: </span><span class="si">{</span><span class="n">cpus_per_task</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>  <span class="c1"># Print the value for debugging</span>
+    <span class="k">if</span> <span class="n">cpus_per_task</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">cpus_per_task</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mp</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span></div>
+
+
+
+<span class="nd">@hydra</span><span class="o">.</span><span class="n">main</span><span class="p">(</span><span class="n">version_base</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">config_path</span><span class="o">=</span><span class="s2">"conf"</span><span class="p">,</span> <span class="n">config_name</span><span class="o">=</span><span class="s2">"kg"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">DictConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build the gene-interaction knowledge graph from the Hydra config."""</span>
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="c1"># These env vars are required entry-point preconditions for the build script;</span>
+    <span class="c1"># cast documents the non-None contract without altering runtime behavior.</span>
+    <span class="n">DATA_ROOT</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"DATA_ROOT"</span><span class="p">))</span>
+    <span class="n">BIOCYPHER_CONFIG_PATH</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"BIOCYPHER_CONFIG_PATH"</span><span class="p">))</span>
+    <span class="n">SCHEMA_CONFIG_PATH</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"SCHEMA_CONFIG_PATH"</span><span class="p">))</span>
+    <span class="n">BIOCYPHER_OUT_PATH</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"BIOCYPHER_OUT_PATH"</span><span class="p">))</span>
+
+    <span class="c1"># wandb configuration</span>
+    <span class="n">wandb_cfg</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
+        <span class="s2">"dict[str, Any]"</span><span class="p">,</span>
+        <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">throw_on_missing</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">slurm_job_id</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"SLURM_JOB_ID"</span><span class="p">,</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+    <span class="n">sorted_cfg</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">wandb_cfg</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">hashed_cfg</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">sorted_cfg</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+    <span class="n">group</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">slurm_job_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">hashed_cfg</span><span class="si">}</span><span class="s2">"</span>
+    <span class="n">wandb</span><span class="o">.</span><span class="n">init</span><span class="p">(</span>
+        <span class="n">mode</span><span class="o">=</span><span class="n">wandb_cfg</span><span class="p">[</span><span class="s2">"wandb"</span><span class="p">][</span><span class="s2">"mode"</span><span class="p">],</span>
+        <span class="n">project</span><span class="o">=</span><span class="n">wandb_cfg</span><span class="p">[</span><span class="s2">"wandb"</span><span class="p">][</span><span class="s2">"project"</span><span class="p">],</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">wandb_cfg</span><span class="p">,</span>
+        <span class="n">group</span><span class="o">=</span><span class="n">group</span><span class="p">,</span>
+        <span class="n">save_code</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">cast</span><span class="p">(</span><span class="n">Any</span><span class="p">,</span> <span class="n">wandb</span><span class="o">.</span><span class="n">run</span><span class="p">)</span><span class="o">.</span><span class="n">log_code</span><span class="p">(</span>
+        <span class="s2">"/"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">torchcell</span><span class="o">.</span><span class="n">__path__</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="p">)</span>
+    <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">({</span><span class="s2">"slurm_job_id"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">slurm_job_id</span><span class="p">)})</span>
+    <span class="c1"># Use this function to get the number of workers</span>
+    <span class="n">num_workers</span> <span class="o">=</span> <span class="n">get_num_workers</span><span class="p">()</span>
+    <span class="n">time_str</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y-%m-</span><span class="si">%d</span><span class="s2">_%H-%M-%S"</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Number of workers: </span><span class="si">{</span><span class="n">num_workers</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">bc</span> <span class="o">=</span> <span class="n">BioCypher</span><span class="p">(</span>
+        <span class="n">output_directory</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="n">BIOCYPHER_OUT_PATH</span><span class="p">,</span> <span class="n">time_str</span><span class="p">),</span>
+        <span class="n">biocypher_config_path</span><span class="o">=</span><span class="n">BIOCYPHER_CONFIG_PATH</span><span class="p">,</span>
+        <span class="n">schema_config_path</span><span class="o">=</span><span class="n">SCHEMA_CONFIG_PATH</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">({</span><span class="s2">"biocypher-out"</span><span class="p">:</span> <span class="n">bc</span><span class="o">.</span><span class="n">_output_directory</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]})</span>
+    <span class="c1"># Partition workers</span>
+    <span class="n">io_workers</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span>
+        <span class="n">wandb</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">adapters</span><span class="p">[</span><span class="s2">"io_to_total_worker_ratio"</span><span class="p">]</span> <span class="o">*</span> <span class="n">num_workers</span>
+    <span class="p">)</span>
+    <span class="n">process_workers</span> <span class="o">=</span> <span class="n">num_workers</span> <span class="o">-</span> <span class="n">io_workers</span>
+    <span class="n">chunk_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">wandb</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">adapters</span><span class="p">[</span><span class="s2">"chunk_size"</span><span class="p">])</span>
+    <span class="n">loader_batch_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">wandb</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">adapters</span><span class="p">[</span><span class="s2">"loader_batch_size"</span><span class="p">])</span>
+
+    <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">"num_workers"</span><span class="p">:</span> <span class="n">num_workers</span><span class="p">,</span>
+            <span class="s2">"io_workers"</span><span class="p">:</span> <span class="n">io_workers</span><span class="p">,</span>
+            <span class="s2">"process_workers"</span><span class="p">:</span> <span class="n">process_workers</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Define dataset configurations</span>
+    <span class="n">dataset_configs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">"class"</span><span class="p">:</span> <span class="n">DmiKuzmin2018Dataset</span><span class="p">,</span>
+            <span class="s2">"path"</span><span class="p">:</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/dmi_kuzmin2018"</span><span class="p">),</span>
+            <span class="s2">"kwargs"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"io_workers"</span><span class="p">:</span> <span class="n">num_workers</span><span class="p">},</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">"class"</span><span class="p">:</span> <span class="n">TmiKuzmin2018Dataset</span><span class="p">,</span>
+            <span class="s2">"path"</span><span class="p">:</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/tmi_kuzmin2018"</span><span class="p">),</span>
+            <span class="s2">"kwargs"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"io_workers"</span><span class="p">:</span> <span class="n">num_workers</span><span class="p">},</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">"class"</span><span class="p">:</span> <span class="n">DmiCostanzo2016Dataset</span><span class="p">,</span>
+            <span class="s2">"path"</span><span class="p">:</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/dmi_costanzo2016_5e6"</span><span class="p">),</span>
+            <span class="s2">"kwargs"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"subset_n"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="mf">5e6</span><span class="p">),</span>
+                <span class="s2">"io_workers"</span><span class="p">:</span> <span class="n">num_workers</span><span class="p">,</span>
+                <span class="s2">"batch_size"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1e3</span><span class="p">),</span>
+            <span class="p">},</span>
+        <span class="p">},</span>
+    <span class="p">]</span>
+
+    <span class="c1"># Instantiate datasets</span>
+    <span class="n">datasets</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">dataset_configs</span><span class="p">:</span>
+        <span class="n">dataset_class</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">"class"</span><span class="p">]</span>
+        <span class="n">dataset_path</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">"path"</span><span class="p">]</span>
+        <span class="n">dataset_kwargs</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">"kwargs"</span><span class="p">]</span>
+        <span class="n">dataset_name</span> <span class="o">=</span> <span class="n">dataset_class</span><span class="o">.</span><span class="vm">__name__</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Instantiating dataset: </span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset_class</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">dataset_path</span><span class="p">,</span> <span class="o">**</span><span class="n">dataset_kwargs</span><span class="p">)</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">instantiation_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">({</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_time(s)"</span><span class="p">:</span> <span class="n">instantiation_time</span><span class="p">})</span>
+        <span class="n">datasets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+
+    <span class="c1"># Define dataset-adapter mapping</span>
+    <span class="n">dataset_adapter_map</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">DmiCostanzo2016Dataset</span><span class="p">:</span> <span class="n">DmiCostanzo2016Adapter</span><span class="p">,</span>
+        <span class="n">DmiKuzmin2018Dataset</span><span class="p">:</span> <span class="n">DmiKuzmin2018Adapter</span><span class="p">,</span>
+        <span class="n">TmiKuzmin2018Dataset</span><span class="p">:</span> <span class="n">TmiKuzmin2018Adapter</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Instantiate adapters based on the dataset-adapter mapping</span>
+    <span class="n">adapters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">dataset_adapter_map</span><span class="p">[</span><span class="n">cast</span><span class="p">(</span><span class="n">Any</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">dataset</span><span class="p">))](</span>
+            <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
+            <span class="n">process_workers</span><span class="o">=</span><span class="n">process_workers</span><span class="p">,</span>
+            <span class="n">io_workers</span><span class="o">=</span><span class="n">io_workers</span><span class="p">,</span>
+            <span class="n">chunk_size</span><span class="o">=</span><span class="n">chunk_size</span><span class="p">,</span>
+            <span class="n">loader_batch_size</span><span class="o">=</span><span class="n">loader_batch_size</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">datasets</span>
+    <span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">adapter</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">adapters</span><span class="p">):</span>
+        <span class="n">adapter_name</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">adapter</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Writing nodes for adapter: </span><span class="si">{</span><span class="n">adapter_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">bc</span><span class="o">.</span><span class="n">write_nodes</span><span class="p">(</span><span class="n">adapter</span><span class="o">.</span><span class="n">get_nodes</span><span class="p">())</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">write_nodes_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">({</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">adapter_name</span><span class="si">}</span><span class="s2">_write_nodes_time(s)"</span><span class="p">:</span> <span class="n">write_nodes_time</span><span class="p">})</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Writing edges for adapter: </span><span class="si">{</span><span class="n">adapter_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">bc</span><span class="o">.</span><span class="n">write_edges</span><span class="p">(</span><span class="n">adapter</span><span class="o">.</span><span class="n">get_edges</span><span class="p">())</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">write_edges_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">({</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">adapter_name</span><span class="si">}</span><span class="s2">_write_edges_time"</span><span class="p">:</span> <span class="n">write_edges_time</span><span class="p">})</span>
+
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Finished iterating nodes and edges"</span><span class="p">)</span>
+    <span class="c1"># Write admin import statement and schema information (for biochatter)</span>
+    <span class="n">bc</span><span class="o">.</span><span class="n">write_import_call</span><span class="p">()</span>
+    <span class="n">bc</span><span class="o">.</span><span class="n">write_schema_info</span><span class="p">(</span><span class="n">as_node</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">relative_bash_script_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="s2">"biocypher-out"</span><span class="p">,</span> <span class="n">time_str</span><span class="p">,</span> <span class="s2">"neo4j-admin-import-call.sh"</span>
+    <span class="p">)</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">"biocypher_file_name.txt"</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">relative_bash_script_path</span><span class="p">)</span>
+    <span class="n">wandb</span><span class="o">.</span><span class="n">finish</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+
+    <span class="c1"># Read the logged file name from the file</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">"biocypher_file_name.txt"</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+        <span class="n">file_name</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

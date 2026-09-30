@@ -1,0 +1,8 @@
+﻿torchcell.database.browser\_style.NodeRule
+==========================================
+
+.. currentmodule:: torchcell.database.browser_style
+
+.. autoclass:: NodeRule
+   :show-inheritance:
+   :members:

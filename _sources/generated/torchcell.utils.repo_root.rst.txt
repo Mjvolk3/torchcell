@@ -1,0 +1,6 @@
+﻿torchcell.utils.repo\_root
+==========================
+
+.. currentmodule:: torchcell.utils
+
+.. autofunction:: repo_root

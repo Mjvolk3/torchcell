@@ -1,0 +1,575 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datamodels.compound_identity &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/datamodels/compound_identity.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.datamodels.compound_identity</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.datamodels.compound_identity</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/datamodels/compound_identity</span>
+<span class="c1"># [[torchcell.datamodels.compound_identity]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/compound_identity</span>
+<span class="sd">"""Shared, pure, offline compound-identity resolver (UI-2).</span>
+
+<span class="sd">Every environmental dataset used to store a compound *name only* -- a</span>
+<span class="sd">``Compound(name="furfural")`` with ``inchikey``/``chebi_id``/``pubchem_cid``/</span>
+<span class="sd">``smiles`` all ``None``. A bare name is not a resolvable identity: two papers</span>
+<span class="sd">spelling "H2O2" vs "hydrogen peroxide" become distinct compounds and nothing</span>
+<span class="sd">joins to ChEBI/PubChem. This module is the ONE reconciler that turns a name (or a</span>
+<span class="sd">PubChem CID) into a structure -- OR reports an honest, typed absence.</span>
+
+<span class="sd">Design (mirrors ``SCerevisiaeGenome.resolve_gene_name``):</span>
+
+<span class="sd">- **Pure + offline.** :func:`resolve_compound_identity` reads ONLY the committed</span>
+<span class="sd">  ``compound_identity_table.json`` -- it NEVER touches the network at import,</span>
+<span class="sd">  build, CI, or test time. The table is the sha256-pinned canonical artifact</span>
+<span class="sd">  (``compound_identity_curate.py`` is the only thing that hits PubChem, run by a</span>
+<span class="sd">  human against the committed input lists in ``compound_identity_inputs/``). The</span>
+<span class="sd">  bytes are sha256-self-checked at import; a mismatch raises (tamper / drift</span>
+<span class="sd">  detection).</span>
+<span class="sd">- **Non-generic pydantic.** ``CompoundIdentityRecord`` /</span>
+<span class="sd">  ``CompoundIdentityResolution`` are plain ``BaseModel`` (no ``Generic[...]``) so</span>
+<span class="sd">  loaders embedding them stay pickle/multiprocessing-safe (PR #119 lesson).</span>
+<span class="sd">- **Callers own retention.** The resolver never mutates or drops -- it REPORTS a</span>
+<span class="sd">  typed status. :func:`resolved_compound` is a thin convenience that a loader uses</span>
+<span class="sd">  to build a ``Compound`` fill-or-gap: fill structure fields where resolved,</span>
+<span class="sd">  attach a typed ``ProvenanceGap`` on ``inchikey`` where not -- **additive only**,</span>
+<span class="sd">  never clobbering a caller-supplied ``smiles`` (hoepfner already sets it).</span>
+
+<span class="sd">Canonical-name policy (serve-50)</span>
+<span class="sd">--------------------------------</span>
+<span class="sd">A row's ``name`` is the ONE name a resolved compound carries, and</span>
+<span class="sd">:func:`resolved_compound` returns it in ``Compound.name`` rather than echoing the</span>
+<span class="sd">label the loader passed. Every other spelling a paper uses is a ``synonyms`` entry on</span>
+<span class="sd">that row, so a loader passes its SOURCE LABEL as a lookup key and gets the canonical</span>
+<span class="sd">identity back. A row's name is PubChem's ``Title`` lowercased unless an input line</span>
+<span class="sd">curated a spelling (``media.py`` owns ``D-glucose``; the pre-existing table owns</span>
+<span class="sd">``actinomycin D``). This is what collapses ``NaCl`` and ``sodium chloride`` onto one</span>
+<span class="sd">``environment perturbation`` node instead of two joinable only on the ``inchikey``</span>
+<span class="sd">property, and it is why the source label must NOT be written into ``Compound.name``.</span>
+<span class="sd">``Compound`` has no ``source_label`` slot and ``schema.py`` is not changed to add one:</span>
+<span class="sd">``Compound`` sits in every served dataset's closure, so a field there is a full-rebuild</span>
+<span class="sd">trigger. The label survives in the table's ``synonyms``, which is where it belongs.</span>
+
+<span class="sd">Two structure routes, and the curated one wins</span>
+<span class="sd">----------------------------------------------</span>
+<span class="sd">:func:`inchikey_from_smiles` derives an InChIKey from a released SMILES with RDKit, for</span>
+<span class="sd">datasets that publish structures but no names a table can key on (Hoepfner 2014: 151 of</span>
+<span class="sd">152 SMILES parse, 150 distinct keys). ``resolved_compound(..., derive_from_smiles=True)``</span>
+<span class="sd">uses it ONLY when the table has no row for the label, because the two routes disagree:</span>
+<span class="sd">concanamycin A's curated PubChem key and its SMILES-derived key differ in the stereo</span>
+<span class="sd">block. A curated row therefore always wins, and the derivation route is reported as</span>
+<span class="sd">``RESOLVED_FROM_SMILES``.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrEnum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">Compound</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProvenanceGap</span><span class="p">,</span> <span class="n">ProvenanceGapReason</span>
+
+<span class="c1"># The committed table lives next to this module; its bytes are the canonical,</span>
+<span class="c1"># sha256-pinned artifact. The builder recomputes + prints this constant.</span>
+<span class="n">_TABLE_PATH</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span><span class="s2">"compound_identity_table.json"</span><span class="p">)</span>
+<span class="n">_TABLE_SHA256</span> <span class="o">=</span> <span class="s2">"da91da75e84743e4b782600ead0fe3bc220c4bdc02ee8f6d89734de4934c037c"</span>
+
+<span class="c1"># Conservative, DOCUMENTED synonym canonicalization (normalized -&gt; normalized),</span>
+<span class="c1"># applied BEFORE lookup. Only spellings we are certain name the SAME compound --</span>
+<span class="c1"># never a fuzzy near-miss.</span>
+<span class="c1">#</span>
+<span class="c1"># Most aliases now live in the TABLE (each row's ``synonyms``, sourced from the</span>
+<span class="c1"># committed input lists), which is the reproducible home for them. This code-level</span>
+<span class="c1"># map is kept for the handful of foldings that predate the table and for spellings</span>
+<span class="c1"># no input list claims; the two compose, since normalization runs first and the</span>
+<span class="c1"># resulting key is then looked up among names AND synonyms.</span>
+<span class="n">_SYNONYMS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"h2o2"</span><span class="p">:</span> <span class="s2">"hydrogen peroxide"</span><span class="p">,</span>
+    <span class="s2">"hydrogen peroxide (h2o2)"</span><span class="p">:</span> <span class="s2">"hydrogen peroxide"</span><span class="p">,</span>
+    <span class="s2">"nacl"</span><span class="p">:</span> <span class="s2">"sodium chloride"</span><span class="p">,</span>
+    <span class="s2">"sodium chloride (nacl)"</span><span class="p">:</span> <span class="s2">"sodium chloride"</span><span class="p">,</span>
+    <span class="s2">"mms"</span><span class="p">:</span> <span class="s2">"methyl methanesulfonate"</span><span class="p">,</span>
+    <span class="s2">"methylmethane sulfonate"</span><span class="p">:</span> <span class="s2">"methyl methanesulfonate"</span><span class="p">,</span>
+    <span class="s2">"actinomycin-d"</span><span class="p">:</span> <span class="s2">"actinomycin d"</span><span class="p">,</span>
+    <span class="s2">"concanamycin-a"</span><span class="p">:</span> <span class="s2">"concanamycin a"</span><span class="p">,</span>
+    <span class="s2">"acetate"</span><span class="p">:</span> <span class="s2">"acetic acid"</span><span class="p">,</span>
+    <span class="s2">"1-propanol"</span><span class="p">:</span> <span class="s2">"1-propanol"</span><span class="p">,</span>
+    <span class="s2">"n-propanol"</span><span class="p">:</span> <span class="s2">"1-propanol"</span><span class="p">,</span>
+    <span class="s2">"propan-1-ol"</span><span class="p">:</span> <span class="s2">"1-propanol"</span><span class="p">,</span>
+    <span class="s2">"etoh"</span><span class="p">:</span> <span class="s2">"ethanol"</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="CompoundResolutionStatus">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity.CompoundResolutionStatus.html#torchcell.datamodels.compound_identity.CompoundResolutionStatus">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CompoundResolutionStatus</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Typed outcome of a resolution attempt, ordered from usable to terminal.</span>
+
+<span class="sd">    - ``RESOLVED``: the table maps the name/CID to a structure (an InChIKey).</span>
+<span class="sd">    - ``RESOLVED_FROM_SMILES``: no table row, but the caller's released SMILES</span>
+<span class="sd">      parsed and yielded an InChIKey (the Hoepfner route).</span>
+<span class="sd">    - ``RESOLVED_MIXTURE``: identified as a substance by ChEBI and/or a PubChem CID,</span>
+<span class="sd">      but no single-molecule InChIKey exists. Tunicamycin is at least ten homologues</span>
+<span class="sd">      (ChEBI:29699); agar's PubChem InChIKey belongs to the agarobiose repeat unit,</span>
+<span class="sd">      not to the algal polysaccharide. The identity rule accepts ChEBI or CID here,</span>
+<span class="sd">      and fabricating a key would misstate what was in the flask.</span>
+<span class="sd">    - ``UNRESOLVED_PUBLIC``: a real public name we simply have not resolved yet --</span>
+<span class="sd">      the ONE recoverable gap (grows the table over time).</span>
+<span class="sd">    - ``UNDEFINED_MIXTURE``: an intrinsically undefined preparation (yeast extract,</span>
+<span class="sd">      peptone, Difco YNB, an SC dropout powder). No structure exists to find --</span>
+<span class="sd">      terminal, and NOT a worklist item.</span>
+<span class="sd">    - ``PROPRIETARY``: a vendor or catalog code (Novartis CMBxxx, a ChemDiv or</span>
+<span class="sd">      ChemBridge library id) whose structure the primary never released -- terminal.</span>
+<span class="sd">    """</span>
+
+    <span class="n">RESOLVED</span> <span class="o">=</span> <span class="s2">"RESOLVED"</span>
+    <span class="n">RESOLVED_FROM_SMILES</span> <span class="o">=</span> <span class="s2">"RESOLVED_FROM_SMILES"</span>
+    <span class="n">RESOLVED_MIXTURE</span> <span class="o">=</span> <span class="s2">"RESOLVED_MIXTURE"</span>
+    <span class="n">UNRESOLVED_PUBLIC</span> <span class="o">=</span> <span class="s2">"UNRESOLVED_PUBLIC"</span>
+    <span class="n">UNDEFINED_MIXTURE</span> <span class="o">=</span> <span class="s2">"UNDEFINED_MIXTURE"</span>
+    <span class="n">PROPRIETARY</span> <span class="o">=</span> <span class="s2">"PROPRIETARY"</span></div>
+
+
+
+<span class="c1">#: Statuses whose gap on ``inchikey`` is TERMINAL: there is nothing left to fetch.</span>
+<span class="n">_TERMINAL_STATUSES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="n">CompoundResolutionStatus</span><span class="o">.</span><span class="n">RESOLVED_MIXTURE</span><span class="p">,</span>
+        <span class="n">CompoundResolutionStatus</span><span class="o">.</span><span class="n">UNDEFINED_MIXTURE</span><span class="p">,</span>
+        <span class="n">CompoundResolutionStatus</span><span class="o">.</span><span class="n">PROPRIETARY</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="CompoundIdentityRecord">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity.CompoundIdentityRecord.html#torchcell.datamodels.compound_identity.CompoundIdentityRecord">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CompoundIdentityRecord</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One row of the pinned name-&gt;structure table (JSON round-trips this natively)."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the ONE canonical name this compound carries"</span><span class="p">)</span>
+    <span class="n">inchikey</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"canonical InChIKey"</span><span class="p">)</span>
+    <span class="n">pubchem_cid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"PubChem CID integer"</span><span class="p">)</span>
+    <span class="n">chebi_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"ChEBI CURIE"</span><span class="p">)</span>
+    <span class="n">smiles</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"canonical/connectivity SMILES"</span>
+    <span class="p">)</span>
+    <span class="n">synonyms</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"every other label a source spells this compound with; each is a "</span>
+        <span class="s2">"lookup key onto this row"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">source_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"the exact retrieval endpoint queried"</span>
+    <span class="p">)</span>
+    <span class="n">retrieval_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"RetrievalMethod value, e.g. 'pubchem_api'"</span>
+    <span class="p">)</span>
+    <span class="n">retrieved_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"ISO date the curator queried PubChem"</span>
+    <span class="p">)</span>
+    <span class="n">resolution_status</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"CompoundResolutionStatus value at curation time"</span>
+    <span class="p">)</span>
+    <span class="n">unresolved_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"why this row carries no InChIKey; the audit trail behind a drop"</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="CompoundIdentityResolution">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity.CompoundIdentityResolution.html#torchcell.datamodels.compound_identity.CompoundIdentityResolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CompoundIdentityResolution</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""What a caller splats into ``Compound`` (only the identity-carrying fields)."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">status</span><span class="p">:</span> <span class="n">CompoundResolutionStatus</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"the table's canonical name; None when no row matched"</span>
+    <span class="p">)</span>
+    <span class="n">inchikey</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">chebi_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">pubchem_cid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">smiles</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">unresolved_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"the row's audit trail for an absent InChIKey"</span>
+    <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">curated</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Whether a table row matched at all (the SMILES route defers to this)."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">identified</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Whether ANY structure identifier is carried (InChIKey, ChEBI, or CID).</span>
+
+<span class="sd">        This is the retention rule the brief states: a compound with none of these</span>
+<span class="sd">        cannot be encoded, so records depending on it are dropped rather than served</span>
+<span class="sd">        under a bare name.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inchikey</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">chebi_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">pubchem_cid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="normalize_compound_name">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity.normalize_compound_name.html#torchcell.datamodels.compound_identity.normalize_compound_name">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">normalize_compound_name</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Lowercase + strip + conservative synonym canonicalization (documented)."""</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">_SYNONYMS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_table</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
+    <span class="nb">list</span><span class="p">[</span><span class="n">CompoundIdentityRecord</span><span class="p">],</span>
+    <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">CompoundIdentityRecord</span><span class="p">],</span>
+    <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CompoundIdentityRecord</span><span class="p">],</span>
+<span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Read + sha256-self-check the committed table, index by name, synonym, and CID.</span>
+
+<span class="sd">    Every lookup key must point at exactly ONE compound. A key claimed by two rows is</span>
+<span class="sd">    raised, not silently won by whichever row loaded last: the curator already awards a</span>
+<span class="sd">    contested key by precedence and qualifies the losers, so a duplicate here means the</span>
+<span class="sd">    table and this module's ``_SYNONYMS`` folding disagree and a loader would otherwise</span>
+<span class="sd">    get a different compound than the one it asked for.</span>
+<span class="sd">    """</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">_TABLE_PATH</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">()</span>
+    <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">digest</span> <span class="o">!=</span> <span class="n">_TABLE_SHA256</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"compound_identity_table.json sha256 mismatch: got </span><span class="si">{</span><span class="n">digest</span><span class="si">}</span><span class="s2">, expected "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_TABLE_SHA256</span><span class="si">}</span><span class="s2"> (table tampered or re-built -- re-pin _TABLE_SHA256)"</span>
+        <span class="p">)</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+    <span class="n">records</span> <span class="o">=</span> <span class="p">[</span><span class="n">CompoundIdentityRecord</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">payload</span><span class="p">[</span><span class="s2">"records"</span><span class="p">]]</span>
+    <span class="n">by_name</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">CompoundIdentityRecord</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">by_cid</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CompoundIdentityRecord</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">record</span><span class="o">.</span><span class="n">synonyms</span><span class="p">]:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">normalize_compound_name</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+            <span class="n">held</span> <span class="o">=</span> <span class="n">by_name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">held</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">held</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">record</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"compound_identity_table.json: lookup key </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2"> is claimed by "</span>
+                    <span class="sa">f</span><span class="s2">"both </span><span class="si">{</span><span class="n">held</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> and </span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2">"</span>
+                <span class="p">)</span>
+            <span class="n">by_name</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">record</span>
+        <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">pubchem_cid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">by_cid</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">pubchem_cid</span><span class="p">,</span> <span class="n">record</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">records</span><span class="p">,</span> <span class="n">by_name</span><span class="p">,</span> <span class="n">by_cid</span>
+
+
+<span class="n">_RECORDS</span><span class="p">,</span> <span class="n">_BY_NAME</span><span class="p">,</span> <span class="n">_BY_CID</span> <span class="o">=</span> <span class="n">_load_table</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="resolve_compound_identity">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity.resolve_compound_identity.html#torchcell.datamodels.compound_identity.resolve_compound_identity">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_compound_identity</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">pubchem_cid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">known_proprietary</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CompoundIdentityResolution</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Resolve a compound identity from the pinned table -- pure, offline.</span>
+
+<span class="sd">    Looks up by normalized ``name`` (matching a row's canonical name OR any of its</span>
+<span class="sd">    synonyms) first, then by ``pubchem_cid``. A matched row's own</span>
+<span class="sd">    ``resolution_status`` is authoritative, so a mixture comes back as</span>
+<span class="sd">    ``RESOLVED_MIXTURE`` carrying ChEBI/CID and no InChIKey, and a vendor code comes</span>
+<span class="sd">    back ``PROPRIETARY`` with the reason it is terminal. With no row at all the answer</span>
+<span class="sd">    is ``PROPRIETARY`` when the caller knows the label is a vendor code, else</span>
+<span class="sd">    ``UNRESOLVED_PUBLIC``. NEVER guesses a structure from a near-miss name.</span>
+<span class="sd">    """</span>
+    <span class="n">record</span><span class="p">:</span> <span class="n">CompoundIdentityRecord</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">record</span> <span class="o">=</span> <span class="n">_BY_NAME</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">normalize_compound_name</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">record</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">pubchem_cid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">record</span> <span class="o">=</span> <span class="n">_BY_CID</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pubchem_cid</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">record</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">CompoundIdentityResolution</span><span class="p">(</span>
+            <span class="n">status</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">CompoundResolutionStatus</span><span class="o">.</span><span class="n">PROPRIETARY</span>
+                <span class="k">if</span> <span class="n">known_proprietary</span>
+                <span class="k">else</span> <span class="n">CompoundResolutionStatus</span><span class="o">.</span><span class="n">UNRESOLVED_PUBLIC</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">CompoundIdentityResolution</span><span class="p">(</span>
+        <span class="n">status</span><span class="o">=</span><span class="n">CompoundResolutionStatus</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">resolution_status</span><span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="n">inchikey</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">inchikey</span><span class="p">,</span>
+        <span class="n">chebi_id</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">chebi_id</span><span class="p">,</span>
+        <span class="n">pubchem_cid</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">pubchem_cid</span><span class="p">,</span>
+        <span class="n">smiles</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">smiles</span><span class="p">,</span>
+        <span class="n">unresolved_reason</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">unresolved_reason</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="inchikey_from_smiles">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity.inchikey_from_smiles.html#torchcell.datamodels.compound_identity.inchikey_from_smiles">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">inchikey_from_smiles</span><span class="p">(</span><span class="n">smiles</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Derive a standard InChIKey from a SMILES with RDKit, or ``None`` if it will not parse.</span>
+
+<span class="sd">    The offline structure route for a dataset that releases SMILES but no name a curated</span>
+<span class="sd">    table can key on. ``None`` is a MEASUREMENT, not a swallowed error: RDKit's parser</span>
+<span class="sd">    returns no molecule for chemistry it cannot represent (Hoepfner's boromycin, whose</span>
+<span class="sd">    boron cage fails), and it logs the reason to stderr. RDKit is imported lazily so this</span>
+<span class="sd">    module stays cheap to import in a loader worker.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chem</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem</span><span class="w"> </span><span class="kn">import</span> <span class="n">inchi</span>
+
+    <span class="n">molecule</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">molecule</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">inchi</span><span class="o">.</span><span class="n">MolToInchiKey</span><span class="p">(</span><span class="n">molecule</span><span class="p">)</span>  <span class="c1"># type: ignore[no-untyped-call]  # RDKit untyped</span>
+    <span class="k">return</span> <span class="n">key</span> <span class="ow">or</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="resolve_compound_identity_from_smiles">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity.resolve_compound_identity_from_smiles.html#torchcell.datamodels.compound_identity.resolve_compound_identity_from_smiles">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_compound_identity_from_smiles</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">smiles</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CompoundIdentityResolution</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Resolve by name, falling back to the caller's SMILES ONLY when no row exists.</span>
+
+<span class="sd">    The curated row always wins: the two routes measurably disagree (concanamycin A's</span>
+<span class="sd">    curated PubChem key and its SMILES-derived key differ in the stereo block), so a</span>
+<span class="sd">    dataset that both appears in the table and ships a SMILES must not silently get a</span>
+<span class="sd">    second identity for the same compound.</span>
+<span class="sd">    """</span>
+    <span class="n">resolution</span> <span class="o">=</span> <span class="n">resolve_compound_identity</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">resolution</span><span class="o">.</span><span class="n">curated</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">resolution</span>
+    <span class="n">derived</span> <span class="o">=</span> <span class="n">inchikey_from_smiles</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">derived</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">resolution</span>
+    <span class="k">return</span> <span class="n">CompoundIdentityResolution</span><span class="p">(</span>
+        <span class="n">status</span><span class="o">=</span><span class="n">CompoundResolutionStatus</span><span class="o">.</span><span class="n">RESOLVED_FROM_SMILES</span><span class="p">,</span>
+        <span class="n">inchikey</span><span class="o">=</span><span class="n">derived</span><span class="p">,</span>
+        <span class="n">smiles</span><span class="o">=</span><span class="n">smiles</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="resolved_compound">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity.resolved_compound.html#torchcell.datamodels.compound_identity.resolved_compound">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolved_compound</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">pubchem_cid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">smiles</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">inchi</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">roles</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">known_proprietary</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">derive_from_smiles</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Compound</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build a ``Compound`` fill-or-gap through the resolver (the loader entrypoint).</span>
+
+<span class="sd">    ``name`` is the loader's SOURCE LABEL: whatever the paper's column or table calls</span>
+<span class="sd">    the compound. The returned ``Compound.name`` is the table's CANONICAL name when a</span>
+<span class="sd">    row matches, so two papers spelling one compound differently produce one node; the</span>
+<span class="sd">    label itself is already recorded as that row's synonym. With no row, the label is</span>
+<span class="sd">    kept as-is.</span>
+
+<span class="sd">    Structure fields merge ADDITIVELY: a caller-supplied field (hoepfner's ``smiles``,</span>
+<span class="sd">    wildenhain's ``pubchem_cid``) always wins; the resolver only fills what is still</span>
+<span class="sd">    ``None``. With ``derive_from_smiles=True`` an unmatched label whose SMILES parses</span>
+<span class="sd">    gets an RDKit-derived InChIKey, but a curated row always outranks that route.</span>
+
+<span class="sd">    When no InChIKey can be filled, a typed ``ProvenanceGap`` is attached on</span>
+<span class="sd">    ``inchikey``: ``not_reported_by_primary`` when the absence is terminal (a vendor</span>
+<span class="sd">    code, an undefined preparation, a homolog mixture with no single key), else</span>
+<span class="sd">    ``deferred_pending_source_review`` (the growable worklist). The gap is asserted ONLY</span>
+<span class="sd">    on the ``None`` field, honoring the ``ProvenanceGapMixin`` invariant.</span>
+<span class="sd">    """</span>
+    <span class="n">resolution</span> <span class="o">=</span> <span class="n">resolve_compound_identity</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">pubchem_cid</span><span class="o">=</span><span class="n">pubchem_cid</span><span class="p">,</span> <span class="n">known_proprietary</span><span class="o">=</span><span class="n">known_proprietary</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">derive_from_smiles</span>
+        <span class="ow">and</span> <span class="n">smiles</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="n">resolution</span><span class="o">.</span><span class="n">inchikey</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="ow">not</span> <span class="n">resolution</span><span class="o">.</span><span class="n">curated</span>
+    <span class="p">):</span>
+        <span class="n">derived</span> <span class="o">=</span> <span class="n">inchikey_from_smiles</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">derived</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">resolution</span> <span class="o">=</span> <span class="n">resolution</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span>
+                <span class="n">update</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">"status"</span><span class="p">:</span> <span class="n">CompoundResolutionStatus</span><span class="o">.</span><span class="n">RESOLVED_FROM_SMILES</span><span class="p">,</span>
+                    <span class="s2">"inchikey"</span><span class="p">:</span> <span class="n">derived</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+
+    <span class="n">merged_inchikey</span> <span class="o">=</span> <span class="n">resolution</span><span class="o">.</span><span class="n">inchikey</span>  <span class="c1"># loaders never supply an inchikey</span>
+    <span class="n">merged_cid</span> <span class="o">=</span> <span class="n">pubchem_cid</span> <span class="k">if</span> <span class="n">pubchem_cid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">resolution</span><span class="o">.</span><span class="n">pubchem_cid</span>
+    <span class="n">merged_smiles</span> <span class="o">=</span> <span class="n">smiles</span> <span class="k">if</span> <span class="n">smiles</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">resolution</span><span class="o">.</span><span class="n">smiles</span>
+
+    <span class="n">gaps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ProvenanceGap</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">merged_inchikey</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">reason</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span>
+            <span class="k">if</span> <span class="n">resolution</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="n">_TERMINAL_STATUSES</span>
+            <span class="k">else</span> <span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">deferred_pending_source_review</span>
+        <span class="p">)</span>
+        <span class="n">gaps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ProvenanceGap</span><span class="p">(</span><span class="n">field</span><span class="o">=</span><span class="s2">"inchikey"</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="n">reason</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">Compound</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">resolution</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="n">resolution</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">name</span><span class="p">,</span>
+        <span class="n">inchikey</span><span class="o">=</span><span class="n">merged_inchikey</span><span class="p">,</span>
+        <span class="n">inchi</span><span class="o">=</span><span class="n">inchi</span><span class="p">,</span>
+        <span class="n">smiles</span><span class="o">=</span><span class="n">merged_smiles</span><span class="p">,</span>
+        <span class="n">pubchem_cid</span><span class="o">=</span><span class="n">merged_cid</span><span class="p">,</span>
+        <span class="n">chebi_id</span><span class="o">=</span><span class="n">resolution</span><span class="o">.</span><span class="n">chebi_id</span><span class="p">,</span>
+        <span class="n">roles</span><span class="o">=</span><span class="n">roles</span> <span class="ow">or</span> <span class="p">[],</span>
+        <span class="n">provenance_gaps</span><span class="o">=</span><span class="n">gaps</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,8 @@
+﻿torchcell.verification.SourcedValue
+===================================
+
+.. currentmodule:: torchcell.verification
+
+.. autoclass:: SourcedValue
+   :show-inheritance:
+   :members:

@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.releases.format\_table
+==================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.releases
+
+.. autofunction:: format_table

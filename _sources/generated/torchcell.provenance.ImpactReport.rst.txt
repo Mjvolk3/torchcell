@@ -1,0 +1,8 @@
+﻿torchcell.provenance.ImpactReport
+=================================
+
+.. currentmodule:: torchcell.provenance
+
+.. autoclass:: ImpactReport
+   :show-inheritance:
+   :members:

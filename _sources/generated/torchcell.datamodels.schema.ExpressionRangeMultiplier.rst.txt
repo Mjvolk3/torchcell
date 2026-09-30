@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.ExpressionRangeMultiplier
+=====================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: ExpressionRangeMultiplier
+   :show-inheritance:
+   :members:

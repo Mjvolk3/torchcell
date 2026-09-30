@@ -1,0 +1,8 @@
+﻿torchcell.losses.point\_dist\_graph\_reg.PointDistGraphReg
+==========================================================
+
+.. currentmodule:: torchcell.losses.point_dist_graph_reg
+
+.. autoclass:: PointDistGraphReg
+   :show-inheritance:
+   :members:

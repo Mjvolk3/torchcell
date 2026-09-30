@@ -1,0 +1,8 @@
+﻿torchcell.verification.CarrierGapCensus
+=======================================
+
+.. currentmodule:: torchcell.verification
+
+.. autoclass:: CarrierGapCensus
+   :show-inheritance:
+   :members:

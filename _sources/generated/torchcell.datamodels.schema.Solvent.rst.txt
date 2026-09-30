@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.Solvent
+===================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: Solvent
+   :show-inheritance:
+   :members:

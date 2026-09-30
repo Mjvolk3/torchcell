@@ -1,0 +1,8 @@
+﻿torchcell.trainers.int\_hetero\_cell.DiffusionRegressionTask
+============================================================
+
+.. currentmodule:: torchcell.trainers.int_hetero_cell
+
+.. autoclass:: DiffusionRegressionTask
+   :show-inheritance:
+   :members:

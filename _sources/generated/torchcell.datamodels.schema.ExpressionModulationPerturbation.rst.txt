@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.ExpressionModulationPerturbation
+============================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: ExpressionModulationPerturbation
+   :show-inheritance:
+   :members:

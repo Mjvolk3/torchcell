@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.messner2023.ProteomeMessner2023Dataset
+=====================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.messner2023
+
+.. autoclass:: ProteomeMessner2023Dataset
+   :show-inheritance:
+   :members:

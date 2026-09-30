@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.SgaKanMxDeletionPerturbation
+========================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: SgaKanMxDeletionPerturbation
+   :show-inheritance:
+   :members:

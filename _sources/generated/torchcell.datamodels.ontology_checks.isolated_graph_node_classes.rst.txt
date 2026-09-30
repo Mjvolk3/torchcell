@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.ontology\_checks.isolated\_graph\_node\_classes
+====================================================================
+
+.. currentmodule:: torchcell.datamodels.ontology_checks
+
+.. autofunction:: isolated_graph_node_classes

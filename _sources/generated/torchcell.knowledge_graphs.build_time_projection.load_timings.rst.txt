@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.build\_time\_projection.load\_timings
+=================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.build_time_projection
+
+.. autofunction:: load_timings

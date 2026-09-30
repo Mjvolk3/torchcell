@@ -1,0 +1,669 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datasets.scerevisiae.yoshida2012 &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/datasets/scerevisiae/yoshida2012.html" />
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html">
+            
+              <img src="../../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.datasets.scerevisiae.yoshida2012</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.datasets.scerevisiae.yoshida2012</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/datasets/scerevisiae/yoshida2012</span>
+<span class="c1"># [[torchcell.datasets.scerevisiae.yoshida2012]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/yoshida2012</span>
+<span class="c1"># Test file: tests/torchcell/datasets/scerevisiae/test_yoshida2012.py</span>
+<span class="sd">"""Yoshida &amp; Yokoyama 2012 organic-acid titers of yeast deletion mutants (Table 3).</span>
+
+<span class="sd">Yoshida S &amp; Yokoyama A 2012 (J Biosci Bioeng 113(5):556-561,</span>
+<span class="sd">doi:10.1016/j.jbiosc.2011.12.017, PMID 22277779) screened the S. cerevisiae haploid</span>
+<span class="sd">deletion collection on YPD-BCP plates for organic-acid overproducers, then quantified the</span>
+<span class="sd">organic-acid titers of the 17 "multifunctional" gene deletions by HPLC. This loader</span>
+<span class="sd">ingests **Table 3** ("Organic acid productivity of the deletion mutants"): one row per</span>
+<span class="sd">strain (WT reference + 17 gene deletions), each giving OD plus six analyte titers in mM</span>
+<span class="sd">(mean +/- SD of n=3 independent experiments; ``*`` in the source marks p&lt;0.05 vs WT by</span>
+<span class="sd">paired Student's t-test).</span>
+
+<span class="sd">Maps to ``MetabolitePhenotype`` (WS15): ``metabolite_level = {analyte -&gt; mM}`` for the</span>
+<span class="sd">five ORGANIC ACIDS (acetate, citrate, malate, pyruvate, succinate) PLUS the inorganic</span>
+<span class="sd">analyte phosphate (a measured analyte kept verbatim, but left OUT of</span>
+<span class="sd">``target_metabolite_ids``). The ``OD`` column is BIOMASS (optical density), not a</span>
+<span class="sd">metabolite, so it is dropped (retained only in the embedded literal for review).</span>
+<span class="sd">``measurement_type = "hplc_organic_acid_titer_mM"``; ``metabolite_level_se = SD/sqrt(3)``;</span>
+<span class="sd">``n_replicates = 3``. The schema stores uncertainty as a per-analyte SE only (no</span>
+<span class="sd">uncertainty-TYPE field), so the source **sample SD** is converted to a standard error</span>
+<span class="sd">(SD/sqrt(n)); the SD-origin is documented here. The five organic acids are mapped to</span>
+<span class="sd">Yeast9 ``s_NNNN`` species ids via ``build_metabolite_s_id_map`` (KEGG-anchored, sourced</span>
+<span class="sd">from ``YeastGEM``, never invented); phosphate is left unmapped.</span>
+
+<span class="sd">Reference = the MEASURED **WT** (BY4742) row of Table 3 (mM +/- SD, n=3), restricted per</span>
+<span class="sd">record to the analytes the strain measured (every strain measures all six here). This is</span>
+<span class="sd">a measured WT baseline, not a population mean.</span>
+
+<span class="sd">Background: the BY4741/BY4742 haploid deletion collection (KanMX4 deletions). The genotype</span>
+<span class="sd">is one ``KanMxDeletionPerturbation`` per strain; the source uses common gene names, so an</span>
+<span class="sd">injected ``SCerevisiaeGenome`` resolves them to systematic R64 ORF ids (Cachera pattern).</span>
+
+<span class="sd">Provenance / extraction: the data IS Table 3 in the paper -- there is no external SI file.</span>
+<span class="sd">The canonical source is the sha256-pinned library-mirror ``paper.pdf`` (verified by</span>
+<span class="sd">``download()``). The MinerU OCR (``paper.md``) scrambled Table 3's numeric cells, so the</span>
+<span class="sd">values were recovered from the BORN-DIGITAL text layer via</span>
+<span class="sd">``pdftotext -layout paper.pdf`` (poppler); the recovered cells are transcribed into the</span>
+<span class="sd">module-level ``TABLE_3`` literal so the build is deterministic and reviewable (the PDF is</span>
+<span class="sd">never re-parsed at ``process()`` time).</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Environment</span><span class="p">,</span>
+    <span class="n">Experiment</span><span class="p">,</span>
+    <span class="n">ExperimentReference</span><span class="p">,</span>
+    <span class="n">Genotype</span><span class="p">,</span>
+    <span class="n">KanMxDeletionPerturbation</span><span class="p">,</span>
+    <span class="n">Media</span><span class="p">,</span>
+    <span class="n">MetaboliteExperiment</span><span class="p">,</span>
+    <span class="n">MetaboliteExperimentReference</span><span class="p">,</span>
+    <span class="n">MetabolitePhenotype</span><span class="p">,</span>
+    <span class="n">Publication</span><span class="p">,</span>
+    <span class="n">ReferenceGenome</span><span class="p">,</span>
+    <span class="n">Temperature</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.zelezniak2018</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_metabolite_s_id_map</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">MEASUREMENT_TYPE</span> <span class="o">=</span> <span class="s2">"hplc_organic_acid_titer_mM"</span>
+<span class="n">N_REPLICATES</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">_SYSTEMATIC_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?$"</span><span class="p">)</span>
+
+<span class="c1"># Library mirror (canonical, sha256-pinned) holding the paper PDF the data is read from.</span>
+<span class="n">LIBRARY_CITATION_KEY</span> <span class="o">=</span> <span class="s2">"yoshidaIdentificationCharacterizationGenes2012"</span>
+<span class="n">PDF_FILENAME</span> <span class="o">=</span> <span class="s2">"paper.pdf"</span>
+<span class="n">PDF_SHA256</span> <span class="o">=</span> <span class="s2">"19df2d21ec52f333969468b916bfe468920e9d3974cd1f996feda21ea0d3d0dd"</span>
+
+<span class="c1"># The five ORGANIC ACIDS mapped to Yeast9 s_NNNN (KEGG-anchored via YeastGEM). Phosphate</span>
+<span class="c1"># is inorganic and intentionally omitted from the model-id mapping (kept as an analyte).</span>
+<span class="n">ACID_KEGG_IDS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"acetate"</span><span class="p">:</span> <span class="s2">"C00033"</span><span class="p">,</span>
+    <span class="s2">"citrate"</span><span class="p">:</span> <span class="s2">"C00158"</span><span class="p">,</span>
+    <span class="s2">"malate"</span><span class="p">:</span> <span class="s2">"C00149"</span><span class="p">,</span>
+    <span class="s2">"pyruvate"</span><span class="p">:</span> <span class="s2">"C00022"</span><span class="p">,</span>
+    <span class="s2">"succinate"</span><span class="p">:</span> <span class="s2">"C00042"</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="c1"># Analytes stored as metabolite_level (five organic acids + inorganic phosphate). OD is</span>
+<span class="c1"># excluded (it is biomass, not a metabolite).</span>
+<span class="n">ANALYTES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"acetate"</span><span class="p">,</span> <span class="s2">"citrate"</span><span class="p">,</span> <span class="s2">"malate"</span><span class="p">,</span> <span class="s2">"pyruvate"</span><span class="p">,</span> <span class="s2">"succinate"</span><span class="p">,</span> <span class="s2">"phosphate"</span><span class="p">]</span>
+
+<span class="c1"># Column order of the embedded Table 3 literal: OD is retained for review but NOT stored.</span>
+<span class="n">_TABLE_3_COLUMNS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"OD"</span><span class="p">,</span>
+    <span class="s2">"acetate"</span><span class="p">,</span>
+    <span class="s2">"citrate"</span><span class="p">,</span>
+    <span class="s2">"malate"</span><span class="p">,</span>
+    <span class="s2">"phosphate"</span><span class="p">,</span>
+    <span class="s2">"pyruvate"</span><span class="p">,</span>
+    <span class="s2">"succinate"</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="c1"># Table 3 "Organic acid productivity of the deletion mutants" -- recovered from the</span>
+<span class="c1"># born-digital text layer (`pdftotext -layout paper.pdf`) of the sha256-pinned mirror PDF.</span>
+<span class="c1"># Each value is (mean_mM, sd_mM) of n=3 independent experiments. WT = BY4742 reference row.</span>
+<span class="c1"># Column order = _TABLE_3_COLUMNS (OD, acetate, citrate, malate, phosphate, pyruvate,</span>
+<span class="c1"># succinate). Source `*` significance marks (p&lt;0.05 vs WT) are not stored.</span>
+<span class="n">TABLE_3</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"WT"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">4.01</span><span class="p">,</span> <span class="mf">0.11</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">4.21</span><span class="p">,</span> <span class="mf">0.30</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.69</span><span class="p">,</span> <span class="mf">0.11</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.18</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">1.29</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="s2">"ASM4"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">3.95</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">4.02</span><span class="p">,</span> <span class="mf">0.30</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.78</span><span class="p">,</span> <span class="mf">0.07</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.13</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">1.31</span><span class="p">,</span> <span class="mf">0.06</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="s2">"EMI5"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">4.17</span><span class="p">,</span> <span class="mf">0.18</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">6.11</span><span class="p">,</span> <span class="mf">0.43</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.14</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.66</span><span class="p">,</span> <span class="mf">0.07</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.28</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">1.34</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="s2">"GTR1"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">3.87</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">4.18</span><span class="p">,</span> <span class="mf">0.24</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.86</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.48</span><span class="p">,</span> <span class="mf">0.09</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">1.06</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="s2">"GTR2"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">3.85</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">4.29</span><span class="p">,</span> <span class="mf">0.26</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.83</span><span class="p">,</span> <span class="mf">0.06</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.43</span><span class="p">,</span> <span class="mf">0.07</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">1.07</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="s2">"LIP5"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">3.97</span><span class="p">,</span> <span class="mf">0.08</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">4.35</span><span class="p">,</span> <span class="mf">0.24</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.13</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.90</span><span class="p">,</span> <span class="mf">0.06</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.22</span><span class="p">,</span> <span class="mf">0.09</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.82</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="s2">"LSM1"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">3.66</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">5.45</span><span class="p">,</span> <span class="mf">0.46</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.12</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.18</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">1.26</span><span class="p">,</span> <span class="mf">0.06</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.94</span><span class="p">,</span> <span class="mf">0.07</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.83</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="s2">"MKS1"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">3.13</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">1.12</span><span class="p">,</span> <span class="mf">0.13</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.83</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.18</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">1.22</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.55</span><span class="p">,</span> <span class="mf">0.08</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">3.11</span><span class="p">,</span> <span class="mf">0.11</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="s2">"NFU1"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">3.91</span><span class="p">,</span> <span class="mf">0.12</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">3.99</span><span class="p">,</span> <span class="mf">0.23</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.13</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.75</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">1.28</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="s2">"PCK1"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">4.07</span><span class="p">,</span> <span class="mf">0.19</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">3.89</span><span class="p">,</span> <span class="mf">0.24</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.19</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.93</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.12</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">1.40</span><span class="p">,</span> <span class="mf">0.07</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="s2">"PHO85"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">2.89</span><span class="p">,</span> <span class="mf">0.29</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">7.20</span><span class="p">,</span> <span class="mf">0.51</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.17</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.17</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.61</span><span class="p">,</span> <span class="mf">0.06</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.26</span><span class="p">,</span> <span class="mf">0.06</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">1.09</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="s2">"PLM2"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">4.07</span><span class="p">,</span> <span class="mf">0.13</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">4.47</span><span class="p">,</span> <span class="mf">0.39</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.18</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">1.05</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.73</span><span class="p">,</span> <span class="mf">0.07</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.83</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="s2">"RTG1"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">4.25</span><span class="p">,</span> <span class="mf">0.10</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">5.41</span><span class="p">,</span> <span class="mf">0.38</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.07</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.14</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.53</span><span class="p">,</span> <span class="mf">0.08</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.35</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">1.06</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="s2">"RTG2"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">3.87</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">5.12</span><span class="p">,</span> <span class="mf">0.36</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.07</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.14</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.69</span><span class="p">,</span> <span class="mf">0.07</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.16</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">1.02</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="s2">"TIF3"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">2.66</span><span class="p">,</span> <span class="mf">0.11</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">6.98</span><span class="p">,</span> <span class="mf">0.49</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.12</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.14</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.71</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.23</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">1.30</span><span class="p">,</span> <span class="mf">0.07</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="s2">"UBA3"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">3.97</span><span class="p">,</span> <span class="mf">0.18</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">3.89</span><span class="p">,</span> <span class="mf">0.19</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.16</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.17</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.74</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.23</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">1.49</span><span class="p">,</span> <span class="mf">0.07</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="s2">"UBP3"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">3.36</span><span class="p">,</span> <span class="mf">0.08</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">4.65</span><span class="p">,</span> <span class="mf">0.31</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.09</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">1.20</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.21</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">1.29</span><span class="p">,</span> <span class="mf">0.07</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="s2">"YDR379C-A"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">3.81</span><span class="p">,</span> <span class="mf">0.09</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">4.12</span><span class="p">,</span> <span class="mf">0.22</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.11</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.74</span><span class="p">,</span> <span class="mf">0.06</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.14</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">1.40</span><span class="p">,</span> <span class="mf">0.06</span><span class="p">),</span>
+    <span class="p">],</span>
+<span class="p">}</span>
+
+<span class="n">_WT_KEY</span> <span class="o">=</span> <span class="s2">"WT"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_row_analytes</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Map a Table 3 row to {analyte -&gt; (mean, sd)} for the stored analytes (drop OD)."""</span>
+    <span class="n">by_col</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">_TABLE_3_COLUMNS</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="n">by_col</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">ANALYTES</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="OrganicAcidYoshida2012Dataset">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.yoshida2012.OrganicAcidYoshida2012Dataset.html#torchcell.datasets.scerevisiae.yoshida2012.OrganicAcidYoshida2012Dataset">[docs]</a>
+<span class="nd">@register_dataset</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrganicAcidYoshida2012Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""HPLC organic-acid titers of 17 yeast deletion mutants (Yoshida 2012, Table 3)."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/organic_acid_yoshida2012"</span><span class="p">,</span>
+        <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset; a genome is required to resolve common gene names."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Experiment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Experiment schema class produced by this dataset."""</span>
+        <span class="k">return</span> <span class="n">MetaboliteExperiment</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reference_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">ExperimentReference</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Experiment-reference schema class produced by this dataset."""</span>
+        <span class="k">return</span> <span class="n">MetaboliteExperimentReference</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The sha256-pinned mirror PDF the Table 3 literal was transcribed from."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">PDF_FILENAME</span><span class="p">]</span>
+
+<div class="viewcode-block" id="OrganicAcidYoshida2012Dataset.download">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.yoshida2012.OrganicAcidYoshida2012Dataset.html#torchcell.datasets.scerevisiae.yoshida2012.OrganicAcidYoshida2012Dataset.download">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Stage the mirror ``paper.pdf`` into raw_dir and verify its sha256.</span>
+
+<span class="sd">        The dataset values are the embedded ``TABLE_3`` literal, but the canonical source</span>
+<span class="sd">        artifact (the paper PDF) is staged + hash-verified here so every built LMDB traces</span>
+<span class="sd">        to an exact, hash-pinned raw file.</span>
+<span class="sd">        """</span>
+        <span class="n">dest</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">PDF_FILENAME</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">mirror</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">],</span>
+            <span class="s2">"torchcell-library"</span><span class="p">,</span>
+            <span class="n">LIBRARY_CITATION_KEY</span><span class="p">,</span>
+            <span class="n">PDF_FILENAME</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">mirror</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Yoshida2012 mirror PDF not found: </span><span class="si">{</span><span class="n">mirror</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">mirror</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">handle</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="n">got</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">got</span> <span class="o">!=</span> <span class="n">PDF_SHA256</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Yoshida2012 paper.pdf sha256 mismatch: got </span><span class="si">{</span><span class="n">got</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">PDF_SHA256</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">mirror</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Staged </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%d</span><span class="s2"> bytes, sha256 verified)"</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_systematic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gene</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Resolve a common/systematic gene name to a systematic ORF id (must succeed)."""</span>
+        <span class="n">gene</span> <span class="o">=</span> <span class="n">gene</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">gene</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">gene</span>
+        <span class="n">genome</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">alias_to_systematic</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gene</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">candidates</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Yoshida2012: could not resolve gene name '</span><span class="si">{</span><span class="n">gene</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+<div class="viewcode-block" id="OrganicAcidYoshida2012Dataset.process">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.yoshida2012.OrganicAcidYoshida2012Dataset.html#torchcell.datasets.scerevisiae.yoshida2012.OrganicAcidYoshida2012Dataset.process">[docs]</a>
+    <span class="nd">@post_process</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build per-strain Metabolite experiments from the Table 3 literal, write LMDB."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">"OrganicAcidYoshida2012Dataset requires an injected SCerevisiaeGenome to "</span>
+                <span class="s2">"resolve common gene names to systematic ORF ids (Table 3 uses names)."</span>
+            <span class="p">)</span>
+        <span class="c1"># Organic-acid -&gt; Yeast9 s_NNNN, sourced from YeastGEM (never invented). Phosphate</span>
+        <span class="c1"># stays unmapped (inorganic; not a modelled organic-acid target).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_s_id_map</span> <span class="o">=</span> <span class="n">build_metabolite_s_id_map</span><span class="p">(</span><span class="n">ACID_KEGG_IDS</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span> <span class="o">=</span> <span class="n">_row_analytes</span><span class="p">(</span><span class="n">TABLE_3</span><span class="p">[</span><span class="n">_WT_KEY</span><span class="p">])</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">TABLE_3</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">gene</span> <span class="o">==</span> <span class="n">_WT_KEY</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">orf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_systematic</span><span class="p">(</span><span class="n">gene</span><span class="p">)</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"orf"</span><span class="p">:</span> <span class="n">orf</span><span class="p">,</span> <span class="s2">"gene"</span><span class="p">:</span> <span class="n">gene</span><span class="p">,</span> <span class="s2">"analytes"</span><span class="p">:</span> <span class="n">_row_analytes</span><span class="p">(</span><span class="n">values</span><span class="p">)})</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Yoshida2012: </span><span class="si">%d</span><span class="s2"> deletion strains, WT reference over </span><span class="si">%d</span><span class="s2"> analytes, "</span>
+            <span class="s2">"</span><span class="si">%d</span><span class="s2"> organic acids mapped to Yeast9 s_NNNN"</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_s_id_map</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([{</span><span class="s2">"orf"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">],</span> <span class="s2">"gene"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]}</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">])</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+
+        <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e11</span><span class="p">))</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">record_row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">rows</span><span class="p">):</span>
+                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span><span class="n">record_row</span><span class="p">)</span>
+                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+                    <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                        <span class="p">{</span>
+                            <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                            <span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                            <span class="s2">"publication"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                        <span class="p">}</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Yoshida2012 organic-acid experiments to LMDB"</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrganicAcidYoshida2012Dataset.preprocess_raw">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.yoshida2012.OrganicAcidYoshida2012Dataset.html#torchcell.datasets.scerevisiae.yoshida2012.OrganicAcidYoshida2012Dataset.preprocess_raw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Preprocessing is handled inside process() for this dataset."""</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_phenotype</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">analytes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetabolitePhenotype</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build a MetabolitePhenotype from {analyte -&gt; (mean_mM, sd_mM)}.</span>
+
+<span class="sd">        Source uncertainty is a **sample SD** (n=3); the schema stores only a per-analyte</span>
+<span class="sd">        SE, so SD is converted to SE = SD / sqrt(n) (n=3). Only the five organic acids</span>
+<span class="sd">        carry a Yeast9 s_NNNN target id (phosphate stays unmapped).</span>
+<span class="sd">        """</span>
+        <span class="n">level</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="n">mean</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">_sd</span><span class="p">)</span> <span class="ow">in</span> <span class="n">analytes</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="n">se</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="n">sd</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">N_REPLICATES</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="p">(</span><span class="n">_mean</span><span class="p">,</span> <span class="n">sd</span><span class="p">)</span> <span class="ow">in</span> <span class="n">analytes</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="n">n_reps</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="n">N_REPLICATES</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">analytes</span><span class="p">}</span>
+        <span class="n">targets</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_s_id_map</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">analytes</span> <span class="k">if</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_s_id_map</span><span class="p">}</span>
+        <span class="k">return</span> <span class="n">MetabolitePhenotype</span><span class="p">(</span>
+            <span class="n">metabolite_level</span><span class="o">=</span><span class="n">level</span><span class="p">,</span>
+            <span class="n">metabolite_level_se</span><span class="o">=</span><span class="n">se</span><span class="p">,</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="n">n_reps</span><span class="p">,</span>
+            <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
+            <span class="n">target_metabolite_ids</span><span class="o">=</span><span class="n">targets</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="OrganicAcidYoshida2012Dataset.create_experiment">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.yoshida2012.OrganicAcidYoshida2012Dataset.html#torchcell.datasets.scerevisiae.yoshida2012.OrganicAcidYoshida2012Dataset.create_experiment">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span>  <span class="c1"># type: ignore[override]</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">MetaboliteExperiment</span><span class="p">,</span> <span class="n">MetaboliteExperimentReference</span><span class="p">,</span> <span class="n">Publication</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Build the Metabolite experiment/reference/publication for one deletion strain."""</span>
+        <span class="c1"># Background = BY4742/BY4741 haploid KanMX4 deletion collection.</span>
+        <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4742"</span>
+        <span class="p">)</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">],</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="c1"># Static (no shaking) YPD liquid, 25 C, 72 h (Methods; Table 3 caption).</span>
+        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
+            <span class="n">media</span><span class="o">=</span><span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"YPD"</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">25</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_phenotype</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"analytes"</span><span class="p">])</span>
+        <span class="c1"># Reference = measured WT (BY4742) row, restricted to the analytes this strain</span>
+        <span class="c1"># measured (all six here); a measured baseline, never a population mean.</span>
+        <span class="n">exp_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"analytes"</span><span class="p">])</span>
+        <span class="n">ref_analytes</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">exp_keys</span><span class="p">}</span>
+        <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_phenotype</span><span class="p">(</span><span class="n">ref_analytes</span><span class="p">)</span>
+        <span class="n">experiment</span> <span class="o">=</span> <span class="n">MetaboliteExperiment</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">genotype</span><span class="o">=</span><span class="n">genotype</span><span class="p">,</span>
+            <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">phenotype</span><span class="o">=</span><span class="n">phenotype</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="n">MetaboliteExperimentReference</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="n">genome_reference</span><span class="p">,</span>
+            <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(),</span>
+            <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">phenotype_reference</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span>
+            <span class="n">pubmed_id</span><span class="o">=</span><span class="s2">"22277779"</span><span class="p">,</span>
+            <span class="n">pubmed_url</span><span class="o">=</span><span class="s2">"https://pubmed.ncbi.nlm.nih.gov/22277779/"</span><span class="p">,</span>
+            <span class="n">doi</span><span class="o">=</span><span class="s2">"10.1016/j.jbiosc.2011.12.017"</span><span class="p">,</span>
+            <span class="n">doi_url</span><span class="o">=</span><span class="s2">"https://doi.org/10.1016/j.jbiosc.2011.12.017"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build/load the dataset for interactive debugging.</span>
+
+<span class="sd">    A genome is REQUIRED (Table 3 uses common gene names). Loads the existing LMDB if</span>
+<span class="sd">    already built; delete ``&lt;root&gt;/processed`` first to re-run ``process()``.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">data_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
+    <span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
+        <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
+        <span class="n">go_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/go"</span><span class="p">),</span>
+        <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/torchcell/organic_acid_yoshida2012"</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">OrganicAcidYoshida2012Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"len = </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

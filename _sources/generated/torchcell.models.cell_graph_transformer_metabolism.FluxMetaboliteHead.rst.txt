@@ -1,0 +1,8 @@
+﻿torchcell.models.cell\_graph\_transformer\_metabolism.FluxMetaboliteHead
+========================================================================
+
+.. currentmodule:: torchcell.models.cell_graph_transformer_metabolism
+
+.. autoclass:: FluxMetaboliteHead
+   :show-inheritance:
+   :members:

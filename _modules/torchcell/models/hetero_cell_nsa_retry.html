@@ -1,0 +1,820 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.models.hetero_cell_nsa_retry &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/models/hetero_cell_nsa_retry.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.models.hetero_cell_nsa_retry</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.models.hetero_cell_nsa_retry</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Heterogeneous cell model using Node-Set Attention blocks over gene/reaction/metabolite graphs."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hydra</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">DictConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">Batch</span><span class="p">,</span> <span class="n">HeteroData</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.nn.aggr.attention</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttentionalAggregation</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.models.act</span><span class="w"> </span><span class="kn">import</span> <span class="n">act_register</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.nn.hetero_nsa</span><span class="w"> </span><span class="kn">import</span> <span class="n">HeteroNSA</span>
+
+
+<div class="viewcode-block" id="get_norm_layer">
+<a class="viewcode-back" href="../../../generated/torchcell.models.hetero_cell_nsa_retry.get_norm_layer.html#torchcell.models.hetero_cell_nsa_retry.get_norm_layer">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_norm_layer</span><span class="p">(</span><span class="n">channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">norm</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Create a normalization layer based on specified type."""</span>
+    <span class="k">if</span> <span class="n">norm</span> <span class="o">==</span> <span class="s2">"layer"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">(</span><span class="n">channels</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">norm</span> <span class="o">==</span> <span class="s2">"batch"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm1d</span><span class="p">(</span><span class="n">channels</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unsupported norm type: </span><span class="si">{</span><span class="n">norm</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="AttentionalGraphAggregation">
+<a class="viewcode-back" href="../../../generated/torchcell.models.hetero_cell_nsa_retry.AttentionalGraphAggregation.html#torchcell.models.hetero_cell_nsa_retry.AttentionalGraphAggregation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AttentionalGraphAggregation</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Attentional aggregation for graph-level representations."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Build the gating and transform MLPs and the attentional aggregator."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gate_nn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">in_channels</span> <span class="o">//</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">in_channels</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transform_nn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">),</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aggregator</span> <span class="o">=</span> <span class="n">AttentionalAggregation</span><span class="p">(</span>
+            <span class="n">gate_nn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gate_nn</span><span class="p">,</span> <span class="n">nn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">transform_nn</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="AttentionalGraphAggregation.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.models.hetero_cell_nsa_retry.AttentionalGraphAggregation.html#torchcell.models.hetero_cell_nsa_retry.AttentionalGraphAggregation.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">dim_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Aggregate node features into graph-level vectors using attention weights."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregator</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">,</span> <span class="n">dim_size</span><span class="o">=</span><span class="n">dim_size</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="PreProcessor">
+<a class="viewcode-back" href="../../../generated/torchcell.models.hetero_cell_nsa_retry.PreProcessor.html#torchcell.models.hetero_cell_nsa_retry.PreProcessor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PreProcessor</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""MLP for preprocessing node features."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">in_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">hidden_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">num_layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">norm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"layer"</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"relu"</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Build a stack of linear, norm, activation, and dropout layers."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="n">act</span> <span class="o">=</span> <span class="n">act_register</span><span class="p">[</span><span class="n">activation</span><span class="p">]</span>
+        <span class="n">norm_layer</span> <span class="o">=</span> <span class="n">get_norm_layer</span><span class="p">(</span><span class="n">hidden_channels</span><span class="p">,</span> <span class="n">norm</span><span class="p">)</span>
+        <span class="n">layers</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="p">))</span>
+        <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">norm_layer</span><span class="p">)</span>
+        <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">act</span><span class="p">)</span>
+        <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_layers</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_channels</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="p">))</span>
+            <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">norm_layer</span><span class="p">)</span>
+            <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">act</span><span class="p">)</span>
+            <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlp</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="o">*</span><span class="n">layers</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PreProcessor.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.models.hetero_cell_nsa_retry.PreProcessor.html#torchcell.models.hetero_cell_nsa_retry.PreProcessor.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Pass node features through the preprocessing MLP."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlp</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="HeteroCellNSA">
+<a class="viewcode-back" href="../../../generated/torchcell.models.hetero_cell_nsa_retry.HeteroCellNSA.html#torchcell.models.hetero_cell_nsa_retry.HeteroCellNSA">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HeteroCellNSA</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Heterogeneous Cell Model using Node-Set Attention (NSA) blocks.</span>
+
+<span class="sd">    This model processes heterogeneous biological cell graphs with gene, reaction,</span>
+<span class="sd">    and metabolite nodes using attention-based message passing.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">gene_num</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">reaction_num</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">metabolite_num</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">hidden_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">out_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">attention_pattern</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"M"</span><span class="p">,</span> <span class="s2">"S"</span><span class="p">],</span>
+        <span class="n">num_heads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
+        <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">norm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"layer"</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"relu"</span><span class="p">,</span>
+        <span class="n">prediction_head_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">graph_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Build node embeddings, preprocessors, NSA blocks, aggregation, and prediction head."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hidden_channels</span> <span class="o">=</span> <span class="n">hidden_channels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gene_num</span> <span class="o">=</span> <span class="n">gene_num</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reaction_num</span> <span class="o">=</span> <span class="n">reaction_num</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metabolite_num</span> <span class="o">=</span> <span class="n">metabolite_num</span>
+
+        <span class="c1"># Store graph names (default to standard ones if not provided)</span>
+        <span class="k">if</span> <span class="n">graph_names</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"physical_interaction"</span><span class="p">,</span> <span class="s2">"regulatory_interaction"</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span> <span class="o">=</span> <span class="n">graph_names</span>
+
+        <span class="c1"># Validate configurations</span>
+        <span class="k">if</span> <span class="n">hidden_channels</span> <span class="o">%</span> <span class="n">num_heads</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Hidden dimension (</span><span class="si">{</span><span class="n">hidden_channels</span><span class="si">}</span><span class="s2">) must be divisible by number of heads (</span><span class="si">{</span><span class="n">num_heads</span><span class="si">}</span><span class="s2">)"</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Learnable embeddings for each node type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gene_embedding</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">gene_num</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reaction_embedding</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">reaction_num</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metabolite_embedding</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">metabolite_num</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="p">)</span>
+
+        <span class="c1"># init embeddings TODO</span>
+        <span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">orthogonal_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gene_embedding</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+        <span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">orthogonal_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reaction_embedding</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+        <span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">orthogonal_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metabolite_embedding</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+
+        <span class="c1"># Preprocessor for gene features</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">preprocessor</span> <span class="o">=</span> <span class="n">PreProcessor</span><span class="p">(</span>
+            <span class="n">in_channels</span><span class="o">=</span><span class="n">hidden_channels</span><span class="p">,</span>
+            <span class="n">hidden_channels</span><span class="o">=</span><span class="n">hidden_channels</span><span class="p">,</span>
+            <span class="n">num_layers</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">dropout</span><span class="o">=</span><span class="n">dropout</span><span class="p">,</span>
+            <span class="n">norm</span><span class="o">=</span><span class="n">norm</span><span class="p">,</span>
+            <span class="n">activation</span><span class="o">=</span><span class="n">activation</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Define node and edge types for the heterogeneous graph</span>
+        <span class="n">node_types</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"gene"</span><span class="p">,</span> <span class="s2">"reaction"</span><span class="p">,</span> <span class="s2">"metabolite"</span><span class="p">}</span>
+
+        <span class="c1"># Dynamically construct edge types based on graph names</span>
+        <span class="n">edge_types</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="c1"># Add gene-gene edges for each graph name</span>
+        <span class="k">for</span> <span class="n">graph_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">:</span>
+            <span class="n">edge_types</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="s2">"gene"</span><span class="p">,</span> <span class="n">graph_name</span><span class="p">,</span> <span class="s2">"gene"</span><span class="p">))</span>
+
+        <span class="c1"># Add the metabolic edges (always present)</span>
+        <span class="n">edge_types</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="s2">"gene"</span><span class="p">,</span> <span class="s2">"gpr"</span><span class="p">,</span> <span class="s2">"reaction"</span><span class="p">))</span>
+        <span class="n">edge_types</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="s2">"metabolite"</span><span class="p">,</span> <span class="s2">"reaction"</span><span class="p">,</span> <span class="s2">"metabolite"</span><span class="p">))</span>
+
+        <span class="c1"># NSA layer with the specified attention pattern</span>
+        <span class="c1"># FIX: Pass the activation class, not an instance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nsa_layer</span> <span class="o">=</span> <span class="n">HeteroNSA</span><span class="p">(</span>
+            <span class="n">hidden_dim</span><span class="o">=</span><span class="n">hidden_channels</span><span class="p">,</span>
+            <span class="n">node_types</span><span class="o">=</span><span class="n">node_types</span><span class="p">,</span>
+            <span class="n">edge_types</span><span class="o">=</span><span class="n">edge_types</span><span class="p">,</span>
+            <span class="n">pattern</span><span class="o">=</span><span class="n">attention_pattern</span><span class="p">,</span>
+            <span class="n">num_heads</span><span class="o">=</span><span class="n">num_heads</span><span class="p">,</span>
+            <span class="n">dropout</span><span class="o">=</span><span class="n">dropout</span><span class="p">,</span>
+            <span class="n">activation</span><span class="o">=</span><span class="n">act_register</span><span class="p">[</span><span class="n">activation</span><span class="p">],</span>  <span class="c1"># Remove the parentheses here</span>
+            <span class="n">aggregation</span><span class="o">=</span><span class="s2">"sum"</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Layer norm for each node type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layer_norms</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="n">node_type</span><span class="p">:</span> <span class="n">get_norm_layer</span><span class="p">(</span><span class="n">hidden_channels</span><span class="p">,</span> <span class="n">norm</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">node_type</span> <span class="ow">in</span> <span class="n">node_types</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Global attentional aggregation for graph-level representation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">global_aggregator</span> <span class="o">=</span> <span class="n">AttentionalGraphAggregation</span><span class="p">(</span>
+            <span class="n">in_channels</span><span class="o">=</span><span class="n">hidden_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="n">hidden_channels</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="n">dropout</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Prediction head for fitness and gene interaction</span>
+        <span class="n">pred_config</span> <span class="o">=</span> <span class="n">prediction_head_config</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prediction_head</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_prediction_head</span><span class="p">(</span>
+            <span class="n">in_channels</span><span class="o">=</span><span class="n">hidden_channels</span><span class="p">,</span>
+            <span class="n">hidden_channels</span><span class="o">=</span><span class="n">pred_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"hidden_channels"</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="p">),</span>
+            <span class="n">out_channels</span><span class="o">=</span><span class="n">out_channels</span><span class="p">,</span>
+            <span class="n">num_layers</span><span class="o">=</span><span class="n">pred_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"head_num_layers"</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="n">dropout</span><span class="o">=</span><span class="n">pred_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"dropout"</span><span class="p">,</span> <span class="n">dropout</span><span class="p">),</span>
+            <span class="n">activation</span><span class="o">=</span><span class="n">pred_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"activation"</span><span class="p">,</span> <span class="n">activation</span><span class="p">),</span>
+            <span class="n">norm</span><span class="o">=</span><span class="n">pred_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"head_norm"</span><span class="p">,</span> <span class="n">norm</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_prediction_head</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">in_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">hidden_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">out_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">num_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">norm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build a multi-layer prediction head for final outputs."""</span>
+        <span class="k">if</span> <span class="n">num_layers</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Identity</span><span class="p">()</span>
+
+        <span class="n">act</span> <span class="o">=</span> <span class="n">act_register</span><span class="p">[</span><span class="n">activation</span><span class="p">]</span>
+        <span class="n">layers</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">in_channels</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">hidden_channels</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_layers</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="n">out_channels</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_layers</span><span class="p">):</span>
+            <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">dims</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">dims</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">num_layers</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">norm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">get_norm_layer</span><span class="p">(</span><span class="n">dims</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">norm</span><span class="p">))</span>
+                <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">act</span><span class="p">)</span>
+                <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="o">*</span><span class="n">layers</span><span class="p">)</span>
+
+<div class="viewcode-block" id="HeteroCellNSA.forward_single">
+<a class="viewcode-back" href="../../../generated/torchcell.models.hetero_cell_nsa_retry.HeteroCellNSA.html#torchcell.models.hetero_cell_nsa_retry.HeteroCellNSA.forward_single">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward_single</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">HeteroData</span> <span class="o">|</span> <span class="n">Batch</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Process a single graph or batch of graphs through the model."""</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gene_embedding</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">device</span>
+
+        <span class="c1"># Check if we're handling a batch</span>
+        <span class="n">is_batch</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">Batch</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">],</span> <span class="s2">"batch"</span><span class="p">)</span>
+
+        <span class="c1"># Initialize node features</span>
+        <span class="k">if</span> <span class="n">is_batch</span><span class="p">:</span>
+            <span class="c1"># For batched data, we need to carefully handle the node indices</span>
+            <span class="n">batch_size</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">ptr</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">],</span> <span class="s2">"ptr"</span><span class="p">)</span>
+                <span class="k">else</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">batch</span><span class="o">.</span><span class="n">max</span><span class="p">())</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Create consistent embeddings for all node types</span>
+            <span class="n">x_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+            <span class="c1"># Process gene nodes</span>
+            <span class="n">gene_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gene_num</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">gene_emb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gene_embedding</span><span class="p">(</span><span class="n">gene_idx</span><span class="p">)</span>
+            <span class="c1"># Expand gene embeddings for each batch item</span>
+            <span class="n">gene_emb_exp</span> <span class="o">=</span> <span class="n">gene_emb</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="c1"># Reshape to [batch_size * gene_num, hidden_dim]</span>
+            <span class="n">gene_emb_flat</span> <span class="o">=</span> <span class="n">gene_emb_exp</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_channels</span><span class="p">)</span>
+
+            <span class="c1"># Handle gene perturbation mask if available</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">],</span> <span class="s2">"pert_mask"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span>
+                <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">pert_mask</span>
+            <span class="p">):</span>
+                <span class="c1"># Only keep non-perturbed gene nodes</span>
+                <span class="n">x_dict</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span> <span class="o">=</span> <span class="n">gene_emb_flat</span><span class="p">[</span><span class="o">~</span><span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">pert_mask</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Use all gene embeddings</span>
+                <span class="n">x_dict</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span> <span class="o">=</span> <span class="n">gene_emb_flat</span><span class="p">[:</span> <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span><span class="p">]</span>
+
+            <span class="c1"># Apply preprocessor to gene features</span>
+            <span class="n">x_dict</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocessor</span><span class="p">(</span><span class="n">x_dict</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">])</span>
+
+            <span class="c1"># Similar approach for reaction nodes</span>
+            <span class="n">reaction_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reaction_num</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">reaction_emb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reaction_embedding</span><span class="p">(</span><span class="n">reaction_idx</span><span class="p">)</span>
+            <span class="n">reaction_emb_exp</span> <span class="o">=</span> <span class="n">reaction_emb</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">reaction_emb_flat</span> <span class="o">=</span> <span class="n">reaction_emb_exp</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_channels</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">],</span> <span class="s2">"pert_mask"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span>
+                <span class="n">data</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">pert_mask</span>
+            <span class="p">):</span>
+                <span class="n">x_dict</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span> <span class="o">=</span> <span class="n">reaction_emb_flat</span><span class="p">[</span><span class="o">~</span><span class="n">data</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">pert_mask</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">x_dict</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span> <span class="o">=</span> <span class="n">reaction_emb_flat</span><span class="p">[:</span> <span class="n">data</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span><span class="p">]</span>
+
+            <span class="c1"># And for metabolite nodes</span>
+            <span class="n">metabolite_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metabolite_num</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">metabolite_emb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metabolite_embedding</span><span class="p">(</span><span class="n">metabolite_idx</span><span class="p">)</span>
+            <span class="n">metabolite_emb_exp</span> <span class="o">=</span> <span class="n">metabolite_emb</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">metabolite_emb_flat</span> <span class="o">=</span> <span class="n">metabolite_emb_exp</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_channels</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"metabolite"</span><span class="p">],</span> <span class="s2">"pert_mask"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span>
+                <span class="n">data</span><span class="p">[</span><span class="s2">"metabolite"</span><span class="p">]</span><span class="o">.</span><span class="n">pert_mask</span>
+            <span class="p">):</span>
+                <span class="n">x_dict</span><span class="p">[</span><span class="s2">"metabolite"</span><span class="p">]</span> <span class="o">=</span> <span class="n">metabolite_emb_flat</span><span class="p">[</span>
+                    <span class="o">~</span><span class="n">data</span><span class="p">[</span><span class="s2">"metabolite"</span><span class="p">]</span><span class="o">.</span><span class="n">pert_mask</span>
+                <span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">x_dict</span><span class="p">[</span><span class="s2">"metabolite"</span><span class="p">]</span> <span class="o">=</span> <span class="n">metabolite_emb_flat</span><span class="p">[</span>
+                    <span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="s2">"metabolite"</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span>
+                <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># For a single graph, use direct indexing with the full embeddings</span>
+            <span class="n">gene_count</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gene_num</span><span class="p">)</span>
+            <span class="n">reaction_count</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">reaction_num</span><span class="p">)</span>
+            <span class="n">metabolite_count</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"metabolite"</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">metabolite_num</span><span class="p">)</span>
+
+            <span class="n">gene_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">gene_count</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">reaction_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">reaction_count</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">metabolite_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">metabolite_count</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+            <span class="n">x_dict</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"gene"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocessor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gene_embedding</span><span class="p">(</span><span class="n">gene_idx</span><span class="p">)),</span>
+                <span class="s2">"reaction"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">reaction_embedding</span><span class="p">(</span><span class="n">reaction_idx</span><span class="p">),</span>
+                <span class="s2">"metabolite"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">metabolite_embedding</span><span class="p">(</span><span class="n">metabolite_idx</span><span class="p">),</span>
+            <span class="p">}</span>
+
+        <span class="c1"># Prepare batch assignment information for NSA layer</span>
+        <span class="n">batch_idx</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">is_batch</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">node_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"gene"</span><span class="p">,</span> <span class="s2">"reaction"</span><span class="p">,</span> <span class="s2">"metabolite"</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">node_type</span><span class="p">],</span> <span class="s2">"batch"</span><span class="p">):</span>
+                    <span class="n">batch_idx</span><span class="p">[</span><span class="n">node_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">node_type</span><span class="p">]</span><span class="o">.</span><span class="n">batch</span>
+
+        <span class="c1"># Process through NSA layer with proper error handling</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">new_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nsa_layer</span><span class="p">(</span><span class="n">x_dict</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">batch_idx</span><span class="p">)</span>
+
+            <span class="c1"># Apply layer norm and residual connection</span>
+            <span class="k">for</span> <span class="n">node_type</span> <span class="ow">in</span> <span class="n">new_x</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">node_type</span> <span class="ow">in</span> <span class="n">x_dict</span><span class="p">:</span>
+                    <span class="n">new_x</span><span class="p">[</span><span class="n">node_type</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer_norms</span><span class="p">[</span><span class="n">node_type</span><span class="p">](</span>
+                        <span class="n">new_x</span><span class="p">[</span><span class="n">node_type</span><span class="p">]</span> <span class="o">+</span> <span class="n">x_dict</span><span class="p">[</span><span class="n">node_type</span><span class="p">]</span>
+                    <span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">new_x</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error in NSA layer: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">traceback</span>
+
+            <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+            <span class="k">raise</span></div>
+
+
+<div class="viewcode-block" id="HeteroCellNSA.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.models.hetero_cell_nsa_retry.HeteroCellNSA.html#torchcell.models.hetero_cell_nsa_retry.HeteroCellNSA.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">cell_graph</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">HeteroData</span> <span class="o">|</span> <span class="n">Batch</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Forward pass comparing reference cell with perturbed cell."""</span>
+        <span class="c1"># Process the reference (wildtype) graph</span>
+        <span class="n">z_w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward_single</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">)</span>
+        <span class="n">z_w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_aggregator</span><span class="p">(</span>
+            <span class="n">z_w</span><span class="p">,</span>
+            <span class="n">index</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">z_w</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">z_w</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">),</span>
+            <span class="n">dim_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Force z_w to be 2D [1, hidden_dim]</span>
+        <span class="n">z_w</span> <span class="o">=</span> <span class="n">z_w</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_channels</span><span class="p">)</span>
+
+        <span class="c1"># Process the perturbed (intact) batch</span>
+        <span class="n">z_i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward_single</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+
+        <span class="c1"># Get batch information</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">],</span> <span class="s2">"batch"</span><span class="p">):</span>
+            <span class="n">batch_idx</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">batch</span>
+            <span class="n">batch_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">batch_idx</span><span class="o">.</span><span class="n">max</span><span class="p">())</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># For single sample</span>
+            <span class="n">batch_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">z_i</span><span class="o">.</span><span class="n">device</span>
+            <span class="p">)</span>
+            <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="c1"># Apply global aggregation</span>
+        <span class="n">z_i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_aggregator</span><span class="p">(</span><span class="n">z_i</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">batch_idx</span><span class="p">)</span>
+
+        <span class="c1"># Force z_i to be 2D [batch_size, hidden_dim]</span>
+        <span class="n">z_i</span> <span class="o">=</span> <span class="n">z_i</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_channels</span><span class="p">)</span>
+
+        <span class="c1"># Expand z_w to match batch size</span>
+        <span class="n">z_w_exp</span> <span class="o">=</span> <span class="n">z_w</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_channels</span><span class="p">)</span>
+
+        <span class="c1"># Calculate difference</span>
+        <span class="n">z_p</span> <span class="o">=</span> <span class="n">z_w_exp</span> <span class="o">-</span> <span class="n">z_i</span>
+
+        <span class="c1"># Force z_p to be exactly [batch_size, hidden_dim]</span>
+        <span class="n">z_p</span> <span class="o">=</span> <span class="n">z_p</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_channels</span><span class="p">)</span>
+
+        <span class="c1"># Generate predictions</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prediction_head</span><span class="p">(</span><span class="n">z_p</span><span class="p">)</span>
+
+        <span class="c1"># Force predictions to be exactly [batch_size, 1]</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="n">predictions</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Only gene interaction prediction</span>
+        <span class="n">gene_interaction</span> <span class="o">=</span> <span class="n">predictions</span>
+
+        <span class="c1"># Print shapes to debug</span>
+        <span class="c1"># print(f"Final shapes: z_w={z_w.shape}, z_i={z_i.shape}, z_p={z_p.shape}, pred={predictions.shape}")</span>
+
+        <span class="k">return</span> <span class="n">predictions</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">"z_w"</span><span class="p">:</span> <span class="n">z_w</span><span class="p">,</span>
+            <span class="s2">"z_i"</span><span class="p">:</span> <span class="n">z_i</span><span class="p">,</span>
+            <span class="s2">"z_p"</span><span class="p">:</span> <span class="n">z_p</span><span class="p">,</span>  <span class="c1"># This should now be [batch_size, hidden_dim]</span>
+            <span class="s2">"gene_interaction"</span><span class="p">:</span> <span class="n">gene_interaction</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">num_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Count the number of parameters in each component of the model."""</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">count_params</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">)</span>
+
+        <span class="n">counts</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"gene_embedding"</span><span class="p">:</span> <span class="n">count_params</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gene_embedding</span><span class="p">),</span>
+            <span class="s2">"reaction_embedding"</span><span class="p">:</span> <span class="n">count_params</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reaction_embedding</span><span class="p">),</span>
+            <span class="s2">"metabolite_embedding"</span><span class="p">:</span> <span class="n">count_params</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metabolite_embedding</span><span class="p">),</span>
+            <span class="s2">"preprocessor"</span><span class="p">:</span> <span class="n">count_params</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocessor</span><span class="p">),</span>
+            <span class="s2">"nsa_layer"</span><span class="p">:</span> <span class="n">count_params</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nsa_layer</span><span class="p">),</span>
+            <span class="s2">"layer_norms"</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="n">count_params</span><span class="p">(</span><span class="n">ln</span><span class="p">)</span> <span class="k">for</span> <span class="n">ln</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer_norms</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+            <span class="s2">"global_aggregator"</span><span class="p">:</span> <span class="n">count_params</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">global_aggregator</span><span class="p">),</span>
+            <span class="s2">"prediction_head"</span><span class="p">:</span> <span class="n">count_params</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prediction_head</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="n">counts</span><span class="p">[</span><span class="s2">"total"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">counts</span></div>
+
+
+
+<span class="nd">@hydra</span><span class="o">.</span><span class="n">main</span><span class="p">(</span>
+    <span class="n">version_base</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">config_path</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s2">"experiments/006-kuzmin-tmi/conf"</span><span class="p">),</span>
+    <span class="n">config_name</span><span class="o">=</span><span class="s2">"hetero_cell_nsa_retry"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">DictConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Run a manual smoke test of the model from the Hydra config."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.losses.isomorphic_cell_loss</span><span class="w"> </span><span class="kn">import</span> <span class="n">ICLoss</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.scratch.load_batch_005</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sample_data_batch</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.timestamp</span><span class="w"> </span><span class="kn">import</span> <span class="n">timestamp</span>
+
+    <span class="c1"># Visualization functions need update for single target</span>
+    <span class="c1"># from torchcell.scratch.cell_batch_overfit_visualization import (</span>
+    <span class="c1">#     plot_embeddings,</span>
+    <span class="c1">#     plot_correlations,</span>
+    <span class="c1"># )</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.transforms.hetero_to_dense_mask</span><span class="w"> </span><span class="kn">import</span> <span class="n">HeteroToDenseMask</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">ASSET_IMAGES_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"ASSET_IMAGES_DIR"</span><span class="p">)</span>
+    <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span>
+        <span class="s2">"cuda"</span>
+        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="ow">and</span> <span class="n">cfg</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">accelerator</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"gpu"</span>
+        <span class="k">else</span> <span class="s2">"cpu"</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Using device: </span><span class="si">{</span><span class="n">device</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># Load data with dense mask transformation</span>
+    <span class="n">dataset</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">load_sample_data_batch</span><span class="p">(</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">data_module</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
+        <span class="n">num_workers</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">data_module</span><span class="o">.</span><span class="n">num_workers</span><span class="p">,</span>
+        <span class="n">config</span><span class="o">=</span><span class="s2">"hetero_cell_bipartite"</span><span class="p">,</span>
+        <span class="n">is_dense</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># This applies dense transformation to the dataset</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Get the cell_graph from the dataset</span>
+
+    <span class="n">dense_transform</span> <span class="o">=</span> <span class="n">HeteroToDenseMask</span><span class="p">(</span>
+        <span class="p">{</span><span class="s2">"gene"</span><span class="p">:</span> <span class="mi">6607</span><span class="p">,</span> <span class="s2">"reaction"</span><span class="p">:</span> <span class="mi">7122</span><span class="p">,</span> <span class="s2">"metabolite"</span><span class="p">:</span> <span class="mi">2806</span><span class="p">}</span>
+    <span class="p">)</span>
+    <span class="n">dataset</span><span class="o">.</span><span class="n">transform</span> <span class="o">=</span> <span class="n">dense_transform</span>
+    <span class="n">cell_graph</span> <span class="o">=</span> <span class="n">dense_transform</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">cell_graph</span><span class="p">)</span>
+
+    <span class="c1"># Verify cell_graph has the necessary dense mask attributes</span>
+    <span class="k">for</span> <span class="n">edge_type</span> <span class="ow">in</span> <span class="n">cell_graph</span><span class="o">.</span><span class="n">edge_types</span><span class="p">:</span>
+        <span class="n">src</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">dst</span> <span class="o">=</span> <span class="n">edge_type</span>
+        <span class="k">if</span> <span class="n">src</span> <span class="o">!=</span> <span class="n">dst</span><span class="p">:</span>  <span class="c1"># Skip self-loops</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="s2">"adj_mask"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cell_graph</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span>
+                <span class="ow">and</span> <span class="s2">"inc_mask"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cell_graph</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span>
+            <span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Warning: Cell graph edge type </span><span class="si">{</span><span class="n">edge_type</span><span class="si">}</span><span class="s2"> missing dense mask attributes."</span>
+                <span class="p">)</span>
+                <span class="c1"># Apply dense transformation explicitly if needed</span>
+                <span class="n">dense_transform</span> <span class="o">=</span> <span class="n">HeteroToDenseMask</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">"gene"</span><span class="p">:</span> <span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">gene_num</span><span class="p">,</span>
+                        <span class="s2">"reaction"</span><span class="p">:</span> <span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">reaction_num</span><span class="p">,</span>
+                        <span class="s2">"metabolite"</span><span class="p">:</span> <span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">metabolite_num</span><span class="p">,</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+                <span class="n">cell_graph</span> <span class="o">=</span> <span class="n">dense_transform</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">"Applied dense mask transformation to cell_graph."</span><span class="p">)</span>
+                <span class="k">break</span>
+
+    <span class="c1"># Verify batch also has mask attributes</span>
+    <span class="k">for</span> <span class="n">edge_type</span> <span class="ow">in</span> <span class="n">batch</span><span class="o">.</span><span class="n">edge_types</span><span class="p">:</span>
+        <span class="n">src</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">dst</span> <span class="o">=</span> <span class="n">edge_type</span>
+        <span class="k">if</span> <span class="n">src</span> <span class="o">!=</span> <span class="n">dst</span><span class="p">:</span>  <span class="c1"># Skip self-loops</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="s2">"adj_mask"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span>
+                <span class="ow">and</span> <span class="s2">"inc_mask"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span>
+            <span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Warning: Batch edge type </span><span class="si">{</span><span class="n">edge_type</span><span class="si">}</span><span class="s2"> missing dense mask attributes!"</span>
+                <span class="p">)</span>
+
+    <span class="c1"># Move to device</span>
+    <span class="n">cell_graph</span> <span class="o">=</span> <span class="n">cell_graph</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="c1"># Print dimensions for verification</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Verifying data dimensions:"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Cell graph dimensions:"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">node_type</span> <span class="ow">in</span> <span class="n">cell_graph</span><span class="o">.</span><span class="n">node_types</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">node_type</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">cell_graph</span><span class="p">[</span><span class="n">node_type</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span><span class="si">}</span><span class="s2"> nodes"</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Batch dimensions:"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">node_type</span> <span class="ow">in</span> <span class="n">batch</span><span class="o">.</span><span class="n">node_types</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">node_type</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">batch</span><span class="p">[</span><span class="n">node_type</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span><span class="si">}</span><span class="s2"> nodes"</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Model configuration:"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  gene_num: </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">gene_num</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  reaction_num: </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">reaction_num</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  metabolite_num: </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">metabolite_num</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  hidden_channels: </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">hidden_channels</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  attention_pattern: </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">attention_pattern</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># Initialize model with verified dimensions</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">HeteroCellNSA</span><span class="p">(</span>
+        <span class="n">gene_num</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">gene_num</span><span class="p">,</span>
+        <span class="n">reaction_num</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">reaction_num</span><span class="p">,</span>
+        <span class="n">metabolite_num</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">metabolite_num</span><span class="p">,</span>
+        <span class="n">hidden_channels</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">hidden_channels</span><span class="p">,</span>
+        <span class="n">out_channels</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># Only gene interaction prediction</span>
+        <span class="n">attention_pattern</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">attention_pattern</span><span class="p">,</span>
+        <span class="n">num_heads</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">heads</span><span class="p">,</span>
+        <span class="n">dropout</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">dropout</span><span class="p">,</span>
+        <span class="n">norm</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">norm</span><span class="p">,</span>
+        <span class="n">activation</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">activation</span><span class="p">,</span>
+        <span class="n">prediction_head_config</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">prediction_head_config</span><span class="p">,</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Model architecture:"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Parameter count: </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># Test forward pass before training</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Testing forward pass..."</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">predictions</span><span class="p">,</span> <span class="n">representations</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"✓ Forward pass successful!"</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"✗ Forward pass failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">traceback</span>
+
+        <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+        <span class="k">return</span>  <span class="c1"># Exit if forward pass fails</span>
+
+    <span class="c1"># Training target - gene interaction in COO format</span>
+    <span class="c1"># The phenotype_values contains the gene interaction scores</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_values</span>
+
+    <span class="c1"># Set up loss function - only single weight for gene interaction</span>
+    <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">is_weighted_phenotype_loss</span><span class="p">:</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">criterion</span> <span class="o">=</span> <span class="n">ICLoss</span><span class="p">(</span>
+        <span class="n">lambda_dist</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">lambda_dist</span><span class="p">,</span>
+        <span class="n">lambda_supcr</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">lambda_supcr</span><span class="p">,</span>
+        <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+        <span class="n">lr</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">lr</span><span class="p">,</span>
+        <span class="n">weight_decay</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">weight_decay</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Setup directories for plots</span>
+    <span class="n">embeddings_dir</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ASSET_IMAGES_DIR</span><span class="p">,</span> <span class="s2">"embedding_plots"</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">embeddings_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">correlation_dir</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ASSET_IMAGES_DIR</span><span class="p">,</span> <span class="s2">"correlation_plots"</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">correlation_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Training preparation</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+    <span class="n">losses</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">num_epochs</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">max_epochs</span>
+
+    <span class="c1"># Initial visualization - skip for now since visualization expects 2D</span>
+    <span class="c1"># TODO: Update visualization functions for single target</span>
+
+    <span class="c1"># Training loop</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_epochs</span><span class="p">):</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+            <span class="n">predictions</span><span class="p">,</span> <span class="n">representations</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+            <span class="c1"># Reshape y and predictions for loss calculation</span>
+            <span class="n">y_reshaped</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">y</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">y</span>
+            <span class="n">loss</span><span class="p">,</span> <span class="n">loss_components</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span>
+                <span class="n">predictions</span><span class="p">,</span> <span class="n">y_reshaped</span><span class="p">,</span> <span class="n">representations</span><span class="p">[</span><span class="s2">"z_p"</span><span class="p">]</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">epoch</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">epoch</span> <span class="o">==</span> <span class="n">num_epochs</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Epoch </span><span class="si">{</span><span class="n">epoch</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">num_epochs</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Loss: </span><span class="si">{</span><span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">"Loss components:"</span><span class="p">,</span> <span class="n">loss_components</span><span class="p">)</span>
+                <span class="c1"># Skip visualization for now - needs update for single target</span>
+                <span class="c1"># TODO: Update visualization functions for single target</span>
+                <span class="k">pass</span>
+                <span class="k">if</span> <span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"cuda"</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"GPU memory allocated: </span><span class="si">{</span><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">memory_allocated</span><span class="p">(</span><span class="n">device</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="o">**</span><span class="mi">2</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> MB"</span>
+                    <span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"GPU memory reserved: </span><span class="si">{</span><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">memory_reserved</span><span class="p">(</span><span class="n">device</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="o">**</span><span class="mi">2</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> MB"</span>
+                    <span class="p">)</span>
+
+            <span class="n">losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+    <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Error during training: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"cuda"</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">"GPU memory may be insufficient. Consider reducing batch size or model size."</span>
+            <span class="p">)</span>
+        <span class="k">raise</span>
+
+    <span class="c1"># Plot final training loss</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">losses</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">losses</span><span class="p">,</span> <span class="s2">"b-"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"ICLoss Training Loss"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Epoch"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Loss (log scale)"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"Training Loss Over Time: λ_dist=</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">lambda_dist</span><span class="si">}</span><span class="s2">, "</span>
+        <span class="sa">f</span><span class="s2">"λ_supcr=</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">lambda_supcr</span><span class="si">}</span><span class="s2">, "</span>
+        <span class="sa">f</span><span class="s2">"wd=</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">weight_decay</span><span class="si">}</span><span class="s2">"</span>
+    <span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">yscale</span><span class="p">(</span><span class="s2">"log"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span>
+        <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ASSET_IMAGES_DIR</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"hetero_cell_nsa_training_loss_</span><span class="si">{</span><span class="n">timestamp</span><span class="p">()</span><span class="si">}</span><span class="s2">.png"</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="c1"># Clean up GPU memory</span>
+    <span class="k">if</span> <span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"cuda"</span><span class="p">:</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">empty_cache</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

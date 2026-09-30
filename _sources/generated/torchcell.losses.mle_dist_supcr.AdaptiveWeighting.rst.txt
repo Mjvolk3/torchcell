@@ -1,0 +1,8 @@
+﻿torchcell.losses.mle\_dist\_supcr.AdaptiveWeighting
+===================================================
+
+.. currentmodule:: torchcell.losses.mle_dist_supcr
+
+.. autoclass:: AdaptiveWeighting
+   :show-inheritance:
+   :members:

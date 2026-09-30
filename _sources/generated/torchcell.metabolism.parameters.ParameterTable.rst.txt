@@ -1,0 +1,8 @@
+﻿torchcell.metabolism.parameters.ParameterTable
+==============================================
+
+.. currentmodule:: torchcell.metabolism.parameters
+
+.. autoclass:: ParameterTable
+   :show-inheritance:
+   :members:

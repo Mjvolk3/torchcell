@@ -1,0 +1,8 @@
+﻿torchcell.models.hetero\_cell\_flex.AttentionalGraphAggregation
+===============================================================
+
+.. currentmodule:: torchcell.models.hetero_cell_flex
+
+.. autoclass:: AttentionalGraphAggregation
+   :show-inheritance:
+   :members:

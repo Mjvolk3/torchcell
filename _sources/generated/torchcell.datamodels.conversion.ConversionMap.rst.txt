@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.conversion.ConversionMap
+=============================================
+
+.. currentmodule:: torchcell.datamodels.conversion
+
+.. autoclass:: ConversionMap
+   :show-inheritance:
+   :members:

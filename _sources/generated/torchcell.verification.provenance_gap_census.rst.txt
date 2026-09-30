@@ -1,0 +1,6 @@
+﻿torchcell.verification.provenance\_gap\_census
+==============================================
+
+.. currentmodule:: torchcell.verification
+
+.. autofunction:: provenance_gap_census

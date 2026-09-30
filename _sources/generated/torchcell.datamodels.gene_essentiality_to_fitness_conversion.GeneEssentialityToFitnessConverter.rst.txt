@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.gene\_essentiality\_to\_fitness\_conversion.GeneEssentialityToFitnessConverter
+===================================================================================================
+
+.. currentmodule:: torchcell.datamodels.gene_essentiality_to_fitness_conversion
+
+.. autoclass:: GeneEssentialityToFitnessConverter
+   :show-inheritance:
+   :members:

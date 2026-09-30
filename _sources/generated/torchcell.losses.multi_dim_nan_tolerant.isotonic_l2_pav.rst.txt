@@ -1,0 +1,6 @@
+﻿torchcell.losses.multi\_dim\_nan\_tolerant.isotonic\_l2\_pav
+============================================================
+
+.. currentmodule:: torchcell.losses.multi_dim_nan_tolerant
+
+.. autofunction:: isotonic_l2_pav

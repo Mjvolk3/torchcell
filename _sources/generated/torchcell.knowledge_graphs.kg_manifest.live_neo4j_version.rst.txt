@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.live\_neo4j\_version
+=============================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autofunction:: live_neo4j_version

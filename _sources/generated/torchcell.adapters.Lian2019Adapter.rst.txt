@@ -1,0 +1,8 @@
+﻿torchcell.adapters.Lian2019Adapter
+==================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: Lian2019Adapter
+   :show-inheritance:
+   :members:

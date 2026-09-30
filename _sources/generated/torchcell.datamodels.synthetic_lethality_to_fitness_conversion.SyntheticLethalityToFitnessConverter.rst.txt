@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.synthetic\_lethality\_to\_fitness\_conversion.SyntheticLethalityToFitnessConverter
+=======================================================================================================
+
+.. currentmodule:: torchcell.datamodels.synthetic_lethality_to_fitness_conversion
+
+.. autoclass:: SyntheticLethalityToFitnessConverter
+   :show-inheritance:
+   :members:

@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset
+==================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.costanzo2016
+
+.. autoclass:: SmfCostanzo2016Dataset
+   :show-inheritance:
+   :members:

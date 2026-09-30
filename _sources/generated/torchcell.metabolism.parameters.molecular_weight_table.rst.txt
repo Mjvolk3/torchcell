@@ -1,0 +1,6 @@
+﻿torchcell.metabolism.parameters.molecular\_weight\_table
+========================================================
+
+.. currentmodule:: torchcell.metabolism.parameters
+
+.. autofunction:: molecular_weight_table

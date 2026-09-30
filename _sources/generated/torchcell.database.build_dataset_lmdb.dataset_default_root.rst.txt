@@ -1,0 +1,6 @@
+﻿torchcell.database.build\_dataset\_lmdb.dataset\_default\_root
+==============================================================
+
+.. currentmodule:: torchcell.database.build_dataset_lmdb
+
+.. autofunction:: dataset_default_root

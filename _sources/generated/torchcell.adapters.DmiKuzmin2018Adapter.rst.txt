@@ -1,0 +1,8 @@
+﻿torchcell.adapters.DmiKuzmin2018Adapter
+=======================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: DmiKuzmin2018Adapter
+   :show-inheritance:
+   :members:

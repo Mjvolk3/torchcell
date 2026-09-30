@@ -1,0 +1,6 @@
+﻿torchcell.models.equivariant\_cell\_graph\_transformer.compute\_smoothness
+==========================================================================
+
+.. currentmodule:: torchcell.models.equivariant_cell_graph_transformer
+
+.. autofunction:: compute_smoothness

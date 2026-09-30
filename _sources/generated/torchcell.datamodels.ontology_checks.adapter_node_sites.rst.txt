@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.ontology\_checks.adapter\_node\_sites
+==========================================================
+
+.. currentmodule:: torchcell.datamodels.ontology_checks
+
+.. autofunction:: adapter_node_sites

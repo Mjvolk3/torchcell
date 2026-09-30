@@ -1,0 +1,8 @@
+﻿torchcell.models.isomorphic\_cell\_attentional.HeteroGnn
+========================================================
+
+.. currentmodule:: torchcell.models.isomorphic_cell_attentional
+
+.. autoclass:: HeteroGnn
+   :show-inheritance:
+   :members:

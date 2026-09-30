@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.CrisprActivationPerturbation
+========================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: CrisprActivationPerturbation
+   :show-inheritance:
+   :members:

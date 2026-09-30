@@ -1,0 +1,463 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datamodels.identity &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/datamodels/identity.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.datamodels.identity</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.datamodels.identity</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/datamodels/identity.py</span>
+<span class="c1"># [[torchcell.datamodels.identity]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/identity</span>
+<span class="c1"># Test file: tests/torchcell/datamodels/test_identity.py</span>
+<span class="sd">"""Composition-based identity for the environment-side entities of the graph.</span>
+
+<span class="sd">A medium, a temperature, an environment perturbation and an environment are</span>
+<span class="sd">PERSISTENT ENTITIES: two datasets that state the same medium are stating the same</span>
+<span class="sd">thing, and the aggregate the whole campaign is for ("every record measured on YPD",</span>
+<span class="sd">"every record on SC plus 0.4 M NaCl") is only formable when both datasets land on</span>
+<span class="sd">ONE node. Content-addressing the whole pydantic dump cannot do that, because the</span>
+<span class="sd">dump also carries the dataset's own bench quote: ``provenance`` (``SourcedValue``</span>
+<span class="sd">with a sha256 anchor), ``note``, ``defers_to``, ``provenance_gaps`` and the</span>
+<span class="sd">free-text ``name``. Two papers stating YPD with 20 g/L agar then differ in every</span>
+<span class="sd">byte that is not the medium, and the join fails at node identity.</span>
+
+<span class="sd">These projections read only the COMPOSITION: what is in the medium, at what dose,</span>
+<span class="sd">in what state; what was added, of what species, at what dose; what the temperature</span>
+<span class="sd">was. Everything that records who said it, or how it was worded, is dropped. What</span>
+<span class="sd">remains is hashed by ``identity_sha256`` over a canonical JSON encoding, so the</span>
+<span class="sd">same composition from any source yields one id.</span>
+
+<span class="sd">Three properties the projections hold to:</span>
+
+<span class="sd">1. **Total.** Every field read exists on the current schema class (the</span>
+<span class="sd">   ``*_IDENTITY_FIELDS`` tuples name them, and the tests check them against</span>
+<span class="sd">   ``model_fields``), so a projection cannot silently skip a slot a record filled.</span>
+<span class="sd">2. **Absence is part of identity.** A field that is ``None`` stays ``None`` in the</span>
+<span class="sd">   projection rather than being omitted, so an environment whose temperature is a</span>
+<span class="sd">   typed ``ProvenanceGap`` is a DIFFERENT environment from one at 30 C, not a</span>
+<span class="sd">   coincidental match.</span>
+<span class="sd">3. **Order is not identity.** Components, dropouts and perturbations are sorted by</span>
+<span class="sd">   their own canonical encoding, so two loaders listing the same ingredients in a</span>
+<span class="sd">   different order agree.</span>
+
+<span class="sd">Two deliberate non-joins, both documented rather than papered over:</span>
+
+<span class="sd">- **Units are not converted.** A temperature stated in Kelvin does not join one</span>
+<span class="sd">  stated in Celsius. Converting would need a rounding tolerance, which is a policy</span>
+<span class="sd">  choice this layer has no business making; every loader states Celsius today.</span>
+<span class="sd">- **Structure strings are not identity.** ``smiles`` / ``inchi`` are not part of</span>
+<span class="sd">  the compound precedence: a SMILES is toolkit-dependent, so two spellings of one</span>
+<span class="sd">  molecule would not join anyway, and the InChIKey derived from a structure is the</span>
+<span class="sd">  hash that does. A compound carrying only a structure string falls through to its</span>
+<span class="sd">  normalized name, exactly as one carrying no identifier does.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalize_compound_name</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BiologicPerturbation</span><span class="p">,</span>
+    <span class="n">Compound</span><span class="p">,</span>
+    <span class="n">Concentration</span><span class="p">,</span>
+    <span class="n">Environment</span><span class="p">,</span>
+    <span class="n">EnvironmentPhysicalPerturbation</span><span class="p">,</span>
+    <span class="n">Media</span><span class="p">,</span>
+    <span class="n">MediaComponent</span><span class="p">,</span>
+    <span class="n">SmallMoleculePerturbation</span><span class="p">,</span>
+    <span class="n">Solvent</span><span class="p">,</span>
+    <span class="n">Temperature</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"BIOLOGIC_PERTURBATION_IDENTITY_FIELDS"</span><span class="p">,</span>
+    <span class="s2">"COMPOUND_IDENTITY_PRECEDENCE"</span><span class="p">,</span>
+    <span class="s2">"CONCENTRATION_IDENTITY_FIELDS"</span><span class="p">,</span>
+    <span class="s2">"ENVIRONMENT_IDENTITY_FIELDS"</span><span class="p">,</span>
+    <span class="s2">"MEDIA_COMPONENT_IDENTITY_FIELDS"</span><span class="p">,</span>
+    <span class="s2">"MEDIA_IDENTITY_FIELDS"</span><span class="p">,</span>
+    <span class="s2">"PHYSICAL_PERTURBATION_IDENTITY_FIELDS"</span><span class="p">,</span>
+    <span class="s2">"SMALL_MOLECULE_IDENTITY_FIELDS"</span><span class="p">,</span>
+    <span class="s2">"SOLVENT_IDENTITY_FIELDS"</span><span class="p">,</span>
+    <span class="s2">"TEMPERATURE_IDENTITY_FIELDS"</span><span class="p">,</span>
+    <span class="s2">"compound_identity_key"</span><span class="p">,</span>
+    <span class="s2">"environment_identity"</span><span class="p">,</span>
+    <span class="s2">"environment_perturbation_identity"</span><span class="p">,</span>
+    <span class="s2">"identity_sha256"</span><span class="p">,</span>
+    <span class="s2">"media_identity"</span><span class="p">,</span>
+    <span class="s2">"temperature_identity"</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">COMPOUND_IDENTITY_PRECEDENCE</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"inchikey"</span><span class="p">,</span> <span class="s2">"chebi_id"</span><span class="p">,</span> <span class="s2">"pubchem_cid"</span><span class="p">)</span>
+<span class="sd">"""Identifier fields tried in order before falling back to the normalized name.</span>
+
+<span class="sd">InChIKey first (the canonical hash of the standard InChI, and ``Compound``'s own</span>
+<span class="sd">primary key), then the ChEBI CURIE, then the PubChem CID. Each is a registry-stable</span>
+<span class="sd">handle for ONE substance, so the first one present is a sufficient key and the rest</span>
+<span class="sd">are redundant cross-references. ``smiles`` / ``inchi`` are deliberately absent (see</span>
+<span class="sd">the module docstring).</span>
+<span class="sd">"""</span>
+
+<span class="n">CONCENTRATION_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"value"</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">,</span> <span class="s2">"basis"</span><span class="p">)</span>
+<span class="n">SOLVENT_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">"percent"</span><span class="p">,</span> <span class="s2">"compound"</span><span class="p">)</span>
+<span class="n">MEDIA_COMPONENT_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"compound"</span><span class="p">,</span>
+    <span class="s2">"role"</span><span class="p">,</span>
+    <span class="s2">"concentration"</span><span class="p">,</span>
+    <span class="s2">"definition"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">MEDIA_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"state"</span><span class="p">,</span>
+    <span class="s2">"is_synthetic"</span><span class="p">,</span>
+    <span class="s2">"base_medium"</span><span class="p">,</span>
+    <span class="s2">"components"</span><span class="p">,</span>
+    <span class="s2">"dropouts"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">TEMPERATURE_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"value"</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">)</span>
+<span class="n">SMALL_MOLECULE_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"perturbation_type"</span><span class="p">,</span>
+    <span class="s2">"compound"</span><span class="p">,</span>
+    <span class="s2">"concentration"</span><span class="p">,</span>
+    <span class="s2">"solvent"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">PHYSICAL_PERTURBATION_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"perturbation_type"</span><span class="p">,</span>
+    <span class="s2">"factor"</span><span class="p">,</span>
+    <span class="s2">"magnitude"</span><span class="p">,</span>
+    <span class="s2">"agent"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">BIOLOGIC_PERTURBATION_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"perturbation_type"</span><span class="p">,</span>
+    <span class="s2">"agent_class"</span><span class="p">,</span>
+    <span class="s2">"name"</span><span class="p">,</span>
+    <span class="s2">"uniprot_id"</span><span class="p">,</span>
+    <span class="s2">"sequence"</span><span class="p">,</span>
+    <span class="s2">"concentration"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">ENVIRONMENT_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"media"</span><span class="p">,</span>
+    <span class="s2">"temperature"</span><span class="p">,</span>
+    <span class="s2">"perturbations"</span><span class="p">,</span>
+    <span class="s2">"aerobicity"</span><span class="p">,</span>
+    <span class="s2">"duration_hours"</span><span class="p">,</span>
+    <span class="s2">"duration_generations"</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_canonical</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Canonical JSON encoding: sorted keys, no insignificant whitespace."""</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">":"</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sorted_identities</span><span class="p">(</span><span class="n">identities</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Order a list of projections by their canonical encoding, not by input order."""</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">identities</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">_canonical</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="compound_identity_key">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.identity.compound_identity_key.html#torchcell.datamodels.identity.compound_identity_key">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compound_identity_key</span><span class="p">(</span><span class="n">compound</span><span class="p">:</span> <span class="n">Compound</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The join key for a compound, as ``"&lt;field&gt;:&lt;value&gt;"``.</span>
+
+<span class="sd">    Precedence: ``inchikey``, else ``chebi_id``, else ``pubchem_cid``, else the</span>
+<span class="sd">    normalized lowercase ``name`` (``normalize_compound_name``, the same folding the</span>
+<span class="sd">    environment collision check uses, so 'NaCl' and 'sodium chloride' agree even</span>
+<span class="sd">    with no identifier on either side). The field name is part of the key, so a name</span>
+<span class="sd">    that happens to be spelled like an InChIKey cannot collide with a real one.</span>
+<span class="sd">    """</span>
+    <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">COMPOUND_IDENTITY_PRECEDENCE</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">compound</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"name:</span><span class="si">{</span><span class="n">normalize_compound_name</span><span class="p">(</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_concentration_identity</span><span class="p">(</span>
+    <span class="n">concentration</span><span class="p">:</span> <span class="n">Concentration</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Project a dose: numeric value, typed unit, and how the dose was set."""</span>
+    <span class="k">if</span> <span class="n">concentration</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"value"</span><span class="p">:</span> <span class="n">concentration</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="s2">"unit"</span><span class="p">:</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">concentration</span><span class="o">.</span><span class="n">unit</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">concentration</span><span class="o">.</span><span class="n">unit</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="s2">"basis"</span><span class="p">:</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">concentration</span><span class="o">.</span><span class="n">basis</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">concentration</span><span class="o">.</span><span class="n">basis</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_solvent_identity</span><span class="p">(</span><span class="n">solvent</span><span class="p">:</span> <span class="n">Solvent</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Project a vehicle: its compound key (name-derived when untyped) and fraction."""</span>
+    <span class="k">if</span> <span class="n">solvent</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">compound</span> <span class="o">=</span> <span class="n">solvent</span><span class="o">.</span><span class="n">compound</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">compound_identity_key</span><span class="p">(</span><span class="n">compound</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">compound</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">else</span> <span class="sa">f</span><span class="s2">"name:</span><span class="si">{</span><span class="n">normalize_compound_name</span><span class="p">(</span><span class="n">solvent</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"compound"</span><span class="p">:</span> <span class="n">key</span><span class="p">,</span> <span class="s2">"percent"</span><span class="p">:</span> <span class="n">solvent</span><span class="o">.</span><span class="n">percent</span><span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_media_component_identity</span><span class="p">(</span><span class="n">component</span><span class="p">:</span> <span class="n">MediaComponent</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Project one ingredient: which substance, in what role, how defined, how much."""</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"compound"</span><span class="p">:</span> <span class="n">compound_identity_key</span><span class="p">(</span><span class="n">component</span><span class="o">.</span><span class="n">compound</span><span class="p">),</span>
+        <span class="s2">"role"</span><span class="p">:</span> <span class="n">component</span><span class="o">.</span><span class="n">role</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="s2">"definition"</span><span class="p">:</span> <span class="n">component</span><span class="o">.</span><span class="n">definition</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="s2">"concentration"</span><span class="p">:</span> <span class="n">_concentration_identity</span><span class="p">(</span><span class="n">component</span><span class="o">.</span><span class="n">concentration</span><span class="p">),</span>
+    <span class="p">}</span>
+
+
+<div class="viewcode-block" id="media_identity">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.identity.media_identity.html#torchcell.datamodels.identity.media_identity">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">media_identity</span><span class="p">(</span><span class="n">media</span><span class="p">:</span> <span class="n">Media</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Project a medium onto its composition: state, synthetic flag, base, contents.</span>
+
+<span class="sd">    ``name``, ``provenance``, and each component's ``provenance`` / ``note`` /</span>
+<span class="sd">    ``defers_to`` are dropped: they record who stated the recipe, not what the recipe</span>
+<span class="sd">    is. Components and dropouts are sorted, so listing order is not identity.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"state"</span><span class="p">:</span> <span class="n">media</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
+        <span class="s2">"is_synthetic"</span><span class="p">:</span> <span class="n">media</span><span class="o">.</span><span class="n">is_synthetic</span><span class="p">,</span>
+        <span class="s2">"base_medium"</span><span class="p">:</span> <span class="n">media</span><span class="o">.</span><span class="n">base_medium</span><span class="p">,</span>
+        <span class="s2">"components"</span><span class="p">:</span> <span class="n">_sorted_identities</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">_media_component_identity</span><span class="p">(</span><span class="n">component</span><span class="p">)</span> <span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">media</span><span class="o">.</span><span class="n">components</span><span class="p">]</span>
+        <span class="p">),</span>
+        <span class="s2">"dropouts"</span><span class="p">:</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">compound_identity_key</span><span class="p">(</span><span class="n">dropout</span><span class="p">)</span> <span class="k">for</span> <span class="n">dropout</span> <span class="ow">in</span> <span class="n">media</span><span class="o">.</span><span class="n">dropouts</span>
+        <span class="p">),</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="temperature_identity">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.identity.temperature_identity.html#torchcell.datamodels.identity.temperature_identity">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">temperature_identity</span><span class="p">(</span><span class="n">temperature</span><span class="p">:</span> <span class="n">Temperature</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Project a temperature onto its value and typed unit (no unit conversion)."""</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"value"</span><span class="p">:</span> <span class="n">temperature</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">:</span> <span class="n">temperature</span><span class="o">.</span><span class="n">unit</span><span class="o">.</span><span class="n">value</span><span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="environment_perturbation_identity">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.identity.environment_perturbation_identity.html#torchcell.datamodels.identity.environment_perturbation_identity">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">environment_perturbation_identity</span><span class="p">(</span><span class="n">perturbation</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Project an environment perturbation onto its typed slots.</span>
+
+<span class="sd">    The discriminator plus the slots of the concrete leaf: compound key, dose and</span>
+<span class="sd">    vehicle for a small molecule; factor, magnitude and realizing agent for a</span>
+<span class="sd">    physical factor; agent class, name, accession, sequence and dose for a biologic.</span>
+<span class="sd">    ``description`` is dropped (it is a per-dataset restatement of the leaf's own</span>
+<span class="sd">    default). The dose IS part of identity on both dosed leaves: two doses of one</span>
+<span class="sd">    compound are two different edits to the environment.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">SmallMoleculePerturbation</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"perturbation_type"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">perturbation_type</span><span class="p">,</span>
+            <span class="s2">"compound"</span><span class="p">:</span> <span class="n">compound_identity_key</span><span class="p">(</span><span class="n">perturbation</span><span class="o">.</span><span class="n">compound</span><span class="p">),</span>
+            <span class="s2">"concentration"</span><span class="p">:</span> <span class="n">_concentration_identity</span><span class="p">(</span><span class="n">perturbation</span><span class="o">.</span><span class="n">concentration</span><span class="p">),</span>
+            <span class="s2">"solvent"</span><span class="p">:</span> <span class="n">_solvent_identity</span><span class="p">(</span><span class="n">perturbation</span><span class="o">.</span><span class="n">solvent</span><span class="p">),</span>
+        <span class="p">}</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">EnvironmentPhysicalPerturbation</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"perturbation_type"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">perturbation_type</span><span class="p">,</span>
+            <span class="s2">"factor"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">factor</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="s2">"magnitude"</span><span class="p">:</span> <span class="n">_concentration_identity</span><span class="p">(</span><span class="n">perturbation</span><span class="o">.</span><span class="n">magnitude</span><span class="p">),</span>
+            <span class="s2">"agent"</span><span class="p">:</span> <span class="p">(</span>
+                <span class="kc">None</span>
+                <span class="k">if</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">agent</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="n">compound_identity_key</span><span class="p">(</span><span class="n">perturbation</span><span class="o">.</span><span class="n">agent</span><span class="p">)</span>
+            <span class="p">),</span>
+        <span class="p">}</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">BiologicPerturbation</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"perturbation_type"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">perturbation_type</span><span class="p">,</span>
+            <span class="s2">"agent_class"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">agent_class</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="s2">"name"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+            <span class="s2">"uniprot_id"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">uniprot_id</span><span class="p">,</span>
+            <span class="s2">"sequence"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">sequence</span><span class="p">,</span>
+            <span class="s2">"concentration"</span><span class="p">:</span> <span class="n">_concentration_identity</span><span class="p">(</span><span class="n">perturbation</span><span class="o">.</span><span class="n">concentration</span><span class="p">),</span>
+        <span class="p">}</span>
+    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+        <span class="s2">"no identity projection for "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">perturbation</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">; an environment perturbation is one of "</span>
+        <span class="s2">"SmallMoleculePerturbation, EnvironmentPhysicalPerturbation, "</span>
+        <span class="s2">"BiologicPerturbation"</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="environment_identity">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.identity.environment_identity.html#torchcell.datamodels.identity.environment_identity">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">environment_identity</span><span class="p">(</span><span class="n">environment</span><span class="p">:</span> <span class="n">Environment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Project an environment onto medium, temperature, edits, oxygen and duration.</span>
+
+<span class="sd">    ``provenance_gaps`` is dropped, but what a gap MEANS is kept: the gapped field is</span>
+<span class="sd">    ``None``, and a ``None`` temperature projects as ``None``, so a record that never</span>
+<span class="sd">    carried a temperature does not merge with one measured at 30 C.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"media"</span><span class="p">:</span> <span class="n">media_identity</span><span class="p">(</span><span class="n">environment</span><span class="o">.</span><span class="n">media</span><span class="p">),</span>
+        <span class="s2">"temperature"</span><span class="p">:</span> <span class="p">(</span>
+            <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">environment</span><span class="o">.</span><span class="n">temperature</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">temperature_identity</span><span class="p">(</span><span class="n">environment</span><span class="o">.</span><span class="n">temperature</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="s2">"perturbations"</span><span class="p">:</span> <span class="n">_sorted_identities</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">environment_perturbation_identity</span><span class="p">(</span><span class="n">perturbation</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">environment</span><span class="o">.</span><span class="n">perturbations</span>
+            <span class="p">]</span>
+        <span class="p">),</span>
+        <span class="s2">"aerobicity"</span><span class="p">:</span> <span class="n">environment</span><span class="o">.</span><span class="n">aerobicity</span><span class="p">,</span>
+        <span class="s2">"duration_hours"</span><span class="p">:</span> <span class="n">environment</span><span class="o">.</span><span class="n">duration_hours</span><span class="p">,</span>
+        <span class="s2">"duration_generations"</span><span class="p">:</span> <span class="n">environment</span><span class="o">.</span><span class="n">duration_generations</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="identity_sha256">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.identity.identity_sha256.html#torchcell.datamodels.identity.identity_sha256">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">identity_sha256</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Hash an identity projection: sha256 over its canonical JSON encoding."""</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">_canonical</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

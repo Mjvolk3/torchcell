@@ -1,0 +1,8 @@
+﻿torchcell.adapters.EnvChemgenVanacloig2022Adapter
+=================================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: EnvChemgenVanacloig2022Adapter
+   :show-inheritance:
+   :members:

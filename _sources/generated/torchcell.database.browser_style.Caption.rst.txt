@@ -1,0 +1,8 @@
+﻿torchcell.database.browser\_style.Caption
+=========================================
+
+.. currentmodule:: torchcell.database.browser_style
+
+.. autoclass:: Caption
+   :show-inheritance:
+   :members:

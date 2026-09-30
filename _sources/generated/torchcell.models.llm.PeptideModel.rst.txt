@@ -1,0 +1,8 @@
+﻿torchcell.models.llm.PeptideModel
+=================================
+
+.. currentmodule:: torchcell.models.llm
+
+.. autoclass:: PeptideModel
+   :show-inheritance:
+   :members:

@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.synthetic\_lethality\_to\_fitness\_conversion.synthetic\_lethality\_to\_fitness\_experiment
+================================================================================================================
+
+.. currentmodule:: torchcell.datamodels.synthetic_lethality_to_fitness_conversion
+
+.. autofunction:: synthetic_lethality_to_fitness_experiment

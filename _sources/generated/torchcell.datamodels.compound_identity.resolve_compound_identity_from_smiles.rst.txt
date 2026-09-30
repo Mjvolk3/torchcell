@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.compound\_identity.resolve\_compound\_identity\_from\_smiles
+=================================================================================
+
+.. currentmodule:: torchcell.datamodels.compound_identity
+
+.. autofunction:: resolve_compound_identity_from_smiles

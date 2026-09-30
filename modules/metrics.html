@@ -1,0 +1,230 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.metrics &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/modules/metrics.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="torchcell.metrics.nan_tolerant_classification_metrics.NaNTolerantMetricBase" href="../generated/torchcell.metrics.nan_tolerant_classification_metrics.NaNTolerantMetricBase.html" />
+    <link rel="prev" title="torchcell.metabolism.yeast_GEM.test_bipartite_attributes" href="../generated/torchcell.metabolism.yeast_GEM.test_bipartite_attributes.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">torchcell.metrics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#nan-tolerant-classification-metrics"><code class="docutils literal notranslate"><span class="pre">nan_tolerant_classification_metrics</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#nan-tolerant-metrics"><code class="docutils literal notranslate"><span class="pre">nan_tolerant_metrics</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">torchcell.metrics</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/modules/metrics.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-torchcell.metrics">
+<span id="torchcell-metrics"></span><h1>torchcell.metrics<a class="headerlink" href="#module-torchcell.metrics" title="Link to this heading"></a></h1>
+<p>TorchMetrics metrics that ignore missing labels. Each metric masks <code class="docutils literal notranslate"><span class="pre">NaN</span></code> targets before updating its state, so a batch with partially labeled multi-task targets can be scored under distributed training. <code class="docutils literal notranslate"><span class="pre">nan_tolerant_metrics</span></code> covers regression and correlation (RMSE, MAE, MSE, Pearson, Spearman, R2) and <code class="docutils literal notranslate"><span class="pre">nan_tolerant_classification_metrics</span></code> covers classification (accuracy, F1, AUROC, precision, recall).</p>
+<nav class="contents local" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#nan-tolerant-classification-metrics" id="id2"><code class="docutils literal notranslate"><span class="pre">nan_tolerant_classification_metrics</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#classes" id="id3">Classes</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#nan-tolerant-metrics" id="id4"><code class="docutils literal notranslate"><span class="pre">nan_tolerant_metrics</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id1" id="id5">Classes</a></p></li>
+</ul>
+</li>
+</ul>
+</nav>
+<section id="nan-tolerant-classification-metrics">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">nan_tolerant_classification_metrics</span></code></a><a class="headerlink" href="#nan-tolerant-classification-metrics" title="Link to this heading"></a></h2>
+<p>NaN-tolerant TorchMetrics classification metrics for DDP training.</p>
+<section id="classes">
+<h3><a class="toc-backref" href="#id3" role="doc-backlink">Classes</a><a class="headerlink" href="#classes" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metrics.nan_tolerant_classification_metrics.NaNTolerantMetricBase.html#torchcell.metrics.nan_tolerant_classification_metrics.NaNTolerantMetricBase" title="torchcell.metrics.nan_tolerant_classification_metrics.NaNTolerantMetricBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nan_tolerant_classification_metrics.NaNTolerantMetricBase</span></code></a></p></td>
+<td><p>Base metric that drops NaN targets and tracks the active device.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metrics.nan_tolerant_classification_metrics.NaNTolerantAccuracy.html#torchcell.metrics.nan_tolerant_classification_metrics.NaNTolerantAccuracy" title="torchcell.metrics.nan_tolerant_classification_metrics.NaNTolerantAccuracy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nan_tolerant_classification_metrics.NaNTolerantAccuracy</span></code></a></p></td>
+<td><p>Classification accuracy that ignores samples with NaN targets.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metrics.nan_tolerant_classification_metrics.NaNTolerantF1Score.html#torchcell.metrics.nan_tolerant_classification_metrics.NaNTolerantF1Score" title="torchcell.metrics.nan_tolerant_classification_metrics.NaNTolerantF1Score"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nan_tolerant_classification_metrics.NaNTolerantF1Score</span></code></a></p></td>
+<td><p>F1 score that ignores samples with NaN targets.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metrics.nan_tolerant_classification_metrics.NaNTolerantAUROC.html#torchcell.metrics.nan_tolerant_classification_metrics.NaNTolerantAUROC" title="torchcell.metrics.nan_tolerant_classification_metrics.NaNTolerantAUROC"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nan_tolerant_classification_metrics.NaNTolerantAUROC</span></code></a></p></td>
+<td><p>Binary AUROC (trapezoidal) that ignores samples with NaN targets.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metrics.nan_tolerant_classification_metrics.NaNTolerantPrecision.html#torchcell.metrics.nan_tolerant_classification_metrics.NaNTolerantPrecision" title="torchcell.metrics.nan_tolerant_classification_metrics.NaNTolerantPrecision"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nan_tolerant_classification_metrics.NaNTolerantPrecision</span></code></a></p></td>
+<td><p>Precision that ignores samples with NaN targets.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metrics.nan_tolerant_classification_metrics.NaNTolerantRecall.html#torchcell.metrics.nan_tolerant_classification_metrics.NaNTolerantRecall" title="torchcell.metrics.nan_tolerant_classification_metrics.NaNTolerantRecall"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nan_tolerant_classification_metrics.NaNTolerantRecall</span></code></a></p></td>
+<td><p>Recall that ignores samples with NaN targets.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="nan-tolerant-metrics">
+<h2><a class="toc-backref" href="#id4" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">nan_tolerant_metrics</span></code></a><a class="headerlink" href="#nan-tolerant-metrics" title="Link to this heading"></a></h2>
+<p>NaN-tolerant TorchMetrics for regression and correlation under missing labels.</p>
+<section id="id1">
+<h3><a class="toc-backref" href="#id5" role="doc-backlink">Classes</a><a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantRMSE.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantRMSE" title="torchcell.metrics.nan_tolerant_metrics.NaNTolerantRMSE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nan_tolerant_metrics.NaNTolerantRMSE</span></code></a></p></td>
+<td><p>Root mean squared error that ignores NaN entries in preds/target.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantMAE.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantMAE" title="torchcell.metrics.nan_tolerant_metrics.NaNTolerantMAE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nan_tolerant_metrics.NaNTolerantMAE</span></code></a></p></td>
+<td><p>Mean absolute error that ignores NaN entries in preds/target.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantMetricBase.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantMetricBase" title="torchcell.metrics.nan_tolerant_metrics.NaNTolerantMetricBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nan_tolerant_metrics.NaNTolerantMetricBase</span></code></a></p></td>
+<td><p>Base metric configured for DDP that tracks the input tensor device.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantPearsonCorrCoef.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantPearsonCorrCoef" title="torchcell.metrics.nan_tolerant_metrics.NaNTolerantPearsonCorrCoef"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nan_tolerant_metrics.NaNTolerantPearsonCorrCoef</span></code></a></p></td>
+<td><p>Pearson correlation computed from sufficient statistics, ignoring NaNs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantSpearmanCorrCoef.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantSpearmanCorrCoef" title="torchcell.metrics.nan_tolerant_metrics.NaNTolerantSpearmanCorrCoef"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nan_tolerant_metrics.NaNTolerantSpearmanCorrCoef</span></code></a></p></td>
+<td><p>Spearman rank correlation that buffers non-NaN values until compute.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantMSE.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantMSE" title="torchcell.metrics.nan_tolerant_metrics.NaNTolerantMSE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nan_tolerant_metrics.NaNTolerantMSE</span></code></a></p></td>
+<td><p>Mean squared (or root mean squared) error ignoring NaN entries.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metrics.nan_tolerant_metrics.NaNTolerantR2Score.html#torchcell.metrics.nan_tolerant_metrics.NaNTolerantR2Score" title="torchcell.metrics.nan_tolerant_metrics.NaNTolerantR2Score"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nan_tolerant_metrics.NaNTolerantR2Score</span></code></a></p></td>
+<td><p>R-squared score computed from squared error and total variance, ignoring NaNs.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../generated/torchcell.metabolism.yeast_GEM.test_bipartite_attributes.html" class="btn btn-neutral float-left" title="torchcell.metabolism.yeast_GEM.test_bipartite_attributes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../generated/torchcell.metrics.nan_tolerant_classification_metrics.NaNTolerantMetricBase.html" class="btn btn-neutral float-right" title="torchcell.metrics.nan_tolerant_classification_metrics.NaNTolerantMetricBase" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

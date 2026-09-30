@@ -1,0 +1,8 @@
+﻿torchcell.literature.ZoteroLibrary
+==================================
+
+.. currentmodule:: torchcell.literature
+
+.. autoclass:: ZoteroLibrary
+   :show-inheritance:
+   :members:

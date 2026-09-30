@@ -1,0 +1,211 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.sga.register &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/sga/register.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.sga.register</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.sga.register</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/sga/register.py</span>
+<span class="c1"># [[torchcell.sga.register]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/sga/register</span>
+<span class="sd">"""Register an image-order colony grid to the plate layout.</span>
+
+<span class="sd">Image analysis returns colony sizes in IMAGE order (row 1 = top, col 1 = left).</span>
+<span class="sd">Which image corner is plate A1 is unknown -- the plate can be loaded in any of</span>
+<span class="sd">the 4 shape-preserving orientations (identity, 180 deg rotation, or a flip about</span>
+<span class="sd">either axis). We resolve it WITHOUT a fiducial by exploiting the no-cell control:</span>
+<span class="sd">the layout's ``Blank_media`` wells must land on EMPTY image spots, and plated</span>
+<span class="sd">wells on colonies. The orientation maximizing that agreement is the true one.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_orient</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">op</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Apply a shape-preserving dihedral op to image-order (row, col)."""</span>
+    <span class="n">r</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"row"</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">"col"</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">op</span> <span class="o">==</span> <span class="s2">"identity"</span><span class="p">:</span>
+        <span class="n">nr</span><span class="p">,</span> <span class="n">nc</span> <span class="o">=</span> <span class="n">r</span><span class="p">,</span> <span class="n">c</span>
+    <span class="k">elif</span> <span class="n">op</span> <span class="o">==</span> <span class="s2">"rot180"</span><span class="p">:</span>
+        <span class="n">nr</span><span class="p">,</span> <span class="n">nc</span> <span class="o">=</span> <span class="n">n_rows</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">r</span><span class="p">,</span> <span class="n">n_cols</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">c</span>
+    <span class="k">elif</span> <span class="n">op</span> <span class="o">==</span> <span class="s2">"flip_v"</span><span class="p">:</span>  <span class="c1"># top&lt;-&gt;bottom</span>
+        <span class="n">nr</span><span class="p">,</span> <span class="n">nc</span> <span class="o">=</span> <span class="n">n_rows</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">r</span><span class="p">,</span> <span class="n">c</span>
+    <span class="k">elif</span> <span class="n">op</span> <span class="o">==</span> <span class="s2">"flip_h"</span><span class="p">:</span>  <span class="c1"># left&lt;-&gt;right</span>
+        <span class="n">nr</span><span class="p">,</span> <span class="n">nc</span> <span class="o">=</span> <span class="n">r</span><span class="p">,</span> <span class="n">n_cols</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">c</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">out</span><span class="p">[</span><span class="s2">"row"</span><span class="p">],</span> <span class="n">out</span><span class="p">[</span><span class="s2">"col"</span><span class="p">]</span> <span class="o">=</span> <span class="n">nr</span><span class="p">,</span> <span class="n">nc</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<div class="viewcode-block" id="resolve_orientation">
+<a class="viewcode-back" href="../../../generated/torchcell.sga.resolve_orientation.html#torchcell.sga.resolve_orientation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_orientation</span><span class="p">(</span>
+    <span class="n">grid</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">layout</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">n_rows</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">14</span><span class="p">,</span>
+    <span class="n">n_cols</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">22</span><span class="p">,</span>
+    <span class="n">inner_row0</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="n">inner_col0</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="n">blank_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Blank_media"</span><span class="p">,</span>
+    <span class="n">empty_thresh</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Return (merged, best_op, agreement).</span>
+
+<span class="sd">    ``grid`` is the image-order quantification (row 1..n_rows, col 1..n_cols,</span>
+<span class="sd">    size, ...). ``layout`` uses plate coordinates (from ``read_echo_picklist``),</span>
+<span class="sd">    where the inner block starts at (``inner_row0``, ``inner_col0``). We try all 4</span>
+<span class="sd">    orientations, map grid -&gt; plate coords, join to layout, and pick the op whose</span>
+<span class="sd">    blank/plated pattern best matches empty/present colonies.</span>
+<span class="sd">    """</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"identity"</span><span class="p">,</span> <span class="s2">"rot180"</span><span class="p">,</span> <span class="s2">"flip_v"</span><span class="p">,</span> <span class="s2">"flip_h"</span><span class="p">):</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">_orient</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="n">g</span><span class="p">[</span><span class="s2">"row"</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">inner_row0</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">col</span><span class="o">=</span><span class="n">g</span><span class="p">[</span><span class="s2">"col"</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">inner_col0</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s2">"row"</span><span class="p">,</span> <span class="s2">"col"</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s2">"inner"</span><span class="p">)</span>
+        <span class="n">is_blank</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">]</span> <span class="o">==</span> <span class="n">blank_name</span>
+        <span class="n">present</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="s2">"size"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">empty_thresh</span>
+        <span class="c1"># agreement = blanks that are empty + plated wells that grew</span>
+        <span class="n">agree</span> <span class="o">=</span> <span class="p">((</span><span class="n">is_blank</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">present</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="o">~</span><span class="n">is_blank</span> <span class="o">&amp;</span> <span class="n">present</span><span class="p">))</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">best</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">agree</span> <span class="o">&gt;</span> <span class="n">best</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span>
+            <span class="n">best</span> <span class="o">=</span> <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">agree</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="n">best</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"no orientation evaluated"</span>
+    <span class="k">return</span> <span class="n">best</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

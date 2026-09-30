@@ -1,0 +1,8 @@
+﻿torchcell.metabolism.pathway.HeterologousPathway
+================================================
+
+.. currentmodule:: torchcell.metabolism.pathway
+
+.. autoclass:: HeterologousPathway
+   :show-inheritance:
+   :members:

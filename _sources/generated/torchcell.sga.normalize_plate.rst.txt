@@ -1,0 +1,6 @@
+﻿torchcell.sga.normalize\_plate
+==============================
+
+.. currentmodule:: torchcell.sga
+
+.. autofunction:: normalize_plate

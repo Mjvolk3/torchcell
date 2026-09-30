@@ -1,0 +1,8 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.AdapterDrift
+=====================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autoclass:: AdapterDrift
+   :show-inheritance:
+   :members:

@@ -1,0 +1,6 @@
+﻿torchcell.database.build\_dataset\_lmdb.resolve\_dataset\_class
+===============================================================
+
+.. currentmodule:: torchcell.database.build_dataset_lmdb
+
+.. autofunction:: resolve_dataset_class

@@ -1,0 +1,6 @@
+﻿torchcell.provenance.build\_impact\_report
+==========================================
+
+.. currentmodule:: torchcell.provenance
+
+.. autofunction:: build_impact_report

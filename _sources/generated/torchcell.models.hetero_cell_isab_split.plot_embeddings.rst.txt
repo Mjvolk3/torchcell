@@ -1,0 +1,6 @@
+﻿torchcell.models.hetero\_cell\_isab\_split.plot\_embeddings
+===========================================================
+
+.. currentmodule:: torchcell.models.hetero_cell_isab_split
+
+.. autofunction:: plot_embeddings

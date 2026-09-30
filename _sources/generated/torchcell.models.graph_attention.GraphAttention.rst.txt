@@ -1,0 +1,8 @@
+﻿torchcell.models.graph\_attention.GraphAttention
+================================================
+
+.. currentmodule:: torchcell.models.graph_attention
+
+.. autoclass:: GraphAttention
+   :show-inheritance:
+   :members:

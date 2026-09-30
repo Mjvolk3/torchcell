@@ -1,0 +1,8 @@
+﻿torchcell.models.hetero\_gnn\_pool.PredictionHead
+=================================================
+
+.. currentmodule:: torchcell.models.hetero_gnn_pool
+
+.. autoclass:: PredictionHead
+   :show-inheritance:
+   :members:

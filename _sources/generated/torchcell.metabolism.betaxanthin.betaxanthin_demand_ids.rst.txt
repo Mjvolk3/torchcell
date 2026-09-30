@@ -1,0 +1,6 @@
+﻿torchcell.metabolism.betaxanthin.betaxanthin\_demand\_ids
+=========================================================
+
+.. currentmodule:: torchcell.metabolism.betaxanthin
+
+.. autofunction:: betaxanthin_demand_ids

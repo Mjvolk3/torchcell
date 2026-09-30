@@ -1,0 +1,8 @@
+﻿torchcell.adapters.EnvChemgenCostanzo2021Adapter
+================================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: EnvChemgenCostanzo2021Adapter
+   :show-inheritance:
+   :members:

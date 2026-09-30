@@ -1,0 +1,6 @@
+﻿torchcell.literature.make\_zotero\_client
+=========================================
+
+.. currentmodule:: torchcell.literature
+
+.. autofunction:: make_zotero_client

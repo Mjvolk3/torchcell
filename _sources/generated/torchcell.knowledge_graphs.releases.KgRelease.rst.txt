@@ -1,0 +1,8 @@
+﻿torchcell.knowledge\_graphs.releases.KgRelease
+==============================================
+
+.. currentmodule:: torchcell.knowledge_graphs.releases
+
+.. autoclass:: KgRelease
+   :show-inheritance:
+   :members:

@@ -1,0 +1,8 @@
+﻿torchcell.models.cell\_graph\_transformer.PerturbationHead
+==========================================================
+
+.. currentmodule:: torchcell.models.cell_graph_transformer
+
+.. autoclass:: PerturbationHead
+   :show-inheritance:
+   :members:

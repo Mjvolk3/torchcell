@@ -1,0 +1,8 @@
+﻿torchcell.trainers.fit\_int\_hetero\_cell\_multiset\_decomposition.RegressionTask
+=================================================================================
+
+.. currentmodule:: torchcell.trainers.fit_int_hetero_cell_multiset_decomposition
+
+.. autoclass:: RegressionTask
+   :show-inheritance:
+   :members:

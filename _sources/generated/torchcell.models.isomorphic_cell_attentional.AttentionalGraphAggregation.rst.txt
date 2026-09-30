@@ -1,0 +1,8 @@
+﻿torchcell.models.isomorphic\_cell\_attentional.AttentionalGraphAggregation
+==========================================================================
+
+.. currentmodule:: torchcell.models.isomorphic_cell_attentional
+
+.. autoclass:: AttentionalGraphAggregation
+   :show-inheritance:
+   :members:

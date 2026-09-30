@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.ProteinAbundanceExperiment
+======================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: ProteinAbundanceExperiment
+   :show-inheritance:
+   :members:

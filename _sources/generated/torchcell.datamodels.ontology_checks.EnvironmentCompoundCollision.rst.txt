@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.ontology\_checks.EnvironmentCompoundCollision
+==================================================================
+
+.. currentmodule:: torchcell.datamodels.ontology_checks
+
+.. autoclass:: EnvironmentCompoundCollision
+   :show-inheritance:
+   :members:

@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.subset.select\_indices
+==================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.subset
+
+.. autofunction:: select_indices

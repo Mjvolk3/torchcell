@@ -1,0 +1,8 @@
+﻿torchcell.adapters.EnvChemgenHoepfner2014Adapter
+================================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: EnvChemgenHoepfner2014Adapter
+   :show-inheritance:
+   :members:

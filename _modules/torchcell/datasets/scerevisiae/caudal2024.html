@@ -1,0 +1,900 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datasets.scerevisiae.caudal2024 &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/datasets/scerevisiae/caudal2024.html" />
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html">
+            
+              <img src="../../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.datasets.scerevisiae.caudal2024</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.datasets.scerevisiae.caudal2024</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/datasets/scerevisiae/caudal2024</span>
+<span class="c1"># [[torchcell.datasets.scerevisiae.caudal2024]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/caudal2024</span>
+<span class="c1"># Test file: tests/torchcell/datasets/scerevisiae/test_caudal2024.py</span>
+<span class="sd">"""Caudal 2024 S. cerevisiae natural-isolate pan-transcriptome (RNA-seq, WS10).</span>
+
+<span class="sd">Caudal et al. 2024 (Nat. Genet. 56:1278, doi:10.1038/s41588-024-01769-9) measured the</span>
+<span class="sd">whole-transcriptome expression of ~1000 natural S. cerevisiae isolates (the 1002-genomes</span>
+<span class="sd">panel), each mapped to its OWN genome. We model every isolate as a PERTURBATION SET off</span>
+<span class="sd">the S288C reference: its genotype is the full set of sequence/copy-number differences from</span>
+<span class="sd">S288C, and its phenotype is the absolute per-gene expression (TPM + raw counts).</span>
+
+<span class="sd">GENOTYPE (three natural-variation perturbation families, all off-graph pointers):</span>
+<span class="sd">  - ``SequenceVariantPerturbation`` -- a native S288C gene whose isolate allele differs</span>
+<span class="sd">    from the S288C reference sequence. The reference allele is reconstructed EXACTLY in</span>
+<span class="sd">    Peter's representation: the coordinate in a gene's first FASTA header</span>
+<span class="sd">    (``chromosomeN:start-end +/-``) slices the SGD R64 chromosome (reverse-complemented on</span>
+<span class="sd">    the minus strand); an isolate has a variant iff its sequence != that slice. Source =</span>
+<span class="sd">    Peter et al. 2018 ``allReferenceGenesWithSNPsAndIndelsInferred`` (gene-keyed store).</span>
+<span class="sd">  - ``NaturalGenePresencePerturbation`` for an ACCESSORY (non-reference) pangenome ORF that</span>
+<span class="sd">    is PRESENT in the isolate (AXIS-1 state=present, natural insertion; ``copy_number`` from</span>
+<span class="sd">    the copy-number matrix, default 1.0).</span>
+<span class="sd">  - ``NaturalGeneAbsencePerturbation`` for a CORE (reference) ORF that is ABSENT in the</span>
+<span class="sd">    isolate (AXIS-1 state=absent, natural deletion). EVERY absence is recorded -- an ORF</span>
+<span class="sd">    with no S288C systematic name is kept by its pangenome id, never dropped (a dropped</span>
+<span class="sd">    absence would wrongly reconstruct the gene as present).</span>
+<span class="sd">These are NATURAL genome-content edits off S288C, distinct from engineered CNV (true dosage</span>
+<span class="sd">of a PRESENT gene stays on the copy-number axis). Core vs accessory is Peter's</span>
+<span class="sd">presence/absence matrix over the 1011 isolates: an ORF present in &gt;= 99% of isolates is core.</span>
+
+<span class="sd">PHENOTYPE (``RNASeqExpressionPhenotype``): per-isolate ``expression_tpm`` +</span>
+<span class="sd">``expression_count`` for the genes that isolate carries (a gene absent from an isolate is</span>
+<span class="sd">KEY-ABSENT, never 0). ``measurement_type = "rnaseq_tpm"``. The shared</span>
+<span class="sd">``phenotype_reference`` is the POPULATION MEAN over the 943 built isolates (mean TPM /</span>
+<span class="sd">rounded mean count per gene) -- an absolute WT-equivalent baseline, NOT a centered 0</span>
+<span class="sd">(reference is not the record itself; ``reference_centered = False`` for verification).</span>
+
+<span class="sd">STRAIN SET: the 943 isolates that are the intersection of Caudal's ``Strain`` codes (969)</span>
+<span class="sd">with Peter's genome panel. The 26 Caudal-only strains (25 ``XTRA_*`` + ``FY4-6``) have no</span>
+<span class="sd">Peter genome and are EXCLUDED -- only isolates with a matched genome are built. An isolate</span>
+<span class="sd">code is whatever both sources spell it, including the ``SACE_`` form (78 of the 943, e.g.</span>
+<span class="sd">``SACE_YAU``); see ``_isolate_and_symbol``.</span>
+
+<span class="sd">Sources (hash-pinned, local library mirror):</span>
+<span class="sd">  - Caudal expression: ``caudalPantranscriptomeRevealsLarge2024/data/</span>
+<span class="sd">    final_data_annotated_merged_04052022.tab.zip`` (comma-delimited, latin-1;</span>
+<span class="sd">    sha256 8b55ccd76e1d19476d8f5f718e9e061cb9e4693e343965114dd4cd65d5f8d26b).</span>
+<span class="sd">  - Peter genome: the genomes tier set ``peter2018_1011_assemblies`` (resolved and</span>
+<span class="sd">    sha256-verified through ``torchcell.sequence.genome.registry``) --</span>
+<span class="sd">    ``allReferenceGenesWithSNPsAndIndelsInferred.tar.gz`` (sha256 b5400b89...),</span>
+<span class="sd">    ``genesMatrix_PresenceAbsence.tab.gz``, ``genesMatrix_CopyNumber.tab.gz``.</span>
+<span class="sd">  - S288C reference: SGD R64-4-1 ``S288C_reference_sequence_R64-4-1_20230830.fsa``.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tarfile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Environment</span><span class="p">,</span>
+    <span class="n">Experiment</span><span class="p">,</span>
+    <span class="n">ExperimentReference</span><span class="p">,</span>
+    <span class="n">Genotype</span><span class="p">,</span>
+    <span class="n">Media</span><span class="p">,</span>
+    <span class="n">NaturalGeneAbsencePerturbation</span><span class="p">,</span>
+    <span class="n">NaturalGenePresencePerturbation</span><span class="p">,</span>
+    <span class="n">Publication</span><span class="p">,</span>
+    <span class="n">ReferenceGenome</span><span class="p">,</span>
+    <span class="n">RNASeqExpressionExperiment</span><span class="p">,</span>
+    <span class="n">RNASeqExpressionExperimentReference</span><span class="p">,</span>
+    <span class="n">RNASeqExpressionPhenotype</span><span class="p">,</span>
+    <span class="n">SequenceVariantPerturbation</span><span class="p">,</span>
+    <span class="n">Temperature</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">PETER2018_1011</span><span class="p">,</span> <span class="n">SGD_S288C_R64</span><span class="p">,</span> <span class="n">resolve</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">MEASUREMENT_TYPE</span> <span class="o">=</span> <span class="s2">"rnaseq_tpm"</span>
+<span class="n">SEQUENCE_SOURCE</span> <span class="o">=</span> <span class="s2">"peterGenomeEvolution10112018"</span>
+<span class="n">CORE_PRESENCE_THRESHOLD</span> <span class="o">=</span> <span class="mf">0.99</span>  <span class="c1"># ORF present in &gt;= 99% of the 1011 isolates -&gt; core</span>
+
+<span class="c1"># Library-mirror-relative paths (under $DATA_ROOT). The stored artifact + sha256 is</span>
+<span class="c1"># canonical; these are referenced (symlinked) in-place, never re-downloaded/copied.</span>
+<span class="n">CAUDAL_ZIP_REL</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"torchcell-library/caudalPantranscriptomeRevealsLarge2024/data/"</span>
+    <span class="s2">"final_data_annotated_merged_04052022.tab.zip"</span>
+<span class="p">)</span>
+<span class="n">CAUDAL_ZIP_SHA256</span> <span class="o">=</span> <span class="s2">"8b55ccd76e1d19476d8f5f718e9e061cb9e4693e343965114dd4cd65d5f8d26b"</span>
+<span class="n">REFGENE_TAR_NAME</span> <span class="o">=</span> <span class="s2">"allReferenceGenesWithSNPsAndIndelsInferred.tar.gz"</span>
+<span class="n">REFGENE_TAR_SHA256</span> <span class="o">=</span> <span class="s2">"b5400b89499fe84b1feada51abd7742c29838ae1f28c0cbd208b6622ca533f25"</span>
+<span class="n">PRESENCE_NAME</span> <span class="o">=</span> <span class="s2">"genesMatrix_PresenceAbsence.tab.gz"</span>
+<span class="n">COPYNUMBER_NAME</span> <span class="o">=</span> <span class="s2">"genesMatrix_CopyNumber.tab.gz"</span>
+<span class="n">SGD_FSA_NAME</span> <span class="o">=</span> <span class="s2">"S288C_reference_sequence_R64-4-1_20230830.fsa"</span>
+
+<span class="n">CAUDAL_ZIP_BASENAME</span> <span class="o">=</span> <span class="s2">"final_data_annotated_merged_04052022.tab.zip"</span>
+<span class="n">RAW_FILES</span> <span class="o">=</span> <span class="p">[</span><span class="n">CAUDAL_ZIP_BASENAME</span><span class="p">,</span> <span class="n">REFGENE_TAR_NAME</span><span class="p">,</span> <span class="n">PRESENCE_NAME</span><span class="p">,</span> <span class="n">COPYNUMBER_NAME</span><span class="p">]</span>
+
+<span class="n">_ROMAN</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"I"</span><span class="p">,</span>
+    <span class="s2">"II"</span><span class="p">,</span>
+    <span class="s2">"III"</span><span class="p">,</span>
+    <span class="s2">"IV"</span><span class="p">,</span>
+    <span class="s2">"V"</span><span class="p">,</span>
+    <span class="s2">"VI"</span><span class="p">,</span>
+    <span class="s2">"VII"</span><span class="p">,</span>
+    <span class="s2">"VIII"</span><span class="p">,</span>
+    <span class="s2">"IX"</span><span class="p">,</span>
+    <span class="s2">"X"</span><span class="p">,</span>
+    <span class="s2">"XI"</span><span class="p">,</span>
+    <span class="s2">"XII"</span><span class="p">,</span>
+    <span class="s2">"XIII"</span><span class="p">,</span>
+    <span class="s2">"XIV"</span><span class="p">,</span>
+    <span class="s2">"XV"</span><span class="p">,</span>
+    <span class="s2">"XVI"</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="n">_S288C_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^(Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?|Q\d</span><span class="si">{4}</span><span class="s2">|YNC[A-Q]\d</span><span class="si">{4}</span><span class="s2">[WC])$"</span><span class="p">)</span>
+<span class="n">_EXCLUDED_STRAIN_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^XTRA_"</span><span class="p">)</span>
+<span class="n">_COMPLEMENT</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">maketrans</span><span class="p">(</span><span class="s2">"ACGTNacgtn"</span><span class="p">,</span> <span class="s2">"TGCANtgcan"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_reverse_complement</span><span class="p">(</span><span class="n">seq</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the reverse complement of a DNA string (A/C/G/T/N, case-preserving)."""</span>
+    <span class="k">return</span> <span class="n">seq</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="n">_COMPLEMENT</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sgd_chromosomes</span><span class="p">(</span><span class="n">fsa_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Map each SGD chromosome id (roman I..XVI, ``MT``) to its uppercase sequence."""</span>
+    <span class="n">chrom</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">buf</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fsa_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"&gt;"</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">chrom</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+                <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\[chromosome=([IVX]+)\]"</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+                    <span class="n">key</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="s2">"[location=mitochondrion]"</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                    <span class="n">key</span> <span class="o">=</span> <span class="s2">"MT"</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">key</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">buf</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">chrom</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">chrom</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_reference_slice</span><span class="p">(</span><span class="n">header</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">chrom</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Reconstruct the S288C reference allele from a Peter gene-file header coordinate."""</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">"chromosome(\d+):(\d+)-(\d+)\s+([+-])"</span><span class="p">,</span> <span class="n">header</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unparseable coordinate header: </span><span class="si">{</span><span class="n">header</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">chrom_n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+    <span class="n">strand</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="s2">"MT"</span> <span class="k">if</span> <span class="n">chrom_n</span> <span class="o">==</span> <span class="mi">17</span> <span class="k">else</span> <span class="n">_ROMAN</span><span class="p">[</span><span class="n">chrom_n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">seq</span> <span class="o">=</span> <span class="n">chrom</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">start</span> <span class="o">-</span> <span class="mi">1</span> <span class="p">:</span> <span class="n">end</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">strand</span> <span class="o">==</span> <span class="s2">"-"</span><span class="p">:</span>
+        <span class="n">seq</span> <span class="o">=</span> <span class="n">_reverse_complement</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">seq</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_isolate_and_symbol</span><span class="p">(</span><span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sys_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Split a Peter gene-FASTA header token into ``(isolate_code, gene_symbol)``.</span>
+
+<span class="sd">    A token is ``&lt;isolate&gt;_&lt;systematic_name&gt;_&lt;symbol&gt;`` and the isolate code appears</span>
+<span class="sd">    VERBATIM, in either of two forms: ``AEE_YAL001C_TFC3`` and</span>
+<span class="sd">    ``SACE_YAU_YAL001C_TFC3``. ``SACE_YAU`` is that isolate's own code, NOT a species</span>
+<span class="sd">    prefix on ``YAU``: 93 of the 1011 codes indexing</span>
+<span class="sd">    ``genesMatrix_PresenceAbsence.tab.gz`` carry it (``SACE_GAL`` ... ``SACE_YDO``), and</span>
+<span class="sd">    so do 78 of the 943 Caudal ``Strain`` codes we build. Stripping the prefix (the fix</span>
+<span class="sd">    proposed in issue 73) leaves those 78 isolates unmatchable and silently discards</span>
+<span class="sd">    469,170 of the 5,672,145 gene records, so the prefix is KEPT. Verified by an</span>
+<span class="sd">    exhaustive scan of all 6015 gene files / 6,081,165 headers.</span>
+
+<span class="sd">    Raises on a token that does not carry ``_&lt;sys_name&gt;_`` or that names an empty</span>
+<span class="sd">    isolate; no header is ever skipped silently (zero such headers exist in the pinned</span>
+<span class="sd">    tarball).</span>
+<span class="sd">    """</span>
+    <span class="n">split_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"_</span><span class="si">{</span><span class="n">sys_name</span><span class="si">}</span><span class="s2">_"</span>
+    <span class="k">if</span> <span class="n">split_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">token</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"header token </span><span class="si">{</span><span class="n">token</span><span class="si">!r}</span><span class="s2"> carries no </span><span class="si">{</span><span class="n">split_key</span><span class="si">!r}</span><span class="s2"> gene key"</span><span class="p">)</span>
+    <span class="n">iso</span><span class="p">,</span> <span class="n">symbol</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">split_key</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">iso</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"header token </span><span class="si">{</span><span class="n">token</span><span class="si">!r}</span><span class="s2"> names an empty isolate"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">iso</span><span class="p">,</span> <span class="n">symbol</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_assert_all_isolates_seen</span><span class="p">(</span><span class="n">matched</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Fail loudly when a built isolate never appeared in a Peter gene-FASTA header.</span>
+
+<span class="sd">    An isolate absent from every header would be assembled with zero sequence variants</span>
+<span class="sd">    and so reconstruct as a perfect S288C match, which is the maximally misleading</span>
+<span class="sd">    failure: the strain and its phenotype are present, its genotype is silently empty.</span>
+<span class="sd">    """</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">matched</span> <span class="o">-</span> <span class="n">seen</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">matched</span><span class="p">)</span><span class="si">}</span><span class="s2"> matched isolates never appeared in a "</span>
+            <span class="sa">f</span><span class="s2">"Peter gene-FASTA header, so their genotype would be silently empty: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_demangle_orf</span><span class="p">(</span><span class="n">col</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Reverse R ``make.names`` on a pangenome-ORF matrix column -&gt; the raw ORF id.</span>
+
+<span class="sd">    ``X1834.YAL063C`` -&gt; ``1834-YAL063C``; ``X1.EC1118_1F14_0012g`` -&gt;</span>
+<span class="sd">    ``1-EC1118_1F14_0012g`` (leading ``X`` dropped; the first ``.`` was the ``-`` after the</span>
+<span class="sd">    ORF number).</span>
+<span class="sd">    """</span>
+    <span class="n">stem</span> <span class="o">=</span> <span class="n">col</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"X"</span><span class="p">)</span> <span class="k">else</span> <span class="n">col</span>
+    <span class="k">return</span> <span class="n">stem</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"."</span><span class="p">,</span> <span class="s2">"-"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_orf_to_s288c</span><span class="p">(</span><span class="n">orf_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the S288C systematic name a pangenome ORF id encodes, else None.</span>
+
+<span class="sd">    A pangenome ORF id is ``&lt;number&gt;-&lt;name&gt;``; ``&lt;name&gt;`` is an S288C systematic name for</span>
+<span class="sd">    reference ORFs (``1834-YAL063C`` -&gt; ``YAL063C``) and an assembly id otherwise</span>
+<span class="sd">    (``1-EC1118_1F14_0012g`` -&gt; None). Residual ``.`` (from mangled ``-B`` suffixes) is</span>
+<span class="sd">    restored before the pattern test.</span>
+
+<span class="sd">    A ``_NumOfGenes_N`` suffix marks a pangenome ORF that collapses N paralogous copies</span>
+<span class="sd">    of a gene into one cluster (``1771-YAL005C_NumOfGenes_3`` -&gt; ``YAL005C``). These ARE</span>
+<span class="sd">    reference genes -- 793 of them -- so we strip the suffix and map the cluster to its</span>
+<span class="sd">    S288C name. This conflates paralogs for the presence/absence question (the cluster is</span>
+<span class="sd">    present iff any copy is), which is the right granularity here; every reference name</span>
+<span class="sd">    maps from exactly one pangenome column, so no de-duplication is needed.</span>
+<span class="sd">    """</span>
+    <span class="n">suffix</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^\d+-"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="n">orf_id</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"."</span><span class="p">,</span> <span class="s2">"-"</span><span class="p">)</span>
+    <span class="n">suffix</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"_NumOfGenes_\d+$"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="n">suffix</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">suffix</span> <span class="k">if</span> <span class="n">_S288C_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">suffix</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="CaudalPanTranscriptome2024Dataset">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.html#torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset">[docs]</a>
+<span class="nd">@register_dataset</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CaudalPanTranscriptome2024Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Natural-isolate pan-transcriptome: each isolate a perturbation set off S288C."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/caudal_pantranscriptome2024"</span><span class="p">,</span>
+        <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset (isolates keyed by their 3-letter Caudal strain code)."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Experiment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Experiment schema class produced by this dataset."""</span>
+        <span class="k">return</span> <span class="n">RNASeqExpressionExperiment</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reference_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">ExperimentReference</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Experiment-reference schema class produced by this dataset."""</span>
+        <span class="k">return</span> <span class="n">RNASeqExpressionExperimentReference</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The Caudal + Peter raw files (symlinked from the library mirror)."""</span>
+        <span class="k">return</span> <span class="n">RAW_FILES</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_data_root</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return $DATA_ROOT (the library-mirror parent)."""</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+        <span class="n">load_dotenv</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
+
+<div class="viewcode-block" id="CaudalPanTranscriptome2024Dataset.download">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.html#torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.download">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Symlink the hash-pinned mirror files into ``raw_dir`` and verify sha256.</span>
+
+<span class="sd">        Large artifacts are referenced in place (never copied). Only the two files with a</span>
+<span class="sd">        pinned sha256 (Caudal zip, Peter reference-gene tarball) are hash-verified; the</span>
+<span class="sd">        presence/copy-number matrices are existence-checked.</span>
+<span class="sd">        """</span>
+        <span class="n">data_root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_root</span><span class="p">()</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">sources</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">CAUDAL_ZIP_BASENAME</span><span class="p">:</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="n">CAUDAL_ZIP_REL</span><span class="p">),</span>
+            <span class="c1"># Peter files come from the genomes tier, sha256-verified on resolve.</span>
+            <span class="n">REFGENE_TAR_NAME</span><span class="p">:</span> <span class="n">resolve</span><span class="p">(</span><span class="n">PETER2018_1011</span><span class="p">,</span> <span class="n">REFGENE_TAR_NAME</span><span class="p">),</span>
+            <span class="n">PRESENCE_NAME</span><span class="p">:</span> <span class="n">resolve</span><span class="p">(</span><span class="n">PETER2018_1011</span><span class="p">,</span> <span class="n">PRESENCE_NAME</span><span class="p">),</span>
+            <span class="n">COPYNUMBER_NAME</span><span class="p">:</span> <span class="n">resolve</span><span class="p">(</span><span class="n">PETER2018_1011</span><span class="p">,</span> <span class="n">COPYNUMBER_NAME</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="n">sha256_expected</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">CAUDAL_ZIP_BASENAME</span><span class="p">:</span> <span class="n">CAUDAL_ZIP_SHA256</span><span class="p">,</span>
+            <span class="n">REFGENE_TAR_NAME</span><span class="p">:</span> <span class="n">REFGENE_TAR_SHA256</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">src</span> <span class="ow">in</span> <span class="n">sources</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">src</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"required raw artifact missing from mirror: </span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">expected</span> <span class="o">=</span> <span class="n">sha256_expected</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">expected</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">got</span> <span class="o">=</span> <span class="n">_sha256</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">got</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> sha256 mismatch: got </span><span class="si">{</span><span class="n">got</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="p">)</span>
+            <span class="n">dest</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Caudal/Peter raw files linked into </span><span class="si">%s</span><span class="s2"> (sha256 verified)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CaudalPanTranscriptome2024Dataset.process">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.html#torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.process">[docs]</a>
+    <span class="nd">@post_process</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build the 943 per-isolate pan-transcriptome experiments and write LMDB."""</span>
+        <span class="n">data_root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_root</span><span class="p">()</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># 1. Peter presence/absence + copy-number matrices -&gt; core/accessory + ORF maps.</span>
+        <span class="n">presence</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">PRESENCE_NAME</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span>
+        <span class="p">)</span>
+        <span class="n">copynumber</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">COPYNUMBER_NAME</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">presence</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">presence</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="n">orf_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">_demangle_orf</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">]</span>
+        <span class="n">s288c_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">_orf_to_s288c</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">orf_ids</span><span class="p">]</span>
+        <span class="n">s288c_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">s288c_names</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="n">presence_vals</span> <span class="o">=</span> <span class="n">presence</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">copynumber_vals</span> <span class="o">=</span> <span class="n">copynumber</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">core_mask</span> <span class="o">=</span> <span class="n">presence_vals</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">CORE_PRESENCE_THRESHOLD</span>
+        <span class="n">peter_isolates</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">presence</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">))</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Peter pangenome: </span><span class="si">%d</span><span class="s2"> ORFs (</span><span class="si">%d</span><span class="s2"> core, </span><span class="si">%d</span><span class="s2"> accessory), </span><span class="si">%d</span><span class="s2"> isolates"</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">),</span>
+            <span class="nb">int</span><span class="p">(</span><span class="n">core_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+            <span class="nb">int</span><span class="p">((</span><span class="o">~</span><span class="n">core_mask</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">peter_isolates</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="c1"># 2. Caudal expression -&gt; per-(strain, gene) tpm/count, restricted to matched</span>
+        <span class="c1">#    strains; population-mean reference over those strains.</span>
+        <span class="n">strains</span><span class="p">,</span> <span class="n">per_strain</span><span class="p">,</span> <span class="n">ref_tpm</span><span class="p">,</span> <span class="n">ref_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_caudal</span><span class="p">(</span>
+            <span class="n">data_root</span><span class="p">,</span> <span class="n">peter_isolates</span>
+        <span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Matched isolates (Caudal ∩ Peter): </span><span class="si">%d</span><span class="s2">"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">strains</span><span class="p">))</span>
+
+        <span class="c1"># 3. Sequence variants vs the S288C reference slice (heavy; resumable parquet).</span>
+        <span class="n">variants_by_strain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sequence_variants</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="nb">set</span><span class="p">(</span><span class="n">strains</span><span class="p">))</span>
+
+        <span class="c1"># 4. Shared population-mean phenotype reference (absolute TPM baseline).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reference_phenotype</span> <span class="o">=</span> <span class="n">RNASeqExpressionPhenotype</span><span class="p">(</span>
+            <span class="n">expression_tpm</span><span class="o">=</span><span class="n">ref_tpm</span><span class="p">,</span>
+            <span class="n">expression_count</span><span class="o">=</span><span class="n">ref_count</span><span class="p">,</span>
+            <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
+            <span class="n">n_mapped_reads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Row index per strain into the numpy presence/copy-number matrices.</span>
+        <span class="n">strain_row</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">):</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">presence</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">))}</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">"strain_id"</span><span class="p">:</span> <span class="n">strains</span><span class="p">})</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+
+        <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">2e11</span><span class="p">))</span>
+        <span class="n">n_seq_total</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">n_cnv_acc_total</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">n_cnv_core_total</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">strain</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">strains</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"assembling isolates"</span><span class="p">):</span>
+                <span class="n">row</span> <span class="o">=</span> <span class="n">strain_row</span><span class="p">[</span><span class="n">strain</span><span class="p">]</span>
+                <span class="n">presence_perts</span><span class="p">,</span> <span class="n">absence_perts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_content_perturbations</span><span class="p">(</span>
+                    <span class="n">strain</span><span class="p">,</span>
+                    <span class="n">presence_vals</span><span class="p">[</span><span class="n">row</span><span class="p">],</span>
+                    <span class="n">copynumber_vals</span><span class="p">[</span><span class="n">row</span><span class="p">],</span>
+                    <span class="n">s288c_mask</span><span class="p">,</span>
+                    <span class="n">orf_ids</span><span class="p">,</span>
+                    <span class="n">s288c_names</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">seq_perts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sequence_perturbations</span><span class="p">(</span>
+                    <span class="n">strain</span><span class="p">,</span> <span class="n">variants_by_strain</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">strain</span><span class="p">,</span> <span class="p">[])</span>
+                <span class="p">)</span>
+                <span class="n">n_seq_total</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">seq_perts</span><span class="p">)</span>
+                <span class="n">n_cnv_acc_total</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">presence_perts</span><span class="p">)</span>
+                <span class="n">n_cnv_core_total</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">absence_perts</span><span class="p">)</span>
+                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">"strain"</span><span class="p">:</span> <span class="n">strain</span><span class="p">,</span>
+                        <span class="s2">"perturbations"</span><span class="p">:</span> <span class="n">seq_perts</span> <span class="o">+</span> <span class="n">presence_perts</span> <span class="o">+</span> <span class="n">absence_perts</span><span class="p">,</span>
+                        <span class="s2">"expression_tpm"</span><span class="p">:</span> <span class="n">per_strain</span><span class="p">[</span><span class="n">strain</span><span class="p">][</span><span class="s2">"tpm"</span><span class="p">],</span>
+                        <span class="s2">"expression_count"</span><span class="p">:</span> <span class="n">per_strain</span><span class="p">[</span><span class="n">strain</span><span class="p">][</span><span class="s2">"count"</span><span class="p">],</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+                    <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                        <span class="p">{</span>
+                            <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                            <span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                            <span class="s2">"publication"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                        <span class="p">}</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> isolates. Per-isolate means: sequence_variants=</span><span class="si">%.1f</span><span class="s2">, "</span>
+            <span class="s2">"accessory-present=</span><span class="si">%.1f</span><span class="s2">, core-absent=</span><span class="si">%.2f</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">idx</span><span class="p">,</span>
+            <span class="n">n_seq_total</span> <span class="o">/</span> <span class="n">n</span><span class="p">,</span>
+            <span class="n">n_cnv_acc_total</span> <span class="o">/</span> <span class="n">n</span><span class="p">,</span>
+            <span class="n">n_cnv_core_total</span> <span class="o">/</span> <span class="n">n</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_caudal</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">peter_isolates</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
+        <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]],</span>
+        <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Aggregate Caudal expression per (strain, gene); return matched strains + ref."""</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">zipfile</span>
+
+        <span class="n">path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">CAUDAL_ZIP_BASENAME</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">zf</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">zf</span><span class="o">.</span><span class="n">namelist</span><span class="p">()</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".tab"</span><span class="p">))</span>
+            <span class="k">with</span> <span class="n">zf</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span>
+                    <span class="n">handle</span><span class="p">,</span>
+                    <span class="n">encoding</span><span class="o">=</span><span class="s2">"latin-1"</span><span class="p">,</span>
+                    <span class="n">low_memory</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">,</span> <span class="s2">"systematic_name"</span><span class="p">,</span> <span class="s2">"count"</span><span class="p">,</span> <span class="s2">"tpm"</span><span class="p">],</span>
+                <span class="p">)</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="o">~</span><span class="n">df</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">_EXCLUDED_STRAIN_RE</span><span class="p">)]</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"FY4-6"</span><span class="p">]</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">peter_isolates</span><span class="p">)]</span>
+        <span class="c1"># Aggregate multi-allele rows per (strain, gene): tpm sum, count sum (defensive;</span>
+        <span class="c1"># the merged file already carries one row per pair).</span>
+        <span class="n">agg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s2">"Strain"</span><span class="p">,</span> <span class="s2">"systematic_name"</span><span class="p">],</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="n">tpm</span><span class="o">=</span><span class="p">(</span><span class="s2">"tpm"</span><span class="p">,</span> <span class="s2">"sum"</span><span class="p">),</span> <span class="n">count</span><span class="o">=</span><span class="p">(</span><span class="s2">"count"</span><span class="p">,</span> <span class="s2">"sum"</span><span class="p">))</span>
+            <span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">agg</span><span class="p">[</span><span class="s2">"systematic_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">agg</span><span class="p">[</span><span class="s2">"systematic_name"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+        <span class="n">per_strain</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">strain</span><span class="p">,</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">agg</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"Strain"</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="n">genes</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[</span><span class="s2">"systematic_name"</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">tpm</span> <span class="o">=</span> <span class="p">{</span><span class="n">g</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">genes</span><span class="p">,</span> <span class="n">sub</span><span class="p">[</span><span class="s2">"tpm"</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())}</span>
+            <span class="n">count</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">g</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="p">)))</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">genes</span><span class="p">,</span> <span class="n">sub</span><span class="p">[</span><span class="s2">"count"</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+            <span class="p">}</span>
+            <span class="n">per_strain</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">strain</span><span class="p">)]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"tpm"</span><span class="p">:</span> <span class="n">tpm</span><span class="p">,</span> <span class="s2">"count"</span><span class="p">:</span> <span class="n">count</span><span class="p">}</span>
+        <span class="c1"># Population-mean reference over the matched isolates (mean per gene).</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">agg</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"systematic_name"</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span>
+            <span class="n">tpm</span><span class="o">=</span><span class="p">(</span><span class="s2">"tpm"</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">),</span> <span class="n">count</span><span class="o">=</span><span class="p">(</span><span class="s2">"count"</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">ref_tpm</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">g</span><span class="p">):</span> <span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">ref</span><span class="p">[</span><span class="s2">"tpm"</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="n">ref_count</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">g</span><span class="p">):</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="p">)))</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">ref</span><span class="p">[</span><span class="s2">"count"</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="n">strains</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">per_strain</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">strains</span><span class="p">,</span> <span class="n">per_strain</span><span class="p">,</span> <span class="n">ref_tpm</span><span class="p">,</span> <span class="n">ref_count</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sequence_variants</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">matched</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]:</span>
+<span class="w">        </span><span class="sd">"""Diff every isolate's allele vs the S288C reference slice, per gene (resumable).</span>
+
+<span class="sd">        Returns ``strain_id -&gt; [(systematic_gene_name, symbol, header_token), ...]``. The</span>
+<span class="sd">        result is cached to ``preprocess/sequence_variants.parquet`` so re-assembly need not</span>
+<span class="sd">        re-diff the ~6015-gene x 1011-isolate store.</span>
+
+<span class="sd">        Headers naming a Peter isolate outside ``matched`` (68 isolates Caudal did not</span>
+<span class="sd">        sequence) are the only skipped records, and ``_assert_all_isolates_seen`` proves</span>
+<span class="sd">        no isolate we DO build was skipped along with them.</span>
+<span class="sd">        """</span>
+        <span class="n">cache</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"sequence_variants.parquet"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">cache</span><span class="p">):</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Loading cached sequence variants from </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">cache</span><span class="p">)</span>
+            <span class="n">vdf</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_parquet</span><span class="p">(</span><span class="n">cache</span><span class="p">)</span>
+            <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">strain</span><span class="p">,</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">vdf</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"strain_id"</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+                <span class="n">out</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">strain</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+                    <span class="nb">zip</span><span class="p">(</span><span class="n">sub</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">],</span> <span class="n">sub</span><span class="p">[</span><span class="s2">"symbol"</span><span class="p">],</span> <span class="n">sub</span><span class="p">[</span><span class="s2">"header_token"</span><span class="p">])</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="n">out</span>
+
+        <span class="n">chrom</span> <span class="o">=</span> <span class="n">_sgd_chromosomes</span><span class="p">(</span><span class="n">resolve</span><span class="p">(</span><span class="n">SGD_S288C_R64</span><span class="p">,</span> <span class="n">SGD_FSA_NAME</span><span class="p">))</span>
+        <span class="n">tar_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">REFGENE_TAR_NAME</span><span class="p">)</span>
+        <span class="n">strain_col</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">sys_col</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">sym_col</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">tok_col</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">seen_isolates</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">tar_path</span><span class="p">,</span> <span class="s2">"r:gz"</span><span class="p">)</span> <span class="k">as</span> <span class="n">tf</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">tf</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"diffing reference genes"</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">member</span><span class="o">.</span><span class="n">isfile</span><span class="p">():</span>
+                    <span class="k">continue</span>
+                <span class="n">sys_name</span> <span class="o">=</span> <span class="n">member</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">".fasta"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+                <span class="n">extracted</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">extractfile</span><span class="p">(</span><span class="n">member</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">extracted</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">records</span> <span class="o">=</span> <span class="n">_parse_fasta</span><span class="p">(</span><span class="n">extracted</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"latin-1"</span><span class="p">))</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">records</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">ref</span> <span class="o">=</span> <span class="n">_reference_slice</span><span class="p">(</span><span class="n">records</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">chrom</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">header</span><span class="p">,</span> <span class="n">seq</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
+                    <span class="n">token</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">iso</span><span class="p">,</span> <span class="n">symbol</span> <span class="o">=</span> <span class="n">_isolate_and_symbol</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">sys_name</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">iso</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">matched</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="n">seen_isolates</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">iso</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">seq</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">!=</span> <span class="n">ref</span><span class="p">:</span>
+                        <span class="n">strain_col</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">iso</span><span class="p">)</span>
+                        <span class="n">sys_col</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sys_name</span><span class="p">)</span>
+                        <span class="n">sym_col</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span>
+                        <span class="n">tok_col</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+        <span class="c1"># Every built isolate must have been read from a header; a missing one would be</span>
+        <span class="c1"># assembled with an empty genotype rather than failing.</span>
+        <span class="n">_assert_all_isolates_seen</span><span class="p">(</span><span class="n">matched</span><span class="p">,</span> <span class="n">seen_isolates</span><span class="p">)</span>
+        <span class="n">vdf</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">"strain_id"</span><span class="p">:</span> <span class="n">strain_col</span><span class="p">,</span>
+                <span class="s2">"systematic_gene_name"</span><span class="p">:</span> <span class="n">sys_col</span><span class="p">,</span>
+                <span class="s2">"symbol"</span><span class="p">:</span> <span class="n">sym_col</span><span class="p">,</span>
+                <span class="s2">"header_token"</span><span class="p">:</span> <span class="n">tok_col</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">vdf</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">(</span><span class="n">cache</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Diffed </span><span class="si">%d</span><span class="s2"> sequence variants across </span><span class="si">%d</span><span class="s2"> isolates -&gt; </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">vdf</span><span class="p">),</span>
+            <span class="n">vdf</span><span class="p">[</span><span class="s2">"strain_id"</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span>
+            <span class="n">cache</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">strain</span><span class="p">,</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">vdf</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"strain_id"</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="n">out</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">strain</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+                <span class="nb">zip</span><span class="p">(</span><span class="n">sub</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">],</span> <span class="n">sub</span><span class="p">[</span><span class="s2">"symbol"</span><span class="p">],</span> <span class="n">sub</span><span class="p">[</span><span class="s2">"header_token"</span><span class="p">])</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sequence_perturbations</span><span class="p">(</span>
+        <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">variants</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">SequenceVariantPerturbation</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Build the SequenceVariantPerturbations for one isolate."""</span>
+        <span class="n">perts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SequenceVariantPerturbation</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">sys_name</span><span class="p">,</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">variants</span><span class="p">:</span>
+            <span class="n">perts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SequenceVariantPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">sys_name</span><span class="p">,</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">symbol</span> <span class="ow">or</span> <span class="n">sys_name</span><span class="p">,</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">strain</span><span class="p">,</span>
+                    <span class="n">sequence_source</span><span class="o">=</span><span class="n">SEQUENCE_SOURCE</span><span class="p">,</span>
+                    <span class="n">sequence_uri</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">sys_name</span><span class="si">}</span><span class="s2">.fasta#</span><span class="si">{</span><span class="n">token</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                    <span class="n">sequence_sha256</span><span class="o">=</span><span class="n">REFGENE_TAR_SHA256</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">perts</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_content_perturbations</span><span class="p">(</span>
+        <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">presence_row</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">copynumber_row</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">s288c_mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">orf_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">s288c_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
+        <span class="nb">list</span><span class="p">[</span><span class="n">NaturalGenePresencePerturbation</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">NaturalGeneAbsencePerturbation</span><span class="p">]</span>
+    <span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""AXIS-1 presence/absence edits for one isolate, RELATIVE TO S288C.</span>
+
+<span class="sd">        Presence/absence vs S288C is a question of **reference membership** (is this ORF</span>
+<span class="sd">        in S288C?), NOT population frequency (is it in &gt;=99% of isolates?). The two sets</span>
+<span class="sd">        differ -- a reference ORF can be variable, an accessory ORF can be near-ubiquitous</span>
+<span class="sd">        -- so both loops gate on ``s288c_mask`` (does the pangenome column map to an S288C</span>
+<span class="sd">        systematic name, paralog clusters included), never on a frequency ``core_mask``:</span>
+
+<span class="sd">        * non-reference ORF PRESENT -&gt; a natural PRESENCE (S288C lacks it, the isolate has</span>
+<span class="sd">          it), with observed copy number;</span>
+<span class="sd">        * reference ORF ABSENT -&gt; a natural ABSENCE (S288C has it, the isolate lost it).</span>
+
+<span class="sd">        A reference ORF present and an accessory ORF absent are BOTH no-ops vs S288C. The</span>
+<span class="sd">        earlier core/accessory gating silently dropped every *variable* reference ORF that</span>
+<span class="sd">        was absent (~133 per isolate), so those isolates reconstructed as if they still</span>
+<span class="sd">        carried the gene -- the exact failure the "never dropped" invariant forbids.</span>
+<span class="sd">        copy_number != 1 on a present gene is a separate dosage axis, not modelled here.</span>
+<span class="sd">        """</span>
+        <span class="n">presence</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">NaturalGenePresencePerturbation</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">((</span><span class="o">~</span><span class="n">s288c_mask</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">presence_row</span> <span class="o">==</span> <span class="mi">1</span><span class="p">))[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">cn</span> <span class="o">=</span> <span class="n">copynumber_row</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">copy_number</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">cn</span><span class="p">)</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">cn</span><span class="p">)</span> <span class="ow">and</span> <span class="n">cn</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">1.0</span>
+            <span class="n">orf_id</span> <span class="o">=</span> <span class="n">orf_ids</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">presence</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">NaturalGenePresencePerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf_id</span><span class="p">,</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">orf_id</span><span class="p">,</span>
+                    <span class="n">copy_number</span><span class="o">=</span><span class="n">copy_number</span><span class="p">,</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">strain</span><span class="p">,</span>
+                    <span class="n">pangenome_orf_id</span><span class="o">=</span><span class="n">orf_id</span><span class="p">,</span>
+                    <span class="n">origin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">sequence_source</span><span class="o">=</span><span class="n">SEQUENCE_SOURCE</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">absence</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">NaturalGeneAbsencePerturbation</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">s288c_mask</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">presence_row</span> <span class="o">==</span> <span class="mi">0</span><span class="p">))[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="c1"># s288c_mask guarantees a systematic name here; keep the pangenome-id fallback</span>
+            <span class="c1"># defensively so an absence is never dropped.</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">s288c_names</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="ow">or</span> <span class="n">orf_ids</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">absence</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">NaturalGeneAbsencePerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">strain</span><span class="p">,</span>
+                    <span class="n">pangenome_orf_id</span><span class="o">=</span><span class="n">orf_ids</span><span class="p">[</span><span class="n">j</span><span class="p">],</span>
+                    <span class="n">sequence_source</span><span class="o">=</span><span class="n">SEQUENCE_SOURCE</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">presence</span><span class="p">,</span> <span class="n">absence</span>
+
+<div class="viewcode-block" id="CaudalPanTranscriptome2024Dataset.preprocess_raw">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.html#torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.preprocess_raw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Preprocessing is handled inside process() for this dataset."""</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="CaudalPanTranscriptome2024Dataset.create_experiment">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.html#torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.create_experiment">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span>  <span class="c1"># type: ignore[override]</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
+        <span class="n">RNASeqExpressionExperiment</span><span class="p">,</span> <span class="n">RNASeqExpressionExperimentReference</span><span class="p">,</span> <span class="n">Publication</span>
+    <span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Build the RNA-seq experiment/reference/publication for one isolate."""</span>
+        <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"S288C"</span>
+        <span class="p">)</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"perturbations"</span><span class="p">])</span>
+        <span class="c1"># SC liquid medium, 30 C, harvested at mid-log (OD ~0.3) -- Caudal Methods.</span>
+        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
+            <span class="n">media</span><span class="o">=</span><span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"SC"</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">30</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">RNASeqExpressionPhenotype</span><span class="p">(</span>
+            <span class="n">expression_tpm</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"expression_tpm"</span><span class="p">],</span>
+            <span class="n">expression_count</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"expression_count"</span><span class="p">],</span>
+            <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
+            <span class="n">n_mapped_reads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">experiment</span> <span class="o">=</span> <span class="n">RNASeqExpressionExperiment</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">genotype</span><span class="o">=</span><span class="n">genotype</span><span class="p">,</span>
+            <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">phenotype</span><span class="o">=</span><span class="n">phenotype</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="n">RNASeqExpressionExperimentReference</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="n">genome_reference</span><span class="p">,</span>
+            <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(),</span>
+            <span class="n">phenotype_reference</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_reference_phenotype</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span>
+            <span class="n">pubmed_id</span><span class="o">=</span><span class="s2">"38778243"</span><span class="p">,</span>
+            <span class="n">pubmed_url</span><span class="o">=</span><span class="s2">"https://pubmed.ncbi.nlm.nih.gov/38862621/"</span><span class="p">,</span>
+            <span class="n">doi</span><span class="o">=</span><span class="s2">"10.1038/s41588-024-01769-9"</span><span class="p">,</span>
+            <span class="n">doi_url</span><span class="o">=</span><span class="s2">"https://doi.org/10.1038/s41588-024-01769-9"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_fasta</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Parse FASTA text into ``[(header_without_gt, sequence), ...]``."""</span>
+    <span class="n">records</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">header</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">seq</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"&gt;"</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">header</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">records</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">header</span><span class="p">,</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">seq</span><span class="p">)))</span>
+            <span class="n">header</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="n">seq</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">seq</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">header</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">records</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">header</span><span class="p">,</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">seq</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">records</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sha256</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">20</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the hex sha256 of a file, read in chunks."""</span>
+    <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">handle</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">chunk_size</span><span class="p">),</span> <span class="sa">b</span><span class="s2">""</span><span class="p">):</span>
+            <span class="n">digest</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">digest</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build/load the dataset for interactive debugging.</span>
+
+<span class="sd">    Loads the existing LMDB if already built. To rebuild, delete ``&lt;root&gt;/processed``</span>
+<span class="sd">    (and ``&lt;root&gt;/preprocess/sequence_variants.parquet`` to re-diff) first.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">],</span> <span class="s2">"data/torchcell/caudal_pantranscriptome2024"</span>
+    <span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">CaudalPanTranscriptome2024Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"len = </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">record</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">exp</span> <span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span>
+    <span class="n">ptypes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">pert</span> <span class="ow">in</span> <span class="n">exp</span><span class="p">[</span><span class="s2">"genotype"</span><span class="p">][</span><span class="s2">"perturbations"</span><span class="p">]:</span>
+        <span class="n">ptypes</span><span class="p">[</span><span class="n">pert</span><span class="p">[</span><span class="s2">"perturbation_type"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ptypes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pert</span><span class="p">[</span><span class="s2">"perturbation_type"</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"record[0] perturbation-type counts:"</span><span class="p">,</span> <span class="n">ptypes</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"record[0] phenotype gene count:"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">exp</span><span class="p">[</span><span class="s2">"phenotype"</span><span class="p">][</span><span class="s2">"expression_tpm"</span><span class="p">]))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"record[0] genome_reference:"</span><span class="p">,</span> <span class="n">record</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">][</span><span class="s2">"genome_reference"</span><span class="p">])</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

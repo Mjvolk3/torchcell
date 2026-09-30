@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.dataset\_adapter\_files
+================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autofunction:: dataset_adapter_files

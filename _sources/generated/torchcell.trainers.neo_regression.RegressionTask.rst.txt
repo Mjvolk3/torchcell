@@ -1,0 +1,8 @@
+﻿torchcell.trainers.neo\_regression.RegressionTask
+=================================================
+
+.. currentmodule:: torchcell.trainers.neo_regression
+
+.. autoclass:: RegressionTask
+   :show-inheritance:
+   :members:

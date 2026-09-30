@@ -1,0 +1,6 @@
+﻿torchcell.literature.capture\_by\_doi
+=====================================
+
+.. currentmodule:: torchcell.literature
+
+.. autofunction:: capture_by_doi

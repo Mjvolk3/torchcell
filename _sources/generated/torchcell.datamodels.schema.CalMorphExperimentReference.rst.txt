@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.CalMorphExperimentReference
+=======================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: CalMorphExperimentReference
+   :show-inheritance:
+   :members:

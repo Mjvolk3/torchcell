@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.PresenceAbsencePerturbation
+=======================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: PresenceAbsencePerturbation
+   :show-inheritance:
+   :members:

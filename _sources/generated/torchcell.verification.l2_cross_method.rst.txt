@@ -1,0 +1,6 @@
+﻿torchcell.verification.l2\_cross\_method
+========================================
+
+.. currentmodule:: torchcell.verification
+
+.. autofunction:: l2_cross_method

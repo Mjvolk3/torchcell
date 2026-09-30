@@ -1,0 +1,6 @@
+﻿torchcell.models.hetero\_cell\_bipartite\_dango\_gi\_lazy.calculate\_weight\_l2\_norm
+=====================================================================================
+
+.. currentmodule:: torchcell.models.hetero_cell_bipartite_dango_gi_lazy
+
+.. autofunction:: calculate_weight_l2_norm

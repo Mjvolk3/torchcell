@@ -1,0 +1,8 @@
+﻿torchcell.datasets.GraphEmbeddingDataset
+========================================
+
+.. currentmodule:: torchcell.datasets
+
+.. autoclass:: GraphEmbeddingDataset
+   :show-inheritance:
+   :members:

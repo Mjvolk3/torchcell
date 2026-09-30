@@ -1,0 +1,8 @@
+﻿torchcell.models.cell\_graph\_transformer\_metabolism.MetabolomeVectorHead
+==========================================================================
+
+.. currentmodule:: torchcell.models.cell_graph_transformer_metabolism
+
+.. autoclass:: MetabolomeVectorHead
+   :show-inheritance:
+   :members:

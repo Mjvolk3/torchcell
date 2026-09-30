@@ -1,0 +1,8 @@
+﻿torchcell.metabolism.parameters.ParameterProvenance
+===================================================
+
+.. currentmodule:: torchcell.metabolism.parameters
+
+.. autoclass:: ParameterProvenance
+   :show-inheritance:
+   :members:

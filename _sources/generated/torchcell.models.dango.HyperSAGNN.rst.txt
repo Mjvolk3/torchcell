@@ -1,0 +1,8 @@
+﻿torchcell.models.dango.HyperSAGNN
+=================================
+
+.. currentmodule:: torchcell.models.dango
+
+.. autoclass:: HyperSAGNN
+   :show-inheritance:
+   :members:

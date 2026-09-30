@@ -1,0 +1,8 @@
+﻿torchcell.data.Deduplicator
+===========================
+
+.. currentmodule:: torchcell.data
+
+.. autoclass:: Deduplicator
+   :show-inheritance:
+   :members:

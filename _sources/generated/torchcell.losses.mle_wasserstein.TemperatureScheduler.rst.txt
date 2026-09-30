@@ -1,0 +1,8 @@
+﻿torchcell.losses.mle\_wasserstein.TemperatureScheduler
+======================================================
+
+.. currentmodule:: torchcell.losses.mle_wasserstein
+
+.. autoclass:: TemperatureScheduler
+   :show-inheritance:
+   :members:

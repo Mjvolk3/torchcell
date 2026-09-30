@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.create\_scerevisiae\_kg.get\_num\_workers
+=====================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.create_scerevisiae_kg
+
+.. autofunction:: get_num_workers

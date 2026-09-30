@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.identity.compound\_identity\_key
+=====================================================
+
+.. currentmodule:: torchcell.datamodels.identity
+
+.. autofunction:: compound_identity_key

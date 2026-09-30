@@ -1,0 +1,8 @@
+﻿torchcell.models.cell\_latent\_perturbation\_unified.ProjectedGATConv
+=====================================================================
+
+.. currentmodule:: torchcell.models.cell_latent_perturbation_unified
+
+.. autoclass:: ProjectedGATConv
+   :show-inheritance:
+   :members:

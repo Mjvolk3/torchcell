@@ -1,0 +1,391 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.verification.metabolite &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/verification/metabolite.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.verification.metabolite</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.verification.metabolite</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/verification/metabolite</span>
+<span class="c1"># [[torchcell.verification.metabolite]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/verification/metabolite</span>
+<span class="sd">"""L0-L4 record-level verifier for metabolite datasets (roadmap WS8; Cachera2023).</span>
+
+<span class="sd">For `MetabolitePhenotype` datasets (e.g. the Cachera CRI-SPA betaxanthin screen). The</span>
+<span class="sd">schema validator already enforces non-empty levels, matching level/replicate keys, and</span>
+<span class="sd">non-negative SE, so L0 subsumes those. This verifier adds:</span>
+
+<span class="sd">1. L1 `genotype_uniqueness` -- one record per strain (deletion-set signature; a single-</span>
+<span class="sd">   deletion collection reduces to one gene per record, a combinatorial one keys on the set).</span>
+<span class="sd">2. L2 `level_finiteness` -- measured levels are finite (guards inf/NaN).</span>
+<span class="sd">3. L3 `reference_zero` -- the control level is 0 (population-centered baseline).</span>
+<span class="sd">4. L3 `measurement_type_consistent` -- every record shares one measurement_type (levels</span>
+<span class="sd">   from different assays must not be silently mixed).</span>
+<span class="sd">5. L4 `gene_containment` (caller) -- the screened deletions overlap the yeast deletion</span>
+<span class="sd">   collection used by the other datasets.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.levels</span><span class="w"> </span><span class="kn">import</span> <span class="n">l0_structural</span><span class="p">,</span> <span class="n">l1_count</span><span class="p">,</span> <span class="n">l2_value_fidelity</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Level</span><span class="p">,</span>
+    <span class="n">LevelResult</span><span class="p">,</span>
+    <span class="n">Provenance</span><span class="p">,</span>
+    <span class="n">VerificationReport</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">Record</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_deleted_genes</span><span class="p">(</span><span class="n">experiment</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Systematic names deleted in this experiment's genotype.</span>
+
+<span class="sd">    Excludes ``gene_addition`` perturbations: the engineered cassette background is</span>
+<span class="sd">    constant across every strain (and heterologous names are not real ORFs), so it is</span>
+<span class="sd">    not a screened deletion and must not enter the L1/L4 deleted-ORF key.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">p</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">experiment</span><span class="p">[</span><span class="s2">"genotype"</span><span class="p">][</span><span class="s2">"perturbations"</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbation_type"</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">"gene_addition"</span>
+    <span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_genotype_signature</span><span class="p">(</span>
+    <span class="n">experiment</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Canonical STRAIN identity: the sorted set of deleted perturbations, each keyed by</span>
+<span class="sd">    (systematic_gene_name, perturbation_type, perturbed_gene_name), excluding gene additions.</span>
+
+<span class="sd">    A single-deletion collection reduces to one gene per record (so this equals per-ORF</span>
+<span class="sd">    uniqueness); a COMBINATORIAL collection (e.g. Xue FFA: a POX1-FAA1-FAA4 baseline plus a</span>
+<span class="sd">    set of TF deletions) has one record per unique deletion SET -- an individual ORF legitimately</span>
+<span class="sd">    recurs across many strains, so uniqueness must key on the whole set, not the single ORF.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span>
+        <span class="nb">sorted</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">),</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbation_type"</span><span class="p">),</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbed_gene_name"</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">experiment</span><span class="p">[</span><span class="s2">"genotype"</span><span class="p">][</span><span class="s2">"perturbations"</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbation_type"</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">"gene_addition"</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_l1_orf_uniqueness</span><span class="p">(</span><span class="n">records</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Record</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""L1: exactly one record per STRAIN (genotype signature of deleted ORFs)."""</span>
+    <span class="n">seen</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="o">...</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
+        <span class="n">sig</span> <span class="o">=</span> <span class="n">_genotype_signature</span><span class="p">(</span><span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">])</span>
+        <span class="n">seen</span><span class="p">[</span><span class="n">sig</span><span class="p">]</span> <span class="o">=</span> <span class="n">seen</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">sig</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">dups</span> <span class="o">=</span> <span class="p">{</span><span class="n">s</span><span class="p">:</span> <span class="n">n</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">seen</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L1</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"genotype_uniqueness"</span><span class="p">,</span>
+        <span class="n">passed</span><span class="o">=</span><span class="ow">not</span> <span class="n">dups</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">seen</span><span class="p">)</span><span class="si">}</span><span class="s2"> unique strains (deletion sets), one record each"</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">dups</span>
+            <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dups</span><span class="p">)</span><span class="si">}</span><span class="s2"> deletion sets appear in multiple records"</span>
+        <span class="p">),</span>
+        <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s2">"n_strains"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">seen</span><span class="p">),</span> <span class="s2">"n_duplicated"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">dups</span><span class="p">)},</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_l3_reference_zero</span><span class="p">(</span><span class="n">records</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Record</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""L3: the reference (control) metabolite level is 0 (centered baseline)."""</span>
+    <span class="n">worst</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
+        <span class="n">levels</span> <span class="o">=</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">][</span><span class="s2">"phenotype_reference"</span><span class="p">][</span><span class="s2">"metabolite_level"</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">levels</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">worst</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">worst</span><span class="p">,</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span>
+    <span class="n">holds</span> <span class="o">=</span> <span class="n">worst</span> <span class="o">==</span> <span class="mf">0.0</span>
+    <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L3</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"reference_zero"</span><span class="p">,</span>
+        <span class="n">passed</span><span class="o">=</span><span class="n">holds</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"reference metabolite level == 0 for all </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> values"</span>
+            <span class="k">if</span> <span class="n">holds</span>
+            <span class="k">else</span> <span class="sa">f</span><span class="s2">"reference level not identically 0: max|v|=</span><span class="si">{</span><span class="n">worst</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">),</span>
+        <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s2">"n_values"</span><span class="p">:</span> <span class="n">n</span><span class="p">,</span> <span class="s2">"worst_abs"</span><span class="p">:</span> <span class="n">worst</span><span class="p">},</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_l3_reference_finite</span><span class="p">(</span><span class="n">records</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Record</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""L3: the reference level is finite and defined for every measured metabolite.</span>
+
+<span class="sd">    For ABSOLUTE-quantity datasets the reference is a WT-equivalent baseline, not a</span>
+<span class="sd">    centered 0, so we check the reference is well-defined: non-empty, every value finite,</span>
+<span class="sd">    and its metabolite keys are a SUBSET of the experiment's measured metabolites. Dense</span>
+<span class="sd">    screens (e.g. Mulleder amino acids) key-match exactly (subset + equal cardinality);</span>
+<span class="sd">    sparse targeted metabolomics (e.g. Zelezniak) reference each strain against the WT</span>
+<span class="sd">    baseline only for the metabolites the WT measured, so the reference is a proper subset</span>
+<span class="sd">    (a strain may measure metabolites the WT lacks, which then have no WT baseline).</span>
+<span class="sd">    """</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">bad</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
+        <span class="n">exp_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"phenotype"</span><span class="p">][</span><span class="s2">"metabolite_level"</span><span class="p">])</span>
+        <span class="n">levels</span> <span class="o">=</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">][</span><span class="s2">"phenotype_reference"</span><span class="p">][</span><span class="s2">"metabolite_level"</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">levels</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">set</span><span class="p">(</span><span class="n">levels</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">exp_keys</span><span class="p">:</span>
+            <span class="n">bad</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">continue</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">levels</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)):</span>
+                <span class="n">bad</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">holds</span> <span class="o">=</span> <span class="n">bad</span> <span class="o">==</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L3</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"reference_finite"</span><span class="p">,</span>
+        <span class="n">passed</span><span class="o">=</span><span class="n">holds</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"reference level finite + key-subset for all </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> values"</span>
+            <span class="k">if</span> <span class="n">holds</span>
+            <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">bad</span><span class="si">}</span><span class="s2"> reference levels non-finite, empty, or not a key-subset"</span>
+        <span class="p">),</span>
+        <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s2">"n_values"</span><span class="p">:</span> <span class="n">n</span><span class="p">,</span> <span class="s2">"n_bad"</span><span class="p">:</span> <span class="n">bad</span><span class="p">},</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_l3_measurement_type_consistent</span><span class="p">(</span><span class="n">records</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Record</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""L3: all records share a single measurement_type (no silent cross-assay mixing)."""</span>
+    <span class="n">types</span> <span class="o">=</span> <span class="p">{</span><span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"phenotype"</span><span class="p">][</span><span class="s2">"measurement_type"</span><span class="p">]</span> <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L3</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"measurement_type_consistent"</span><span class="p">,</span>
+        <span class="n">passed</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">types</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"single measurement_type: </span><span class="si">{</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">types</span><span class="p">),</span><span class="w"> </span><span class="kc">None</span><span class="p">)</span><span class="si">!r}</span><span class="s2">"</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">types</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span>
+            <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">types</span><span class="p">)</span><span class="si">}</span><span class="s2"> distinct measurement_types mixed: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">types</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">),</span>
+        <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s2">"measurement_types"</span><span class="p">:</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">types</span><span class="p">)},</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="verify_metabolite_dataset">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.verify_metabolite_dataset.html#torchcell.verification.verify_metabolite_dataset">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">verify_metabolite_dataset</span><span class="p">(</span>
+    <span class="n">records</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Record</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="n">Provenance</span><span class="p">,</span>
+    <span class="n">expected_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">reference_centered</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VerificationReport</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Run the L0-L3 record-level gate for a metabolite dataset.</span>
+
+<span class="sd">    ``reference_centered`` (default True): assert the reference level is identically 0,</span>
+<span class="sd">    for population-CENTERED scores (Cachera CRI-SPA). Set False for ABSOLUTE-quantity</span>
+<span class="sd">    datasets (Mulleder amino-acid concentrations), where the reference is a WT-equivalent</span>
+<span class="sd">    baseline and is instead checked for finiteness + key-consistency.</span>
+
+<span class="sd">    L4 (cross-source gene overlap with the deletion collection) is asserted by the</span>
+<span class="sd">    caller across datasets.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeAdapter</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentType</span>
+
+    <span class="n">validate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="n">TypeAdapter</span><span class="p">(</span><span class="n">ExperimentType</span><span class="p">)</span><span class="o">.</span><span class="n">validate_python</span>
+
+    <span class="n">report</span> <span class="o">=</span> <span class="n">VerificationReport</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">provenance</span><span class="o">=</span><span class="n">provenance</span><span class="p">)</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">l0_structural</span><span class="p">((</span><span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span> <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span><span class="p">),</span> <span class="n">validate</span><span class="p">))</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">l1_count</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">),</span> <span class="n">expected_count</span><span class="p">))</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_l1_orf_uniqueness</span><span class="p">(</span><span class="n">records</span><span class="p">))</span>
+
+    <span class="n">levels</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"phenotype"</span><span class="p">][</span><span class="s2">"metabolite_level"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+    <span class="p">]</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">l2_value_fidelity</span><span class="p">(</span><span class="n">levels</span><span class="p">,</span> <span class="n">allow_nan</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+    <span class="c1"># SE may be NaN where a metabolite has a single replicate; never negative.</span>
+    <span class="n">se_values</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"phenotype"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"metabolite_level_se"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+    <span class="p">]</span>
+    <span class="n">se_result</span> <span class="o">=</span> <span class="n">l2_value_fidelity</span><span class="p">(</span><span class="n">se_values</span><span class="p">,</span> <span class="n">allow_nan</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">minimum</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+        <span class="n">LevelResult</span><span class="p">(</span>
+            <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L2</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"se_nonnegative"</span><span class="p">,</span>
+            <span class="n">passed</span><span class="o">=</span><span class="n">se_result</span><span class="o">.</span><span class="n">passed</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="n">se_result</span><span class="o">.</span><span class="n">message</span><span class="p">,</span>
+            <span class="n">details</span><span class="o">=</span><span class="n">se_result</span><span class="o">.</span><span class="n">details</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">reference_centered</span><span class="p">:</span>
+        <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_l3_reference_zero</span><span class="p">(</span><span class="n">records</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_l3_reference_finite</span><span class="p">(</span><span class="n">records</span><span class="p">))</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_l3_measurement_type_consistent</span><span class="p">(</span><span class="n">records</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">report</span></div>
+
+
+
+<div class="viewcode-block" id="metabolite_gene_set">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.metabolite_gene_set.html#torchcell.verification.metabolite_gene_set">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">metabolite_gene_set</span><span class="p">(</span><span class="n">records</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Record</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Union of deleted systematic gene names across records (the L4 overlap key)."""</span>
+    <span class="n">genes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
+        <span class="n">genes</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_deleted_genes</span><span class="p">(</span><span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="n">genes</span></div>
+
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"verify_metabolite_dataset"</span><span class="p">,</span> <span class="s2">"metabolite_gene_set"</span><span class="p">,</span> <span class="s2">"Record"</span><span class="p">]</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,8 @@
+﻿torchcell.datasets.RandomEmbeddingDataset
+=========================================
+
+.. currentmodule:: torchcell.datasets
+
+.. autoclass:: RandomEmbeddingDataset
+   :show-inheritance:
+   :members:

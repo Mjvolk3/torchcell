@@ -1,0 +1,8 @@
+﻿torchcell.datasets.CodonFrequencyDataset
+========================================
+
+.. currentmodule:: torchcell.datasets
+
+.. autoclass:: CodonFrequencyDataset
+   :show-inheritance:
+   :members:

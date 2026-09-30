@@ -1,0 +1,8 @@
+﻿torchcell.models.dcell.DCellSubsystem
+=====================================
+
+.. currentmodule:: torchcell.models.dcell
+
+.. autoclass:: DCellSubsystem
+   :show-inheritance:
+   :members:

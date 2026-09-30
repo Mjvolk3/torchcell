@@ -1,0 +1,6 @@
+﻿torchcell.metabolism.constraints.null\_space\_basis
+===================================================
+
+.. currentmodule:: torchcell.metabolism.constraints
+
+.. autofunction:: null_space_basis

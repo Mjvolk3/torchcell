@@ -1,0 +1,672 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.paper.tables &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/paper/tables.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.paper.tables</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.paper.tables</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/paper/tables.py</span>
+<span class="c1"># [[torchcell.paper.tables]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/paper/tables.py</span>
+<span class="c1"># Test file: tests/torchcell/paper/test_tables.py</span>
+<span class="sd">"""Reusable primitives for generating paper tables in BOTH markdown and LaTeX</span>
+<span class="sd">from a single in-code source of truth, plus data-derived columns such as a</span>
+<span class="sd">streaming-gzip "signal" (a Kolmogorov-complexity proxy) computed directly from a</span>
+<span class="sd">built LMDB.</span>
+
+<span class="sd">Why this exists: paper tables were being hand-transcribed from markdown into</span>
+<span class="sd">LaTeX, which drifts and hides errors. The reliable pattern is: define columns +</span>
+<span class="sd">rows once (pydantic), compute any data-derived cells from the source of truth</span>
+<span class="sd">(the LMDB), then render markdown and LaTeX from the same object. This module is</span>
+<span class="sd">table-agnostic so multiple paper tables can reuse it.</span>
+
+<span class="sd">Building blocks:</span>
+<span class="sd">  - ``human_bytes`` / ``tex_escape``            -- formatting helpers</span>
+<span class="sd">  - ``stream_gzip_signal``                      -- bounded-memory gzip size over an LMDB</span>
+<span class="sd">  - ``SignalCache``                             -- memoize signals, keyed by LMDB fingerprint</span>
+<span class="sd">  - ``Column`` / ``Row`` / ``PaperTable``       -- render the same table to md + LaTeX</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">zlib</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="c1"># --- formatting -----------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="human_bytes">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.tables.human_bytes.html#torchcell.paper.tables.human_bytes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">human_bytes</span><span class="p">(</span><span class="n">nbytes</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Format a byte count the way a paper table reads: 0.6 KB, 101 KB, 1.9 MB.</span>
+
+<span class="sd">    Uses SI (1000) units to match the gzip-size convention already in the note.</span>
+<span class="sd">    """</span>
+    <span class="n">kb</span> <span class="o">=</span> <span class="n">nbytes</span> <span class="o">/</span> <span class="mi">1000</span>
+    <span class="k">if</span> <span class="n">kb</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">nbytes</span><span class="si">}</span><span class="s2"> B"</span>
+    <span class="k">if</span> <span class="n">kb</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">kb</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"0"</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span> <span class="o">+</span> <span class="s2">" KB"</span>
+    <span class="k">if</span> <span class="n">kb</span> <span class="o">&lt;</span> <span class="mi">1000</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">kb</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> KB"</span>
+    <span class="n">mb</span> <span class="o">=</span> <span class="n">kb</span> <span class="o">/</span> <span class="mi">1000</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">mb</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"0"</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span> <span class="o">+</span> <span class="s2">" MB"</span></div>
+
+
+
+<span class="n">_TEX_REPLACEMENTS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"&amp;"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\&amp;"</span><span class="p">,</span>
+    <span class="s2">"%"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\%"</span><span class="p">,</span>
+    <span class="s2">"_"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\_"</span><span class="p">,</span>
+    <span class="s2">"#"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\#"</span><span class="p">,</span>
+    <span class="s2">"$"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\$"</span><span class="p">,</span>
+    <span class="s2">"×"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"$\times$"</span><span class="p">,</span>
+    <span class="s2">"~"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\textasciitilde</span><span class="si">{}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="s2">"β"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"$\beta$"</span><span class="p">,</span>
+    <span class="s2">"±"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"$\pm$"</span><span class="p">,</span>
+    <span class="s2">"≈"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"$\approx$"</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="tex_escape">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.tables.tex_escape.html#torchcell.paper.tables.tex_escape">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">tex_escape</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Escape the LaTeX specials that show up in dataset table cells.</span>
+
+<span class="sd">    Note ``$`` is escaped too, so pass already-formed math (e.g. ``n×1``) using</span>
+<span class="sd">    the unicode source characters (``×``) and let this build the math, rather</span>
+<span class="sd">    than embedding raw ``$...$`` yourself.</span>
+<span class="sd">    """</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">_TEX_REPLACEMENTS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">s</span></div>
+
+
+
+<div class="viewcode-block" id="Cell">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.tables.Cell.html#torchcell.paper.tables.Cell">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Cell</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A table cell that renders differently in markdown vs LaTeX.</span>
+
+<span class="sd">    Use when a value needs markup that differs between the two targets -- e.g.</span>
+<span class="sd">    scientific notation, where markdown wants unicode superscripts (``1.3×10⁵``)</span>
+<span class="sd">    and LaTeX wants math mode (``$1.3\times10^{5}$``). ``tex`` is emitted RAW</span>
+<span class="sd">    (not escaped); plain ``str`` cells are tex-escaped as usual.</span>
+<span class="sd">    """</span>
+
+    <span class="n">md</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">tex</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<span class="n">_SUPERSCRIPT</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">maketrans</span><span class="p">(</span><span class="s2">"0123456789-"</span><span class="p">,</span> <span class="s2">"⁰¹²³⁴⁵⁶⁷⁸⁹⁻"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="scientific">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.tables.scientific.html#torchcell.paper.tables.scientific">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">scientific</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Cell</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Format a number in scientific notation (unit-free) for a table cell.</span>
+
+<span class="sd">    Renders identically-shaped magnitudes so a column is scannable and aligns:</span>
+<span class="sd">    ``584 -&gt; 5.8×10²``, ``103398 -&gt; 1.0×10⁵``, ``127797526 -&gt; 1.3×10⁸``. Mantissa</span>
+<span class="sd">    is 2 significant figures. The UNIT belongs in the column header (e.g. bytes),</span>
+<span class="sd">    not the cell -- keeping cells numeric is what lets them right-align cleanly.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Cell</span><span class="p">(</span><span class="n">md</span><span class="o">=</span><span class="s2">"0"</span><span class="p">,</span> <span class="n">tex</span><span class="o">=</span><span class="s2">"0"</span><span class="p">)</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+    <span class="n">mant</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">value</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">10</span><span class="o">**</span><span class="n">e</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">return</span> <span class="n">Cell</span><span class="p">(</span>
+        <span class="n">md</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">mant</span><span class="si">}</span><span class="s2">×10</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="n">_SUPERSCRIPT</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="n">tex</span><span class="o">=</span><span class="sa">rf</span><span class="s2">"$</span><span class="si">{</span><span class="n">mant</span><span class="si">}</span><span class="s2">\times10^</span><span class="se">{{</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="se">}}</span><span class="s2">$"</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1"># --- gzip signal over an LMDB (streaming, bounded memory) -----------------</span>
+
+
+<div class="viewcode-block" id="default_phenotype_bytes">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.tables.default_phenotype_bytes.html#torchcell.paper.tables.default_phenotype_bytes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">default_phenotype_bytes</span><span class="p">(</span><span class="n">record</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Extract the serialized phenotype from a torchcell LMDB record.</span>
+
+<span class="sd">    Records are ``{"experiment": {..., "phenotype": {...}}, ...}``. Sorting</span>
+<span class="sd">    keys makes the signal deterministic across builds.</span>
+<span class="sd">    """</span>
+    <span class="n">ph</span> <span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"phenotype"</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">ph</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="instance_bytes">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.tables.instance_bytes.html#torchcell.paper.tables.instance_bytes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">instance_bytes</span><span class="p">(</span><span class="n">record</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Serialize the full stored INSTANCE (perturbation + environment + phenotype).</span>
+
+<span class="sd">    This counts the stored PERTURBATION -- the edit that defines the genotype,</span>
+<span class="sd">    whether a single gene deletion or thousands of natural gene-presence entries</span>
+<span class="sd">    that amount to an entirely new genome (referenced by ``sequence_uri`` +</span>
+<span class="sd">    ``sequence_sha256``) -- alongside the environment and the measured phenotype.</span>
+<span class="sd">    It never includes the shared reference genome (that lives external, as a</span>
+<span class="sd">    pointer, and is not stored per-instance); only each instance's delta from it.</span>
+<span class="sd">    Constant record metadata (experiment_type, dataset_name) compresses away.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">record</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">],</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="stream_gzip_signal">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.tables.stream_gzip_signal.html#torchcell.paper.tables.stream_gzip_signal">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">stream_gzip_signal</span><span class="p">(</span>
+    <span class="n">lmdb_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">extract</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="nb">bytes</span><span class="p">]</span> <span class="o">=</span> <span class="n">default_phenotype_bytes</span><span class="p">,</span>
+    <span class="n">level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
+    <span class="n">log_every</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1_000_000</span><span class="p">,</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="n">log</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="nb">print</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Return ``(n_records, gzip_bytes)`` for an LMDB in a single streaming pass.</span>
+
+<span class="sd">    Byte-equivalent to gzip-compressing the concatenation of ``extract(record)``</span>
+<span class="sd">    over every record, but via ``zlib.compressobj`` so memory stays bounded --</span>
+<span class="sd">    this is what lets 20M+ record LMDBs (tens of GB) get a real value instead of</span>
+<span class="sd">    "pending". ``extract`` is pluggable so the same machinery can measure other</span>
+<span class="sd">    per-record payloads for future tables.</span>
+<span class="sd">    """</span>
+    <span class="n">lmdb_dir</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">lmdb_dir</span><span class="p">)</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">lmdb_dir</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">lock</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">max_readers</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span>
+    <span class="n">comp</span> <span class="o">=</span> <span class="n">zlib</span><span class="o">.</span><span class="n">compressobj</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">zlib</span><span class="o">.</span><span class="n">DEFLATED</span><span class="p">,</span> <span class="mi">16</span> <span class="o">+</span> <span class="n">zlib</span><span class="o">.</span><span class="n">MAX_WBITS</span><span class="p">)</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">txn</span><span class="o">.</span><span class="n">cursor</span><span class="p">():</span>
+                <span class="n">total</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">comp</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">extract</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">v</span><span class="p">))))</span>
+                <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">log_every</span> <span class="ow">and</span> <span class="n">n</span> <span class="o">%</span> <span class="n">log_every</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">rate</span> <span class="o">=</span> <span class="n">n</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span><span class="p">,</span> <span class="mf">1e-9</span><span class="p">)</span>
+                    <span class="n">log</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"    [</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">n</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> records (</span><span class="si">{</span><span class="n">rate</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">/s, </span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t0</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">s)"</span>
+                    <span class="p">)</span>
+        <span class="n">total</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">comp</span><span class="o">.</span><span class="n">flush</span><span class="p">())</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">n</span><span class="p">,</span> <span class="n">total</span></div>
+
+
+
+<div class="viewcode-block" id="DatasetSignalRecord">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.tables.DatasetSignalRecord.html#torchcell.paper.tables.DatasetSignalRecord">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DatasetSignalRecord</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One dataset's computed row -- the raw-data artifact the DB report emits.</span>
+
+<span class="sd">    This is the source-of-truth output: a ``build`` step scans each LMDB and</span>
+<span class="sd">    writes a list of these to JSON; ``render`` (table) and ``plot`` (scatter)</span>
+<span class="sd">    steps consume ONLY the JSON, never re-reading an LMDB. ``instances`` is the</span>
+<span class="sd">    dataset length (record count); ``signal_bytes`` is the gzip proxy.</span>
+<span class="sd">    """</span>
+
+    <span class="n">section</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">genotypes</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">env</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">instances</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">shape</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">graph_role</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">signal_bytes</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">built</span><span class="p">:</span> <span class="nb">bool</span></div>
+
+
+
+<div class="viewcode-block" id="read_first_record">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.tables.read_first_record.html#torchcell.paper.tables.read_first_record">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_first_record</span><span class="p">(</span><span class="n">lmdb_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Return the first record of an LMDB (for schema-derived table columns)."""</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">lmdb_dir</span><span class="p">),</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">lock</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">txn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()))</span>
+            <span class="n">record</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">record</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+
+<span class="c1"># The schema stores a ``graph_level`` per phenotype; display it against the Cell</span>
+<span class="c1"># Graph Transformer's structure -- the gene multigraph + the bipartite metabolic</span>
+<span class="c1"># network. ``metabolism`` -&gt; ``bipartite node`` (a metabolite in the bipartite</span>
+<span class="c1"># layer). Interactions are refined edge-vs-hyperedge by gene count below.</span>
+<span class="n">GRAPH_ROLE_MAP</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"metabolism"</span><span class="p">:</span> <span class="s2">"bipartite node"</span><span class="p">}</span>
+<span class="n">_INTERACTION_LEVELS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"edge"</span><span class="p">,</span> <span class="s2">"hyperedge"</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="phenotype_descriptor">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.tables.phenotype_descriptor.html#torchcell.paper.tables.phenotype_descriptor">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">phenotype_descriptor</span><span class="p">(</span><span class="n">record</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Derive ``(shape, graph_role)`` for one record from its stored instance.</span>
+
+<span class="sd">    ``shape`` is the shape of a SINGLE phenotype instance: ``scalar`` or</span>
+<span class="sd">    ``vector (D)`` (a length-1 vector is a scalar). ``graph_role`` is where the</span>
+<span class="sd">    label sits in the cell graph: ``global`` / ``node`` / ``bipartite node``</span>
+<span class="sd">    (from ``graph_level``), or -- for a gene interaction -- ``edge`` when it</span>
+<span class="sd">    relates two gene nodes and ``hyperedge`` when it relates three or more,</span>
+<span class="sd">    derived from the number of perturbations (so a digenic interaction reads</span>
+<span class="sd">    ``edge`` and a trigenic one ``hyperedge``, regardless of the stored</span>
+<span class="sd">    ``graph_level``). Everything is read from the record, never hand-authored.</span>
+<span class="sd">    """</span>
+    <span class="n">ph</span> <span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"phenotype"</span><span class="p">]</span>
+    <span class="n">graph_level</span> <span class="o">=</span> <span class="n">ph</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"graph_level"</span><span class="p">)</span>
+    <span class="n">role</span> <span class="o">=</span> <span class="n">GRAPH_ROLE_MAP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">graph_level</span><span class="p">,</span> <span class="n">graph_level</span> <span class="ow">or</span> <span class="s2">"—"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">graph_level</span> <span class="ow">in</span> <span class="n">_INTERACTION_LEVELS</span><span class="p">:</span>
+        <span class="n">n_genes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">record</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"genotype"</span><span class="p">][</span><span class="s2">"perturbations"</span><span class="p">])</span>
+        <span class="n">role</span> <span class="o">=</span> <span class="s2">"edge"</span> <span class="k">if</span> <span class="n">n_genes</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="s2">"hyperedge"</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="n">ph</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ph</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"label_name"</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">list</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">label</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"vector (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">label</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="s2">"scalar"</span>
+    <span class="k">return</span> <span class="n">shape</span><span class="p">,</span> <span class="n">role</span></div>
+
+
+
+<div class="viewcode-block" id="lmdb_fingerprint">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.tables.lmdb_fingerprint.html#torchcell.paper.tables.lmdb_fingerprint">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">lmdb_fingerprint</span><span class="p">(</span><span class="n">lmdb_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Fingerprint an LMDB's ``data.mdb`` (mtime+size) so a rebuild invalidates</span>
+<span class="sd">    any cached signal. Raises if the file is absent (caller checks existence).</span>
+<span class="sd">    """</span>
+    <span class="n">st</span> <span class="o">=</span> <span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">lmdb_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"data.mdb"</span><span class="p">)</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">)</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">st</span><span class="o">.</span><span class="n">st_size</span><span class="si">}</span><span class="s2">"</span></div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_CacheEntry</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">n</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="nb">bytes</span><span class="p">:</span> <span class="nb">int</span>
+
+
+<div class="viewcode-block" id="SignalCache">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.tables.SignalCache.html#torchcell.paper.tables.SignalCache">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SignalCache</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""JSON-backed memo of ``(n, bytes)`` per id, keyed by LMDB fingerprint.</span>
+
+<span class="sd">    Reuse across runs so only rebuilt datasets recompute. ``entries`` maps a</span>
+<span class="sd">    stable id (e.g. a dataset subpath) to its last computed signal + the LMDB</span>
+<span class="sd">    fingerprint it was computed from.</span>
+<span class="sd">    """</span>
+
+    <span class="n">path</span><span class="p">:</span> <span class="n">Path</span>
+    <span class="n">entries</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_CacheEntry</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SignalCache.load">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.tables.SignalCache.html#torchcell.paper.tables.SignalCache.load">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SignalCache</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Load an existing cache JSON, or return an empty cache for a new path."""</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">raw</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+            <span class="n">entries</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">_CacheEntry</span><span class="p">(</span><span class="o">**</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">raw</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">entries</span><span class="o">=</span><span class="n">entries</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SignalCache.save">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.tables.SignalCache.html#torchcell.paper.tables.SignalCache.save">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Persist the cache to its JSON path (sorted for a stable diff)."""</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entries</span><span class="o">.</span><span class="n">items</span><span class="p">())}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="SignalCache.get_or_compute">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.tables.SignalCache.html#torchcell.paper.tables.SignalCache.get_or_compute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_or_compute</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cache_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">lmdb_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">extract</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="nb">bytes</span><span class="p">]</span> <span class="o">=</span> <span class="n">default_phenotype_bytes</span><span class="p">,</span>
+        <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="n">log</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="nb">print</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return ``(n, bytes, from_cache)``, computing + persisting on a miss."""</span>
+        <span class="n">fp</span> <span class="o">=</span> <span class="n">lmdb_fingerprint</span><span class="p">(</span><span class="n">lmdb_dir</span><span class="p">)</span>
+        <span class="n">hit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entries</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cache_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">hit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">hit</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">hit</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="n">hit</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span> <span class="kc">True</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">nbytes</span> <span class="o">=</span> <span class="n">stream_gzip_signal</span><span class="p">(</span><span class="n">lmdb_dir</span><span class="p">,</span> <span class="n">extract</span><span class="o">=</span><span class="n">extract</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="n">log</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entries</span><span class="p">[</span><span class="n">cache_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">_CacheEntry</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">fp</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="nb">bytes</span><span class="o">=</span><span class="n">nbytes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">n</span><span class="p">,</span> <span class="n">nbytes</span><span class="p">,</span> <span class="kc">False</span></div>
+</div>
+
+
+
+<span class="c1"># --- generic table (one source of truth -&gt; markdown + LaTeX) --------------</span>
+
+<span class="n">Align</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"l"</span><span class="p">,</span> <span class="s2">"c"</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">]</span>
+<span class="n">_MD_ALIGN</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"l"</span><span class="p">:</span> <span class="s2">":--"</span><span class="p">,</span> <span class="s2">"c"</span><span class="p">:</span> <span class="s2">":-:"</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">:</span> <span class="s2">"--:"</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="Column">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.tables.Column.html#torchcell.paper.tables.Column">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Column</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A table column. ``header`` is also the key used to look up a row's cell."""</span>
+
+    <span class="n">header</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">align</span><span class="p">:</span> <span class="n">Align</span> <span class="o">=</span> <span class="s2">"l"</span></div>
+
+
+
+<div class="viewcode-block" id="Row">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.tables.Row.html#torchcell.paper.tables.Row">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Row</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""One table row. ``cells`` maps column header -&gt; display string. ``section``</span>
+<span class="sd">    optionally groups rows (a subheading in md, a ``\multicolumn`` rule in LaTeX).</span>
+<span class="sd">    ``bold`` emphasizes the whole row (e.g. a totals footer).</span>
+<span class="sd">    """</span>
+
+    <span class="n">cells</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Cell</span><span class="p">]</span>
+    <span class="n">section</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">bold</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+
+
+<div class="viewcode-block" id="PaperTable">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.tables.PaperTable.html#torchcell.paper.tables.PaperTable">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PaperTable</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Columns + rows rendered identically to markdown and LaTeX.</span>
+
+<span class="sd">    Rows may carry a ``section``; sections render as H3 headings (markdown) or</span>
+<span class="sd">    bold ``\multicolumn`` group rows (LaTeX), preserving first-seen order.</span>
+<span class="sd">    """</span>
+
+    <span class="n">columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Column</span><span class="p">]</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Row</span><span class="p">]</span>
+    <span class="n">footer</span><span class="p">:</span> <span class="n">Row</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cell_md</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="n">Row</span><span class="p">,</span> <span class="n">col</span><span class="p">:</span> <span class="n">Column</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">cells</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">md</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Cell</span><span class="p">)</span> <span class="k">else</span> <span class="n">v</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"**</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s2">**"</span> <span class="k">if</span> <span class="n">row</span><span class="o">.</span><span class="n">bold</span> <span class="ow">and</span> <span class="n">s</span> <span class="k">else</span> <span class="n">s</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cell_tex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="n">Row</span><span class="p">,</span> <span class="n">col</span><span class="p">:</span> <span class="n">Column</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">cells</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">tex</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Cell</span><span class="p">)</span> <span class="k">else</span> <span class="n">tex_escape</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">rf</span><span class="s2">"\textbf</span><span class="se">{{</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="se">}}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">row</span><span class="o">.</span><span class="n">bold</span> <span class="ow">and</span> <span class="n">s</span> <span class="k">else</span> <span class="n">s</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sections</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="n">seen</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">section</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                <span class="n">seen</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">section</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">seen</span>
+
+    <span class="c1"># -- markdown --</span>
+<div class="viewcode-block" id="PaperTable.to_markdown">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.tables.PaperTable.html#torchcell.paper.tables.PaperTable.to_markdown">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_markdown</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">sectioned</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">heading_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Render as GitHub-flavored markdown; sections become H3 headings."""</span>
+        <span class="n">headers</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">header</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+        <span class="n">aligns</span> <span class="o">=</span> <span class="p">[</span><span class="n">_MD_ALIGN</span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">align</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+        <span class="n">hbar</span> <span class="o">=</span> <span class="s2">"| "</span> <span class="o">+</span> <span class="s2">" | "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span> <span class="o">+</span> <span class="s2">" |"</span>
+        <span class="n">abar</span> <span class="o">=</span> <span class="s2">"| "</span> <span class="o">+</span> <span class="s2">" | "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">aligns</span><span class="p">)</span> <span class="o">+</span> <span class="s2">" |"</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">body</span><span class="p">(</span><span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Row</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="s2">"| "</span> <span class="o">+</span> <span class="s2">" | "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cell_md</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">+</span> <span class="s2">" |"</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span>
+            <span class="p">]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">sectioned</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sections</span><span class="p">()</span> <span class="o">==</span> <span class="p">[</span><span class="kc">None</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">hbar</span><span class="p">,</span> <span class="n">abar</span><span class="p">,</span> <span class="o">*</span><span class="n">body</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">)])</span>
+
+        <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">hashes</span> <span class="o">=</span> <span class="s2">"#"</span> <span class="o">*</span> <span class="n">heading_level</span>
+        <span class="k">for</span> <span class="n">sec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sections</span><span class="p">():</span>
+            <span class="n">srows</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">rows</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">section</span> <span class="o">==</span> <span class="n">sec</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">sec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">hashes</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">sec</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">hbar</span><span class="p">,</span> <span class="n">abar</span><span class="p">,</span> <span class="o">*</span><span class="n">body</span><span class="p">(</span><span class="n">srows</span><span class="p">),</span> <span class="s2">""</span><span class="p">])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">footer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">hashes</span><span class="si">}</span><span class="s2"> Total"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="n">hbar</span><span class="p">,</span> <span class="n">abar</span><span class="p">,</span> <span class="o">*</span><span class="n">body</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">footer</span><span class="p">]),</span> <span class="s2">""</span><span class="p">])</span>
+        <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span></div>
+
+
+    <span class="c1"># -- latex --</span>
+<div class="viewcode-block" id="PaperTable.to_latex">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.tables.PaperTable.html#torchcell.paper.tables.PaperTable.to_latex">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_latex</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">caption</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">sectioned</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">table_env</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"table*"</span><span class="p">,</span>
+        <span class="n">position</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"t"</span><span class="p">,</span>
+        <span class="n">size</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"footnotesize"</span><span class="p">,</span>
+        <span class="n">colsep_pt</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="n">footnote</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">header_comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Render as a booktabs LaTeX table; sections become bold multicolumn rows."""</span>
+        <span class="n">colspec</span> <span class="o">=</span> <span class="s2">"@</span><span class="si">{}</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">align</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"@</span><span class="si">{}</span><span class="s2">"</span>
+        <span class="n">ncol</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">header_comment</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="sa">f</span><span class="s2">"% </span><span class="si">{</span><span class="n">ln</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">ln</span> <span class="ow">in</span> <span class="n">header_comment</span><span class="o">.</span><span class="n">splitlines</span><span class="p">())</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"\begin</span><span class="se">{{</span><span class="si">{</span><span class="n">table_env</span><span class="si">}</span><span class="se">}}</span><span class="s2">[</span><span class="si">{</span><span class="n">position</span><span class="si">}</span><span class="s2">]"</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\centering"</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"\</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"\setlength</span><span class="se">{{</span><span class="s2">\tabcolsep</span><span class="se">}}{{</span><span class="si">{</span><span class="n">colsep_pt</span><span class="si">}</span><span class="s2">pt</span><span class="se">}}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"\caption</span><span class="se">{{</span><span class="si">{</span><span class="n">caption</span><span class="si">}</span><span class="se">}}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"\label</span><span class="se">{{</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="se">}}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"\begin</span><span class="se">{{</span><span class="s2">tabular</span><span class="se">}}{{</span><span class="si">{</span><span class="n">colspec</span><span class="si">}</span><span class="se">}}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\toprule"</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">" &amp; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tex_escape</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">header</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">" </span><span class="se">\\</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\midrule"</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">emit</span><span class="p">(</span><span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Row</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="s2">" &amp; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cell_tex</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">" </span><span class="se">\\</span><span class="s2">"</span>
+                <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">sectioned</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sections</span><span class="p">()</span> <span class="o">==</span> <span class="p">[</span><span class="kc">None</span><span class="p">]:</span>
+            <span class="n">emit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">first</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">for</span> <span class="n">sec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sections</span><span class="p">():</span>
+                <span class="n">srows</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">rows</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">section</span> <span class="o">==</span> <span class="n">sec</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">sec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">first</span><span class="p">:</span>
+                        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\addlinespace"</span><span class="p">)</span>
+                    <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="sa">rf</span><span class="s2">"\multicolumn</span><span class="se">{{</span><span class="si">{</span><span class="n">ncol</span><span class="si">}</span><span class="se">}}{{</span><span class="s2">@</span><span class="se">{{}}</span><span class="s2">l</span><span class="se">}}{{</span><span class="s2">\textbf</span><span class="se">{{</span><span class="si">{</span><span class="n">tex_escape</span><span class="p">(</span><span class="n">sec</span><span class="p">)</span><span class="si">}</span><span class="se">}}}}</span><span class="s2"> </span><span class="se">\\</span><span class="s2">"</span>
+                    <span class="p">)</span>
+                <span class="n">emit</span><span class="p">(</span><span class="n">srows</span><span class="p">)</span>
+                <span class="n">first</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">footer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\midrule"</span><span class="p">)</span>
+            <span class="n">emit</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">footer</span><span class="p">])</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\bottomrule"</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\end</span><span class="si">{tabular}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">footnote</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"</span><span class="se">\\</span><span class="s2">[2pt]</span><span class="se">{{</span><span class="s2">\footnotesize </span><span class="si">{</span><span class="n">footnote</span><span class="si">}</span><span class="se">}}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"\end</span><span class="se">{{</span><span class="si">{</span><span class="n">table_env</span><span class="si">}</span><span class="se">}}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># --- dendron note frontmatter ---------------------------------------------</span>
+
+
+<div class="viewcode-block" id="read_frontmatter">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.tables.read_frontmatter.html#torchcell.paper.tables.read_frontmatter">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_frontmatter</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">default_title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Untitled"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the leading dendron ``---...---`` block of a note (verbatim), or a</span>
+<span class="sd">    minimal one if absent -- so a regenerated note keeps its dendron identity.</span>
+<span class="sd">    """</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">text</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"---"</span><span class="p">):</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">---"</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">end</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">text</span><span class="p">[:</span> <span class="n">end</span> <span class="o">+</span> <span class="mi">4</span><span class="p">]</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"---</span><span class="se">\n</span><span class="s2">title: </span><span class="si">{</span><span class="n">default_title</span><span class="si">}</span><span class="se">\n</span><span class="s2">desc: ''</span><span class="se">\n</span><span class="s2">---"</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

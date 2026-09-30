@@ -1,0 +1,6 @@
+﻿torchcell.sga.read\_echo\_picklist
+==================================
+
+.. currentmodule:: torchcell.sga
+
+.. autofunction:: read_echo_picklist

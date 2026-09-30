@@ -1,0 +1,8 @@
+﻿torchcell.trainers.neo\_regression.ListMLEMetric
+================================================
+
+.. currentmodule:: torchcell.trainers.neo_regression
+
+.. autoclass:: ListMLEMetric
+   :show-inheritance:
+   :members:

@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset
+=============================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.sgd
+
+.. autoclass:: GeneEssentialitySgdDataset
+   :show-inheritance:
+   :members:

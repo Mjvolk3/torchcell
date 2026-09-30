@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.compound\_identity\_curate.assemble
+========================================================
+
+.. currentmodule:: torchcell.datamodels.compound_identity_curate
+
+.. autofunction:: assemble

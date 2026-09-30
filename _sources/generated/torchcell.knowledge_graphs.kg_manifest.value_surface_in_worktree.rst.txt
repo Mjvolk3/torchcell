@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.value\_surface\_in\_worktree
+=====================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autofunction:: value_surface_in_worktree

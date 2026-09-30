@@ -1,0 +1,8 @@
+﻿torchcell.viz.transformer\_diagnostics.TransformerDiagnostics
+=============================================================
+
+.. currentmodule:: torchcell.viz.transformer_diagnostics
+
+.. autoclass:: TransformerDiagnostics
+   :show-inheritance:
+   :members:

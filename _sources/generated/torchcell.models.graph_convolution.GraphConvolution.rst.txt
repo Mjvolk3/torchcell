@@ -1,0 +1,8 @@
+﻿torchcell.models.graph\_convolution.GraphConvolution
+====================================================
+
+.. currentmodule:: torchcell.models.graph_convolution
+
+.. autoclass:: GraphConvolution
+   :show-inheritance:
+   :members:

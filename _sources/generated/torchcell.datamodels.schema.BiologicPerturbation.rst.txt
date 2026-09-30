@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.BiologicPerturbation
+================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: BiologicPerturbation
+   :show-inheritance:
+   :members:

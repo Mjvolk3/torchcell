@@ -1,0 +1,8 @@
+﻿torchcell.knowledge\_graphs.incremental\_import.CsvGroup
+========================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.incremental_import
+
+.. autoclass:: CsvGroup
+   :show-inheritance:
+   :members:

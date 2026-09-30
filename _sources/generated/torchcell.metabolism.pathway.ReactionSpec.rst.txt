@@ -1,0 +1,8 @@
+﻿torchcell.metabolism.pathway.ReactionSpec
+=========================================
+
+.. currentmodule:: torchcell.metabolism.pathway
+
+.. autoclass:: ReactionSpec
+   :show-inheritance:
+   :members:

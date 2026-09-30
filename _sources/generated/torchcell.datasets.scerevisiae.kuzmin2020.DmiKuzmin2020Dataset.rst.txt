@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.kuzmin2020.DmiKuzmin2020Dataset
+==============================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.kuzmin2020
+
+.. autoclass:: DmiKuzmin2020Dataset
+   :show-inheritance:
+   :members:

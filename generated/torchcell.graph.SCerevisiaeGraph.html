@@ -1,0 +1,476 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.graph.SCerevisiaeGraph &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/generated/torchcell.graph.SCerevisiaeGraph.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="torchcell.graph.GeneGraph" href="torchcell.graph.GeneGraph.html" />
+    <link rel="prev" title="torchcell.graph" href="../modules/graph.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../modules/graph.html">torchcell.graph</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../modules/graph.html#classes">Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/graph.html#functions">Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../modules/graph.html">torchcell.graph</a></li>
+      <li class="breadcrumb-item active">torchcell.graph.SCerevisiaeGraph</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/generated/torchcell.graph.SCerevisiaeGraph.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="torchcell-graph-scerevisiaegraph">
+<h1>torchcell.graph.SCerevisiaeGraph<a class="headerlink" href="#torchcell-graph-scerevisiaegraph" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SCerevisiaeGraph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sgd_root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'data/sgd/genome'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">string_root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'data/string'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tflink_root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'data/tflink'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genome</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SCerevisiaeGenome</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchcell/graph/graph.html#SCerevisiaeGraph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Lazy builder of SGD, STRING, TFLink, and GO gene graphs for S. cerevisiae.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.parse_genome">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_genome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">genome</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="torchcell.sequence.ParsedGenome.html#torchcell.sequence.ParsedGenome" title="torchcell.sequence.data.ParsedGenome"><span class="pre">ParsedGenome</span></a></span></span><a class="reference internal" href="../_modules/torchcell/graph/graph.html#SCerevisiaeGraph.parse_genome"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.parse_genome" title="Link to this definition"></a></dt>
+<dd><p>Return a ParsedGenome from the genome’s gene set and alias mapping.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_raw">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_raw</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Graph</span></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_raw" title="Link to this definition"></a></dt>
+<dd><p>Lazily load or build the raw SGD gene graph from per-gene JSON.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_gene">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_gene</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_gene" title="Link to this definition"></a></dt>
+<dd><p>Lazily load or build the gene graph with protein, loci, and pathway data.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_physical">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_physical</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_physical" title="Link to this definition"></a></dt>
+<dd><p>Lazily load or build the physical interaction gene graph.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_genetic">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_genetic</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_genetic" title="Link to this definition"></a></dt>
+<dd><p>Lazily load or build the genetic interaction gene graph.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_regulatory">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_regulatory</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_regulatory" title="Link to this definition"></a></dt>
+<dd><p>Lazily load or build the regulatory interaction gene graph.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_go">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_go</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DiGraph</span></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_go" title="Link to this definition"></a></dt>
+<dd><p>Lazily load or build the GO ontology DiGraph annotated with genes.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_tflink">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_tflink</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_tflink" title="Link to this definition"></a></dt>
+<dd><p>Lazily load or build the TFLink transcription-factor gene graph.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_string9_1_neighborhood">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_string9_1_neighborhood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_string9_1_neighborhood" title="Link to this definition"></a></dt>
+<dd><p>Lazily load the STRING v9.1 neighborhood channel gene graph.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_string9_1_fusion">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_string9_1_fusion</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_string9_1_fusion" title="Link to this definition"></a></dt>
+<dd><p>Lazily load the STRING v9.1 fusion channel gene graph.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_string9_1_cooccurence">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_string9_1_cooccurence</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_string9_1_cooccurence" title="Link to this definition"></a></dt>
+<dd><p>Lazily load the STRING v9.1 co-occurrence channel gene graph.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_string9_1_coexpression">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_string9_1_coexpression</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_string9_1_coexpression" title="Link to this definition"></a></dt>
+<dd><p>Lazily load the STRING v9.1 co-expression channel gene graph.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_string9_1_experimental">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_string9_1_experimental</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_string9_1_experimental" title="Link to this definition"></a></dt>
+<dd><p>Lazily load the STRING v9.1 experimental channel gene graph.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_string9_1_database">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_string9_1_database</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_string9_1_database" title="Link to this definition"></a></dt>
+<dd><p>Lazily load the STRING v9.1 database channel gene graph.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_string11_0_neighborhood">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_string11_0_neighborhood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_string11_0_neighborhood" title="Link to this definition"></a></dt>
+<dd><p>Lazily load the STRING v11.0 neighborhood channel gene graph.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_string11_0_fusion">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_string11_0_fusion</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_string11_0_fusion" title="Link to this definition"></a></dt>
+<dd><p>Lazily load the STRING v11.0 fusion channel gene graph.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_string11_0_cooccurence">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_string11_0_cooccurence</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_string11_0_cooccurence" title="Link to this definition"></a></dt>
+<dd><p>Lazily load the STRING v11.0 co-occurrence channel gene graph.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_string11_0_coexpression">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_string11_0_coexpression</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_string11_0_coexpression" title="Link to this definition"></a></dt>
+<dd><p>Lazily load the STRING v11.0 co-expression channel gene graph.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_string11_0_experimental">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_string11_0_experimental</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_string11_0_experimental" title="Link to this definition"></a></dt>
+<dd><p>Lazily load the STRING v11.0 experimental channel gene graph.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_string11_0_database">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_string11_0_database</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_string11_0_database" title="Link to this definition"></a></dt>
+<dd><p>Lazily load the STRING v11.0 database channel gene graph.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_string12_0_neighborhood">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_string12_0_neighborhood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_string12_0_neighborhood" title="Link to this definition"></a></dt>
+<dd><p>Lazily load the STRING v12.0 neighborhood channel gene graph.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_string12_0_fusion">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_string12_0_fusion</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_string12_0_fusion" title="Link to this definition"></a></dt>
+<dd><p>Lazily load the STRING v12.0 fusion channel gene graph.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_string12_0_cooccurence">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_string12_0_cooccurence</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_string12_0_cooccurence" title="Link to this definition"></a></dt>
+<dd><p>Lazily load the STRING v12.0 co-occurrence channel gene graph.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_string12_0_coexpression">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_string12_0_coexpression</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_string12_0_coexpression" title="Link to this definition"></a></dt>
+<dd><p>Lazily load the STRING v12.0 co-expression channel gene graph.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_string12_0_experimental">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_string12_0_experimental</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_string12_0_experimental" title="Link to this definition"></a></dt>
+<dd><p>Lazily load the STRING v12.0 experimental channel gene graph.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.G_string12_0_database">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">G_string12_0_database</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.G_string12_0_database" title="Link to this definition"></a></dt>
+<dd><p>Lazily load the STRING v12.0 database channel gene graph.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.download_tflink_data">
+<span class="sig-name descname"><span class="pre">download_tflink_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/graph/graph.html#SCerevisiaeGraph.download_tflink_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.download_tflink_data" title="Link to this definition"></a></dt>
+<dd><p>Download the TFLink interaction file for S. cerevisiae.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>output_path</strong> – Path to save the downloaded file</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.download_string_data">
+<span class="sig-name descname"><span class="pre">download_string_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'9.1'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/graph/graph.html#SCerevisiaeGraph.download_string_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.download_string_data" title="Link to this definition"></a></dt>
+<dd><p>Download the STRING protein interaction file for S. cerevisiae.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_path</strong> – Path to save the downloaded file</p></li>
+<li><p><strong>version</strong> – STRING database version (“9.1”, “11.0”, or “12.0”)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.create_string_graphs">
+<span class="sig-name descname"><span class="pre">create_string_graphs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/graph/graph.html#SCerevisiaeGraph.create_string_graphs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.create_string_graphs" title="Link to this definition"></a></dt>
+<dd><p>Create GeneGraph objects from STRING data and save them to attributes.</p>
+<p>Strip the ‘4932.’ prefix from protein IDs for consistency.
+Only include nodes that exist in genome.gene_set.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.strip_string_prefix">
+<span class="sig-name descname"><span class="pre">strip_string_prefix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protein_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></span><a class="reference internal" href="../_modules/torchcell/graph/graph.html#SCerevisiaeGraph.strip_string_prefix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.strip_string_prefix" title="Link to this definition"></a></dt>
+<dd><p>Strip the ‘4932.’ prefix from STRING protein IDs.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.create_G_tflink">
+<span class="sig-name descname"><span class="pre">create_G_tflink</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DiGraph</span></span></span><a class="reference internal" href="../_modules/torchcell/graph/graph.html#SCerevisiaeGraph.create_G_tflink"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.create_G_tflink" title="Link to this definition"></a></dt>
+<dd><p>Create a directed graph of transcription factor interactions from TFLink.</p>
+<p>Only include interactions where both TF and target are in genome.gene_set.
+Convert alias gene names to systematic names if possible.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Directed graph of TF interactions</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>nx.DiGraph</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.save_graph">
+<span class="sig-name descname"><span class="pre">save_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'sgd'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/graph/graph.html#SCerevisiaeGraph.save_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.save_graph" title="Link to this definition"></a></dt>
+<dd><p>Save graph to a pickle file. Handles both NetworkX graphs and GeneGraph objects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> – NetworkX graph or GeneGraph to save</p></li>
+<li><p><strong>graph_name</strong> – Name of the graph</p></li>
+<li><p><strong>root_type</strong> – Type of root directory (‘sgd’, ‘string’, or ‘tflink’)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.load_graph">
+<span class="sig-name descname"><span class="pre">load_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'sgd'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="torchcell.graph.GeneGraph.html#torchcell.graph.GeneGraph" title="torchcell.graph.graph.GeneGraph"><span class="pre">GeneGraph</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Graph</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/graph/graph.html#SCerevisiaeGraph.load_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.load_graph" title="Link to this definition"></a></dt>
+<dd><p>Load graph from a pickle file. Could be a NetworkX graph or a GeneGraph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph_name</strong> – Name of the graph</p></li>
+<li><p><strong>root_type</strong> – Type of root directory (‘sgd’, ‘string’, or ‘tflink’)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>NetworkX graph or GeneGraph object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.add_json_data_to_graph">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_json_data_to_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">json_files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Graph</span></span></span><a class="reference internal" href="../_modules/torchcell/graph/graph.html#SCerevisiaeGraph.add_json_data_to_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.add_json_data_to_graph" title="Link to this definition"></a></dt>
+<dd><p>Build a graph whose nodes are genes loaded from per-gene JSON files.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.all_go_terms">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">all_go_terms</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">SortedSet</span></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.all_go_terms" title="Link to this definition"></a></dt>
+<dd><p>Collects a SortedSet of all GO terms for all genes in genome.gene_set.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.go_to_genes">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">go_to_genes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">SortedDict</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="torchcell.sequence.GeneSet.html#torchcell.sequence.GeneSet" title="torchcell.sequence.data.GeneSet"><span class="pre">GeneSet</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.go_to_genes" title="Link to this definition"></a></dt>
+<dd><p>Map each non-obsolete GO term to the set of genes annotated to it.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.create_go_subgraph">
+<span class="sig-name descname"><span class="pre">create_go_subgraph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">go_terms</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">go_dag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DiGraph</span></span></span><a class="reference internal" href="../_modules/torchcell/graph/graph.html#SCerevisiaeGraph.create_go_subgraph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.create_go_subgraph" title="Link to this definition"></a></dt>
+<dd><p>Build a DiGraph for the given GO terms with parent edges and gene data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.combine_with_super_node">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">combine_with_super_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graphs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Graph</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Graph</span></span></span><a class="reference internal" href="../_modules/torchcell/graph/graph.html#SCerevisiaeGraph.combine_with_super_node"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.combine_with_super_node" title="Link to this definition"></a></dt>
+<dd><p>Merge GO subgraphs under a single <a class="reference external" href="GO:ROOT">GO:ROOT</a> super node.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.create_G_go">
+<span class="sig-name descname"><span class="pre">create_G_go</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DiGraph</span></span></span><a class="reference internal" href="../_modules/torchcell/graph/graph.html#SCerevisiaeGraph.create_G_go"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.create_G_go" title="Link to this definition"></a></dt>
+<dd><p>Build the full GO DiGraph from BP, MF, and CC subgraphs under a root.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.add_physical_edges">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_physical_edges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G_raw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">G_physical</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Graph</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Graph</span></span></span><a class="reference internal" href="../_modules/torchcell/graph/graph.html#SCerevisiaeGraph.add_physical_edges"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.add_physical_edges" title="Link to this definition"></a></dt>
+<dd><p>Add physical interaction edges from the raw graph to G_physical.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.add_genetic_edges">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_genetic_edges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G_raw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">G_genetic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Graph</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Graph</span></span></span><a class="reference internal" href="../_modules/torchcell/graph/graph.html#SCerevisiaeGraph.add_genetic_edges"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.add_genetic_edges" title="Link to this definition"></a></dt>
+<dd><p>Add genetic interaction edges from the raw graph to G_genetic.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.add_regulatory_edges">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_regulatory_edges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G_raw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">G_regulatory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DiGraph</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DiGraph</span></span></span><a class="reference internal" href="../_modules/torchcell/graph/graph.html#SCerevisiaeGraph.add_regulatory_edges"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.add_regulatory_edges" title="Link to this definition"></a></dt>
+<dd><p>Add regulatory edges from the raw graph to the regulatory graph.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.add_gene_protein_overview">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_gene_protein_overview</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G_raw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">G_gene</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Graph</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Graph</span></span></span><a class="reference internal" href="../_modules/torchcell/graph/graph.html#SCerevisiaeGraph.add_gene_protein_overview"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.add_gene_protein_overview" title="Link to this definition"></a></dt>
+<dd><p>Add protein overview attributes (length, weight, pI, etc.) to gene nodes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.add_loci_information">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_loci_information</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G_raw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">G_gene</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Graph</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Graph</span></span></span><a class="reference internal" href="../_modules/torchcell/graph/graph.html#SCerevisiaeGraph.add_loci_information"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.add_loci_information" title="Link to this definition"></a></dt>
+<dd><p>Add S288C start, end, and chromosome loci attributes to gene nodes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.graph.SCerevisiaeGraph.add_pathway_annotation">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_pathway_annotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G_raw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">G_gene</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Graph</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Graph</span></span></span><a class="reference internal" href="../_modules/torchcell/graph/graph.html#SCerevisiaeGraph.add_pathway_annotation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.graph.SCerevisiaeGraph.add_pathway_annotation" title="Link to this definition"></a></dt>
+<dd><p>Add pathway display-name annotations to gene nodes.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../modules/graph.html" class="btn btn-neutral float-left" title="torchcell.graph" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="torchcell.graph.GeneGraph.html" class="btn btn-neutral float-right" title="torchcell.graph.GeneGraph" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

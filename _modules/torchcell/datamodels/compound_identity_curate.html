@@ -1,0 +1,902 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datamodels.compound_identity_curate &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/datamodels/compound_identity_curate.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.datamodels.compound_identity_curate</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.datamodels.compound_identity_curate</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/datamodels/compound_identity_curate.py</span>
+<span class="c1"># [[torchcell.datamodels.compound_identity_curate]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/compound_identity_curate</span>
+<span class="sa">r</span><span class="sd">"""Reproducible curator for the pinned compound-identity table (UI-2, serve-50).</span>
+
+<span class="sd">This is the ONLY thing in the compound-identity subsystem that touches the network.</span>
+<span class="sd">It reads committed input lists (``compound_identity_inputs/&lt;source&gt;.txt``), queries the</span>
+<span class="sd">PubChem PUG REST API at &lt;= 5 requests per second, and writes</span>
+<span class="sd">``compound_identity_table.json`` with deterministic bytes. The resolver</span>
+<span class="sd">(:mod:`torchcell.datamodels.compound_identity`) then reads that table offline forever.</span>
+
+<span class="sd">Run from the repo root::</span>
+
+<span class="sd">    PYTHONPATH=. ~/miniconda3/envs/torchcell/bin/python \\</span>
+<span class="sd">        -m torchcell.datamodels.compound_identity_curate \\</span>
+<span class="sd">        --names torchcell/datamodels/compound_identity_inputs/curated_core.txt \\</span>
+<span class="sd">        --names torchcell/datamodels/compound_identity_inputs/hillenmeyer2008.txt \\</span>
+<span class="sd">        ... \\</span>
+<span class="sd">        --cids torchcell/datamodels/compound_identity_inputs/wildenhain2015_cids.txt \\</span>
+<span class="sd">        --out torchcell/datamodels/compound_identity_table.json</span>
+
+<span class="sd">It prints the sha256 to re-pin into ``compound_identity.py::_TABLE_SHA256``.</span>
+
+<span class="sd">Input-file grammar (one entry per line; ``#`` starts a comment, and the first comment</span>
+<span class="sd">line must name the review the list came from)::</span>
+
+<span class="sd">    LABEL                          look LABEL up by name; canonical name = PubChem Title, lowercased</span>
+<span class="sd">    LABEL | query=&lt;name&gt;           look &lt;name&gt; up instead; LABEL becomes a synonym</span>
+<span class="sd">    LABEL | cid=&lt;int&gt;              look the CID up directly (the `CID &lt;n&gt;` labels, and the CID lists)</span>
+<span class="sd">    LABEL | canonical              LABEL itself is the canonical name (a curated row already exists)</span>
+<span class="sd">    LABEL | chebi=CHEBI:&lt;n&gt;        hand-verified ChEBI CURIE, overriding the PubChem synonym scan</span>
+<span class="sd">    LABEL | mixture=&lt;why&gt;          a defined mixture: keep CID/ChEBI, leave `inchikey` null</span>
+<span class="sd">    LABEL | unresolved=&lt;why&gt;       no lookup; a RECOVERABLE gap, with its reason recorded</span>
+<span class="sd">    LABEL | proprietary=&lt;why&gt;      no lookup; a TERMINAL vendor or catalog code</span>
+<span class="sd">    LABEL | undefined=&lt;why&gt;        no lookup; a TERMINAL undefined preparation (yeast extract)</span>
+
+<span class="sd">Directives combine with ``|``, and a prose reason may itself contain ``|`` (it consumes</span>
+<span class="sd">the rest of the line). Two labels that resolve to the same PubChem CID collapse into ONE</span>
+<span class="sd">row carrying both labels as synonyms, which is what makes ``NaCl`` (Hillenmeyer) and</span>
+<span class="sd">``sodium chloride`` (Nadal-Ribelles) the same compound node. A lookup key claimed by two</span>
+<span class="sd">compounds is awarded by precedence (curated &gt; PubChem name index &gt; CID only) and the</span>
+<span class="sd">losing rows are qualified ``&lt;name&gt; (CID &lt;n&gt;)``; a tie leaves the key unassigned, because</span>
+<span class="sd">a label that names two compounds equally well names neither.</span>
+
+<span class="sd">Three rules keep this honest:</span>
+
+<span class="sd">- **Never guess.** A PubChem name lookup that 404s yields an ``UNRESOLVED_PUBLIC`` row</span>
+<span class="sd">  whose ``unresolved_reason`` records the fault, not a near-miss structure.</span>
+<span class="sd">- **One ChEBI or none.** A ChEBI CURIE is adopted from PubChem's synonym list only when</span>
+<span class="sd">  that list carries exactly ONE distinct ChEBI id; several (acetic acid carries</span>
+<span class="sd">  ``CHEBI:15366`` and ``CHEBI:47622``) means the choice is a curation decision, so the</span>
+<span class="sd">  field stays null unless an input line states it with ``chebi=``.</span>
+<span class="sd">- **A mixture gets no InChIKey.** Tunicamycin is at least ten homologues (ChEBI:29699);</span>
+<span class="sd">  its identity is the ChEBI class, and fabricating a single-molecule key for it would be</span>
+<span class="sd">  a lie about what was in the flask.</span>
+
+<span class="sd">HTTP errors are surfaced, never swallowed: the opener passes 4xx bodies through (PubChem</span>
+<span class="sd">answers a missing name with a JSON ``Fault`` and HTTP 404), while a transport failure</span>
+<span class="sd">raises and stops the run rather than silently degrading a row.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">urllib.parse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">urllib.request</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">date</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="n">_PUG_BASE</span> <span class="o">=</span> <span class="s2">"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound"</span>
+<span class="n">_PROPERTIES</span> <span class="o">=</span> <span class="s2">"Title,InChIKey,ConnectivitySMILES"</span>
+<span class="n">_RETRIEVAL_METHOD</span> <span class="o">=</span> <span class="s2">"pubchem_api"</span>
+<span class="n">_MIN_INTERVAL_S</span> <span class="o">=</span> <span class="mf">0.25</span>  <span class="c1"># &lt;= 5 requests/s, PubChem's published ceiling</span>
+<span class="n">_MAX_BUSY_RETRIES</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">_BUSY_BACKOFF_S</span> <span class="o">=</span> <span class="mf">5.0</span>
+<span class="n">_CID_BATCH</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">_SCHEMA_VERSION</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">_CHEBI_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\bCHEBI:\d+\b"</span><span class="p">)</span>
+<span class="n">_DIRECTIVE_SEP</span> <span class="o">=</span> <span class="s2">"|"</span>
+<span class="c1">#: Directives whose value is prose and therefore swallows the rest of the line.</span>
+<span class="n">_FREE_TEXT_DIRECTIVES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"mixture"</span><span class="p">:</span> <span class="s2">"mixture_reason"</span><span class="p">,</span>
+    <span class="s2">"unresolved"</span><span class="p">:</span> <span class="s2">"unresolved_reason"</span><span class="p">,</span>
+    <span class="s2">"proprietary"</span><span class="p">:</span> <span class="s2">"proprietary_reason"</span><span class="p">,</span>
+    <span class="s2">"undefined"</span><span class="p">:</span> <span class="s2">"undefined_reason"</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Input grammar</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<div class="viewcode-block" id="CurationDirective">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity_curate.CurationDirective.html#torchcell.datamodels.compound_identity_curate.CurationDirective">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CurationDirective</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One parsed input line: a loader label plus how to resolve it."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the string a loader passes to resolved_compound"</span><span class="p">)</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"input-file stem, e.g. 'hillenmeyer2008'"</span><span class="p">)</span>
+    <span class="n">query</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"PubChem name to look up instead of the label"</span>
+    <span class="p">)</span>
+    <span class="n">cid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"resolve by this PubChem CID"</span><span class="p">)</span>
+    <span class="n">canonical</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"the label IS the canonical row name"</span>
+    <span class="p">)</span>
+    <span class="n">chebi_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"hand-verified ChEBI CURIE"</span><span class="p">)</span>
+    <span class="n">mixture_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"why no single-molecule InChIKey exists"</span>
+    <span class="p">)</span>
+    <span class="n">unresolved_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"why PubChem cannot be asked, a recoverable gap"</span>
+    <span class="p">)</span>
+    <span class="n">proprietary_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"why this is a terminal vendor/catalog code"</span>
+    <span class="p">)</span>
+    <span class="n">undefined_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"why this preparation has no structure at all"</span>
+    <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">name_query</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The string handed to PubChem's name index."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">skip_lookup</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The terminal reason that makes a PubChem call pointless, if any."""</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unresolved_reason</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">proprietary_reason</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">undefined_reason</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="parse_line">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity_curate.parse_line.html#torchcell.datamodels.compound_identity_curate.parse_line">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_line</span><span class="p">(</span><span class="n">line</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CurationDirective</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Parse ``LABEL [| key=value]...`` into a typed directive."""</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">_DIRECTIVE_SEP</span><span class="p">)]</span>
+    <span class="n">fields</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"label"</span><span class="p">:</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">"source"</span><span class="p">:</span> <span class="n">source</span><span class="p">}</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">while</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">):</span>
+        <span class="n">directive</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">directive</span> <span class="o">==</span> <span class="s2">"canonical"</span><span class="p">:</span>
+            <span class="n">fields</span><span class="p">[</span><span class="s2">"canonical"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">continue</span>
+        <span class="n">key</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">directive</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s2">"="</span><span class="p">)</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">"query"</span><span class="p">:</span>
+            <span class="n">fields</span><span class="p">[</span><span class="s2">"query"</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">"cid"</span><span class="p">:</span>
+            <span class="n">fields</span><span class="p">[</span><span class="s2">"cid"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">"chebi"</span><span class="p">:</span>
+            <span class="n">fields</span><span class="p">[</span><span class="s2">"chebi_id"</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">_FREE_TEXT_DIRECTIVES</span><span class="p">:</span>
+            <span class="c1"># A prose reason may itself contain the separator (a quoted SOM table</span>
+            <span class="c1"># row), so it consumes the rest of the line verbatim.</span>
+            <span class="n">rest</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">" </span><span class="si">{</span><span class="n">_DIRECTIVE_SEP</span><span class="si">}</span><span class="s2"> "</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">value</span><span class="p">,</span> <span class="o">*</span><span class="n">parts</span><span class="p">[</span><span class="n">index</span><span class="p">:]])</span>
+            <span class="n">fields</span><span class="p">[</span><span class="n">_FREE_TEXT_DIRECTIVES</span><span class="p">[</span><span class="n">key</span><span class="p">]]</span> <span class="o">=</span> <span class="n">rest</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2">: unknown directive </span><span class="si">{</span><span class="n">directive</span><span class="si">!r}</span><span class="s2"> in </span><span class="si">{</span><span class="n">line</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">CurationDirective</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="read_name_list">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity_curate.read_name_list.html#torchcell.datamodels.compound_identity_curate.read_name_list">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_name_list</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">CurationDirective</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Parse an input list of labels (comments and blank lines skipped)."""</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">stem</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CurationDirective</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">raw</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"#"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">raw</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"#"</span><span class="p">)</span> <span class="k">else</span> <span class="n">raw</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">parse_line</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">source</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="read_cid_list">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity_curate.read_cid_list.html#torchcell.datamodels.compound_identity_curate.read_cid_list">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_cid_list</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">CurationDirective</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Parse an input list of bare PubChem CIDs (one per line)."""</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">stem</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CurationDirective</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">raw</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">raw</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"#"</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">cid</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CurationDirective</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">"CID </span><span class="si">{</span><span class="n">cid</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">,</span> <span class="n">cid</span><span class="o">=</span><span class="n">cid</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># PubChem access</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_PassThroughErrorProcessor</span><span class="p">(</span><span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">HTTPErrorProcessor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Return 4xx/5xx responses instead of raising, so a Fault body can be read.</span>
+
+<span class="sd">    PubChem answers an unknown name with HTTP 404 and a JSON ``Fault``; that body is</span>
+<span class="sd">    the EVIDENCE that the name is unresolvable, so it must reach the caller. Transport</span>
+<span class="sd">    failures still raise and abort the run.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">http_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">response</span>
+
+    <span class="n">https_response</span> <span class="o">=</span> <span class="n">http_response</span>
+
+
+<div class="viewcode-block" id="PubChemProperty">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity_curate.PubChemProperty.html#torchcell.datamodels.compound_identity_curate.PubChemProperty">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PubChemProperty</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One row of a PUG REST ``PropertyTable``."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">cid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">alias</span><span class="o">=</span><span class="s2">"CID"</span><span class="p">)</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">"Title"</span><span class="p">)</span>
+    <span class="n">inchikey</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">"InChIKey"</span><span class="p">)</span>
+    <span class="n">smiles</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">"ConnectivitySMILES"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="PubChemClient">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity_curate.PubChemClient.html#torchcell.datamodels.compound_identity_curate.PubChemClient">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PubChemClient</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Rate-limited PUG REST client with an on-disk response cache."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cache_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build the client; an existing cache file is loaded so a rerun skips the network."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_opener</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">build_opener</span><span class="p">(</span><span class="n">_PassThroughErrorProcessor</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache_path</span> <span class="o">=</span> <span class="n">cache_path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">cache_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">cache_path</span> <span class="ow">and</span> <span class="n">cache_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+            <span class="k">else</span> <span class="p">{}</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_wait</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last</span>
+        <span class="k">if</span> <span class="n">delta</span> <span class="o">&lt;</span> <span class="n">_MIN_INTERVAL_S</span><span class="p">:</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">_MIN_INTERVAL_S</span> <span class="o">-</span> <span class="n">delta</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""One PUG REST call, backing off while PubChem's dynamic throttle is engaged.</span>
+
+<span class="sd">        Only ``PUGREST.NotFound`` is data (the name has no CID). ``PUGREST.ServerBusy``</span>
+<span class="sd">        is a throttle signal and is retried after a growing pause; any other fault, or a</span>
+<span class="sd">        throttle that survives :data:`_MAX_BUSY_RETRIES`, aborts the run. Recording a</span>
+<span class="sd">        throttled call as "unresolved" would silently curate a compound out of existence.</span>
+<span class="sd">        """</span>
+        <span class="n">request</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span>
+            <span class="n">url</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">body</span><span class="p">,</span>
+            <span class="n">headers</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"User-Agent"</span><span class="p">:</span> <span class="s2">"torchcell-compound-curator"</span><span class="p">,</span>
+                <span class="o">**</span><span class="p">(</span>
+                    <span class="p">{</span><span class="s2">"Content-Type"</span><span class="p">:</span> <span class="s2">"application/x-www-form-urlencoded"</span><span class="p">}</span>
+                    <span class="k">if</span> <span class="n">body</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="k">else</span> <span class="p">{}</span>
+                <span class="p">),</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">_MAX_BUSY_RETRIES</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_wait</span><span class="p">()</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_opener</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span> <span class="k">as</span> <span class="n">response</span><span class="p">:</span>
+                <span class="n">payload</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span>
+            <span class="n">code</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Fault"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Code"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">code</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">code</span> <span class="o">==</span> <span class="s2">"PUGREST.NotFound"</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">payload</span>
+            <span class="k">if</span> <span class="n">code</span> <span class="o">!=</span> <span class="s2">"PUGREST.ServerBusy"</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"PubChem fault </span><span class="si">{</span><span class="n">code</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">payload</span><span class="p">[</span><span class="s1">'Fault'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">_BUSY_BACKOFF_S</span> <span class="o">*</span> <span class="p">(</span><span class="n">attempt</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"PubChem stayed busy after </span><span class="si">{</span><span class="n">_MAX_BUSY_RETRIES</span><span class="si">}</span><span class="s2"> retries for </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="PubChemClient.flush">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity_curate.PubChemClient.html#torchcell.datamodels.compound_identity_curate.PubChemClient.flush">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">flush</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Persist the response cache so a rerun skips the network."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="PubChemClient.property_by_name">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity_curate.PubChemClient.html#torchcell.datamodels.compound_identity_curate.PubChemClient.property_by_name">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">property_by_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PubChemProperty</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""First property row for a name, or None when PubChem reports no CID."""</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">name_property_url</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">url</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">url</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_first_property</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">url</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="PubChemClient.properties_by_cids">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity_curate.PubChemClient.html#torchcell.datamodels.compound_identity_curate.PubChemClient.properties_by_cids">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">properties_by_cids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">PubChemProperty</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Batched CID -&gt; property lookup (one POST per :data:`_CID_BATCH` CIDs)."""</span>
+        <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">PubChemProperty</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">pending</span> <span class="o">=</span> <span class="p">[</span><span class="n">cid</span> <span class="k">for</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">cids</span> <span class="k">if</span> <span class="n">cid_property_url</span><span class="p">(</span><span class="n">cid</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pending</span><span class="p">),</span> <span class="n">_CID_BATCH</span><span class="p">):</span>
+            <span class="n">chunk</span> <span class="o">=</span> <span class="n">pending</span><span class="p">[</span><span class="n">start</span> <span class="p">:</span> <span class="n">start</span> <span class="o">+</span> <span class="n">_CID_BATCH</span><span class="p">]</span>
+            <span class="n">payload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_PUG_BASE</span><span class="si">}</span><span class="s2">/cid/property/</span><span class="si">{</span><span class="n">_PROPERTIES</span><span class="si">}</span><span class="s2">/JSON"</span><span class="p">,</span>
+                <span class="n">body</span><span class="o">=</span><span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urlencode</span><span class="p">(</span>
+                    <span class="p">{</span><span class="s2">"cid"</span><span class="p">:</span> <span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">chunk</span><span class="p">)}</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"ascii"</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"PropertyTable"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Properties"</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="n">found</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"CID"</span><span class="p">]):</span> <span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">chunk</span><span class="p">:</span>
+                <span class="n">row</span> <span class="o">=</span> <span class="n">found</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cid</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">cid_property_url</span><span class="p">(</span><span class="n">cid</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="p">{</span><span class="s2">"PropertyTable"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"Properties"</span><span class="p">:</span> <span class="p">[</span><span class="n">row</span><span class="p">]}}</span>
+                    <span class="k">if</span> <span class="n">row</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="k">else</span> <span class="n">payload</span>
+                <span class="p">)</span>
+        <span class="k">for</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">cids</span><span class="p">:</span>
+            <span class="n">prop</span> <span class="o">=</span> <span class="n">_first_property</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">cid_property_url</span><span class="p">(</span><span class="n">cid</span><span class="p">)])</span>
+            <span class="k">if</span> <span class="n">prop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">prop</span><span class="o">.</span><span class="n">cid</span> <span class="o">==</span> <span class="n">cid</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span> <span class="o">=</span> <span class="n">prop</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+
+<div class="viewcode-block" id="PubChemClient.chebi_by_cids">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity_curate.PubChemClient.html#torchcell.datamodels.compound_identity_curate.PubChemClient.chebi_by_cids">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">chebi_by_cids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Batched CID -&gt; ChEBI CURIE, adopted only when exactly one id is listed."""</span>
+        <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">pending</span> <span class="o">=</span> <span class="p">[</span><span class="n">cid</span> <span class="k">for</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">cids</span> <span class="k">if</span> <span class="n">synonyms_url</span><span class="p">(</span><span class="n">cid</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pending</span><span class="p">),</span> <span class="n">_CID_BATCH</span><span class="p">):</span>
+            <span class="n">chunk</span> <span class="o">=</span> <span class="n">pending</span><span class="p">[</span><span class="n">start</span> <span class="p">:</span> <span class="n">start</span> <span class="o">+</span> <span class="n">_CID_BATCH</span><span class="p">]</span>
+            <span class="n">payload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_PUG_BASE</span><span class="si">}</span><span class="s2">/cid/synonyms/JSON"</span><span class="p">,</span>
+                <span class="n">body</span><span class="o">=</span><span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urlencode</span><span class="p">(</span>
+                    <span class="p">{</span><span class="s2">"cid"</span><span class="p">:</span> <span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">chunk</span><span class="p">)}</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"ascii"</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"InformationList"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Information"</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="n">found</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"CID"</span><span class="p">]):</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Synonym"</span><span class="p">,</span> <span class="p">[])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">chunk</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">synonyms_url</span><span class="p">(</span><span class="n">cid</span><span class="p">)]</span> <span class="o">=</span> <span class="n">found</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cid</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">for</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">cids</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span> <span class="o">=</span> <span class="n">_single_chebi</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">synonyms_url</span><span class="p">(</span><span class="n">cid</span><span class="p">)])</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="name_property_url">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity_curate.name_property_url.html#torchcell.datamodels.compound_identity_curate.name_property_url">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">name_property_url</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The canonical single-name GET endpoint (also the row's recorded ``source_url``)."""</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_PUG_BASE</span><span class="si">}</span><span class="s2">/name/</span><span class="si">{</span><span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">safe</span><span class="o">=</span><span class="s1">''</span><span class="p">)</span><span class="si">}</span><span class="s2">/property/</span><span class="si">{</span><span class="n">_PROPERTIES</span><span class="si">}</span><span class="s2">/JSON"</span></div>
+
+
+
+<div class="viewcode-block" id="cid_property_url">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity_curate.cid_property_url.html#torchcell.datamodels.compound_identity_curate.cid_property_url">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">cid_property_url</span><span class="p">(</span><span class="n">cid</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The canonical single-CID GET endpoint that reproduces one batched row."""</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_PUG_BASE</span><span class="si">}</span><span class="s2">/cid/</span><span class="si">{</span><span class="n">cid</span><span class="si">}</span><span class="s2">/property/</span><span class="si">{</span><span class="n">_PROPERTIES</span><span class="si">}</span><span class="s2">/JSON"</span></div>
+
+
+
+<div class="viewcode-block" id="synonyms_url">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity_curate.synonyms_url.html#torchcell.datamodels.compound_identity_curate.synonyms_url">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">synonyms_url</span><span class="p">(</span><span class="n">cid</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The canonical single-CID synonyms endpoint (the ChEBI source)."""</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_PUG_BASE</span><span class="si">}</span><span class="s2">/cid/</span><span class="si">{</span><span class="n">cid</span><span class="si">}</span><span class="s2">/synonyms/JSON"</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_first_property</span><span class="p">(</span><span class="n">payload</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PubChemProperty</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"PropertyTable"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Properties"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">rows</span> <span class="ow">or</span> <span class="n">rows</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">PubChemProperty</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">rows</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_single_chebi</span><span class="p">(</span><span class="n">synonyms</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The ChEBI CURIE when a synonym list carries exactly one; else None."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">synonyms</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">hits</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">synonyms</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">_CHEBI_RE</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">))})</span>
+    <span class="k">return</span> <span class="n">hits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">hits</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Row assembly</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<div class="viewcode-block" id="CuratedRow">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity_curate.CuratedRow.html#torchcell.datamodels.compound_identity_curate.CuratedRow">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CuratedRow</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One assembled table row, before it is serialized to JSON."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">inchikey</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">pubchem_cid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">chebi_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">smiles</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">synonyms</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">source_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">retrieval_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">retrieved_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">resolution_status</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">unresolved_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">sources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">precedence</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"claim strength on a lookup key: 2 curated, 1 PubChem name index, 0 CID only"</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_merge_key</span><span class="p">(</span><span class="n">directive</span><span class="p">:</span> <span class="n">CurationDirective</span><span class="p">,</span> <span class="n">prop</span><span class="p">:</span> <span class="n">PubChemProperty</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Identity under which two labels collapse into one row."""</span>
+    <span class="k">if</span> <span class="n">prop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"cid:</span><span class="si">{</span><span class="n">prop</span><span class="o">.</span><span class="n">cid</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"name:</span><span class="si">{</span><span class="n">directive</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
+
+
+<div class="viewcode-block" id="assemble">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity_curate.assemble.html#torchcell.datamodels.compound_identity_curate.assemble">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">assemble</span><span class="p">(</span>
+    <span class="n">directives</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CurationDirective</span><span class="p">],</span>
+    <span class="n">properties</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">PubChemProperty</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span>
+    <span class="n">chebi</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span>
+    <span class="n">today</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">CuratedRow</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Collapse directives + PubChem answers into deduplicated, canonical rows."""</span>
+    <span class="n">groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">CurationDirective</span><span class="p">,</span> <span class="n">PubChemProperty</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">directive</span> <span class="ow">in</span> <span class="n">directives</span><span class="p">:</span>
+        <span class="n">prop</span> <span class="o">=</span> <span class="n">properties</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">directive</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+        <span class="n">groups</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">_merge_key</span><span class="p">(</span><span class="n">directive</span><span class="p">,</span> <span class="n">prop</span><span class="p">),</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">directive</span><span class="p">,</span> <span class="n">prop</span><span class="p">))</span>
+
+    <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CuratedRow</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">members</span> <span class="ow">in</span> <span class="n">groups</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">first_prop</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">p</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">members</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">curated</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">members</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">canonical</span><span class="p">]</span>
+        <span class="n">mixture</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">d</span><span class="o">.</span><span class="n">mixture_reason</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">members</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">mixture_reason</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">terminal</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">reason</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">members</span>
+                <span class="k">for</span> <span class="n">status</span><span class="p">,</span> <span class="n">reason</span> <span class="ow">in</span> <span class="p">(</span>
+                    <span class="p">(</span><span class="s2">"UNRESOLVED_PUBLIC"</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">unresolved_reason</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s2">"PROPRIETARY"</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">proprietary_reason</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s2">"UNDEFINED_MIXTURE"</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">undefined_reason</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">reason</span>
+            <span class="p">),</span>
+            <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">hand_chebi</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">d</span><span class="o">.</span><span class="n">chebi_id</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">members</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">chebi_id</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="n">claimed</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">d</span><span class="o">.</span><span class="n">label</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">curated</span><span class="p">})</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">claimed</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"conflicting canonical names for one compound: </span><span class="si">{</span><span class="n">claimed</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"(sources </span><span class="si">{</span><span class="nb">sorted</span><span class="p">({</span><span class="n">d</span><span class="o">.</span><span class="n">source</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">curated</span><span class="p">})</span><span class="si">}</span><span class="s2">); exactly one input "</span>
+                <span class="s2">"line may claim `canonical` per compound"</span>
+            <span class="p">)</span>
+        <span class="n">precedence</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="mi">2</span> <span class="k">if</span> <span class="n">claimed</span> <span class="k">else</span> <span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">cid</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">members</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">claimed</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">claimed</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">first_prop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">first_prop</span><span class="o">.</span><span class="n">title</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">first_prop</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">members</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span>
+
+        <span class="n">labels</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">d</span><span class="o">.</span><span class="n">label</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">members</span><span class="p">}</span> <span class="o">-</span> <span class="p">{</span><span class="n">name</span><span class="p">})</span>
+        <span class="n">sources</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">d</span><span class="o">.</span><span class="n">source</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">members</span><span class="p">})</span>
+        <span class="n">cid</span> <span class="o">=</span> <span class="n">first_prop</span><span class="o">.</span><span class="n">cid</span> <span class="k">if</span> <span class="n">first_prop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">source_url</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">cid_property_url</span><span class="p">(</span><span class="n">cid</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">cid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">cid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">members</span><span class="p">)</span>
+            <span class="k">else</span> <span class="p">(</span>
+                <span class="n">name_property_url</span><span class="p">(</span><span class="n">members</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name_query</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">first_prop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">terminal</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">CuratedRow</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">synonyms</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span>
+                    <span class="n">resolution_status</span><span class="o">=</span><span class="n">terminal</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                    <span class="n">unresolved_reason</span><span class="o">=</span><span class="n">terminal</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                    <span class="n">retrieved_at</span><span class="o">=</span><span class="n">today</span><span class="p">,</span>
+                    <span class="n">sources</span><span class="o">=</span><span class="n">sources</span><span class="p">,</span>
+                    <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="n">first_prop</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">CuratedRow</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">chebi_id</span><span class="o">=</span><span class="n">hand_chebi</span><span class="p">,</span>
+                    <span class="n">synonyms</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span>
+                    <span class="n">source_url</span><span class="o">=</span><span class="n">name_property_url</span><span class="p">(</span><span class="n">members</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name_query</span><span class="p">),</span>
+                    <span class="n">retrieval_method</span><span class="o">=</span><span class="n">_RETRIEVAL_METHOD</span><span class="p">,</span>
+                    <span class="n">retrieved_at</span><span class="o">=</span><span class="n">today</span><span class="p">,</span>
+                    <span class="n">resolution_status</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">"RESOLVED_MIXTURE"</span>
+                        <span class="k">if</span> <span class="n">mixture</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">hand_chebi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                        <span class="k">else</span> <span class="s2">"UNRESOLVED_PUBLIC"</span>
+                    <span class="p">),</span>
+                    <span class="n">unresolved_reason</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">mixture</span>
+                        <span class="k">if</span> <span class="n">mixture</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                        <span class="k">else</span> <span class="s2">"PubChem name lookup returned no CID (PUGREST.NotFound)"</span>
+                    <span class="p">),</span>
+                    <span class="n">sources</span><span class="o">=</span><span class="n">sources</span><span class="p">,</span>
+                    <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="n">resolved_chebi</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">hand_chebi</span> <span class="k">if</span> <span class="n">hand_chebi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">chebi</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">first_prop</span><span class="o">.</span><span class="n">cid</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">mixture</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">CuratedRow</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">pubchem_cid</span><span class="o">=</span><span class="n">first_prop</span><span class="o">.</span><span class="n">cid</span><span class="p">,</span>
+                    <span class="n">chebi_id</span><span class="o">=</span><span class="n">resolved_chebi</span><span class="p">,</span>
+                    <span class="n">synonyms</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span>
+                    <span class="n">source_url</span><span class="o">=</span><span class="n">source_url</span><span class="p">,</span>
+                    <span class="n">retrieval_method</span><span class="o">=</span><span class="n">_RETRIEVAL_METHOD</span><span class="p">,</span>
+                    <span class="n">retrieved_at</span><span class="o">=</span><span class="n">today</span><span class="p">,</span>
+                    <span class="n">resolution_status</span><span class="o">=</span><span class="s2">"RESOLVED_MIXTURE"</span><span class="p">,</span>
+                    <span class="n">unresolved_reason</span><span class="o">=</span><span class="n">mixture</span><span class="p">,</span>
+                    <span class="n">sources</span><span class="o">=</span><span class="n">sources</span><span class="p">,</span>
+                    <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">CuratedRow</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">inchikey</span><span class="o">=</span><span class="n">first_prop</span><span class="o">.</span><span class="n">inchikey</span><span class="p">,</span>
+                <span class="n">pubchem_cid</span><span class="o">=</span><span class="n">first_prop</span><span class="o">.</span><span class="n">cid</span><span class="p">,</span>
+                <span class="n">chebi_id</span><span class="o">=</span><span class="n">resolved_chebi</span><span class="p">,</span>
+                <span class="n">smiles</span><span class="o">=</span><span class="n">first_prop</span><span class="o">.</span><span class="n">smiles</span><span class="p">,</span>
+                <span class="n">synonyms</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span>
+                <span class="n">source_url</span><span class="o">=</span><span class="n">source_url</span><span class="p">,</span>
+                <span class="n">retrieval_method</span><span class="o">=</span><span class="n">_RETRIEVAL_METHOD</span><span class="p">,</span>
+                <span class="n">retrieved_at</span><span class="o">=</span><span class="n">today</span><span class="p">,</span>
+                <span class="n">resolution_status</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">"RESOLVED"</span>
+                    <span class="k">if</span> <span class="n">first_prop</span><span class="o">.</span><span class="n">inchikey</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="k">else</span> <span class="s2">"UNRESOLVED_PUBLIC"</span>
+                <span class="p">),</span>
+                <span class="n">unresolved_reason</span><span class="o">=</span><span class="p">(</span>
+                    <span class="kc">None</span>
+                    <span class="k">if</span> <span class="n">first_prop</span><span class="o">.</span><span class="n">inchikey</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="k">else</span> <span class="s2">"PubChem returned a CID with no InChIKey"</span>
+                <span class="p">),</span>
+                <span class="n">sources</span><span class="o">=</span><span class="n">sources</span><span class="p">,</span>
+                <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="n">rows</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">r</span><span class="o">.</span><span class="n">pubchem_cid</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">_disambiguate</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_disambiguate</span><span class="p">(</span><span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CuratedRow</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">CuratedRow</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Resolve lookup-key collisions by PRECEDENCE, so no key has a silent winner.</span>
+
+<span class="sd">    Two PubChem records can share a Title (Cisplatin is titled on more than one CID), and</span>
+<span class="sd">    one compound's synonym can be another's name. A key is awarded to the single highest-</span>
+<span class="sd">    precedence row that claims it: a row an input line marked ``canonical`` outranks a row</span>
+<span class="sd">    resolved through PubChem's NAME index, which outranks one reached only by CID. The</span>
+<span class="sd">    losers keep the identity and lose the key: a losing name becomes ``&lt;name&gt; (CID &lt;n&gt;)``,</span>
+<span class="sd">    a losing synonym is dropped. A tie at the top means nobody gets the key, because a</span>
+<span class="sd">    label that names two compounds equally well names neither.</span>
+<span class="sd">    """</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="p">[[</span><span class="n">k</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="n">row</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">row</span><span class="o">.</span><span class="n">synonyms</span><span class="p">]]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
+    <span class="n">owners</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row_keys</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">keys</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">row_keys</span><span class="p">):</span>
+            <span class="n">owners</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+    <span class="n">winner</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">claimants</span> <span class="ow">in</span> <span class="n">owners</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">best</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">rows</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">precedence</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">claimants</span><span class="p">)</span>
+        <span class="n">top</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">claimants</span> <span class="k">if</span> <span class="n">rows</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">precedence</span> <span class="o">==</span> <span class="n">best</span><span class="p">]</span>
+        <span class="n">winner</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">top</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">top</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CuratedRow</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">rows</span><span class="p">):</span>
+        <span class="n">name_key</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">keep</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">s</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">row</span><span class="o">.</span><span class="n">synonyms</span>
+            <span class="k">if</span> <span class="n">winner</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span> <span class="o">==</span> <span class="n">index</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="n">name_key</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">winner</span><span class="p">[</span><span class="n">name_key</span><span class="p">]</span> <span class="o">==</span> <span class="n">index</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"synonyms"</span><span class="p">:</span> <span class="n">keep</span><span class="p">}))</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">row</span><span class="o">.</span><span class="n">pubchem_cid</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"name collision on </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> with no CID to qualify it"</span>
+            <span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">row</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span>
+                <span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> (CID </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">pubchem_cid</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span> <span class="s2">"synonyms"</span><span class="p">:</span> <span class="n">keep</span><span class="p">}</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">r</span><span class="o">.</span><span class="n">pubchem_cid</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<div class="viewcode-block" id="serialize">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity_curate.serialize.html#torchcell.datamodels.compound_identity_curate.serialize">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">serialize</span><span class="p">(</span><span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CuratedRow</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Deterministic table bytes (sorted keys, stable indent, trailing newline)."""</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"schema_version"</span><span class="p">:</span> <span class="n">_SCHEMA_VERSION</span><span class="p">,</span>
+        <span class="s2">"records"</span><span class="p">:</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="p">{</span><span class="s2">"sources"</span><span class="p">,</span> <span class="s2">"precedence"</span><span class="p">})</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">],</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Entry point</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<div class="viewcode-block" id="curate">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity_curate.curate.html#torchcell.datamodels.compound_identity_curate.curate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">curate</span><span class="p">(</span>
+    <span class="n">name_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span> <span class="n">cid_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span> <span class="n">cache</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">CuratedRow</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">CurationDirective</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Read the input lists, query PubChem, and assemble the rows."""</span>
+    <span class="n">directives</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CurationDirective</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">name_files</span><span class="p">:</span>
+        <span class="n">directives</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">read_name_list</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">cid_files</span><span class="p">:</span>
+        <span class="n">directives</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">read_cid_list</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+
+    <span class="n">client</span> <span class="o">=</span> <span class="n">PubChemClient</span><span class="p">(</span><span class="n">cache</span><span class="p">)</span>
+    <span class="n">cid_directives</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">directives</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">cid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">d</span><span class="o">.</span><span class="n">skip_lookup</span><span class="p">]</span>
+    <span class="n">name_directives</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">directives</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">cid</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">d</span><span class="o">.</span><span class="n">skip_lookup</span><span class="p">]</span>
+
+    <span class="n">by_cid</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">properties_by_cids</span><span class="p">(</span><span class="nb">sorted</span><span class="p">({</span><span class="n">d</span><span class="o">.</span><span class="n">cid</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">cid_directives</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">cid</span><span class="p">}))</span>
+    <span class="n">properties</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">PubChemProperty</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">directive</span> <span class="ow">in</span> <span class="n">cid_directives</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">directive</span><span class="o">.</span><span class="n">cid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">properties</span><span class="p">[</span><span class="n">directive</span><span class="o">.</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">by_cid</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">directive</span><span class="o">.</span><span class="n">cid</span><span class="p">)</span>
+
+    <span class="n">queried</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">PubChemProperty</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">directive</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">name_directives</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">directive</span><span class="o">.</span><span class="n">name_query</span>
+        <span class="k">if</span> <span class="n">query</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">queried</span><span class="p">:</span>
+            <span class="n">queried</span><span class="p">[</span><span class="n">query</span><span class="p">]</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">property_by_name</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">50</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">client</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  ... </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">name_directives</span><span class="p">)</span><span class="si">}</span><span class="s2"> name lookups"</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">properties</span><span class="p">[</span><span class="n">directive</span><span class="o">.</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">queried</span><span class="p">[</span><span class="n">query</span><span class="p">]</span>
+
+    <span class="n">all_cids</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">p</span><span class="o">.</span><span class="n">cid</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">properties</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">})</span>
+    <span class="n">chebi</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chebi_by_cids</span><span class="p">(</span><span class="n">all_cids</span><span class="p">)</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">assemble</span><span class="p">(</span><span class="n">directives</span><span class="p">,</span> <span class="n">properties</span><span class="p">,</span> <span class="n">chebi</span><span class="p">,</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">rows</span><span class="p">,</span> <span class="n">directives</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Curate the table from the committed input lists and print the sha256 to pin."""</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="vm">__doc__</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--names"</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"append"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="p">[],</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"label input list (repeatable)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--cids"</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"append"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="p">[],</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"bare-CID input list (repeatable)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--out"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"table JSON to write"</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--cache"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"response-cache JSON"</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="n">rows</span><span class="p">,</span> <span class="n">directives</span> <span class="o">=</span> <span class="n">curate</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">names</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">cids</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">cache</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">serialize</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+    <span class="n">args</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"wrote </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">out</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="si">}</span><span class="s2"> records)"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"sha256 = </span><span class="si">{</span><span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">'utf-8'</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="n">by_source</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">key</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span> <span class="n">r</span><span class="o">.</span><span class="n">resolution_status</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">r</span><span class="o">.</span><span class="n">synonyms</span><span class="p">]</span>
+    <span class="p">}</span>
+    <span class="k">for</span> <span class="n">directive</span> <span class="ow">in</span> <span class="n">directives</span><span class="p">:</span>
+        <span class="n">bucket</span> <span class="o">=</span> <span class="n">by_source</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">directive</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">directive</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="s2">"AMBIGUOUS_LABEL"</span><span class="p">)</span>
+        <span class="n">bucket</span><span class="p">[</span><span class="n">state</span><span class="p">]</span> <span class="o">=</span> <span class="n">bucket</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">by_source</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">by_source</span><span class="p">[</span><span class="n">source</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">row</span><span class="o">.</span><span class="n">resolution_status</span> <span class="o">!=</span> <span class="s2">"RESOLVED"</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  [</span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">resolution_status</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">unresolved_reason</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">}</span> <span class="o">|</span> <span class="p">{</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">synonyms</span>
+    <span class="p">}</span>
+    <span class="n">dropped</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="p">{</span><span class="n">d</span><span class="o">.</span><span class="n">label</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">directives</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">}</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">dropped</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  AMBIGUOUS labels dropped as lookup keys (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dropped</span><span class="p">)</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">dropped</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

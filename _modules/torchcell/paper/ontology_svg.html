@@ -1,0 +1,1076 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.paper.ontology_svg &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/paper/ontology_svg.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.paper.ontology_svg</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.paper.ontology_svg</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Lay out and render :mod:`torchcell.paper.ontology_graph` as a zoomable SVG map.</span>
+
+<span class="sd">The layout is deliberately domain-aware rather than a generic force/graphviz pass.</span>
+<span class="sd">The schema has a real shape -- an hourglass whose waist is</span>
+<span class="sd">``Experiment = (Genotype x Environment) -&gt; Phenotype`` -- and a generic layout hides</span>
+<span class="sd">that shape under a hairball. So each domain gets a titled lane, each inheritance</span>
+<span class="sd">tree inside a lane is drawn as a horizontal tree (parent left, children stacked</span>
+<span class="sd">right, parent centred on its children), and composition edges are drawn as light</span>
+<span class="sd">curves anchored at the exact field row that holds the reference.</span>
+
+<span class="sd">Everything is emitted as one self-contained SVG with no external references, so the</span>
+<span class="sd">same file drops into draw.io, into LaTeX (via rsvg/Inkscape), and into the HTML</span>
+<span class="sd">explorer.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">xml.sax.saxutils</span><span class="w"> </span><span class="kn">import</span> <span class="n">escape</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.paper.ontology_graph</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LANE_HEADINGS</span><span class="p">,</span>
+    <span class="n">LANE_ORDER</span><span class="p">,</span>
+    <span class="n">LANE_PALETTE_INDEX</span><span class="p">,</span>
+    <span class="n">LANE_SUBTITLES</span><span class="p">,</span>
+    <span class="n">LANE_TITLES</span><span class="p">,</span>
+    <span class="n">OntologyGraph</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">PLOT_PALETTE</span><span class="p">,</span> <span class="n">PLOT_PALETTE_FILL</span>
+
+<span class="c1"># --- Card + lane geometry, in SVG user units. One unit is arbitrary; the physical</span>
+<span class="c1"># size comes from the width/height attributes, and the viewBox makes the whole thing</span>
+<span class="c1"># scale losslessly. Row height and font size are chosen so that a card reads</span>
+<span class="c1"># comfortably at roughly 4x zoom in a PDF viewer.</span>
+<span class="n">CARD_W</span> <span class="o">=</span> <span class="mf">258.0</span>
+<span class="n">HEADER_H</span> <span class="o">=</span> <span class="mf">21.0</span>
+<span class="n">ROW_H</span> <span class="o">=</span> <span class="mf">12.6</span>
+<span class="n">CARD_PAD_Y</span> <span class="o">=</span> <span class="mf">5.0</span>
+<span class="n">GAP_X</span> <span class="o">=</span> <span class="mf">46.0</span>  <span class="c1"># horizontal gap between tree levels</span>
+<span class="n">GAP_Y</span> <span class="o">=</span> <span class="mf">9.0</span>  <span class="c1"># vertical gap between sibling cards</span>
+<span class="n">TREE_GAP_Y</span> <span class="o">=</span> <span class="mf">34.0</span>  <span class="c1"># vertical gap between separate trees in one lane</span>
+<span class="n">LANE_PAD</span> <span class="o">=</span> <span class="mf">26.0</span>
+<span class="n">LANE_TITLE_H</span> <span class="o">=</span> <span class="mf">62.0</span>
+<span class="n">LANE_GAP_X</span> <span class="o">=</span> <span class="mf">54.0</span>
+<span class="n">LANE_GAP_Y</span> <span class="o">=</span> <span class="mf">46.0</span>
+
+<span class="n">FONT_CLASS</span> <span class="o">=</span> <span class="mf">8.6</span>
+<span class="n">FONT_FIELD</span> <span class="o">=</span> <span class="mf">7.0</span>
+<span class="n">FONT_LANE</span> <span class="o">=</span> <span class="mf">34.0</span>
+<span class="n">FONT_LANE_SUB</span> <span class="o">=</span> <span class="mf">13.0</span>
+
+<span class="c1"># Backbone composition edges: the ones that *are* the data model. Drawn bold; every</span>
+<span class="c1"># other composition edge is drawn as a hairline so the backbone stays legible.</span>
+<span class="n">BACKBONE_EDGES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="p">(</span><span class="s2">"Experiment"</span><span class="p">,</span> <span class="s2">"Genotype"</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"Experiment"</span><span class="p">,</span> <span class="s2">"Environment"</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"Experiment"</span><span class="p">,</span> <span class="s2">"Phenotype"</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"ExperimentReference"</span><span class="p">,</span> <span class="s2">"ReferenceGenome"</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"ExperimentReference"</span><span class="p">,</span> <span class="s2">"Environment"</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"ExperimentReference"</span><span class="p">,</span> <span class="s2">"Phenotype"</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"Genotype"</span><span class="p">,</span> <span class="s2">"GenePerturbation"</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"Environment"</span><span class="p">,</span> <span class="s2">"Media"</span><span class="p">),</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="c1"># Which column and stacking slot each lane occupies. Columns read left to right as</span>
+<span class="c1"># the hourglass: inputs, waist, output, supporting vocabulary.</span>
+<span class="n">LANE_GRID</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"genotype"</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="s2">"experiment"</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="s2">"environment"</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+    <span class="s2">"phenotype"</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="s2">"provenance"</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="s2">"enum"</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="c1"># Target height for a lane before its trees wrap into another column. Lanes made of</span>
+<span class="c1"># many shallow roots (environment, the enums) would otherwise render as a single</span>
+<span class="c1"># absurdly tall thin strip; wrapping them keeps every lane roughly rectangular so the</span>
+<span class="c1"># lanes tile without leaving large voids.</span>
+<span class="n">LANE_TARGET_H</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"genotype"</span><span class="p">:</span> <span class="mf">3000.0</span><span class="p">,</span>
+    <span class="s2">"environment"</span><span class="p">:</span> <span class="mf">900.0</span><span class="p">,</span>
+    <span class="s2">"experiment"</span><span class="p">:</span> <span class="mf">2000.0</span><span class="p">,</span>
+    <span class="s2">"phenotype"</span><span class="p">:</span> <span class="mf">1900.0</span><span class="p">,</span>
+    <span class="s2">"provenance"</span><span class="p">:</span> <span class="mf">420.0</span><span class="p">,</span>
+    <span class="s2">"enum"</span><span class="p">:</span> <span class="mf">900.0</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1"># Compact cards are ~6x shorter, so no lane needs to wrap; a wrap there just leaves a</span>
+<span class="c1"># one-item second column and a wide empty frame.</span>
+<span class="n">LANE_TARGET_H_COMPACT</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">LANE_TARGET_H</span><span class="p">,</span> <span class="mf">1.0e6</span><span class="p">)</span>
+
+<span class="c1"># Compact mode rebalances the grid: with short lanes, environment fits beside</span>
+<span class="c1"># phenotype instead of hanging below experiment and stretching the whole canvas.</span>
+<span class="n">LANE_GRID_COMPACT</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"genotype"</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="s2">"experiment"</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="s2">"phenotype"</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="s2">"environment"</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+    <span class="s2">"provenance"</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="s2">"enum"</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_text_w</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">font_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">factor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.53</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="o">*</span> <span class="n">font_size</span> <span class="o">*</span> <span class="n">factor</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_truncate</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_w</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">font_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">_text_w</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">font_size</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">max_w</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">text</span>
+    <span class="n">keep</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">max_w</span> <span class="o">/</span> <span class="p">(</span><span class="n">font_size</span> <span class="o">*</span> <span class="mf">0.53</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">text</span><span class="p">[:</span><span class="n">keep</span><span class="p">]</span> <span class="o">+</span> <span class="s2">"…"</span>
+
+
+<div class="viewcode-block" id="Card">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.ontology_svg.Card.html#torchcell.paper.ontology_svg.Card">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Card</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A placed class box."""</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">lane</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">x</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">y</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">w</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">CARD_W</span>
+    <span class="n">h</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">row_anchors</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"field name -&gt; y offset of its row centre"</span>
+    <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cx</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Card centre x."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">w</span> <span class="o">/</span> <span class="mi">2</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Card centre y."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="o">/</span> <span class="mi">2</span></div>
+
+
+
+<div class="viewcode-block" id="Lane">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.ontology_svg.Lane.html#torchcell.paper.ontology_svg.Lane">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Lane</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A titled domain block containing one or more laid-out trees."""</span>
+
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">x</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">y</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">w</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">h</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">card_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Layout">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.ontology_svg.Layout.html#torchcell.paper.ontology_svg.Layout">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Layout</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A fully placed diagram, ready to serialise."""</span>
+
+    <span class="n">cards</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Card</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">lanes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Lane</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">height</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_card_height</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">OntologyGraph</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">compact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Card height. In compact mode the body is dropped and only the header shows.</span>
+
+<span class="sd">    Compact mode is what makes a Nature-sized panel possible: with 95 classes the</span>
+<span class="sd">    full field list is ~3700 units tall, which at 179 mm wide would be 212 mm tall --</span>
+<span class="sd">    over the 170 mm ceiling. Collapsing to headers keeps the same lanes, the same</span>
+<span class="sd">    topology and the same colors, just without the field rows.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">compact</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">HEADER_H</span> <span class="o">+</span> <span class="mf">3.0</span>
+    <span class="k">return</span> <span class="n">HEADER_H</span> <span class="o">+</span> <span class="n">graph</span><span class="o">.</span><span class="n">classes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">row_count</span> <span class="o">*</span> <span class="n">ROW_H</span> <span class="o">+</span> <span class="n">CARD_PAD_Y</span> <span class="o">*</span> <span class="mi">2</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_lane_roots</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">OntologyGraph</span><span class="p">,</span> <span class="n">lane</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Trees to draw in a lane: classes with no parent, or whose parent is elsewhere."""</span>
+    <span class="n">members</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">lane_members</span><span class="p">(</span><span class="n">lane</span><span class="p">))</span>
+    <span class="n">roots</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">n</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">members</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">graph</span><span class="o">.</span><span class="n">classes</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">graph</span><span class="o">.</span><span class="n">classes</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">members</span>
+    <span class="p">]</span>
+    <span class="c1"># Put the conceptually primary root first so the lane reads top-down sensibly.</span>
+    <span class="n">priority</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"Genotype"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"Environment"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"Experiment"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"Phenotype"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">roots</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="p">(</span><span class="n">priority</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">n</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_place_tree</span><span class="p">(</span>
+    <span class="n">graph</span><span class="p">:</span> <span class="n">OntologyGraph</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">y</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Card</span><span class="p">],</span>
+    <span class="n">lane</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">compact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Place ``name`` and its subtree; return (block height, rightmost x reached).</span>
+
+<span class="sd">    Parent sits at ``x`` vertically centred on the stacked block of its children,</span>
+<span class="sd">    which start at ``x + CARD_W + GAP_X``. This is the classic horizontal tree: it</span>
+<span class="sd">    keeps sibling classes aligned in a readable column and makes depth in the</span>
+<span class="sd">    ontology map directly onto horizontal distance.</span>
+
+<span class="sd">    Recursion stops at the lane boundary. Inheritance crosses lanes -- ``Phenotype``,</span>
+<span class="sd">    ``Compound`` and ``Environment`` all derive from ``ProvenanceGapMixin``, which</span>
+<span class="sd">    lives in the provenance lane -- so walking the unfiltered child list would place</span>
+<span class="sd">    those subtrees inside whichever lane happened to reach them first. Every lane</span>
+<span class="sd">    writes into one shared ``out`` dict, and provenance is laid out after phenotype,</span>
+<span class="sd">    so the provenance pass silently overwrote all fourteen phenotype cards and left</span>
+<span class="sd">    the phenotype frame drawing empty. The cross-lane parent link is not lost; it is</span>
+<span class="sd">    drawn by :func:`_inheritance_svg`, which resolves cards by name regardless of lane.</span>
+<span class="sd">    """</span>
+    <span class="n">own_h</span> <span class="o">=</span> <span class="n">_card_height</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">compact</span><span class="p">)</span>
+    <span class="n">children</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">children_of</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">if</span> <span class="n">graph</span><span class="o">.</span><span class="n">classes</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">lane</span> <span class="o">==</span> <span class="n">lane</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">children</span><span class="p">:</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Card</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">lane</span><span class="o">=</span><span class="n">lane</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">own_h</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">own_h</span><span class="p">,</span> <span class="n">x</span> <span class="o">+</span> <span class="n">CARD_W</span>
+
+    <span class="n">child_x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">CARD_W</span> <span class="o">+</span> <span class="n">GAP_X</span>
+    <span class="n">cursor</span> <span class="o">=</span> <span class="n">y</span>
+    <span class="n">far_right</span> <span class="o">=</span> <span class="n">child_x</span> <span class="o">+</span> <span class="n">CARD_W</span>
+    <span class="n">gap_y</span> <span class="o">=</span> <span class="n">GAP_Y</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">compact</span> <span class="k">else</span> <span class="n">GAP_Y</span> <span class="o">*</span> <span class="mf">0.7</span>
+    <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
+        <span class="n">block_h</span><span class="p">,</span> <span class="n">reach</span> <span class="o">=</span> <span class="n">_place_tree</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">child</span><span class="p">,</span> <span class="n">child_x</span><span class="p">,</span> <span class="n">cursor</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">lane</span><span class="p">,</span> <span class="n">compact</span><span class="p">)</span>
+        <span class="n">far_right</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">far_right</span><span class="p">,</span> <span class="n">reach</span><span class="p">)</span>
+        <span class="n">cursor</span> <span class="o">+=</span> <span class="n">block_h</span> <span class="o">+</span> <span class="n">gap_y</span>
+    <span class="n">block_h</span> <span class="o">=</span> <span class="n">cursor</span> <span class="o">-</span> <span class="n">y</span> <span class="o">-</span> <span class="n">gap_y</span>
+
+    <span class="n">out</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Card</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">lane</span><span class="o">=</span><span class="n">lane</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span> <span class="o">+</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="p">(</span><span class="n">block_h</span> <span class="o">-</span> <span class="n">own_h</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="n">h</span><span class="o">=</span><span class="n">own_h</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">block_h</span><span class="p">,</span> <span class="n">own_h</span><span class="p">),</span> <span class="n">far_right</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_flow_lane</span><span class="p">(</span>
+    <span class="n">graph</span><span class="p">:</span> <span class="n">OntologyGraph</span><span class="p">,</span> <span class="n">lane</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">compact</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Card</span><span class="p">],</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Lay a lane's trees out, wrapping into a new column past the target height."""</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="p">(</span><span class="n">LANE_TARGET_H_COMPACT</span> <span class="k">if</span> <span class="n">compact</span> <span class="k">else</span> <span class="n">LANE_TARGET_H</span><span class="p">)[</span><span class="n">lane</span><span class="p">]</span>
+    <span class="n">cards</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Card</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">col_x</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">cursor_y</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">col_right</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">max_x</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">max_y</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">tree_gap</span> <span class="o">=</span> <span class="n">TREE_GAP_Y</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">compact</span> <span class="k">else</span> <span class="n">TREE_GAP_Y</span> <span class="o">*</span> <span class="mf">0.6</span>
+
+    <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">_lane_roots</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">lane</span><span class="p">):</span>
+        <span class="n">probe</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Card</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">block_h</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_place_tree</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">probe</span><span class="p">,</span> <span class="n">lane</span><span class="p">,</span> <span class="n">compact</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cursor_y</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">cursor_y</span> <span class="o">+</span> <span class="n">block_h</span> <span class="o">&gt;</span> <span class="n">target</span><span class="p">:</span>
+            <span class="n">col_x</span> <span class="o">=</span> <span class="n">col_right</span> <span class="o">+</span> <span class="n">LANE_GAP_X</span>
+            <span class="n">cursor_y</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">reach</span> <span class="o">=</span> <span class="n">_place_tree</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="n">col_x</span><span class="p">,</span> <span class="n">cursor_y</span><span class="p">,</span> <span class="n">cards</span><span class="p">,</span> <span class="n">lane</span><span class="p">,</span> <span class="n">compact</span><span class="p">)</span>
+        <span class="n">col_right</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">col_right</span><span class="p">,</span> <span class="n">reach</span><span class="p">)</span>
+        <span class="n">max_x</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_x</span><span class="p">,</span> <span class="n">reach</span><span class="p">)</span>
+        <span class="n">cursor_y</span> <span class="o">+=</span> <span class="n">block_h</span> <span class="o">+</span> <span class="n">tree_gap</span>
+        <span class="n">max_y</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_y</span><span class="p">,</span> <span class="n">cursor_y</span> <span class="o">-</span> <span class="n">tree_gap</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">cards</span><span class="p">,</span> <span class="n">max_x</span><span class="p">,</span> <span class="n">max_y</span>
+
+
+<div class="viewcode-block" id="build_layout">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.ontology_svg.build_layout.html#torchcell.paper.ontology_svg.build_layout">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_layout</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">OntologyGraph</span><span class="p">,</span> <span class="n">compact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Layout</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Place every class into its lane, then pack lanes into the grid."""</span>
+    <span class="n">layout</span> <span class="o">=</span> <span class="n">Layout</span><span class="p">()</span>
+
+    <span class="c1"># 1. Lay each lane out at the origin, measuring its natural extent.</span>
+    <span class="n">lane_local</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Card</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">lane</span> <span class="ow">in</span> <span class="n">LANE_ORDER</span><span class="p">:</span>
+        <span class="n">cards</span><span class="p">,</span> <span class="n">max_x</span><span class="p">,</span> <span class="n">max_y</span> <span class="o">=</span> <span class="n">_flow_lane</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">lane</span><span class="p">,</span> <span class="n">compact</span><span class="p">)</span>
+        <span class="n">lane_local</span><span class="p">[</span><span class="n">lane</span><span class="p">]</span> <span class="o">=</span> <span class="n">cards</span>
+        <span class="n">title_h</span> <span class="o">=</span> <span class="n">LANE_TITLE_H</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">compact</span> <span class="k">else</span> <span class="n">LANE_TITLE_H</span> <span class="o">*</span> <span class="mf">0.72</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">lanes</span><span class="p">[</span><span class="n">lane</span><span class="p">]</span> <span class="o">=</span> <span class="n">Lane</span><span class="p">(</span>
+            <span class="n">key</span><span class="o">=</span><span class="n">lane</span><span class="p">,</span>
+            <span class="n">w</span><span class="o">=</span><span class="n">max_x</span> <span class="o">+</span> <span class="n">LANE_PAD</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="n">h</span><span class="o">=</span><span class="n">max_y</span> <span class="o">+</span> <span class="n">LANE_PAD</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">title_h</span><span class="p">,</span>
+            <span class="n">card_names</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">cards</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="c1"># 2. Pack lanes into columns. A lane keeps its OWN width -- forcing it to the</span>
+    <span class="c1">#    column width drew a huge empty box around the narrow lanes -- but the next</span>
+    <span class="c1">#    column starts past the widest lane in this one, so columns stay aligned.</span>
+    <span class="n">grid</span> <span class="o">=</span> <span class="n">LANE_GRID_COMPACT</span> <span class="k">if</span> <span class="n">compact</span> <span class="k">else</span> <span class="n">LANE_GRID</span>
+    <span class="n">col_w</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">lane</span><span class="p">,</span> <span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="n">grid</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">col_w</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">col_w</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">layout</span><span class="o">.</span><span class="n">lanes</span><span class="p">[</span><span class="n">lane</span><span class="p">]</span><span class="o">.</span><span class="n">w</span><span class="p">)</span>
+
+    <span class="n">col_x</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">running</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">col_w</span><span class="p">):</span>
+        <span class="n">col_x</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">running</span>
+        <span class="n">running</span> <span class="o">+=</span> <span class="n">col_w</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">+</span> <span class="n">LANE_GAP_X</span>
+    <span class="n">total_w</span> <span class="o">=</span> <span class="n">running</span> <span class="o">-</span> <span class="n">LANE_GAP_X</span>
+
+    <span class="n">col_cursor</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">col_w</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">lane</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">grid</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="mi">1</span><span class="p">])):</span>
+        <span class="n">col</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">grid</span><span class="p">[</span><span class="n">lane</span><span class="p">]</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">lanes</span><span class="p">[</span><span class="n">lane</span><span class="p">]</span>
+        <span class="n">entry</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">col_x</span><span class="p">[</span><span class="n">col</span><span class="p">]</span>
+        <span class="n">entry</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">col_cursor</span><span class="p">[</span><span class="n">col</span><span class="p">]</span>
+        <span class="n">col_cursor</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">+=</span> <span class="n">entry</span><span class="o">.</span><span class="n">h</span> <span class="o">+</span> <span class="n">LANE_GAP_Y</span>
+
+    <span class="n">total_h</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">col_cursor</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">-</span> <span class="n">LANE_GAP_Y</span>
+
+    <span class="c1"># 3. Translate each lane's cards into absolute space and record row anchors.</span>
+    <span class="n">title_h</span> <span class="o">=</span> <span class="n">LANE_TITLE_H</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">compact</span> <span class="k">else</span> <span class="n">LANE_TITLE_H</span> <span class="o">*</span> <span class="mf">0.72</span>
+    <span class="k">for</span> <span class="n">lane</span><span class="p">,</span> <span class="n">cards</span> <span class="ow">in</span> <span class="n">lane_local</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">lanes</span><span class="p">[</span><span class="n">lane</span><span class="p">]</span>
+        <span class="n">dx</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">LANE_PAD</span>
+        <span class="n">dy</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">title_h</span> <span class="o">+</span> <span class="n">LANE_PAD</span>
+        <span class="k">for</span> <span class="n">card</span> <span class="ow">in</span> <span class="n">cards</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">card</span><span class="o">.</span><span class="n">x</span> <span class="o">+=</span> <span class="n">dx</span>
+            <span class="n">card</span><span class="o">.</span><span class="n">y</span> <span class="o">+=</span> <span class="n">dy</span>
+            <span class="bp">cls</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">classes</span><span class="p">[</span><span class="n">card</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">enum_members</span>
+                <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"enum"</span>
+                <span class="k">else</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">own_fields</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">row_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">rows</span><span class="p">):</span>
+                <span class="n">card</span><span class="o">.</span><span class="n">row_anchors</span><span class="p">[</span><span class="n">row_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">card</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">HEADER_H</span> <span class="o">+</span> <span class="n">CARD_PAD_Y</span> <span class="o">+</span> <span class="n">i</span> <span class="o">*</span> <span class="n">ROW_H</span> <span class="o">+</span> <span class="n">ROW_H</span> <span class="o">/</span> <span class="mi">2</span>
+                <span class="p">)</span>
+            <span class="n">layout</span><span class="o">.</span><span class="n">cards</span><span class="p">[</span><span class="n">card</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">card</span>
+
+    <span class="n">layout</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">total_w</span>
+    <span class="n">layout</span><span class="o">.</span><span class="n">height</span> <span class="o">=</span> <span class="n">total_h</span>
+    <span class="k">return</span> <span class="n">layout</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_lane_colors</span><span class="p">(</span><span class="n">lane</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">LANE_PALETTE_INDEX</span><span class="p">[</span><span class="n">lane</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">PLOT_PALETTE</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">PLOT_PALETTE_FILL</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_card_svg</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">OntologyGraph</span><span class="p">,</span> <span class="n">card</span><span class="p">:</span> <span class="n">Card</span><span class="p">,</span> <span class="n">compact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="bp">cls</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">classes</span><span class="p">[</span><span class="n">card</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">compact</span><span class="p">:</span>
+        <span class="n">stroke</span><span class="p">,</span> <span class="n">fill</span> <span class="o">=</span> <span class="n">_lane_colors</span><span class="p">(</span><span class="n">card</span><span class="o">.</span><span class="n">lane</span><span class="p">)</span>
+        <span class="n">dash</span> <span class="o">=</span> <span class="s1">' stroke-dasharray="3 2"'</span> <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">is_abstract</span> <span class="k">else</span> <span class="s2">""</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="n">_truncate</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">card</span><span class="o">.</span><span class="n">w</span> <span class="o">-</span> <span class="mi">12</span><span class="p">,</span> <span class="n">FONT_CLASS</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'&lt;g class="node" id="node-</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">" data-name="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'data-lane="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">lane</span><span class="si">}</span><span class="s1">"&gt;'</span>
+            <span class="sa">f</span><span class="s1">'&lt;rect class="card" x="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">x</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">y</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'width="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">w</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" height="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">h</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" rx="3" fill="</span><span class="si">{</span><span class="n">fill</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'stroke="</span><span class="si">{</span><span class="n">stroke</span><span class="si">}</span><span class="s1">" stroke-width="1"</span><span class="si">{</span><span class="n">dash</span><span class="si">}</span><span class="s1">/&gt;'</span>
+            <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">6</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">card</span><span class="o">.</span><span class="n">h</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">3.1</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'font-size="</span><span class="si">{</span><span class="n">FONT_CLASS</span><span class="si">}</span><span class="s1">" font-weight="700" fill="#2B2B2B"&gt;'</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">title</span><span class="p">)</span><span class="si">}</span><span class="s2">&lt;/text&gt;&lt;/g&gt;"</span>
+        <span class="p">)</span>
+    <span class="n">stroke</span><span class="p">,</span> <span class="n">fill</span> <span class="o">=</span> <span class="n">_lane_colors</span><span class="p">(</span><span class="n">card</span><span class="o">.</span><span class="n">lane</span><span class="p">)</span>
+    <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">'&lt;g class="node" id="node-</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">" data-name="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">" '</span>
+        <span class="sa">f</span><span class="s1">'data-lane="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">lane</span><span class="si">}</span><span class="s1">"&gt;'</span>
+    <span class="p">)</span>
+    <span class="n">dash</span> <span class="o">=</span> <span class="s1">' stroke-dasharray="4 2.5"'</span> <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">is_abstract</span> <span class="k">else</span> <span class="s2">""</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">'&lt;rect class="card" x="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">x</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">y</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+        <span class="sa">f</span><span class="s1">'width="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">w</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" height="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">h</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" rx="4" '</span>
+        <span class="sa">f</span><span class="s1">'fill="#FFFFFF" stroke="</span><span class="si">{</span><span class="n">stroke</span><span class="si">}</span><span class="s1">" stroke-width="1.1"</span><span class="si">{</span><span class="n">dash</span><span class="si">}</span><span class="s1">/&gt;'</span>
+    <span class="p">)</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">'&lt;path class="card-head" d="M</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">x</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">4</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> '</span>
+        <span class="sa">f</span><span class="s2">"a4 4 0 0 1 4 -4 h</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">w</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">8</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> a4 4 0 0 1 4 4 "</span>
+        <span class="sa">f</span><span class="s1">'v</span><span class="si">{</span><span class="n">HEADER_H</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">4</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> h</span><span class="si">{</span><span class="o">-</span><span class="n">card</span><span class="o">.</span><span class="n">w</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> Z" fill="</span><span class="si">{</span><span class="n">fill</span><span class="si">}</span><span class="s1">" stroke="none"/&gt;'</span>
+    <span class="p">)</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">'&lt;line x1="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">x</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y1="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">HEADER_H</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+        <span class="sa">f</span><span class="s1">'x2="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">card</span><span class="o">.</span><span class="n">w</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y2="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">HEADER_H</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+        <span class="sa">f</span><span class="s1">'stroke="</span><span class="si">{</span><span class="n">stroke</span><span class="si">}</span><span class="s1">" stroke-width="1.1"/&gt;'</span>
+    <span class="p">)</span>
+
+    <span class="n">title</span> <span class="o">=</span> <span class="n">_truncate</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">card</span><span class="o">.</span><span class="n">w</span> <span class="o">-</span> <span class="mi">16</span><span class="p">,</span> <span class="n">FONT_CLASS</span><span class="p">)</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">'&lt;text class="cls-name" x="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">8</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+        <span class="sa">f</span><span class="s1">'y="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">HEADER_H</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">6.5</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" font-size="</span><span class="si">{</span><span class="n">FONT_CLASS</span><span class="si">}</span><span class="s1">" '</span>
+        <span class="sa">f</span><span class="s1">'font-weight="700" fill="#2B2B2B"&gt;</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">title</span><span class="p">)</span><span class="si">}</span><span class="s1">&lt;/text&gt;'</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"enum"</span><span class="p">:</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'&lt;text class="cls-tag" x="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">card</span><span class="o">.</span><span class="n">w</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">8</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'y="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">HEADER_H</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">6.5</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" font-size="</span><span class="si">{</span><span class="n">FONT_FIELD</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.4</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'text-anchor="end" fill="#666666"&gt;enum&lt;/text&gt;'</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="bp">cls</span><span class="o">.</span><span class="n">inherited_field_count</span><span class="p">:</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'&lt;text class="cls-tag" x="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">card</span><span class="o">.</span><span class="n">w</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">8</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'y="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">HEADER_H</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">6.5</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" font-size="</span><span class="si">{</span><span class="n">FONT_FIELD</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.4</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'text-anchor="end" fill="#8A8A8A"&gt;'</span>
+            <span class="sa">f</span><span class="s2">"+</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="n">inherited_field_count</span><span class="si">}</span><span class="s2"> inherited&lt;/text&gt;"</span>
+        <span class="p">)</span>
+
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">'&lt;g class="lod-detail"&gt;'</span><span class="p">)</span>
+    <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"enum"</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">member</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">enum_members</span><span class="p">):</span>
+            <span class="n">ty</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">HEADER_H</span> <span class="o">+</span> <span class="n">CARD_PAD_Y</span> <span class="o">+</span> <span class="n">i</span> <span class="o">*</span> <span class="n">ROW_H</span> <span class="o">+</span> <span class="n">ROW_H</span> <span class="o">-</span> <span class="mf">3.4</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">8</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">ty</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" font-size="</span><span class="si">{</span><span class="n">FONT_FIELD</span><span class="si">}</span><span class="s1">" '</span>
+                <span class="sa">f</span><span class="s1">'fill="#4A4A4A"&gt;</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">_truncate</span><span class="p">(</span><span class="n">member</span><span class="p">,</span><span class="w"> </span><span class="n">card</span><span class="o">.</span><span class="n">w</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">16</span><span class="p">,</span><span class="w"> </span><span class="n">FONT_FIELD</span><span class="p">))</span><span class="si">}</span><span class="s1">'</span>
+                <span class="sa">f</span><span class="s2">"&lt;/text&gt;"</span>
+            <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">own_fields</span><span class="p">):</span>
+            <span class="n">ty</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">HEADER_H</span> <span class="o">+</span> <span class="n">CARD_PAD_Y</span> <span class="o">+</span> <span class="n">i</span> <span class="o">*</span> <span class="n">ROW_H</span> <span class="o">+</span> <span class="n">ROW_H</span> <span class="o">-</span> <span class="mf">3.4</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="p">(</span><span class="s2">""</span> <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">required</span> <span class="k">else</span> <span class="s2">"?"</span><span class="p">)</span>
+            <span class="n">name_w</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">_text_w</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">FONT_FIELD</span><span class="p">)</span> <span class="o">+</span> <span class="mi">6</span><span class="p">,</span> <span class="n">card</span><span class="o">.</span><span class="n">w</span> <span class="o">*</span> <span class="mf">0.52</span><span class="p">)</span>
+            <span class="n">type_w</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">w</span> <span class="o">-</span> <span class="mi">16</span> <span class="o">-</span> <span class="n">name_w</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">8</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">ty</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" font-size="</span><span class="si">{</span><span class="n">FONT_FIELD</span><span class="si">}</span><span class="s1">" '</span>
+                <span class="sa">f</span><span class="s1">'fill="#2B2B2B"&gt;'</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">_truncate</span><span class="p">(</span><span class="n">label</span><span class="p">,</span><span class="w"> </span><span class="n">name_w</span><span class="p">,</span><span class="w"> </span><span class="n">FONT_FIELD</span><span class="p">))</span><span class="si">}</span><span class="s2">&lt;/text&gt;"</span>
+            <span class="p">)</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">card</span><span class="o">.</span><span class="n">w</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">8</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">ty</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+                <span class="sa">f</span><span class="s1">'font-size="</span><span class="si">{</span><span class="n">FONT_FIELD</span><span class="si">}</span><span class="s1">" text-anchor="end" fill="#8A8A8A"&gt;'</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">_truncate</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">type_label</span><span class="p">,</span><span class="w"> </span><span class="n">type_w</span><span class="p">,</span><span class="w"> </span><span class="n">FONT_FIELD</span><span class="p">))</span><span class="si">}</span><span class="s2">&lt;/text&gt;"</span>
+            <span class="p">)</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"&lt;/g&gt;"</span><span class="p">)</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"&lt;/g&gt;"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_inheritance_svg</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">OntologyGraph</span><span class="p">,</span> <span class="n">layout</span><span class="p">:</span> <span class="n">Layout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""UML generalisation: elbow from the child's left edge back to the parent."""</span>
+    <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">classes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">parent</span> <span class="ow">or</span> <span class="bp">cls</span><span class="o">.</span><span class="n">parent</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">layout</span><span class="o">.</span><span class="n">cards</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">layout</span><span class="o">.</span><span class="n">cards</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">child</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">cards</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">cards</span><span class="p">[</span><span class="bp">cls</span><span class="o">.</span><span class="n">parent</span><span class="p">]</span>
+        <span class="n">stroke</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_lane_colors</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">lane</span><span class="p">)</span>
+        <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">parent</span><span class="o">.</span><span class="n">w</span><span class="p">,</span> <span class="n">parent</span><span class="o">.</span><span class="n">cy</span>
+        <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">child</span><span class="o">.</span><span class="n">cy</span>
+        <span class="n">mid</span> <span class="o">=</span> <span class="n">x1</span> <span class="o">+</span> <span class="n">GAP_X</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'&lt;path class="inherit" d="M</span><span class="si">{</span><span class="n">x2</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">y2</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> H</span><span class="si">{</span><span class="n">mid</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> '</span>
+            <span class="sa">f</span><span class="s1">'V</span><span class="si">{</span><span class="n">y1</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> H</span><span class="si">{</span><span class="n">x1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">7</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" fill="none" stroke="</span><span class="si">{</span><span class="n">stroke</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'stroke-width="0.9" stroke-opacity="0.85"/&gt;'</span>
+        <span class="p">)</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'&lt;path class="inherit-head" d="M</span><span class="si">{</span><span class="n">x1</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">y1</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> '</span>
+            <span class="sa">f</span><span class="s1">'l7 -3.4 v6.8 Z" fill="#FFFFFF" stroke="</span><span class="si">{</span><span class="n">stroke</span><span class="si">}</span><span class="s1">" stroke-width="0.9"/&gt;'</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_composition_svg</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">OntologyGraph</span><span class="p">,</span> <span class="n">layout</span><span class="p">:</span> <span class="n">Layout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Curved has-a edges, anchored on the field row that holds the reference."""</span>
+    <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">composition_edges</span><span class="p">:</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">edge</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">edge</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="n">edge</span><span class="o">.</span><span class="n">field_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">edge</span><span class="o">.</span><span class="n">source</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">layout</span><span class="o">.</span><span class="n">cards</span> <span class="ow">or</span> <span class="n">edge</span><span class="o">.</span><span class="n">target</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">layout</span><span class="o">.</span><span class="n">cards</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">src</span><span class="p">,</span> <span class="n">dst</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">cards</span><span class="p">[</span><span class="n">edge</span><span class="o">.</span><span class="n">source</span><span class="p">],</span> <span class="n">layout</span><span class="o">.</span><span class="n">cards</span><span class="p">[</span><span class="n">edge</span><span class="o">.</span><span class="n">target</span><span class="p">]</span>
+        <span class="n">backbone</span> <span class="o">=</span> <span class="p">(</span><span class="n">edge</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">edge</span><span class="o">.</span><span class="n">target</span><span class="p">)</span> <span class="ow">in</span> <span class="n">BACKBONE_EDGES</span>
+        <span class="n">stroke</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_lane_colors</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">classes</span><span class="p">[</span><span class="n">edge</span><span class="o">.</span><span class="n">target</span><span class="p">]</span><span class="o">.</span><span class="n">lane</span><span class="p">)</span>
+
+        <span class="n">y1</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">row_anchors</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">edge</span><span class="o">.</span><span class="n">field_name</span><span class="p">,</span> <span class="n">src</span><span class="o">.</span><span class="n">cy</span><span class="p">)</span>
+        <span class="n">going_right</span> <span class="o">=</span> <span class="n">dst</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;=</span> <span class="n">src</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">src</span><span class="o">.</span><span class="n">w</span>
+        <span class="n">x1</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">src</span><span class="o">.</span><span class="n">w</span> <span class="k">if</span> <span class="n">going_right</span> <span class="k">else</span> <span class="n">src</span><span class="o">.</span><span class="n">x</span>
+        <span class="n">x2</span> <span class="o">=</span> <span class="n">dst</span><span class="o">.</span><span class="n">x</span> <span class="k">if</span> <span class="n">going_right</span> <span class="k">else</span> <span class="n">dst</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">dst</span><span class="o">.</span><span class="n">w</span>
+        <span class="n">y2</span> <span class="o">=</span> <span class="n">dst</span><span class="o">.</span><span class="n">cy</span>
+        <span class="n">bow</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">70.0</span><span class="p">,</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x2</span> <span class="o">-</span> <span class="n">x1</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.42</span><span class="p">)</span>
+        <span class="n">c1</span> <span class="o">=</span> <span class="n">x1</span> <span class="o">+</span> <span class="n">bow</span> <span class="k">if</span> <span class="n">going_right</span> <span class="k">else</span> <span class="n">x1</span> <span class="o">-</span> <span class="n">bow</span>
+        <span class="n">c2</span> <span class="o">=</span> <span class="n">x2</span> <span class="o">-</span> <span class="n">bow</span> <span class="k">if</span> <span class="n">going_right</span> <span class="k">else</span> <span class="n">x2</span> <span class="o">+</span> <span class="n">bow</span>
+
+        <span class="n">width</span> <span class="o">=</span> <span class="s2">"1.9"</span> <span class="k">if</span> <span class="n">backbone</span> <span class="k">else</span> <span class="s2">"0.6"</span>
+        <span class="n">opacity</span> <span class="o">=</span> <span class="s2">"0.9"</span> <span class="k">if</span> <span class="n">backbone</span> <span class="k">else</span> <span class="s2">"0.3"</span>
+        <span class="n">cls_attr</span> <span class="o">=</span> <span class="s2">"compose backbone"</span> <span class="k">if</span> <span class="n">backbone</span> <span class="k">else</span> <span class="s2">"compose"</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'&lt;path class="</span><span class="si">{</span><span class="n">cls_attr</span><span class="si">}</span><span class="s1">" data-src="</span><span class="si">{</span><span class="n">edge</span><span class="o">.</span><span class="n">source</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'data-dst="</span><span class="si">{</span><span class="n">edge</span><span class="o">.</span><span class="n">target</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'d="M</span><span class="si">{</span><span class="n">x1</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">y1</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> C</span><span class="si">{</span><span class="n">c1</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">y1</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">c2</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">y2</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> '</span>
+            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">x2</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">y2</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" fill="none" stroke="</span><span class="si">{</span><span class="n">stroke</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'stroke-width="</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s1">" stroke-opacity="</span><span class="si">{</span><span class="n">opacity</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'stroke-dasharray="</span><span class="si">{</span><span class="s2">"none"</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">backbone</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s2">"3 2.5"</span><span class="si">}</span><span class="s1">"/&gt;'</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">backbone</span><span class="p">:</span>
+            <span class="n">direction</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="n">going_right</span> <span class="k">else</span> <span class="mi">1</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'&lt;path class="compose-head" d="M</span><span class="si">{</span><span class="n">x2</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">y2</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> '</span>
+                <span class="sa">f</span><span class="s1">'l</span><span class="si">{</span><span class="n">direction</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">7.5</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> -3.6 v7.2 Z" fill="</span><span class="si">{</span><span class="n">stroke</span><span class="si">}</span><span class="s1">"/&gt;'</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_lane_frames_svg</span><span class="p">(</span>
+    <span class="n">graph</span><span class="p">:</span> <span class="n">OntologyGraph</span><span class="p">,</span> <span class="n">layout</span><span class="p">:</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">compact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">LANE_ORDER</span><span class="p">:</span>
+        <span class="n">lane</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">lanes</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="n">stroke</span><span class="p">,</span> <span class="n">fill</span> <span class="o">=</span> <span class="n">_lane_colors</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">head</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">sub</span> <span class="o">=</span> <span class="n">LANE_TITLES</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s2">" — "</span><span class="p">)</span>
+        <span class="n">head</span> <span class="o">=</span> <span class="n">head</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+
+        <span class="c1"># Shrink the banner to whatever the lane is actually wide, so a narrow lane</span>
+        <span class="c1"># cannot spill its title past its own frame.</span>
+        <span class="n">count_label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">lane</span><span class="o">.</span><span class="n">card_names</span><span class="p">)</span><span class="si">}</span><span class="s2"> classes"</span>
+        <span class="n">avail</span> <span class="o">=</span> <span class="n">lane</span><span class="o">.</span><span class="n">w</span> <span class="o">-</span> <span class="n">LANE_PAD</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">_text_w</span><span class="p">(</span><span class="n">count_label</span><span class="p">,</span> <span class="n">FONT_LANE_SUB</span><span class="p">)</span> <span class="o">-</span> <span class="mi">16</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">FONT_LANE</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">compact</span> <span class="k">else</span> <span class="n">FONT_LANE</span> <span class="o">*</span> <span class="mf">0.72</span>
+        <span class="k">while</span> <span class="n">size</span> <span class="o">&gt;</span> <span class="mi">11</span> <span class="ow">and</span> <span class="n">_text_w</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="mf">0.62</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">avail</span><span class="p">:</span>
+            <span class="n">size</span> <span class="o">-=</span> <span class="mf">1.0</span>
+        <span class="n">sub_size</span> <span class="o">=</span> <span class="n">FONT_LANE_SUB</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">compact</span> <span class="k">else</span> <span class="n">FONT_LANE_SUB</span> <span class="o">*</span> <span class="mf">0.8</span>
+        <span class="n">base_y</span> <span class="o">=</span> <span class="n">lane</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="p">(</span><span class="mi">38</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">compact</span> <span class="k">else</span> <span class="mi">28</span><span class="p">)</span>
+
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'&lt;g class="lane" id="lane-</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">"&gt;'</span>
+            <span class="sa">f</span><span class="s1">'&lt;rect x="</span><span class="si">{</span><span class="n">lane</span><span class="o">.</span><span class="n">x</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">lane</span><span class="o">.</span><span class="n">y</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" width="</span><span class="si">{</span><span class="n">lane</span><span class="o">.</span><span class="n">w</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'height="</span><span class="si">{</span><span class="n">lane</span><span class="o">.</span><span class="n">h</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" rx="10" fill="</span><span class="si">{</span><span class="n">fill</span><span class="si">}</span><span class="s1">" fill-opacity="0.26" '</span>
+            <span class="sa">f</span><span class="s1">'stroke="</span><span class="si">{</span><span class="n">stroke</span><span class="si">}</span><span class="s1">" stroke-width="1.4"/&gt;'</span>
+            <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">lane</span><span class="o">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">LANE_PAD</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">base_y</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'font-size="</span><span class="si">{</span><span class="n">size</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" font-weight="700" fill="</span><span class="si">{</span><span class="n">stroke</span><span class="si">}</span><span class="s1">"&gt;'</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">head</span><span class="p">)</span><span class="si">}</span><span class="s2">&lt;/text&gt;"</span>
+            <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">lane</span><span class="o">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">LANE_PAD</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">base_y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">16</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'font-size="</span><span class="si">{</span><span class="n">sub_size</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" fill="#666666"&gt;'</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">_truncate</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span><span class="w"> </span><span class="n">avail</span><span class="p">,</span><span class="w"> </span><span class="n">sub_size</span><span class="p">))</span><span class="si">}</span><span class="s2">&lt;/text&gt;"</span>
+            <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">lane</span><span class="o">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">lane</span><span class="o">.</span><span class="n">w</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">LANE_PAD</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">base_y</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'font-size="</span><span class="si">{</span><span class="n">sub_size</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" text-anchor="end" fill="</span><span class="si">{</span><span class="n">stroke</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'fill-opacity="0.75"&gt;</span><span class="si">{</span><span class="n">count_label</span><span class="si">}</span><span class="s1">&lt;/text&gt;'</span>
+            <span class="sa">f</span><span class="s2">"&lt;/g&gt;"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_legend_svg</span><span class="p">(</span>
+    <span class="n">layout</span><span class="p">:</span> <span class="n">Layout</span><span class="p">,</span>
+    <span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">y</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">compact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">explore_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s2">"solid box"</span><span class="p">,</span> <span class="s2">"concrete class you can instantiate"</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"dashed box"</span><span class="p">,</span> <span class="s2">"abstract base class"</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"solid line + hollow arrow"</span><span class="p">,</span> <span class="s2">"inheritance (is-a), arrow points to the parent"</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"bold curve"</span><span class="p">,</span> <span class="s2">"the data-model backbone (genotype × environment → phenotype)"</span><span class="p">),</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">compact</span><span class="p">:</span>
+        <span class="n">rows</span> <span class="o">+=</span> <span class="p">[</span>
+            <span class="p">(</span>
+                <span class="s2">"faint dashed curve"</span><span class="p">,</span>
+                <span class="s2">"composition (has-a), anchored on the field that holds it"</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="p">(</span><span class="s2">"field?"</span><span class="p">,</span> <span class="s2">"optional field; unmarked fields are required"</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"+n inherited"</span><span class="p">,</span> <span class="s2">"fields inherited from ancestors, shown on the card"</span><span class="p">),</span>
+        <span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">rows</span> <span class="o">+=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="s2">"faint dashed curve"</span><span class="p">,</span> <span class="s2">"composition (has-a)"</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"box colour"</span><span class="p">,</span> <span class="s2">"domain lane; every class keeps its lane's colour"</span><span class="p">),</span>
+        <span class="p">]</span>
+
+    <span class="n">scale</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">compact</span> <span class="k">else</span> <span class="mf">1.35</span>  <span class="c1"># legend text must survive the 179 mm render</span>
+    <span class="n">fs</span> <span class="o">=</span> <span class="mf">7.4</span> <span class="o">*</span> <span class="n">scale</span>
+    <span class="n">lh</span> <span class="o">=</span> <span class="mf">15.0</span> <span class="o">*</span> <span class="n">scale</span>
+    <span class="n">box_w</span> <span class="o">=</span> <span class="n">CARD_W</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.55</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">compact</span> <span class="k">else</span> <span class="mf">2.3</span><span class="p">)</span>
+    <span class="n">box_h</span> <span class="o">=</span> <span class="mi">28</span> <span class="o">*</span> <span class="n">scale</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span> <span class="o">*</span> <span class="n">lh</span> <span class="o">+</span> <span class="p">(</span><span class="n">lh</span> <span class="k">if</span> <span class="n">explore_url</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s1">'&lt;g class="legend"&gt;&lt;rect x="</span><span class="si">{</span><span class="n">x</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">y</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" width="</span><span class="si">{</span><span class="n">box_w</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+        <span class="sa">f</span><span class="s1">'height="</span><span class="si">{</span><span class="n">box_h</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" rx="6" fill="#FFFFFF" '</span>
+        <span class="sa">f</span><span class="s1">'stroke="#666666" stroke-width="1"/&gt;'</span>
+        <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">10</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">18</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">scale</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+        <span class="sa">f</span><span class="s1">'font-size="</span><span class="si">{</span><span class="mi">10</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">scale</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" font-weight="700" '</span>
+        <span class="sa">f</span><span class="s1">'fill="#2B2B2B"&gt;How to read this map&lt;/text&gt;'</span>
+    <span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">mark</span><span class="p">,</span> <span class="n">meaning</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">rows</span><span class="p">):</span>
+        <span class="n">ty</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="mi">34</span> <span class="o">*</span> <span class="n">scale</span> <span class="o">+</span> <span class="n">i</span> <span class="o">*</span> <span class="n">lh</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">10</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">ty</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" font-size="</span><span class="si">{</span><span class="n">fs</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'font-weight="700" fill="#4A4A4A"&gt;</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">mark</span><span class="p">)</span><span class="si">}</span><span class="s1">&lt;/text&gt;'</span>
+            <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">box_w</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.42</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">ty</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'font-size="</span><span class="si">{</span><span class="n">fs</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" fill="#666666"&gt;</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">meaning</span><span class="p">)</span><span class="si">}</span><span class="s1">&lt;/text&gt;'</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">explore_url</span><span class="p">:</span>
+        <span class="n">ty</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="mi">34</span> <span class="o">*</span> <span class="n">scale</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span> <span class="o">*</span> <span class="n">lh</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">10</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">ty</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" font-size="</span><span class="si">{</span><span class="n">fs</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'font-weight="700" fill="#4A4A4A"&gt;explore it&lt;/text&gt;'</span>
+            <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">box_w</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.42</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">ty</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'font-size="</span><span class="si">{</span><span class="n">fs</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" fill="#6C8EBF"&gt;</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">explore_url</span><span class="p">)</span><span class="si">}</span><span class="s1">&lt;/text&gt;'</span>
+        <span class="p">)</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"&lt;/g&gt;"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
+
+
+<span class="c1"># Child rows are indented by shifting the text's x, not by prefixing spaces: leading</span>
+<span class="c1"># whitespace in an SVG text node is collapsed by renderers (rsvg drops it outright,</span>
+<span class="c1"># and a non-breaking space is honoured inconsistently), which silently flattens the</span>
+<span class="c1"># parent/child structure. An x offset is unambiguous everywhere.</span>
+<span class="n">INDENT_W</span> <span class="o">=</span> <span class="mf">7.0</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_wrap_csv</span><span class="p">(</span><span class="n">names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">max_w</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">font_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Comma-join ``names`` and wrap so no line exceeds ``max_w``."""</span>
+    <span class="n">lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">current</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">names</span><span class="p">):</span>
+        <span class="n">piece</span> <span class="o">=</span> <span class="n">name</span> <span class="o">+</span> <span class="p">(</span><span class="s2">","</span> <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="n">trial</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">current</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">piece</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">current</span> <span class="k">else</span> <span class="n">piece</span>
+        <span class="k">if</span> <span class="n">current</span> <span class="ow">and</span> <span class="n">_text_w</span><span class="p">(</span><span class="n">trial</span><span class="p">,</span> <span class="n">font_size</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">max_w</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
+            <span class="n">current</span> <span class="o">=</span> <span class="n">piece</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">current</span> <span class="o">=</span> <span class="n">trial</span>
+    <span class="k">if</span> <span class="n">current</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">lines</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_suffix_family</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">children</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Children with the parent's name stripped, when every child carries it as a suffix.</span>
+
+<span class="sd">    ``Phenotype`` -&gt; ``FitnessPhenotype, CalMorphPhenotype, ...`` is the dominant shape</span>
+<span class="sd">    in this schema, and stripping the shared suffix is what lets all thirteen fit on a</span>
+<span class="sd">    printed panel without dropping any of them.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">children</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span> <span class="ow">and</span> <span class="n">c</span> <span class="o">!=</span> <span class="n">parent</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">children</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">c</span><span class="p">[:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">parent</span><span class="p">)]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">children</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_lane_body_lines</span><span class="p">(</span>
+    <span class="n">graph</span><span class="p">:</span> <span class="n">OntologyGraph</span><span class="p">,</span>
+    <span class="n">lane</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">max_w</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">font_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">6.0</span><span class="p">,</span>
+    <span class="n">max_lines</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">11</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Derive a lane block's body as ``(x offset, text)`` rows.</span>
+
+<span class="sd">    Nothing here is typed by hand: the roots, the subtype counts, and the names all</span>
+<span class="sd">    come off :class:`OntologyGraph`, so the panel cannot name a class the schema does</span>
+<span class="sd">    not have, and cannot omit one it does without saying how many it dropped.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">in_lane</span><span class="p">(</span><span class="n">names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">graph</span><span class="o">.</span><span class="n">classes</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">lane</span> <span class="o">==</span> <span class="n">lane</span><span class="p">]</span>
+
+    <span class="n">roots</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">lane_roots</span><span class="p">(</span><span class="n">lane</span><span class="p">)</span>
+    <span class="n">branching</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">roots</span> <span class="k">if</span> <span class="n">in_lane</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">children_of</span><span class="p">(</span><span class="n">r</span><span class="p">))]</span>
+    <span class="n">flat</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">roots</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">in_lane</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">children_of</span><span class="p">(</span><span class="n">r</span><span class="p">))]</span>
+
+    <span class="n">inner_w</span> <span class="o">=</span> <span class="n">max_w</span> <span class="o">-</span> <span class="n">INDENT_W</span>
+    <span class="n">lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">seen_families</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">branching</span><span class="p">:</span>
+        <span class="n">children</span> <span class="o">=</span> <span class="n">in_lane</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">children_of</span><span class="p">(</span><span class="n">root</span><span class="p">))</span>
+        <span class="n">n_desc</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">in_lane</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">descendants_of</span><span class="p">(</span><span class="n">root</span><span class="p">)))</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mf">0.0</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">root</span><span class="si">}</span><span class="s2">  ·  </span><span class="si">{</span><span class="n">n_desc</span><span class="si">}</span><span class="s2"> subtypes"</span><span class="p">))</span>
+        <span class="n">family</span> <span class="o">=</span> <span class="n">_suffix_family</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">children</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">family</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
+                <span class="n">extra</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">in_lane</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">descendants_of</span><span class="p">(</span><span class="n">child</span><span class="p">)))</span>
+                <span class="n">tail</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"  ·  </span><span class="si">{</span><span class="n">extra</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">extra</span> <span class="k">else</span> <span class="s2">""</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">INDENT_W</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">child</span><span class="si">}{</span><span class="n">tail</span><span class="si">}</span><span class="s2">"</span><span class="p">))</span>
+            <span class="k">continue</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">family</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">seen_families</span><span class="p">:</span>
+            <span class="n">same</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"same </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">family</span><span class="p">)</span><span class="si">}</span><span class="s2"> families as </span><span class="si">{</span><span class="n">seen_families</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">INDENT_W</span><span class="p">,</span> <span class="n">same</span><span class="p">))</span>
+            <span class="k">continue</span>
+        <span class="n">seen_families</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">root</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="n">INDENT_W</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span> <span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">_wrap_csv</span><span class="p">(</span><span class="n">family</span><span class="p">,</span> <span class="n">inner_w</span><span class="p">,</span> <span class="n">font_size</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">flat</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span> <span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">_wrap_csv</span><span class="p">(</span><span class="n">flat</span><span class="p">,</span> <span class="n">max_w</span><span class="p">,</span> <span class="n">font_size</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">max_lines</span><span class="p">:</span>
+        <span class="n">dropped</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">-</span> <span class="n">max_lines</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[:</span> <span class="n">max_lines</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"…  +</span><span class="si">{</span><span class="n">dropped</span><span class="si">}</span><span class="s2"> more lines — full list in the interactive map"</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">lines</span>
+
+
+<div class="viewcode-block" id="render_schematic_svg">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.ontology_svg.render_schematic_svg.html#torchcell.paper.ontology_svg.render_schematic_svg">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">render_schematic_svg</span><span class="p">(</span>
+    <span class="n">graph</span><span class="p">:</span> <span class="n">OntologyGraph</span><span class="p">,</span>
+    <span class="n">physical_width_mm</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">179.0</span><span class="p">,</span>
+    <span class="n">explore_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Render the legible, Nature-compliant structural panel.</span>
+
+<span class="sd">    The full map cannot be a printed figure: every class name across 179 mm forces the</span>
+<span class="sd">    labels to about 1.2 pt, five times under Nature's 6 pt floor. So this panel drops</span>
+<span class="sd">    to the level that *is* legible -- the six domains, the hourglass between them, and</span>
+<span class="sd">    each domain's roots and subtype counts read off the graph -- and prints the</span>
+<span class="sd">    explorer URL for the rest.</span>
+
+<span class="sd">    The whole thing is laid out in POINTS, with the viewBox width set to the physical</span>
+<span class="sd">    width in points. A font-size of 6 in user units is therefore exactly 6 pt in the</span>
+<span class="sd">    rendered figure, which makes the type-size guarantee structural rather than a</span>
+<span class="sd">    thing to re-check by hand.</span>
+<span class="sd">    """</span>
+    <span class="n">vb_w</span> <span class="o">=</span> <span class="n">physical_width_mm</span> <span class="o">*</span> <span class="mf">72.0</span> <span class="o">/</span> <span class="mf">25.4</span>
+    <span class="n">margin</span> <span class="o">=</span> <span class="mf">10.0</span>
+    <span class="n">gap</span> <span class="o">=</span> <span class="mf">9.0</span>
+    <span class="n">title_band</span> <span class="o">=</span> <span class="mf">26.0</span>
+
+    <span class="c1"># Three columns: inputs | waist | output, with the two supporting lanes beneath.</span>
+    <span class="n">col_w</span> <span class="o">=</span> <span class="p">(</span><span class="n">vb_w</span> <span class="o">-</span> <span class="n">margin</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">gap</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">3</span>
+    <span class="n">body_w</span> <span class="o">=</span> <span class="n">col_w</span> <span class="o">-</span> <span class="mf">10.0</span>
+
+    <span class="c1"># (lane, heading, gloss, body lines). Heading and gloss are the only editorial</span>
+    <span class="c1"># strings; every body line is derived from the graph, so a renamed or newly added</span>
+    <span class="c1"># class cannot leave a stale label behind.</span>
+    <span class="n">blocks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span>
+            <span class="n">lane</span><span class="p">,</span>
+            <span class="n">LANE_HEADINGS</span><span class="p">[</span><span class="n">lane</span><span class="p">],</span>
+            <span class="n">LANE_SUBTITLES</span><span class="p">[</span><span class="n">lane</span><span class="p">],</span>
+            <span class="n">_lane_body_lines</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">lane</span><span class="p">,</span> <span class="n">body_w</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">lane</span> <span class="ow">in</span> <span class="n">LANE_ORDER</span>
+    <span class="p">]</span>
+
+    <span class="n">line_h</span> <span class="o">=</span> <span class="mf">7.6</span>
+    <span class="n">head_h</span> <span class="o">=</span> <span class="mf">20.0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">block_h</span><span class="p">(</span><span class="n">lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">head_h</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">*</span> <span class="n">line_h</span> <span class="o">+</span> <span class="mf">7.0</span>
+
+    <span class="n">placed</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">by_key</span> <span class="o">=</span> <span class="p">{</span><span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">b</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">blocks</span><span class="p">}</span>
+
+    <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span> <span class="o">=</span> <span class="n">margin</span><span class="p">,</span> <span class="n">margin</span> <span class="o">+</span> <span class="n">col_w</span> <span class="o">+</span> <span class="n">gap</span><span class="p">,</span> <span class="n">margin</span> <span class="o">+</span> <span class="p">(</span><span class="n">col_w</span> <span class="o">+</span> <span class="n">gap</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">margin</span> <span class="o">+</span> <span class="n">title_band</span>
+
+    <span class="n">h_gen</span> <span class="o">=</span> <span class="n">block_h</span><span class="p">(</span><span class="n">by_key</span><span class="p">[</span><span class="s2">"genotype"</span><span class="p">][</span><span class="mi">3</span><span class="p">])</span>
+    <span class="n">h_env</span> <span class="o">=</span> <span class="n">block_h</span><span class="p">(</span><span class="n">by_key</span><span class="p">[</span><span class="s2">"environment"</span><span class="p">][</span><span class="mi">3</span><span class="p">])</span>
+    <span class="n">h_exp</span> <span class="o">=</span> <span class="n">block_h</span><span class="p">(</span><span class="n">by_key</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="mi">3</span><span class="p">])</span>
+    <span class="n">h_phe</span> <span class="o">=</span> <span class="n">block_h</span><span class="p">(</span><span class="n">by_key</span><span class="p">[</span><span class="s2">"phenotype"</span><span class="p">][</span><span class="mi">3</span><span class="p">])</span>
+    <span class="n">placed</span><span class="p">[</span><span class="s2">"genotype"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">col_w</span><span class="p">,</span> <span class="n">h_gen</span><span class="p">)</span>
+    <span class="n">placed</span><span class="p">[</span><span class="s2">"environment"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">y</span> <span class="o">+</span> <span class="n">h_gen</span> <span class="o">+</span> <span class="n">gap</span><span class="p">,</span> <span class="n">col_w</span><span class="p">,</span> <span class="n">h_env</span><span class="p">)</span>
+    <span class="n">left_h</span> <span class="o">=</span> <span class="n">h_gen</span> <span class="o">+</span> <span class="n">gap</span> <span class="o">+</span> <span class="n">h_env</span>
+    <span class="n">placed</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y</span> <span class="o">+</span> <span class="p">(</span><span class="n">left_h</span> <span class="o">-</span> <span class="n">h_exp</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">col_w</span><span class="p">,</span> <span class="n">h_exp</span><span class="p">)</span>
+    <span class="n">placed</span><span class="p">[</span><span class="s2">"phenotype"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">y</span> <span class="o">+</span> <span class="p">(</span><span class="n">left_h</span> <span class="o">-</span> <span class="n">h_phe</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">col_w</span><span class="p">,</span> <span class="n">h_phe</span><span class="p">)</span>
+
+    <span class="n">y2</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="n">left_h</span> <span class="o">+</span> <span class="n">gap</span> <span class="o">*</span> <span class="mf">1.6</span>
+    <span class="n">h_prov</span> <span class="o">=</span> <span class="n">block_h</span><span class="p">(</span><span class="n">by_key</span><span class="p">[</span><span class="s2">"provenance"</span><span class="p">][</span><span class="mi">3</span><span class="p">])</span>
+    <span class="n">h_enum</span> <span class="o">=</span> <span class="n">block_h</span><span class="p">(</span><span class="n">by_key</span><span class="p">[</span><span class="s2">"enum"</span><span class="p">][</span><span class="mi">3</span><span class="p">])</span>
+    <span class="n">placed</span><span class="p">[</span><span class="s2">"provenance"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">col_w</span><span class="p">,</span> <span class="n">h_prov</span><span class="p">)</span>
+    <span class="n">placed</span><span class="p">[</span><span class="s2">"enum"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">col_w</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">gap</span><span class="p">,</span> <span class="n">h_enum</span><span class="p">)</span>
+
+    <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">arrows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">arrow</span><span class="p">(</span><span class="n">xa</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">ya</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">xb</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">yb</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">color</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Route a backbone arrow through the gutter between two columns.</span>
+
+<span class="sd">        The columns are adjacent -- the gutter is ``gap`` units wide while the blocks</span>
+<span class="sd">        it connects sit tens of units apart vertically. A bezier whose control points</span>
+<span class="sd">        sit at the horizontal midpoint therefore degenerates into a near-vertical</span>
+<span class="sd">        squiggle crammed into that gutter, so the connector is drawn as an orthogonal</span>
+<span class="sd">        elbow instead: out horizontally, down (or up) the middle of the gutter, then</span>
+<span class="sd">        horizontally into the target. Arrival is horizontal by construction, which is</span>
+<span class="sd">        what makes the fixed right-pointing head correct.</span>
+<span class="sd">        """</span>
+        <span class="n">tip</span> <span class="o">=</span> <span class="n">xb</span> <span class="o">-</span> <span class="mf">4.4</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">yb</span> <span class="o">-</span> <span class="n">ya</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.5</span><span class="p">:</span>
+            <span class="n">spine</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"M</span><span class="si">{</span><span class="n">xa</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">ya</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> H</span><span class="si">{</span><span class="n">tip</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">xa</span> <span class="o">+</span> <span class="n">xb</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="nb">abs</span><span class="p">(</span><span class="n">yb</span> <span class="o">-</span> <span class="n">ya</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="n">xb</span> <span class="o">-</span> <span class="n">xa</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">sweep_in</span><span class="p">,</span> <span class="n">sweep_out</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="n">yb</span> <span class="o">&gt;</span> <span class="n">ya</span> <span class="k">else</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="n">r</span> <span class="k">if</span> <span class="n">yb</span> <span class="o">&gt;</span> <span class="n">ya</span> <span class="k">else</span> <span class="o">-</span><span class="n">r</span>
+            <span class="n">spine</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"M</span><span class="si">{</span><span class="n">xa</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">ya</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> H</span><span class="si">{</span><span class="n">mid</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">r</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"A</span><span class="si">{</span><span class="n">r</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">r</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> 0 0 </span><span class="si">{</span><span class="n">sweep_in</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">mid</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">ya</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">step</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"V</span><span class="si">{</span><span class="n">yb</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">step</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"A</span><span class="si">{</span><span class="n">r</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">r</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> 0 0 </span><span class="si">{</span><span class="n">sweep_out</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">mid</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">r</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">yb</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"H</span><span class="si">{</span><span class="n">tip</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'&lt;path d="</span><span class="si">{</span><span class="n">spine</span><span class="si">}</span><span class="s1">" fill="none" stroke="</span><span class="si">{</span><span class="n">color</span><span class="si">}</span><span class="s1">" stroke-width="1.4" '</span>
+            <span class="sa">f</span><span class="s1">'stroke-linecap="butt" stroke-linejoin="round"/&gt;'</span>
+            <span class="sa">f</span><span class="s1">'&lt;path d="M</span><span class="si">{</span><span class="n">xb</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">yb</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> l-4.4 -2.2 v4.4 Z" fill="</span><span class="si">{</span><span class="n">color</span><span class="si">}</span><span class="s1">"/&gt;'</span>
+        <span class="p">)</span>
+
+    <span class="n">gx</span><span class="p">,</span> <span class="n">gy</span><span class="p">,</span> <span class="n">gw</span><span class="p">,</span> <span class="n">gh</span> <span class="o">=</span> <span class="n">placed</span><span class="p">[</span><span class="s2">"genotype"</span><span class="p">]</span>
+    <span class="n">ex</span><span class="p">,</span> <span class="n">ey</span><span class="p">,</span> <span class="n">ew</span><span class="p">,</span> <span class="n">eh</span> <span class="o">=</span> <span class="n">placed</span><span class="p">[</span><span class="s2">"environment"</span><span class="p">]</span>
+    <span class="n">xx</span><span class="p">,</span> <span class="n">xy</span><span class="p">,</span> <span class="n">xw</span><span class="p">,</span> <span class="n">xh</span> <span class="o">=</span> <span class="n">placed</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span>
+    <span class="n">px</span><span class="p">,</span> <span class="n">py</span><span class="p">,</span> <span class="n">pw</span><span class="p">,</span> <span class="n">ph</span> <span class="o">=</span> <span class="n">placed</span><span class="p">[</span><span class="s2">"phenotype"</span><span class="p">]</span>
+    <span class="n">arrows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arrow</span><span class="p">(</span><span class="n">gx</span> <span class="o">+</span> <span class="n">gw</span><span class="p">,</span> <span class="n">gy</span> <span class="o">+</span> <span class="n">gh</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">xx</span><span class="p">,</span> <span class="n">xy</span> <span class="o">+</span> <span class="n">xh</span> <span class="o">*</span> <span class="mf">0.36</span><span class="p">,</span> <span class="n">PLOT_PALETTE</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="n">arrows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arrow</span><span class="p">(</span><span class="n">ex</span> <span class="o">+</span> <span class="n">ew</span><span class="p">,</span> <span class="n">ey</span> <span class="o">+</span> <span class="n">eh</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">xx</span><span class="p">,</span> <span class="n">xy</span> <span class="o">+</span> <span class="n">xh</span> <span class="o">*</span> <span class="mf">0.64</span><span class="p">,</span> <span class="n">PLOT_PALETTE</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="n">arrows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arrow</span><span class="p">(</span><span class="n">xx</span> <span class="o">+</span> <span class="n">xw</span><span class="p">,</span> <span class="n">xy</span> <span class="o">+</span> <span class="n">xh</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">px</span><span class="p">,</span> <span class="n">py</span> <span class="o">+</span> <span class="n">ph</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">PLOT_PALETTE</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">head</span><span class="p">,</span> <span class="n">sub</span><span class="p">,</span> <span class="n">lines</span> <span class="ow">in</span> <span class="n">blocks</span><span class="p">:</span>
+        <span class="n">bx</span><span class="p">,</span> <span class="n">by</span><span class="p">,</span> <span class="n">bw</span><span class="p">,</span> <span class="n">bh</span> <span class="o">=</span> <span class="n">placed</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="n">stroke</span><span class="p">,</span> <span class="n">fill</span> <span class="o">=</span> <span class="n">_lane_colors</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'&lt;rect x="</span><span class="si">{</span><span class="n">bx</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">by</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" width="</span><span class="si">{</span><span class="n">bw</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" height="</span><span class="si">{</span><span class="n">bh</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'rx="3" fill="#FFFFFF" stroke="</span><span class="si">{</span><span class="n">stroke</span><span class="si">}</span><span class="s1">" stroke-width="1"/&gt;'</span>
+            <span class="sa">f</span><span class="s1">'&lt;path d="M</span><span class="si">{</span><span class="n">bx</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">by</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">3</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> a3 3 0 0 1 3 -3 h</span><span class="si">{</span><span class="n">bw</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">6</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> '</span>
+            <span class="sa">f</span><span class="s1">'a3 3 0 0 1 3 3 v</span><span class="si">{</span><span class="n">head_h</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">3</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> h</span><span class="si">{</span><span class="o">-</span><span class="n">bw</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> Z" fill="</span><span class="si">{</span><span class="n">fill</span><span class="si">}</span><span class="s1">"/&gt;'</span>
+            <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">bx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">5</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">by</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">9.4</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" font-size="7" '</span>
+            <span class="sa">f</span><span class="s1">'font-weight="700" fill="</span><span class="si">{</span><span class="n">stroke</span><span class="si">}</span><span class="s1">"&gt;</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">head</span><span class="p">)</span><span class="si">}</span><span class="s1">&lt;/text&gt;'</span>
+            <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">bx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">bw</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">5</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">by</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">9.4</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" font-size="6" '</span>
+            <span class="sa">f</span><span class="s1">'text-anchor="end" fill="</span><span class="si">{</span><span class="n">stroke</span><span class="si">}</span><span class="s1">"&gt;'</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">lane_members</span><span class="p">(</span><span class="n">key</span><span class="p">))</span><span class="si">}</span><span class="s2"> classes&lt;/text&gt;"</span>
+            <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">bx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">5</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">by</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">17.2</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" font-size="6" '</span>
+            <span class="sa">f</span><span class="s1">'fill="#666666"&gt;</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">_truncate</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span><span class="w"> </span><span class="n">bw</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">))</span><span class="si">}</span><span class="s1">&lt;/text&gt;'</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">dx</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lines</span><span class="p">):</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">bx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">5</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">dx</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">by</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">head_h</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">6</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">line_h</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+                <span class="sa">f</span><span class="s1">'font-size="6" fill="#2B2B2B"&gt;'</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">_truncate</span><span class="p">(</span><span class="n">line</span><span class="p">,</span><span class="w"> </span><span class="n">bw</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">dx</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">))</span><span class="si">}</span><span class="s2">&lt;/text&gt;"</span>
+            <span class="p">)</span>
+
+    <span class="c1"># Arrows last: they run in the gutters, so they must not be painted over by the</span>
+    <span class="c1"># opaque block rectangles (which is what reduced them to steep slivers before).</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">arrows</span><span class="p">)</span>
+
+    <span class="n">n_models</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">classes</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"model"</span><span class="p">)</span>
+    <span class="n">n_fields</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">own_fields</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">classes</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="n">foot_y</span> <span class="o">=</span> <span class="n">y2</span> <span class="o">+</span> <span class="nb">max</span><span class="p">(</span><span class="n">h_prov</span><span class="p">,</span> <span class="n">h_enum</span><span class="p">)</span> <span class="o">+</span> <span class="mf">13.0</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">margin</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">foot_y</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" font-size="6" fill="#666666"&gt;'</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_models</span><span class="si">}</span><span class="s2"> pydantic classes &amp;#183; </span><span class="si">{</span><span class="n">n_fields</span><span class="si">}</span><span class="s2"> declared fields &amp;#183; "</span>
+        <span class="sa">f</span><span class="s2">"generated from torchcell.datamodels.schema&lt;/text&gt;"</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">explore_url</span><span class="p">:</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">vb_w</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">margin</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">foot_y</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" font-size="6" '</span>
+            <span class="sa">f</span><span class="s1">'text-anchor="end" fill="</span><span class="si">{</span><span class="n">PLOT_PALETTE</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s1">"&gt;'</span>
+            <span class="sa">f</span><span class="s2">"full interactive map: </span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">explore_url</span><span class="p">)</span><span class="si">}</span><span class="s2">&lt;/text&gt;"</span>
+        <span class="p">)</span>
+
+    <span class="n">vb_h</span> <span class="o">=</span> <span class="n">foot_y</span> <span class="o">+</span> <span class="mf">8.0</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s1">'&lt;svg xmlns="http://www.w3.org/2000/svg" '</span>
+        <span class="sa">f</span><span class="s1">'width="</span><span class="si">{</span><span class="n">physical_width_mm</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">mm" '</span>
+        <span class="sa">f</span><span class="s1">'height="</span><span class="si">{</span><span class="n">vb_h</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">25.4</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">72.0</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">mm" '</span>
+        <span class="sa">f</span><span class="s1">'viewBox="0 0 </span><span class="si">{</span><span class="n">vb_w</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">vb_h</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+        <span class="sa">f</span><span class="s1">'font-family="Arial, Helvetica, sans-serif"&gt;'</span>
+        <span class="sa">f</span><span class="s2">"&lt;style&gt;text</span><span class="se">{{</span><span class="s2">font-family:Arial,Helvetica,sans-serif</span><span class="se">}}</span><span class="s2">&lt;/style&gt;"</span>
+        <span class="sa">f</span><span class="s1">'&lt;rect width="100%" height="100%" fill="#FFFFFF"/&gt;'</span>
+        <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">margin</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">margin</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">8</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" font-size="9" '</span>
+        <span class="sa">f</span><span class="s1">'font-weight="700" fill="#2B2B2B"&gt;The torchcell experiment ontology&lt;/text&gt;'</span>
+        <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">margin</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">margin</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">17</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" font-size="6.5" '</span>
+        <span class="sa">f</span><span class="s1">'fill="#666666"&gt;Every record is a typed genotype '</span>
+        <span class="sa">f</span><span class="s2">"× environment → phenotype experiment, with provenance "</span>
+        <span class="sa">f</span><span class="s2">"attached to each sourced value.&lt;/text&gt;"</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">''</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span><span class="si">}</span><span class="s2">&lt;/svg&gt;"</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="render_svg">
+<a class="viewcode-back" href="../../../generated/torchcell.paper.ontology_svg.render_svg.html#torchcell.paper.ontology_svg.render_svg">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">render_svg</span><span class="p">(</span>
+    <span class="n">graph</span><span class="p">:</span> <span class="n">OntologyGraph</span><span class="p">,</span>
+    <span class="n">layout</span><span class="p">:</span> <span class="n">Layout</span><span class="p">,</span>
+    <span class="n">physical_width_mm</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">subtitle</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">compact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">explore_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Serialise a placed layout to one self-contained SVG document."""</span>
+    <span class="n">margin</span> <span class="o">=</span> <span class="mf">40.0</span>
+    <span class="n">header_h</span> <span class="o">=</span> <span class="mf">96.0</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">compact</span> <span class="k">else</span> <span class="mf">72.0</span>
+    <span class="c1"># Derived, not guessed: a hardcoded legend band clipped the box off the canvas.</span>
+    <span class="n">legend_scale</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">compact</span> <span class="k">else</span> <span class="mf">1.35</span>
+    <span class="n">legend_rows</span> <span class="o">=</span> <span class="mi">6</span> <span class="k">if</span> <span class="n">compact</span> <span class="k">else</span> <span class="mi">7</span>
+    <span class="n">legend_h</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="mf">26.0</span>
+        <span class="o">+</span> <span class="mi">28</span> <span class="o">*</span> <span class="n">legend_scale</span>
+        <span class="o">+</span> <span class="p">(</span><span class="n">legend_rows</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">explore_url</span> <span class="k">else</span> <span class="mi">0</span><span class="p">))</span> <span class="o">*</span> <span class="mf">15.0</span> <span class="o">*</span> <span class="n">legend_scale</span>
+        <span class="o">+</span> <span class="mf">16.0</span>
+    <span class="p">)</span>
+    <span class="n">vb_w</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">width</span> <span class="o">+</span> <span class="n">margin</span> <span class="o">*</span> <span class="mi">2</span>
+    <span class="n">vb_h</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">height</span> <span class="o">+</span> <span class="n">margin</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">header_h</span> <span class="o">+</span> <span class="n">legend_h</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="n">physical_width_mm</span> <span class="o">/</span> <span class="n">vb_w</span>
+
+    <span class="n">body</span> <span class="o">=</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">_lane_frames_svg</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">layout</span><span class="p">,</span> <span class="n">compact</span><span class="p">),</span>
+            <span class="n">_composition_svg</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">layout</span><span class="p">),</span>
+            <span class="n">_inheritance_svg</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">layout</span><span class="p">),</span>
+            <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">_card_svg</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">cards</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">compact</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">cards</span><span class="p">)</span>
+            <span class="p">),</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="n">n_models</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">classes</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"model"</span><span class="p">)</span>
+    <span class="n">n_enums</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">classes</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"enum"</span><span class="p">)</span>
+    <span class="n">n_fields</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">own_fields</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">classes</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s1">'&lt;svg xmlns="http://www.w3.org/2000/svg" '</span>
+        <span class="sa">f</span><span class="s1">'xmlns:xlink="http://www.w3.org/1999/xlink" '</span>
+        <span class="sa">f</span><span class="s1">'width="</span><span class="si">{</span><span class="n">physical_width_mm</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">mm" height="</span><span class="si">{</span><span class="n">vb_h</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">scale</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">mm" '</span>
+        <span class="sa">f</span><span class="s1">'viewBox="0 0 </span><span class="si">{</span><span class="n">vb_w</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">vb_h</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" '</span>
+        <span class="sa">f</span><span class="s1">'font-family="Arial, Helvetica, sans-serif"&gt;'</span>
+        <span class="sa">f</span><span class="s2">"&lt;style&gt;text</span><span class="se">{{</span><span class="s2">font-family:Arial,Helvetica,sans-serif</span><span class="se">}}</span><span class="s2">&lt;/style&gt;"</span>
+        <span class="sa">f</span><span class="s1">'&lt;rect width="100%" height="100%" fill="#FFFFFF"/&gt;'</span>
+        <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">margin</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="46" font-size="30" font-weight="700" '</span>
+        <span class="sa">f</span><span class="s1">'fill="#2B2B2B"&gt;</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">title</span><span class="p">)</span><span class="si">}</span><span class="s1">&lt;/text&gt;'</span>
+        <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">margin</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="70" font-size="13" fill="#666666"&gt;'</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">subtitle</span><span class="p">)</span><span class="si">}</span><span class="s2">&lt;/text&gt;"</span>
+        <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">margin</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="88" font-size="11" fill="#8A8A8A"&gt;'</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_models</span><span class="si">}</span><span class="s2"> classes &amp;#183; </span><span class="si">{</span><span class="n">n_enums</span><span class="si">}</span><span class="s2"> controlled vocabularies &amp;#183; "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_fields</span><span class="si">}</span><span class="s2"> declared fields &amp;#183; generated from "</span>
+        <span class="sa">f</span><span class="s2">"torchcell.datamodels.schema&lt;/text&gt;"</span>
+        <span class="sa">f</span><span class="s1">'&lt;g id="diagram" transform="translate(</span><span class="si">{</span><span class="n">margin</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">margin</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">header_h</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">)"&gt;'</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">body</span><span class="si">}</span><span class="s2">&lt;/g&gt;"</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_legend_svg</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span><span class="w"> </span><span class="n">margin</span><span class="p">,</span><span class="w"> </span><span class="n">margin</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">header_h</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">layout</span><span class="o">.</span><span class="n">height</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">26</span><span class="p">,</span><span class="w"> </span><span class="n">compact</span><span class="p">,</span><span class="w"> </span><span class="n">explore_url</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+        <span class="sa">f</span><span class="s2">"&lt;/svg&gt;"</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

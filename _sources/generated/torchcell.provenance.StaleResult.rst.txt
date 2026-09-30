@@ -1,0 +1,8 @@
+﻿torchcell.provenance.StaleResult
+================================
+
+.. currentmodule:: torchcell.provenance
+
+.. autoclass:: StaleResult
+   :show-inheritance:
+   :members:

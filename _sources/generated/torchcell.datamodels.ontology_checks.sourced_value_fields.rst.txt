@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.ontology\_checks.sourced\_value\_fields
+============================================================
+
+.. currentmodule:: torchcell.datamodels.ontology_checks
+
+.. autofunction:: sourced_value_fields

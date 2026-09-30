@@ -1,0 +1,6 @@
+﻿torchcell.verification.l1\_provenance\_gaps
+===========================================
+
+.. currentmodule:: torchcell.verification
+
+.. autofunction:: l1_provenance_gaps

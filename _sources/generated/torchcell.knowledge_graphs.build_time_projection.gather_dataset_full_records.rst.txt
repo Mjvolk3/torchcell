@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.build\_time\_projection.gather\_dataset\_full\_records
+==================================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.build_time_projection
+
+.. autofunction:: gather_dataset_full_records

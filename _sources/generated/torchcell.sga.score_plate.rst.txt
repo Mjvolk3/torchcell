@@ -1,0 +1,6 @@
+﻿torchcell.sga.score\_plate
+==========================
+
+.. currentmodule:: torchcell.sga
+
+.. autofunction:: score_plate

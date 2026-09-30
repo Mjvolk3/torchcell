@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.ontology\_checks.JoinKeyCensus
+===================================================
+
+.. currentmodule:: torchcell.datamodels.ontology_checks
+
+.. autoclass:: JoinKeyCensus
+   :show-inheritance:
+   :members:

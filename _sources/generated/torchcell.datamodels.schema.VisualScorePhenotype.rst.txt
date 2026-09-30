@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.VisualScorePhenotype
+================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: VisualScorePhenotype
+   :show-inheritance:
+   :members:

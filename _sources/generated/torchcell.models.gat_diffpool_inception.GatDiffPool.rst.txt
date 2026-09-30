@@ -1,0 +1,8 @@
+﻿torchcell.models.gat\_diffpool\_inception.GatDiffPool
+=====================================================
+
+.. currentmodule:: torchcell.models.gat_diffpool_inception
+
+.. autoclass:: GatDiffPool
+   :show-inheritance:
+   :members:

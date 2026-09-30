@@ -1,0 +1,6 @@
+﻿torchcell.ontology.print\_ontology\_summary
+===========================================
+
+.. currentmodule:: torchcell.ontology
+
+.. autofunction:: print_ontology_summary

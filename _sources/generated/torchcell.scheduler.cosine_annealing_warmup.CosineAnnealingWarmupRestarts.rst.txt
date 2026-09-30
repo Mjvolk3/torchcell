@@ -1,0 +1,8 @@
+﻿torchcell.scheduler.cosine\_annealing\_warmup.CosineAnnealingWarmupRestarts
+===========================================================================
+
+.. currentmodule:: torchcell.scheduler.cosine_annealing_warmup
+
+.. autoclass:: CosineAnnealingWarmupRestarts
+   :show-inheritance:
+   :members:

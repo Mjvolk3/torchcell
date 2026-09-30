@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.SuppressorAllelePerturbation
+========================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: SuppressorAllelePerturbation
+   :show-inheritance:
+   :members:

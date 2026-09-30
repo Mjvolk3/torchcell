@@ -1,0 +1,611 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.loader.dense_padding_data_loader &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/loader/dense_padding_data_loader.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.loader.dense_padding_data_loader</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.loader.dense_padding_data_loader</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Data loader and collater that pad batches to a dense, fixed node count."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.utils.data</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch_geometric</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">beartype.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data.dataloader</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_collate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">Batch</span><span class="p">,</span> <span class="n">Dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseData</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data.datapipes</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetAdapter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data.on_disk_dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">OnDiskDataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data.storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseStorage</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparseTensor</span><span class="p">,</span> <span class="n">TensorFrame</span><span class="p">,</span> <span class="n">torch_frame</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_sparse</span>
+
+<span class="n">FLOAT_PADDING_VALUE</span> <span class="o">=</span> <span class="mf">1e-5</span>
+<span class="n">NON_FLOAT_PADDING_VALUE</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_dense_pad_tensor</span><span class="p">(</span>
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">values</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+    <span class="n">float_padding_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">FLOAT_PADDING_VALUE</span><span class="p">,</span>
+    <span class="n">non_float_padding_value</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">NON_FLOAT_PADDING_VALUE</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Densely pads a list of `torch.Tensor` along a new `batch_dim=0`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        key (str): The key of the attribute to be padded.</span>
+<span class="sd">        values (list): A list of values to be padded.</span>
+<span class="sd">        float_padding_value (float, optional): The padding value for `float` dtype tensors.</span>
+<span class="sd">        non_float_padding_value (int, optional): The padding value for non-`float` (e.g., `int`) dtype tensors.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tuple containing the padded value and an optional mask.</span>
+<span class="sd">    """</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">cat_dim</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">elem</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">dtype</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">dtype</span>
+    <span class="n">padding_value</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">float_padding_value</span>
+        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_floating_point</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+        <span class="k">else</span> <span class="n">non_float_padding_value</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">elem</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dtype</span> <span class="o">!=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">]:</span>
+                <span class="c1"># NOTE: We cannot use `torch.nn.utils.rnn.pad_sequence` directly with unsigned integer/boolean tensors.</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span><span class="o">.</span><span class="n">long</span><span class="p">()</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s2">"edge_index"</span> <span class="ow">in</span> <span class="n">key</span> <span class="ow">and</span> <span class="n">elem</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">elem</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="c1"># Concatenate `edge_index` tensors.</span>
+                <span class="c1"># NOTE: Here, we assume dimension `0` denotes the source and target node indices and dimension `1` denotes the number of edges.</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">value</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">rnn</span><span class="o">.</span><span class="n">pad_sequence</span><span class="p">(</span>
+                        <span class="p">[</span><span class="n">val</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">values</span><span class="p">],</span>
+                        <span class="n">batch_first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                        <span class="n">padding_value</span><span class="o">=</span><span class="n">padding_value</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">value</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">rnn</span><span class="o">.</span><span class="n">pad_sequence</span><span class="p">(</span>
+                        <span class="n">values</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">padding_value</span><span class="o">=</span><span class="n">padding_value</span>
+                    <span class="p">)</span>
+                <span class="p">]</span>
+            <span class="k">if</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">]:</span>
+                <span class="c1"># NOTE: We cannot use `torch.nn.utils.rnn.pad_sequence` directly with unsigned integer/boolean tensors.</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+                    <span class="p">[(</span><span class="n">value</span> <span class="o">!=</span> <span class="n">padding_value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="n">cat_dim</span> <span class="ow">or</span> <span class="mi">0</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+                    <span class="n">value</span><span class="p">[</span><span class="n">value</span> <span class="o">==</span> <span class="n">padding_value</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">value</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">rnn</span><span class="o">.</span><span class="n">pad_sequence</span><span class="p">(</span>
+                    <span class="n">values</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">padding_value</span><span class="o">=</span><span class="n">padding_value</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">values</span><span class="p">,</span> <span class="n">mask</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_dense_padded_collate</span><span class="p">(</span>
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">values</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+    <span class="n">data_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseData</span><span class="p">],</span>
+    <span class="n">stores</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseStorage</span><span class="p">],</span>
+    <span class="n">float_padding_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">FLOAT_PADDING_VALUE</span><span class="p">,</span>
+    <span class="n">non_float_padding_value</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">NON_FLOAT_PADDING_VALUE</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Collates a list of values into a single tensor or list of tensors.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        key (str): The key of the attribute to be collated.</span>
+<span class="sd">        values (list): A list of values to be collated.</span>
+<span class="sd">        data_list (list): A list of data objects.</span>
+<span class="sd">        stores (list): A list of storage objects.</span>
+<span class="sd">        float_padding_value (float, optional): The padding value for `float` dtype tensors.</span>
+<span class="sd">        non_float_padding_value (int, optional): The padding value for non-`float` (e.g., `int`) dtype tensors.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tuple containing the collated value and an optional mask.</span>
+<span class="sd">    """</span>
+    <span class="n">cat_dim</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">elem</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_sparse</span><span class="p">(</span><span class="n">elem</span><span class="p">):</span>
+        <span class="c1"># Concatenate a list of `torch.Tensor` along a new `batch_dim=0`.</span>
+        <span class="n">padding_value</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">float_padding_value</span>
+            <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_floating_point</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+            <span class="k">else</span> <span class="n">non_float_padding_value</span>
+        <span class="p">)</span>
+        <span class="n">values</span><span class="p">,</span> <span class="n">mask</span> <span class="o">=</span> <span class="n">_dense_pad_tensor</span><span class="p">(</span>
+            <span class="n">key</span><span class="p">,</span>
+            <span class="n">values</span><span class="p">,</span>
+            <span class="n">float_padding_value</span><span class="o">=</span><span class="n">float_padding_value</span><span class="p">,</span>
+            <span class="n">non_float_padding_value</span><span class="o">=</span><span class="n">non_float_padding_value</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="s2">"is_nested"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"Dense padding collation for nested tensors is not supported (tested) yet."</span>
+            <span class="p">)</span>
+            <span class="n">tensors</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">nested_tensor</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+                <span class="n">tensors</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">nested_tensor</span><span class="o">.</span><span class="n">unbind</span><span class="p">())</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nested</span><span class="o">.</span><span class="n">nested_tensor</span><span class="p">(</span><span class="n">tensors</span><span class="p">)</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nested</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">tensor</span><span class="p">:</span> <span class="n">tensor</span> <span class="o">!=</span> <span class="n">padding_value</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">value</span><span class="p">,</span> <span class="n">mask</span>
+
+        <span class="n">out</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get_worker_info</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Write directly into shared memory to avoid an extra copy:</span>
+            <span class="n">numel</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">torch_geometric</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">WITH_PT20</span><span class="p">:</span>
+                <span class="n">storage</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">untyped_storage</span><span class="p">()</span><span class="o">.</span><span class="n">_new_shared</span><span class="p">(</span>  <span class="c1"># type: ignore[no-untyped-call]  # torch storage internals untyped</span>
+                    <span class="n">numel</span> <span class="o">*</span> <span class="n">elem</span><span class="o">.</span><span class="n">element_size</span><span class="p">(),</span> <span class="n">device</span><span class="o">=</span><span class="n">elem</span><span class="o">.</span><span class="n">device</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">torch_geometric</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">WITH_PT112</span><span class="p">:</span>
+                <span class="n">storage</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">storage</span><span class="p">()</span><span class="o">.</span><span class="n">_new_shared</span><span class="p">(</span><span class="n">numel</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">elem</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># type: ignore[no-untyped-call]  # torch storage internals untyped</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">storage</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">storage</span><span class="p">()</span><span class="o">.</span><span class="n">_new_shared</span><span class="p">(</span><span class="n">numel</span><span class="p">)</span>  <span class="c1"># type: ignore[no-untyped-call]  # torch storage internals untyped</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">data_list</span><span class="p">)]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span>
+                <span class="n">values</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">([</span><span class="n">value</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">])]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="p">)</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">storage</span><span class="p">)</span><span class="o">.</span><span class="n">resize_</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="n">value</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">cat_dim</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span> <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">value</span> <span class="o">!=</span> <span class="n">padding_value</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">value</span><span class="p">,</span> <span class="n">mask</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">TensorFrame</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">"Dense padding collation for TensorFrames is not supported (tested) yet."</span>
+        <span class="p">)</span>
+        <span class="n">values</span><span class="p">,</span> <span class="n">mask</span> <span class="o">=</span> <span class="n">_dense_pad_tensor</span><span class="p">(</span>
+            <span class="n">key</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">non_float_padding_value</span><span class="o">=</span><span class="n">non_float_padding_value</span>
+        <span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">torch_frame</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">along</span><span class="o">=</span><span class="s2">"row"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span><span class="p">,</span> <span class="n">mask</span>
+
+    <span class="k">elif</span> <span class="n">is_sparse</span><span class="p">(</span><span class="n">elem</span><span class="p">):</span>
+        <span class="c1"># Concatenate a list of `SparseTensor` along the `cat_dim`.</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">"Dense padding collation for SparseTensors is not supported (tested) yet."</span>
+        <span class="p">)</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+        <span class="c1"># Convert a list of numerical values to a `torch.Tensor`.</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span><span class="p">,</span> <span class="kc">None</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+        <span class="c1"># Recursively collate elements of dictionaries.</span>
+        <span class="n">value_dict</span><span class="p">,</span> <span class="n">mask_dict</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">elem</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">value_dict</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">mask_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">_dense_padded_collate</span><span class="p">(</span>
+                <span class="n">key</span><span class="p">,</span> <span class="p">[</span><span class="n">v</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">],</span> <span class="n">data_list</span><span class="p">,</span> <span class="n">stores</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">value_dict</span><span class="p">,</span> <span class="n">mask_dict</span>
+
+    <span class="k">elif</span> <span class="p">(</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">SparseTensor</span><span class="p">))</span>
+    <span class="p">):</span>
+        <span class="c1"># Recursively collate elements of lists.</span>
+        <span class="n">value_list</span><span class="p">,</span> <span class="n">mask_list</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">elem</span><span class="p">)):</span>
+            <span class="n">value</span><span class="p">,</span> <span class="n">mask</span> <span class="o">=</span> <span class="n">_dense_padded_collate</span><span class="p">(</span>
+                <span class="n">key</span><span class="p">,</span> <span class="p">[</span><span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">],</span> <span class="n">data_list</span><span class="p">,</span> <span class="n">stores</span>
+            <span class="p">)</span>
+            <span class="n">value_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="n">mask_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value_list</span><span class="p">,</span> <span class="n">mask_list</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Other-wise, just return the list of values as it is.</span>
+        <span class="k">return</span> <span class="n">values</span><span class="p">,</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="dense_padded_collate">
+<a class="viewcode-back" href="../../../generated/torchcell.loader.dense_padding_data_loader.dense_padded_collate.html#torchcell.loader.dense_padding_data_loader.dense_padded_collate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">dense_padded_collate</span><span class="p">(</span>
+    <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseData</span><span class="p">],</span>
+    <span class="n">data_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseData</span><span class="p">],</span>
+    <span class="n">follow_batch</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">exclude_keys</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">BaseData</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Collate a list of data objects into a single dense object of type cls.</span>
+
+<span class="sd">    `collate` can handle both homogeneous and heterogeneous data objects by</span>
+<span class="sd">    individually collating all their stores. In addition, `collate` can handle</span>
+<span class="sd">    nested data structures such as dictionaries and lists.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cls (type): The class into which to collate.</span>
+<span class="sd">        data_list (list): A list of data objects.</span>
+<span class="sd">        follow_batch (list, optional): Creates assignment batch vectors for</span>
+<span class="sd">            each key in the list. (default: `None`)</span>
+<span class="sd">        exclude_keys (list, optional): Will exclude each key in the list.</span>
+<span class="sd">            (default: `None`)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tuple containing the collated data object and a dictionary</span>
+<span class="sd">        holding optional batch feature masks.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_list</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="c1"># Materialize `data_list` to keep the `_parent` weakref alive.</span>
+        <span class="n">data_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">data_list</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="bp">cls</span> <span class="o">!=</span> <span class="n">data_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="vm">__class__</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">_base_cls</span><span class="o">=</span><span class="n">data_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span>  <span class="c1"># Dynamic inheritance.</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+
+    <span class="c1"># Create empty stores:</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">stores_as</span><span class="p">(</span><span class="n">data_list</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">exclude_keys_set</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">exclude_keys</span> <span class="ow">or</span> <span class="p">[])</span>
+
+    <span class="c1"># Group all storage objects of every data object in the `data_list` by key,</span>
+    <span class="c1"># i.e. `key_to_store_list = { key: [store_1, store_2, ...], ... }`:</span>
+    <span class="n">key_to_stores</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">data_list</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">store</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">stores</span><span class="p">:</span>
+            <span class="n">key_to_stores</span><span class="p">[</span><span class="n">store</span><span class="o">.</span><span class="n">_key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">store</span><span class="p">)</span>
+
+    <span class="c1"># With this, we iterate over each list of storage objects and recursively</span>
+    <span class="c1"># collate all its attributes into a unified representation:</span>
+
+    <span class="c1"># We maintain an additional dictionary:</span>
+    <span class="c1"># * `mask_dict` stores a mask representation of each attribute</span>
+    <span class="c1">#    and is needed to re-construct individual elements from mini-batches.</span>
+    <span class="n">mask_dict</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">out_store</span> <span class="ow">in</span> <span class="n">out</span><span class="o">.</span><span class="n">stores</span><span class="p">:</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">out_store</span><span class="o">.</span><span class="n">_key</span>
+        <span class="n">stores</span> <span class="o">=</span> <span class="n">key_to_stores</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">stores</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">exclude_keys_set</span><span class="p">:</span>  <span class="c1"># Do not include top-level attribute.</span>
+                <span class="k">continue</span>
+
+            <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">store</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="k">for</span> <span class="n">store</span> <span class="ow">in</span> <span class="n">stores</span><span class="p">]</span>
+
+            <span class="c1"># The `num_nodes` attribute needs special treatment, as we need to</span>
+            <span class="c1"># sum their values up instead of merging them to a list:</span>
+            <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="s2">"num_nodes"</span><span class="p">:</span>
+                <span class="n">out_store</span><span class="o">.</span><span class="n">_num_nodes</span> <span class="o">=</span> <span class="n">values</span>
+                <span class="n">out_store</span><span class="o">.</span><span class="n">num_nodes</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Skip batching of `ptr` vectors during dense collation:</span>
+            <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="s2">"ptr"</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Collate attributes into a unified representation:</span>
+            <span class="n">value</span><span class="p">,</span> <span class="n">mask</span> <span class="o">=</span> <span class="n">_dense_padded_collate</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">data_list</span><span class="p">,</span> <span class="n">stores</span><span class="p">)</span>
+
+            <span class="n">out_store</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">mask_dict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="n">mask</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">mask_dict</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="n">mask</span>
+
+    <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="n">mask_dict</span></div>
+
+
+
+<div class="viewcode-block" id="dense_padded_from_data_list">
+<a class="viewcode-back" href="../../../generated/torchcell.loader.dense_padding_data_loader.dense_padded_from_data_list.html#torchcell.loader.dense_padding_data_loader.dense_padded_from_data_list">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">dense_padded_from_data_list</span><span class="p">(</span>
+    <span class="n">data_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseData</span><span class="p">],</span>
+    <span class="n">follow_batch</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">exclude_keys</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Batch</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Construct a dense Batch object from a Python list of data objects.</span>
+
+<span class="sd">    Builds a dense `~torch_geometric.data.Batch` from a list of</span>
+<span class="sd">    `~torch_geometric.data.Data` or `~torch_geometric.data.HeteroData` objects.</span>
+<span class="sd">    The assignment vector `batch` is created on the fly. In addition, creates</span>
+<span class="sd">    assignment vectors for each key in `follow_batch`. Will exclude any keys</span>
+<span class="sd">    given in `exclude_keys`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data_list (list): A list of data objects.</span>
+<span class="sd">        follow_batch (list, optional): Creates assignment batch vectors for</span>
+<span class="sd">            each key in the list. (default: `None`)</span>
+<span class="sd">        exclude_keys (list, optional): Will exclude each key in the list.</span>
+<span class="sd">            (default: `None`)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A single `Batch` object holding a mini-batch of data.</span>
+<span class="sd">    """</span>
+    <span class="n">batch</span><span class="p">,</span> <span class="n">mask_dict</span> <span class="o">=</span> <span class="n">dense_padded_collate</span><span class="p">(</span>
+        <span class="n">Batch</span><span class="p">,</span> <span class="n">data_list</span><span class="o">=</span><span class="n">data_list</span><span class="p">,</span> <span class="n">follow_batch</span><span class="o">=</span><span class="n">follow_batch</span><span class="p">,</span> <span class="n">exclude_keys</span><span class="o">=</span><span class="n">exclude_keys</span>
+    <span class="p">)</span>
+
+    <span class="n">batch</span><span class="o">.</span><span class="n">_num_graphs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_list</span><span class="p">)</span>
+    <span class="n">batch</span><span class="o">.</span><span class="n">mask_dict</span> <span class="o">=</span> <span class="n">mask_dict</span>  <span class="c1"># NOTE: `mask_dict` must be a public attribute of `Batch` for auto-device onloading to work.</span>
+
+    <span class="k">return</span> <span class="n">batch</span></div>
+
+
+
+<div class="viewcode-block" id="DensePaddingCollater">
+<a class="viewcode-back" href="../../../generated/torchcell.loader.dense_padding_data_loader.DensePaddingCollater.html#torchcell.loader.dense_padding_data_loader.DensePaddingCollater">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DensePaddingCollater</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Collate dataset objects into a mini-batch using dense padding.</span>
+
+<span class="sd">    Pads data objects from a `torch_geometric.data.Dataset` to a mini-batch</span>
+<span class="sd">    along a new dimension. Data objects can be either of type</span>
+<span class="sd">    `~torch_geometric.data.Data` or `~torch_geometric.data.HeteroData`.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dataset</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">BaseData</span><span class="p">],</span> <span class="n">DatasetAdapter</span><span class="p">],</span>
+        <span class="n">follow_batch</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">exclude_keys</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Store the dataset and the follow/exclude key configuration."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">follow_batch</span> <span class="o">=</span> <span class="n">follow_batch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exclude_keys</span> <span class="o">=</span> <span class="n">exclude_keys</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Collate a list of data objects into the DataLoader storage format.</span>
+
+<span class="sd">        Collates a python list of data objects to the internal storage format</span>
+<span class="sd">        of `torch_geometric.data.DataLoader`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            batch: A python list of data objects.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A mini-batch of data objects.</span>
+<span class="sd">        """</span>
+        <span class="n">elem</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">BaseData</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">dense_padded_from_data_list</span><span class="p">(</span>
+                <span class="n">batch</span><span class="p">,</span> <span class="n">follow_batch</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">follow_batch</span><span class="p">,</span> <span class="n">exclude_keys</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">exclude_keys</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">default_collate</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">TensorFrame</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">torch_frame</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">along</span><span class="o">=</span><span class="s2">"row"</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">batch</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="bp">self</span><span class="p">([</span><span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">])</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">elem</span><span class="p">}</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="s2">"_fields"</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">elem</span><span class="p">)(</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">))</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">batch</span><span class="p">)))</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">))</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">batch</span><span class="p">)]</span>
+
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"DataLoader found invalid type: '</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DensePaddingCollater.collate_fn">
+<a class="viewcode-back" href="../../../generated/torchcell.loader.dense_padding_data_loader.DensePaddingCollater.html#torchcell.loader.dense_padding_data_loader.DensePaddingCollater.collate_fn">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">collate_fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Collate a batch, fetching from disk first for OnDiskDataset.</span>
+
+<span class="sd">        Collates a python list of data objects to the internal storage format</span>
+<span class="sd">        of `torch_geometric.data.DataLoader`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            batch: A python list of data objects.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A mini-batch of data objects.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span> <span class="n">OnDiskDataset</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">multi_get</span><span class="p">(</span><span class="n">batch</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DensePaddingDataLoader">
+<a class="viewcode-back" href="../../../generated/torchcell.loader.dense_padding_data_loader.DensePaddingDataLoader.html#torchcell.loader.dense_padding_data_loader.DensePaddingDataLoader">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DensePaddingDataLoader</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">[</span><span class="n">Any</span><span class="p">]):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Data loader that merges dataset objects into mini-batches via dense padding.</span>
+
+<span class="sd">    Merges data objects from a `torch_geometric.data.Dataset` into a mini-batch</span>
+<span class="sd">    using padding along a new dimension. Data objects can be either of type</span>
+<span class="sd">    `~torch_geometric.data.Data` or `~torch_geometric.data.HeteroData`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dataset (Dataset): The dataset from which to load the data.</span>
+<span class="sd">        batch_size (int, optional): How many samples per batch to load.</span>
+<span class="sd">            (default: `1`)</span>
+<span class="sd">        shuffle (bool, optional): If set to `True`, the data will be</span>
+<span class="sd">            reshuffled at every epoch. (default: `False`)</span>
+<span class="sd">        follow_batch (List[str], optional): Creates assignment batch</span>
+<span class="sd">            vectors for each key in the list. (default: `None`)</span>
+<span class="sd">        exclude_keys (List[str], optional): Will exclude each key in the</span>
+<span class="sd">            list. (default: `None`)</span>
+<span class="sd">        **kwargs (optional): Additional arguments of</span>
+<span class="sd">            `torch.utils.data.DataLoader`.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dataset</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">BaseData</span><span class="p">],</span> <span class="n">DatasetAdapter</span><span class="p">],</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">shuffle</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">follow_batch</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">exclude_keys</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Set up the dense-padding collater and base DataLoader."""</span>
+        <span class="c1"># Remove for PyTorch Lightning:</span>
+        <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"collate_fn"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="c1"># Save for PyTorch Lightning &lt; 1.6:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">follow_batch</span> <span class="o">=</span> <span class="n">follow_batch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exclude_keys</span> <span class="o">=</span> <span class="n">exclude_keys</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">collator</span> <span class="o">=</span> <span class="n">DensePaddingCollater</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">follow_batch</span><span class="p">,</span> <span class="n">exclude_keys</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">OnDiskDataset</span><span class="p">):</span>
+            <span class="n">dataset</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">))</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">dataset</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]  # map-style range/Sequence is a valid Dataset at runtime (mirrors PyG DataLoader)</span>
+            <span class="n">batch_size</span><span class="p">,</span>
+            <span class="n">shuffle</span><span class="p">,</span>
+            <span class="n">collate_fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">collator</span><span class="o">.</span><span class="n">collate_fn</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

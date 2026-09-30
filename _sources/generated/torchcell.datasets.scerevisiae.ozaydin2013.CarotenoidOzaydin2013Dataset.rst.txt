@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.ozaydin2013.CarotenoidOzaydin2013Dataset
+=======================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.ozaydin2013
+
+.. autoclass:: CarotenoidOzaydin2013Dataset
+   :show-inheritance:
+   :members:

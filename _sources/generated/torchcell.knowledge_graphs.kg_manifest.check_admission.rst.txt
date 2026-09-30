@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.check\_admission
+=========================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autofunction:: check_admission

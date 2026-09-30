@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.Temperature
+=======================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: Temperature
+   :show-inheritance:
+   :members:

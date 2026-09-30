@@ -1,0 +1,6 @@
+﻿torchcell.metabolism.yeast\_GEM.plot\_full\_network
+===================================================
+
+.. currentmodule:: torchcell.metabolism.yeast_GEM
+
+.. autofunction:: plot_full_network

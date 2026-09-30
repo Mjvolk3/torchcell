@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.MediaComponent
+==========================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: MediaComponent
+   :show-inheritance:
+   :members:

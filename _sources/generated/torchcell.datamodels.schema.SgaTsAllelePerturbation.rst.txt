@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.SgaTsAllelePerturbation
+===================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: SgaTsAllelePerturbation
+   :show-inheritance:
+   :members:

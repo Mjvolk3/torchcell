@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.kuzmin2018.DmfKuzmin2018Dataset
+==============================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.kuzmin2018
+
+.. autoclass:: DmfKuzmin2018Dataset
+   :show-inheritance:
+   :members:

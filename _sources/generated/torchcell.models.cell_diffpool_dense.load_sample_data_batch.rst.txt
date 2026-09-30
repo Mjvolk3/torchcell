@@ -1,0 +1,6 @@
+﻿torchcell.models.cell\_diffpool\_dense.load\_sample\_data\_batch
+================================================================
+
+.. currentmodule:: torchcell.models.cell_diffpool_dense
+
+.. autofunction:: load_sample_data_batch

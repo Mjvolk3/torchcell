@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.PseudobulkExpressionPhenotype
+=========================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: PseudobulkExpressionPhenotype
+   :show-inheritance:
+   :members:

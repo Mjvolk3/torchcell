@@ -1,0 +1,6 @@
+﻿torchcell.verification.l2\_value\_fidelity
+==========================================
+
+.. currentmodule:: torchcell.verification
+
+.. autofunction:: l2_value_fidelity

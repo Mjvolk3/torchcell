@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.ExperimentReference
+===============================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: ExperimentReference
+   :show-inheritance:
+   :members:

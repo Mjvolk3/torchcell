@@ -1,0 +1,8 @@
+﻿torchcell.trainers.simple\_linear\_regression.SimpleLinearRegressionTask
+========================================================================
+
+.. currentmodule:: torchcell.trainers.simple_linear_regression
+
+.. autoclass:: SimpleLinearRegressionTask
+   :show-inheritance:
+   :members:

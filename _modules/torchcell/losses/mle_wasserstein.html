@@ -1,0 +1,929 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.losses.mle_wasserstein &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/losses/mle_wasserstein.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.losses.mle_wasserstein</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.losses.mle_wasserstein</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/losses/mle_wasserstein</span>
+<span class="c1"># [[torchcell.losses.mle_wass_supcr]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/losses/mle_wasserstein</span>
+<span class="c1"># Test file: tests/torchcell/losses/test_mle_wass_supcr.py</span>
+<span class="c1"># Note: File name kept as mle_wasserstein.py for compatibility, but class is MleWassSupCR</span>
+
+<span class="sd">"""Composite MSE + Wasserstein + SupCR loss with buffers and DDP gathering."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.distributed</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dist</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">geomloss</span><span class="w"> </span><span class="kn">import</span> <span class="n">SamplesLoss</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.losses.multi_dim_nan_tolerant</span><span class="w"> </span><span class="kn">import</span> <span class="n">WeightedMSELoss</span><span class="p">,</span> <span class="n">WeightedSupCRCell</span>
+
+
+<div class="viewcode-block" id="AdaptiveWeighting">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_wasserstein.AdaptiveWeighting.html#torchcell.losses.mle_wasserstein.AdaptiveWeighting">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AdaptiveWeighting</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Manages adaptive weighting for buffer contributions during training."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">warmup_epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">stable_epoch</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Store the warmup and stabilization epoch thresholds."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">warmup_epochs</span> <span class="o">=</span> <span class="n">warmup_epochs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stable_epoch</span> <span class="o">=</span> <span class="n">stable_epoch</span>
+
+<div class="viewcode-block" id="AdaptiveWeighting.get_buffer_weight">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_wasserstein.AdaptiveWeighting.html#torchcell.losses.mle_wasserstein.AdaptiveWeighting.get_buffer_weight">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_buffer_weight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Get buffer weight based on training epoch."""</span>
+        <span class="k">if</span> <span class="n">epoch</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">warmup_epochs</span><span class="p">:</span>
+            <span class="c1"># Linear ramp from 0.1 to 0.3</span>
+            <span class="k">return</span> <span class="mf">0.1</span> <span class="o">+</span> <span class="mf">0.2</span> <span class="o">*</span> <span class="p">(</span><span class="n">epoch</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">warmup_epochs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">epoch</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">stable_epoch</span><span class="p">:</span>
+            <span class="c1"># Sigmoid transition from 0.3 to 0.9</span>
+            <span class="n">progress</span> <span class="o">=</span> <span class="p">(</span><span class="n">epoch</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">warmup_epochs</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">stable_epoch</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">warmup_epochs</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="mf">0.3</span> <span class="o">+</span> <span class="mf">0.6</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">10</span> <span class="o">*</span> <span class="p">(</span><span class="n">progress</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Stable at 0.9</span>
+            <span class="k">return</span> <span class="mf">0.9</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TemperatureScheduler">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_wasserstein.TemperatureScheduler.html#torchcell.losses.mle_wasserstein.TemperatureScheduler">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TemperatureScheduler</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Manages temperature scheduling for SupCR loss."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">init_temp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">final_temp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">schedule</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"exponential"</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Store the initial and final temperatures and the schedule type."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_temp</span> <span class="o">=</span> <span class="n">init_temp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">final_temp</span> <span class="o">=</span> <span class="n">final_temp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span> <span class="o">=</span> <span class="n">schedule</span>
+
+<div class="viewcode-block" id="TemperatureScheduler.get_temperature">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_wasserstein.TemperatureScheduler.html#torchcell.losses.mle_wasserstein.TemperatureScheduler.get_temperature">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_temperature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">max_epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Get temperature based on training epoch."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span> <span class="o">==</span> <span class="s2">"exponential"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">init_temp</span>
+                <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">final_temp</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_temp</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="n">epoch</span> <span class="o">/</span> <span class="n">max_epochs</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span> <span class="o">==</span> <span class="s2">"cosine"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_temp</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">init_temp</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_temp</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span>
+                <span class="mi">1</span> <span class="o">+</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">epoch</span> <span class="o">/</span> <span class="n">max_epochs</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_temp</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="WeightedWassersteinLoss">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_wasserstein.WeightedWassersteinLoss.html#torchcell.losses.mle_wasserstein.WeightedWassersteinLoss">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WeightedWassersteinLoss</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Weighted Wasserstein distance loss for multi-dimensional outputs."""</span>
+
+    <span class="c1"># Optional dimension weights; registered as a buffer when provided, else None.</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">blur</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+        <span class="n">p</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">scaling</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
+        <span class="n">weights</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Initialize Weighted Wasserstein Loss.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            blur: Smoothing parameter for entropic regularization</span>
+<span class="sd">            p: Power for the ground cost (p=1: W1, p=2: W2)</span>
+<span class="sd">            scaling: Scaling parameter for multi-scale approach (0.5 &lt; scaling &lt; 1)</span>
+<span class="sd">            weights: Optional weights for different dimensions</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blur</span> <span class="o">=</span> <span class="n">blur</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">p</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span> <span class="o">=</span> <span class="n">scaling</span>
+
+        <span class="c1"># Initialize SamplesLoss for Wasserstein distance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wasserstein</span> <span class="o">=</span> <span class="n">SamplesLoss</span><span class="p">(</span>
+            <span class="n">loss</span><span class="o">=</span><span class="s2">"sinkhorn"</span><span class="p">,</span>
+            <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span>
+            <span class="n">blur</span><span class="o">=</span><span class="n">blur</span><span class="p">,</span>
+            <span class="n">scaling</span><span class="o">=</span><span class="n">scaling</span><span class="p">,</span>
+            <span class="n">debias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Remove bias for better accuracy</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"weights"</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="WeightedWassersteinLoss.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_wasserstein.WeightedWassersteinLoss.html#torchcell.losses.mle_wasserstein.WeightedWassersteinLoss.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">predictions</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">targets</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Compute weighted Wasserstein distance.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            predictions: Predicted values [batch_size, num_dims]</span>
+<span class="sd">            targets: Target values [batch_size, num_dims]</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (total_loss, per_dimension_losses)</span>
+<span class="sd">        """</span>
+        <span class="n">batch_size</span><span class="p">,</span> <span class="n">num_dims</span> <span class="o">=</span> <span class="n">predictions</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">predictions</span><span class="o">.</span><span class="n">device</span>
+
+        <span class="c1"># Handle NaN values</span>
+        <span class="n">valid_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span>
+
+        <span class="c1"># Compute per-dimension Wasserstein distances</span>
+        <span class="n">dim_losses</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_dims</span><span class="p">):</span>
+            <span class="n">dim_valid</span> <span class="o">=</span> <span class="n">valid_mask</span><span class="p">[:,</span> <span class="n">dim</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">dim_valid</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># Need at least 2 samples</span>
+                <span class="c1"># Extract valid predictions and targets for this dimension</span>
+                <span class="n">pred_dim</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[</span><span class="n">dim_valid</span><span class="p">,</span> <span class="n">dim</span> <span class="p">:</span> <span class="n">dim</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># Keep 2D shape</span>
+                <span class="n">targ_dim</span> <span class="o">=</span> <span class="n">targets</span><span class="p">[</span><span class="n">dim_valid</span><span class="p">,</span> <span class="n">dim</span> <span class="p">:</span> <span class="n">dim</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+
+                <span class="c1"># Compute Wasserstein distance for this dimension</span>
+                <span class="n">w_dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wasserstein</span><span class="p">(</span><span class="n">pred_dim</span><span class="p">,</span> <span class="n">targ_dim</span><span class="p">)</span>
+                <span class="n">dim_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">w_dist</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Not enough valid samples</span>
+                <span class="n">dim_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">))</span>
+
+        <span class="c1"># Stack dimension losses</span>
+        <span class="n">dim_losses_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">dim_losses</span><span class="p">)</span>
+
+        <span class="c1"># Apply weights if provided</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">weighted_losses</span> <span class="o">=</span> <span class="n">dim_losses_tensor</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span>
+            <span class="n">total_loss</span> <span class="o">=</span> <span class="n">weighted_losses</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">total_loss</span> <span class="o">=</span> <span class="n">dim_losses_tensor</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">total_loss</span><span class="p">,</span> <span class="n">dim_losses_tensor</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="BufferedWeightedWassersteinLoss">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_wasserstein.BufferedWeightedWassersteinLoss.html#torchcell.losses.mle_wasserstein.BufferedWeightedWassersteinLoss">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BufferedWeightedWassersteinLoss</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Enhanced Wasserstein loss with circular buffer for small batch training."""</span>
+
+    <span class="c1"># Registered buffers (declared for type checking; created via register_buffer).</span>
+    <span class="n">pred_buffer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">target_buffer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">buffer_ptr</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">buffer_full</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">total_samples</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">buffer_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
+        <span class="n">blur</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+        <span class="n">p</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">scaling</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
+        <span class="n">weights</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">min_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Set up the base Wasserstein loss and circular prediction/target buffers."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span> <span class="o">=</span> <span class="n">buffer_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_samples</span> <span class="o">=</span> <span class="n">min_samples</span>
+
+        <span class="c1"># Initialize base Wasserstein loss</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_wasserstein_loss</span> <span class="o">=</span> <span class="n">WeightedWassersteinLoss</span><span class="p">(</span>
+            <span class="n">blur</span><span class="o">=</span><span class="n">blur</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">scaling</span><span class="o">=</span><span class="n">scaling</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Circular buffer for predictions and targets</span>
+        <span class="n">num_dims</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"pred_buffer"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">buffer_size</span><span class="p">,</span> <span class="n">num_dims</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"target_buffer"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">buffer_size</span><span class="p">,</span> <span class="n">num_dims</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"buffer_ptr"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"buffer_full"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"total_samples"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">))</span>
+
+<div class="viewcode-block" id="BufferedWeightedWassersteinLoss.update_buffer">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_wasserstein.BufferedWeightedWassersteinLoss.html#torchcell.losses.mle_wasserstein.BufferedWeightedWassersteinLoss.update_buffer">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_buffer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">predictions</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">targets</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Update circular buffer with new samples."""</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">predictions</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">ptr</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer_ptr</span><span class="p">)</span>
+
+        <span class="c1"># Handle wrap-around</span>
+        <span class="k">if</span> <span class="n">ptr</span> <span class="o">+</span> <span class="n">batch_size</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pred_buffer</span><span class="p">[</span><span class="n">ptr</span> <span class="p">:</span> <span class="n">ptr</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">]</span> <span class="o">=</span> <span class="n">predictions</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target_buffer</span><span class="p">[</span><span class="n">ptr</span> <span class="p">:</span> <span class="n">ptr</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">]</span> <span class="o">=</span> <span class="n">targets</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Split across boundary</span>
+            <span class="n">first_part</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span> <span class="o">-</span> <span class="n">ptr</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pred_buffer</span><span class="p">[</span><span class="n">ptr</span><span class="p">:]</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[:</span><span class="n">first_part</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target_buffer</span><span class="p">[</span><span class="n">ptr</span><span class="p">:]</span> <span class="o">=</span> <span class="n">targets</span><span class="p">[:</span><span class="n">first_part</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+
+            <span class="n">second_part</span> <span class="o">=</span> <span class="n">batch_size</span> <span class="o">-</span> <span class="n">first_part</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pred_buffer</span><span class="p">[:</span><span class="n">second_part</span><span class="p">]</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[</span><span class="n">first_part</span><span class="p">:]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target_buffer</span><span class="p">[:</span><span class="n">second_part</span><span class="p">]</span> <span class="o">=</span> <span class="n">targets</span><span class="p">[</span><span class="n">first_part</span><span class="p">:]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+
+        <span class="c1"># Update pointer and status</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buffer_ptr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">ptr</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
+            <span class="s2">"torch.Tensor | int"</span><span class="p">,</span>
+            <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buffer_full</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="BufferedWeightedWassersteinLoss.get_buffer_samples">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_wasserstein.BufferedWeightedWassersteinLoss.html#torchcell.losses.mle_wasserstein.BufferedWeightedWassersteinLoss.get_buffer_samples">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_buffer_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get all valid samples from buffer."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_full</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_buffer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_buffer</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n_samples</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_buffer</span><span class="p">[:</span><span class="n">n_samples</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_buffer</span><span class="p">[:</span><span class="n">n_samples</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="BufferedWeightedWassersteinLoss.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_wasserstein.BufferedWeightedWassersteinLoss.html#torchcell.losses.mle_wasserstein.BufferedWeightedWassersteinLoss.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">predictions</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">targets</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">all_predictions</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">all_targets</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">buffer_weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Compute Wasserstein loss with buffer support.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            predictions: Local batch predictions</span>
+<span class="sd">            targets: Local batch targets</span>
+<span class="sd">            all_predictions: Gathered predictions from all GPUs (optional)</span>
+<span class="sd">            all_targets: Gathered targets from all GPUs (optional)</span>
+<span class="sd">            buffer_weight: Weight for buffer contribution (0-1)</span>
+<span class="sd">        """</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">predictions</span><span class="o">.</span><span class="n">device</span>
+
+        <span class="c1"># Update buffer with gathered data when available</span>
+        <span class="k">if</span> <span class="n">all_predictions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">all_targets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_buffer</span><span class="p">(</span><span class="n">all_predictions</span><span class="p">,</span> <span class="n">all_targets</span><span class="p">)</span>
+            <span class="n">current_preds</span> <span class="o">=</span> <span class="n">all_predictions</span>
+            <span class="n">current_targets</span> <span class="o">=</span> <span class="n">all_targets</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_buffer</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+            <span class="n">current_preds</span> <span class="o">=</span> <span class="n">predictions</span>
+            <span class="n">current_targets</span> <span class="o">=</span> <span class="n">targets</span>
+
+        <span class="c1"># Check if we have enough samples</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_samples</span><span class="p">:</span>
+            <span class="c1"># Not enough samples yet, return zero loss</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Get buffer samples</span>
+        <span class="n">buffer_preds</span><span class="p">,</span> <span class="n">buffer_targets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_buffer_samples</span><span class="p">()</span>
+        <span class="n">buffer_preds</span> <span class="o">=</span> <span class="n">buffer_preds</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">buffer_targets</span> <span class="o">=</span> <span class="n">buffer_targets</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Combine current batch with buffer based on buffer_weight</span>
+        <span class="k">if</span> <span class="n">buffer_weight</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="c1"># Weighted combination</span>
+            <span class="n">n_current</span> <span class="o">=</span> <span class="n">current_preds</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">n_buffer</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_current</span> <span class="o">*</span> <span class="n">buffer_weight</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">buffer_weight</span><span class="p">))</span>
+            <span class="n">n_buffer</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">n_buffer</span><span class="p">,</span> <span class="n">buffer_preds</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">n_buffer</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># Random sample from buffer</span>
+                <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="n">buffer_preds</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">))[:</span><span class="n">n_buffer</span><span class="p">]</span>
+                <span class="n">combined_preds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">current_preds</span><span class="p">,</span> <span class="n">buffer_preds</span><span class="p">[</span><span class="n">indices</span><span class="p">]],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span>
+                <span class="p">)</span>
+                <span class="n">combined_targets</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">current_targets</span><span class="p">,</span> <span class="n">buffer_targets</span><span class="p">[</span><span class="n">indices</span><span class="p">]],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">combined_preds</span> <span class="o">=</span> <span class="n">current_preds</span>
+                <span class="n">combined_targets</span> <span class="o">=</span> <span class="n">current_targets</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Use all buffer samples</span>
+            <span class="n">combined_preds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">current_preds</span><span class="p">,</span> <span class="n">buffer_preds</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">combined_targets</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">current_targets</span><span class="p">,</span> <span class="n">buffer_targets</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Compute Wasserstein loss on combined samples</span>
+        <span class="n">loss</span><span class="p">,</span> <span class="n">dim_losses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_wasserstein_loss</span><span class="p">(</span><span class="n">combined_preds</span><span class="p">,</span> <span class="n">combined_targets</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="n">dim_losses</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="BufferedWeightedSupCRCell">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_wasserstein.BufferedWeightedSupCRCell.html#torchcell.losses.mle_wasserstein.BufferedWeightedSupCRCell">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BufferedWeightedSupCRCell</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Enhanced SupCR loss with circular buffer for small batch training."""</span>
+
+    <span class="c1"># Registered buffers (declared for type checking; created via register_buffer).</span>
+    <span class="n">embedding_buffer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">label_buffer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">buffer_ptr</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">buffer_full</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">total_samples</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">buffer_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
+        <span class="n">embedding_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+        <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">weights</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">min_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Set up the base SupCR loss and circular embedding/label buffers."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span> <span class="o">=</span> <span class="n">buffer_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">embedding_dim</span> <span class="o">=</span> <span class="n">embedding_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_samples</span> <span class="o">=</span> <span class="n">min_samples</span>
+
+        <span class="c1"># Initialize base SupCR loss</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_supcr</span> <span class="o">=</span> <span class="n">WeightedSupCRCell</span><span class="p">(</span><span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+
+        <span class="c1"># Circular buffer for embeddings and labels</span>
+        <span class="n">num_dims</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
+            <span class="s2">"embedding_buffer"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">buffer_size</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"label_buffer"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">buffer_size</span><span class="p">,</span> <span class="n">num_dims</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"buffer_ptr"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"buffer_full"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"total_samples"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">))</span>
+
+<div class="viewcode-block" id="BufferedWeightedSupCRCell.update_buffer">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_wasserstein.BufferedWeightedSupCRCell.html#torchcell.losses.mle_wasserstein.BufferedWeightedSupCRCell.update_buffer">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_buffer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">labels</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Update circular buffer with new samples."""</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">ptr</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer_ptr</span><span class="p">)</span>
+
+        <span class="c1"># Handle wrap-around</span>
+        <span class="k">if</span> <span class="n">ptr</span> <span class="o">+</span> <span class="n">batch_size</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">embedding_buffer</span><span class="p">[</span><span class="n">ptr</span> <span class="p">:</span> <span class="n">ptr</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">]</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">label_buffer</span><span class="p">[</span><span class="n">ptr</span> <span class="p">:</span> <span class="n">ptr</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">]</span> <span class="o">=</span> <span class="n">labels</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Split across boundary</span>
+            <span class="n">first_part</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span> <span class="o">-</span> <span class="n">ptr</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">embedding_buffer</span><span class="p">[</span><span class="n">ptr</span><span class="p">:]</span> <span class="o">=</span> <span class="n">embeddings</span><span class="p">[:</span><span class="n">first_part</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">label_buffer</span><span class="p">[</span><span class="n">ptr</span><span class="p">:]</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[:</span><span class="n">first_part</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+
+            <span class="n">second_part</span> <span class="o">=</span> <span class="n">batch_size</span> <span class="o">-</span> <span class="n">first_part</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">embedding_buffer</span><span class="p">[:</span><span class="n">second_part</span><span class="p">]</span> <span class="o">=</span> <span class="n">embeddings</span><span class="p">[</span><span class="n">first_part</span><span class="p">:]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">label_buffer</span><span class="p">[:</span><span class="n">second_part</span><span class="p">]</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="n">first_part</span><span class="p">:]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+
+        <span class="c1"># Update pointer and status</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buffer_ptr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">ptr</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
+            <span class="s2">"torch.Tensor | int"</span><span class="p">,</span>
+            <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buffer_full</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="BufferedWeightedSupCRCell.get_buffer_samples">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_wasserstein.BufferedWeightedSupCRCell.html#torchcell.losses.mle_wasserstein.BufferedWeightedSupCRCell.get_buffer_samples">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_buffer_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get all valid samples from buffer."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_full</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_buffer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_buffer</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n_samples</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_buffer</span><span class="p">[:</span><span class="n">n_samples</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_buffer</span><span class="p">[:</span><span class="n">n_samples</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="BufferedWeightedSupCRCell.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_wasserstein.BufferedWeightedSupCRCell.html#torchcell.losses.mle_wasserstein.BufferedWeightedSupCRCell.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">embeddings</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">labels</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">all_embeddings</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">all_labels</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">buffer_weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Compute SupCR loss with buffer support.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            embeddings: Local batch embeddings</span>
+<span class="sd">            labels: Local batch labels</span>
+<span class="sd">            all_embeddings: Gathered embeddings from all GPUs (optional)</span>
+<span class="sd">            all_labels: Gathered labels from all GPUs (optional)</span>
+<span class="sd">            buffer_weight: Weight for buffer contribution (0-1)</span>
+<span class="sd">            temperature: Optional temperature override</span>
+<span class="sd">        """</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">device</span>
+
+        <span class="c1"># Update buffer with gathered data when available</span>
+        <span class="k">if</span> <span class="n">all_embeddings</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">all_labels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_buffer</span><span class="p">(</span><span class="n">all_embeddings</span><span class="p">,</span> <span class="n">all_labels</span><span class="p">)</span>
+            <span class="n">current_embeddings</span> <span class="o">=</span> <span class="n">all_embeddings</span>
+            <span class="n">current_labels</span> <span class="o">=</span> <span class="n">all_labels</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_buffer</span><span class="p">(</span><span class="n">embeddings</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+            <span class="n">current_embeddings</span> <span class="o">=</span> <span class="n">embeddings</span>
+            <span class="n">current_labels</span> <span class="o">=</span> <span class="n">labels</span>
+
+        <span class="c1"># Check if we have enough samples</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_samples</span><span class="p">:</span>
+            <span class="c1"># Not enough samples yet, return zero loss</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Update temperature if provided</span>
+        <span class="k">if</span> <span class="n">temperature</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">base_supcr</span><span class="o">.</span><span class="n">supcr</span><span class="o">.</span><span class="n">temperature</span> <span class="o">=</span> <span class="n">temperature</span>
+
+        <span class="c1"># Get buffer samples</span>
+        <span class="n">buffer_embeddings</span><span class="p">,</span> <span class="n">buffer_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_buffer_samples</span><span class="p">()</span>
+        <span class="n">buffer_embeddings</span> <span class="o">=</span> <span class="n">buffer_embeddings</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">buffer_labels</span> <span class="o">=</span> <span class="n">buffer_labels</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># For SupCR, we always want to use buffer as negative samples</span>
+        <span class="n">combined_embeddings</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">current_embeddings</span><span class="p">,</span> <span class="n">buffer_embeddings</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">combined_labels</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">current_labels</span><span class="p">,</span> <span class="n">buffer_labels</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Compute SupCR loss</span>
+        <span class="n">loss</span><span class="p">,</span> <span class="n">dim_losses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_supcr</span><span class="p">(</span><span class="n">combined_embeddings</span><span class="p">,</span> <span class="n">combined_labels</span><span class="p">)</span>
+
+        <span class="c1"># Scale by buffer weight to reduce influence when buffer is stale</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">buffer_weight</span> <span class="o">+</span> <span class="n">buffer_weight</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="n">dim_losses</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MleWassSupCR">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_wasserstein.MleWassSupCR.html#torchcell.losses.mle_wasserstein.MleWassSupCR">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MleWassSupCR</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Composite MSE + Wasserstein + SupCR loss.</span>
+
+<span class="sd">    Combines circular buffers, DDP synchronization, and adaptive weighting.</span>
+<span class="sd">    """</span>
+
+    <span class="c1"># Component losses differ depending on ``use_buffer`` (declared as unions so</span>
+    <span class="c1"># both the buffered and unbuffered assignments type-check).</span>
+    <span class="n">wasserstein_loss</span><span class="p">:</span> <span class="s2">"BufferedWeightedWassersteinLoss | WeightedWassersteinLoss"</span>
+    <span class="n">supcr_loss</span><span class="p">:</span> <span class="s2">"BufferedWeightedSupCRCell | WeightedSupCRCell"</span>
+    <span class="c1"># Registered buffers (declared for type checking; created via register_buffer).</span>
+    <span class="n">forward_count</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">current_epoch</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="c1"># Component configuration</span>
+        <span class="n">lambda_mse</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">lambda_wasserstein</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">lambda_supcr</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
+        <span class="c1"># Wasserstein-specific parameters</span>
+        <span class="n">wasserstein_blur</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+        <span class="n">wasserstein_p</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">wasserstein_scaling</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
+        <span class="c1"># SupCR-specific parameters</span>
+        <span class="n">supcr_temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">embedding_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+        <span class="c1"># Buffer configuration</span>
+        <span class="n">use_buffer</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">buffer_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
+        <span class="n">min_samples_for_wasserstein</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
+        <span class="n">min_samples_for_supcr</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
+        <span class="c1"># DDP configuration</span>
+        <span class="n">use_ddp_gather</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">gather_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="c1"># Adaptive weighting</span>
+        <span class="n">use_adaptive_weighting</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">warmup_epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">stable_epoch</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="c1"># Temperature scheduling</span>
+        <span class="n">use_temp_scheduling</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">init_temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">final_temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">temp_schedule</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"exponential"</span><span class="p">,</span>
+        <span class="c1"># Other parameters</span>
+        <span class="n">weights</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">max_epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Configure loss components, buffers, adaptive weighting, and scheduling."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="c1"># Lambda weights</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_mse</span> <span class="o">=</span> <span class="n">lambda_mse</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_wasserstein</span> <span class="o">=</span> <span class="n">lambda_wasserstein</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_supcr</span> <span class="o">=</span> <span class="n">lambda_supcr</span>
+
+        <span class="c1"># Configuration flags</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_buffer</span> <span class="o">=</span> <span class="n">use_buffer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_ddp_gather</span> <span class="o">=</span> <span class="n">use_ddp_gather</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gather_interval</span> <span class="o">=</span> <span class="n">gather_interval</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_adaptive_weighting</span> <span class="o">=</span> <span class="n">use_adaptive_weighting</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_temp_scheduling</span> <span class="o">=</span> <span class="n">use_temp_scheduling</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_epochs</span> <span class="o">=</span> <span class="n">max_epochs</span>
+
+        <span class="c1"># Initialize loss components</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mse_loss</span> <span class="o">=</span> <span class="n">WeightedMSELoss</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">use_buffer</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">wasserstein_loss</span> <span class="o">=</span> <span class="n">BufferedWeightedWassersteinLoss</span><span class="p">(</span>
+                <span class="n">buffer_size</span><span class="o">=</span><span class="n">buffer_size</span><span class="p">,</span>
+                <span class="n">blur</span><span class="o">=</span><span class="n">wasserstein_blur</span><span class="p">,</span>
+                <span class="n">p</span><span class="o">=</span><span class="n">wasserstein_p</span><span class="p">,</span>
+                <span class="n">scaling</span><span class="o">=</span><span class="n">wasserstein_scaling</span><span class="p">,</span>
+                <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span>
+                <span class="n">min_samples</span><span class="o">=</span><span class="n">min_samples_for_wasserstein</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">supcr_loss</span> <span class="o">=</span> <span class="n">BufferedWeightedSupCRCell</span><span class="p">(</span>
+                <span class="n">buffer_size</span><span class="o">=</span><span class="n">buffer_size</span><span class="p">,</span>
+                <span class="n">embedding_dim</span><span class="o">=</span><span class="n">embedding_dim</span><span class="p">,</span>
+                <span class="n">temperature</span><span class="o">=</span><span class="n">supcr_temperature</span><span class="p">,</span>
+                <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span>
+                <span class="n">min_samples</span><span class="o">=</span><span class="n">min_samples_for_supcr</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">wasserstein_loss</span> <span class="o">=</span> <span class="n">WeightedWassersteinLoss</span><span class="p">(</span>
+                <span class="n">blur</span><span class="o">=</span><span class="n">wasserstein_blur</span><span class="p">,</span>
+                <span class="n">p</span><span class="o">=</span><span class="n">wasserstein_p</span><span class="p">,</span>
+                <span class="n">scaling</span><span class="o">=</span><span class="n">wasserstein_scaling</span><span class="p">,</span>
+                <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">supcr_loss</span> <span class="o">=</span> <span class="n">WeightedSupCRCell</span><span class="p">(</span>
+                <span class="n">temperature</span><span class="o">=</span><span class="n">supcr_temperature</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Initialize adaptive components with dynamic defaults</span>
+        <span class="k">if</span> <span class="n">use_adaptive_weighting</span><span class="p">:</span>
+            <span class="n">actual_warmup_epochs</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">warmup_epochs</span> <span class="k">if</span> <span class="n">warmup_epochs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">int</span><span class="p">(</span><span class="n">max_epochs</span> <span class="o">*</span> <span class="mf">0.1</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">actual_stable_epoch</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">stable_epoch</span> <span class="k">if</span> <span class="n">stable_epoch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">int</span><span class="p">(</span><span class="n">max_epochs</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">adaptive_weighting</span> <span class="o">=</span> <span class="n">AdaptiveWeighting</span><span class="p">(</span>
+                <span class="n">actual_warmup_epochs</span><span class="p">,</span> <span class="n">actual_stable_epoch</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">use_temp_scheduling</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">temp_scheduler</span> <span class="o">=</span> <span class="n">TemperatureScheduler</span><span class="p">(</span>
+                <span class="n">init_temperature</span><span class="p">,</span> <span class="n">final_temperature</span><span class="p">,</span> <span class="n">temp_schedule</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Tracking</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"forward_count"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"current_epoch"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">))</span>
+
+<div class="viewcode-block" id="MleWassSupCR.gather_across_gpus">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_wasserstein.MleWassSupCR.html#torchcell.losses.mle_wasserstein.MleWassSupCR.gather_across_gpus">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gather_across_gpus</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Gather tensors from all GPUs."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">dist</span><span class="o">.</span><span class="n">is_initialized</span><span class="p">()</span> <span class="ow">or</span> <span class="n">dist</span><span class="o">.</span><span class="n">get_world_size</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">tensor</span>
+
+        <span class="n">world_size</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">get_world_size</span><span class="p">()</span>
+        <span class="n">gathered</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">world_size</span><span class="p">)]</span>
+        <span class="n">dist</span><span class="o">.</span><span class="n">all_gather</span><span class="p">(</span><span class="n">gathered</span><span class="p">,</span> <span class="n">tensor</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">gathered</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MleWassSupCR.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_wasserstein.MleWassSupCR.html#torchcell.losses.mle_wasserstein.MleWassSupCR.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">predictions</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">targets</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">z_P</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Compute the composite loss and a dictionary of component breakdowns.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            predictions: Model predictions [batch_size, num_dims]</span>
+<span class="sd">            targets: Target values [batch_size, num_dims]</span>
+<span class="sd">            z_P: Perturbed embeddings for SupCR [batch_size, embedding_dim]</span>
+<span class="sd">            epoch: Current training epoch (optional)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (total_loss, loss_dict)</span>
+<span class="sd">        """</span>
+        <span class="c1"># Update epoch if provided</span>
+        <span class="k">if</span> <span class="n">epoch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_epoch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">epoch</span>
+
+        <span class="n">device</span> <span class="o">=</span> <span class="n">predictions</span><span class="o">.</span><span class="n">device</span>
+
+        <span class="c1"># Initialize loss components</span>
+        <span class="n">total_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">loss_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Get adaptive weights</span>
+        <span class="n">buffer_weight</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_adaptive_weighting</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_buffer</span><span class="p">:</span>
+            <span class="n">buffer_weight</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">adaptive_weighting</span><span class="o">.</span><span class="n">get_buffer_weight</span><span class="p">(</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_epoch</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="p">)</span>
+            <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"buffer_weight"</span><span class="p">]</span> <span class="o">=</span> <span class="n">buffer_weight</span>
+
+        <span class="c1"># Get temperature</span>
+        <span class="n">temperature</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_temp_scheduling</span><span class="p">:</span>
+            <span class="n">temperature</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">temp_scheduler</span><span class="o">.</span><span class="n">get_temperature</span><span class="p">(</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_epoch</span><span class="o">.</span><span class="n">item</span><span class="p">()),</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_epochs</span>
+            <span class="p">)</span>
+            <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"temperature"</span><span class="p">]</span> <span class="o">=</span> <span class="n">temperature</span>
+
+        <span class="c1"># Gather samples across GPUs if needed</span>
+        <span class="n">all_predictions</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">all_targets</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">all_embeddings</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_ddp_gather</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward_count</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">gather_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">all_predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gather_across_gpus</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
+            <span class="n">all_targets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gather_across_gpus</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span>
+            <span class="n">all_embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gather_across_gpus</span><span class="p">(</span><span class="n">z_P</span><span class="p">)</span>
+
+        <span class="c1"># Compute MSE loss if lambda &gt; 0</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_mse</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">mse_val</span><span class="p">,</span> <span class="n">mse_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mse_loss</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+            <span class="n">weighted_mse</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_mse</span> <span class="o">*</span> <span class="n">mse_val</span>
+            <span class="n">total_loss</span> <span class="o">=</span> <span class="n">total_loss</span> <span class="o">+</span> <span class="n">weighted_mse</span>
+            <span class="n">loss_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"mse_loss"</span><span class="p">:</span> <span class="n">mse_val</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+                    <span class="s2">"mse_dim_losses"</span><span class="p">:</span> <span class="n">mse_dims</span><span class="p">,</span>
+                    <span class="s2">"weighted_mse"</span><span class="p">:</span> <span class="n">weighted_mse</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mse_val</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">mse_dims</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">loss_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span><span class="s2">"mse_loss"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">"mse_dim_losses"</span><span class="p">:</span> <span class="n">mse_dims</span><span class="p">,</span> <span class="s2">"weighted_mse"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Compute Wasserstein loss if lambda &gt; 0</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_wasserstein</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_buffer</span><span class="p">:</span>
+                <span class="n">wasserstein_val</span><span class="p">,</span> <span class="n">wasserstein_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wasserstein_loss</span><span class="p">(</span>
+                    <span class="n">predictions</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="n">all_predictions</span><span class="p">,</span> <span class="n">all_targets</span><span class="p">,</span> <span class="n">buffer_weight</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">wasserstein_val</span><span class="p">,</span> <span class="n">wasserstein_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wasserstein_loss</span><span class="p">(</span>
+                    <span class="n">predictions</span><span class="p">,</span> <span class="n">targets</span>
+                <span class="p">)</span>
+
+            <span class="n">weighted_wasserstein</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_wasserstein</span> <span class="o">*</span> <span class="n">wasserstein_val</span>
+            <span class="n">total_loss</span> <span class="o">=</span> <span class="n">total_loss</span> <span class="o">+</span> <span class="n">weighted_wasserstein</span>
+            <span class="n">loss_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"wasserstein_loss"</span><span class="p">:</span> <span class="n">wasserstein_val</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+                    <span class="s2">"wasserstein_dim_losses"</span><span class="p">:</span> <span class="n">wasserstein_dims</span><span class="p">,</span>
+                    <span class="s2">"weighted_wasserstein"</span><span class="p">:</span> <span class="n">weighted_wasserstein</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">wasserstein_val</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">wasserstein_dims</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">loss_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"wasserstein_loss"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                    <span class="s2">"wasserstein_dim_losses"</span><span class="p">:</span> <span class="n">wasserstein_dims</span><span class="p">,</span>
+                    <span class="s2">"weighted_wasserstein"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Compute SupCR loss if lambda &gt; 0</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_supcr</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_buffer</span><span class="p">:</span>
+                <span class="n">supcr_val</span><span class="p">,</span> <span class="n">supcr_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">supcr_loss</span><span class="p">(</span>
+                    <span class="n">z_P</span><span class="p">,</span>
+                    <span class="n">targets</span><span class="p">,</span>
+                    <span class="n">all_embeddings</span><span class="p">,</span>
+                    <span class="n">all_targets</span><span class="p">,</span>
+                    <span class="n">buffer_weight</span><span class="p">,</span>
+                    <span class="n">temperature</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">temperature</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="c1"># The unbuffered cell has no temperature argument; apply the</span>
+                    <span class="c1"># scheduled value the same way the buffered cell does.</span>
+                    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">supcr_loss</span><span class="p">,</span> <span class="n">WeightedSupCRCell</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">supcr_loss</span><span class="o">.</span><span class="n">supcr</span><span class="o">.</span><span class="n">temperature</span> <span class="o">=</span> <span class="n">temperature</span>
+                <span class="n">supcr_val</span><span class="p">,</span> <span class="n">supcr_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">supcr_loss</span><span class="p">(</span><span class="n">z_P</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+
+            <span class="n">weighted_supcr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_supcr</span> <span class="o">*</span> <span class="n">supcr_val</span>
+            <span class="n">total_loss</span> <span class="o">=</span> <span class="n">total_loss</span> <span class="o">+</span> <span class="n">weighted_supcr</span>
+            <span class="n">loss_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"supcr_loss"</span><span class="p">:</span> <span class="n">supcr_val</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+                    <span class="s2">"supcr_dim_losses"</span><span class="p">:</span> <span class="n">supcr_dims</span><span class="p">,</span>
+                    <span class="s2">"weighted_supcr"</span><span class="p">:</span> <span class="n">weighted_supcr</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">supcr_val</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">supcr_dims</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">loss_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"supcr_loss"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                    <span class="s2">"supcr_dim_losses"</span><span class="p">:</span> <span class="n">supcr_dims</span><span class="p">,</span>
+                    <span class="s2">"weighted_supcr"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Compute normalized contributions</span>
+        <span class="k">if</span> <span class="n">total_loss</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"mse"</span><span class="p">,</span> <span class="s2">"wasserstein"</span><span class="p">,</span> <span class="s2">"supcr"</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="sa">f</span><span class="s2">"weighted_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span> <span class="ow">in</span> <span class="n">loss_dict</span><span class="p">:</span>
+                    <span class="n">loss_dict</span><span class="p">[</span><span class="sa">f</span><span class="s2">"norm_weighted_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">loss_dict</span><span class="p">[</span><span class="sa">f</span><span class="s2">"weighted_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">/</span> <span class="n">total_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                    <span class="p">)</span>
+            <span class="c1"># Also add dist for compatibility</span>
+            <span class="k">if</span> <span class="s2">"weighted_dist"</span> <span class="ow">in</span> <span class="n">loss_dict</span><span class="p">:</span>
+                <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"norm_weighted_dist"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"weighted_dist"</span><span class="p">]</span> <span class="o">/</span> <span class="n">total_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                <span class="p">)</span>
+
+        <span class="c1"># Add unweighted totals for compatibility</span>
+        <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"total_weighted"</span><span class="p">]</span> <span class="o">=</span> <span class="n">total_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"total_loss"</span><span class="p">]</span> <span class="o">=</span> <span class="n">total_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+        <span class="c1"># Add unweighted normalized (for compatibility)</span>
+        <span class="n">total_unweighted</span> <span class="o">=</span> <span class="n">mse_val</span> <span class="o">+</span> <span class="n">wasserstein_val</span> <span class="o">+</span> <span class="n">supcr_val</span>
+        <span class="k">if</span> <span class="n">total_unweighted</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"norm_unweighted_mse"</span><span class="p">]</span> <span class="o">=</span> <span class="n">mse_val</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">/</span> <span class="n">total_unweighted</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"norm_unweighted_wasserstein"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">wasserstein_val</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">/</span> <span class="n">total_unweighted</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="p">)</span>
+            <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"norm_unweighted_supcr"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">supcr_val</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">/</span> <span class="n">total_unweighted</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="p">)</span>
+            <span class="c1"># Also add dist for compatibility</span>
+            <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"norm_unweighted_dist"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">wasserstein_val</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">/</span> <span class="n">total_unweighted</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Update forward counter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">forward_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">total_loss</span><span class="p">,</span> <span class="n">loss_dict</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

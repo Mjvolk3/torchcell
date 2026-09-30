@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.CrisprInterferencePerturbation
+==========================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: CrisprInterferencePerturbation
+   :show-inheritance:
+   :members:

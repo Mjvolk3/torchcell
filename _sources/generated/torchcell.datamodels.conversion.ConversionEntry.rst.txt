@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.conversion.ConversionEntry
+===============================================
+
+.. currentmodule:: torchcell.datamodels.conversion
+
+.. autoclass:: ConversionEntry
+   :show-inheritance:
+   :members:

@@ -1,0 +1,8 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.GraphSchemaEntry
+=========================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autoclass:: GraphSchemaEntry
+   :show-inheritance:
+   :members:

@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.closure\_in\_worktree
+==============================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autofunction:: closure_in_worktree

@@ -1,0 +1,6 @@
+﻿torchcell.paper.tables.default\_phenotype\_bytes
+================================================
+
+.. currentmodule:: torchcell.paper.tables
+
+.. autofunction:: default_phenotype_bytes

@@ -1,0 +1,6 @@
+﻿torchcell.sga.recommend\_volume
+===============================
+
+.. currentmodule:: torchcell.sga
+
+.. autofunction:: recommend_volume

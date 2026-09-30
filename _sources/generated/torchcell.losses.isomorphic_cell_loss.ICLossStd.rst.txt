@@ -1,0 +1,8 @@
+﻿torchcell.losses.isomorphic\_cell\_loss.ICLossStd
+=================================================
+
+.. currentmodule:: torchcell.losses.isomorphic_cell_loss
+
+.. autoclass:: ICLossStd
+   :show-inheritance:
+   :members:

@@ -1,0 +1,8 @@
+﻿torchcell.knowledge\_graphs.releases.ReleaseDataset
+===================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.releases
+
+.. autoclass:: ReleaseDataset
+   :show-inheritance:
+   :members:

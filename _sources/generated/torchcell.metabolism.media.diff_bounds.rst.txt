@@ -1,0 +1,6 @@
+﻿torchcell.metabolism.media.diff\_bounds
+=======================================
+
+.. currentmodule:: torchcell.metabolism.media
+
+.. autofunction:: diff_bounds

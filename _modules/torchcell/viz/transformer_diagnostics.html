@@ -1,0 +1,547 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.viz.transformer_diagnostics &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/viz/transformer_diagnostics.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.viz.transformer_diagnostics</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.viz.transformer_diagnostics</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Visualization helpers for transformer-specific diagnostic metrics."""</span>
+
+<span class="c1"># torchcell/viz/transformer_diagnostics</span>
+<span class="c1"># [[torchcell.viz.transformer_diagnostics]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/viz/transformer_diagnostics</span>
+<span class="c1"># Test file: tests/torchcell/viz/test_transformer_diagnostics.py</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">wandb</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">rc_params_from_file</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.figure</span><span class="w"> </span><span class="kn">import</span> <span class="n">Figure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
+
+
+<div class="viewcode-block" id="TransformerDiagnostics">
+<a class="viewcode-back" href="../../../generated/torchcell.viz.transformer_diagnostics.TransformerDiagnostics.html#torchcell.viz.transformer_diagnostics.TransformerDiagnostics">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransformerDiagnostics</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Visualization class for transformer-specific diagnostic metrics."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mplstyle_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Store the output directory and load the color palette from a style file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            base_dir: Directory where diagnostic figures are written.</span>
+<span class="sd">            mplstyle_path: Optional path to a ``.mplstyle`` file; defaults to the</span>
+<span class="sd">                packaged ``torchcell.mplstyle``.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_dir</span> <span class="o">=</span> <span class="n">base_dir</span>
+
+        <span class="c1"># Load color palette from mplstyle</span>
+        <span class="k">if</span> <span class="n">mplstyle_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Default to torchcell.mplstyle in the package</span>
+            <span class="n">mplstyle_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">osp</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)),</span> <span class="s2">"torchcell.mplstyle"</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">colors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_colors_from_mplstyle</span><span class="p">(</span><span class="n">mplstyle_path</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_colors_from_mplstyle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mplstyle_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Parse color palette from mplstyle file using matplotlib's rc_params_from_file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            mplstyle_path: Path to .mplstyle file</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of hex color strings with '#' prefix</span>
+<span class="sd">        """</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Use matplotlib's official parser for style files</span>
+            <span class="n">rc_params</span> <span class="o">=</span> <span class="n">rc_params_from_file</span><span class="p">(</span><span class="n">mplstyle_path</span><span class="p">,</span> <span class="n">use_default_template</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">prop_cycle</span> <span class="o">=</span> <span class="n">rc_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"axes.prop_cycle"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">prop_cycle</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">colors</span> <span class="o">=</span> <span class="n">prop_cycle</span><span class="o">.</span><span class="n">by_key</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"color"</span><span class="p">,</span> <span class="p">[])</span>
+                <span class="c1"># Ensure '#' prefix on all colors</span>
+                <span class="k">return</span> <span class="p">[</span><span class="s2">"#"</span> <span class="o">+</span> <span class="n">c</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">c</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"#"</span><span class="p">)</span> <span class="k">else</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">colors</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Warning: Could not load colors from </span><span class="si">{</span><span class="n">mplstyle_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="c1"># Fallback to full torchcell.mplstyle palette (22 colors)</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="s2">"#000000"</span><span class="p">,</span>
+            <span class="s2">"#CC8250"</span><span class="p">,</span>
+            <span class="s2">"#7191A9"</span><span class="p">,</span>
+            <span class="s2">"#6B8D3A"</span><span class="p">,</span>
+            <span class="s2">"#B73C39"</span><span class="p">,</span>
+            <span class="s2">"#34699D"</span><span class="p">,</span>
+            <span class="s2">"#3D796E"</span><span class="p">,</span>
+            <span class="s2">"#4A9C60"</span><span class="p">,</span>
+            <span class="s2">"#E6A65D"</span><span class="p">,</span>
+            <span class="s2">"#A05B2C"</span><span class="p">,</span>
+            <span class="s2">"#3978B5"</span><span class="p">,</span>
+            <span class="s2">"#D86E2F"</span><span class="p">,</span>
+            <span class="s2">"#775A9F"</span><span class="p">,</span>
+            <span class="s2">"#EBB386"</span><span class="p">,</span>
+            <span class="s2">"#8D5694"</span><span class="p">,</span>
+            <span class="s2">"#52B2A8"</span><span class="p">,</span>
+            <span class="s2">"#35978A"</span><span class="p">,</span>
+            <span class="s2">"#AB4B4B"</span><span class="p">,</span>
+            <span class="s2">"#6D666F"</span><span class="p">,</span>
+            <span class="s2">"#4E7C7F"</span><span class="p">,</span>
+            <span class="s2">"#905353"</span><span class="p">,</span>
+            <span class="s2">"#C17132"</span><span class="p">,</span>
+        <span class="p">]</span>
+
+<div class="viewcode-block" id="TransformerDiagnostics.save_and_log_figure">
+<a class="viewcode-back" href="../../../generated/torchcell.viz.transformer_diagnostics.TransformerDiagnostics.html#torchcell.viz.transformer_diagnostics.TransformerDiagnostics.save_and_log_figure">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_and_log_figure</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">fig</span><span class="p">:</span> <span class="n">Figure</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">timestamp_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Log figure to wandb only (no disk save).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fig: Matplotlib figure</span>
+<span class="sd">            name: Wandb panel key (e.g., "val_transformer_diagnostics/summary")</span>
+<span class="sd">            timestamp_str: Unused, kept for API compatibility</span>
+<span class="sd">        """</span>
+        <span class="c1"># Log to wandb only</span>
+        <span class="n">buf</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"png"</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">"tight"</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+        <span class="n">buf</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">wandb_image</span> <span class="o">=</span> <span class="n">wandb</span><span class="o">.</span><span class="n">Image</span><span class="p">(</span><span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">buf</span><span class="p">))</span>
+        <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="n">wandb_image</span><span class="p">},</span> <span class="n">commit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">buf</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="TransformerDiagnostics.plot_attention_diagnostics">
+<a class="viewcode-back" href="../../../generated/torchcell.viz.transformer_diagnostics.TransformerDiagnostics.html#torchcell.viz.transformer_diagnostics.TransformerDiagnostics.plot_attention_diagnostics">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_attention_diagnostics</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">attention_stats</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+        <span class="n">residual_ratios</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">qk_logit_stats</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">gradient_norms</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">num_epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">stage</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"val"</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create aggregated diagnostic plot for transformer attention metrics.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            attention_stats: Dict mapping layer_idx -&gt; {</span>
+<span class="sd">                "entropy": float, "effective_rank": float,</span>
+<span class="sd">                "top5": float, "top10": float, "top50": float,</span>
+<span class="sd">                "max_row_weight": float, "col_entropy": float, "max_col_sum": float</span>
+<span class="sd">            }</span>
+<span class="sd">            residual_ratios: Optional dict mapping layer_idx -&gt; residual_update_ratio</span>
+<span class="sd">            qk_logit_stats: Optional dict mapping layer_idx -&gt; {</span>
+<span class="sd">                "logit_mean": float, "logit_std": float, "saturation_ratio": float</span>
+<span class="sd">            }</span>
+<span class="sd">            gradient_norms: Optional dict mapping layer_idx -&gt; gradient_norm (not currently plotted)</span>
+<span class="sd">            num_epochs: Current epoch number</span>
+<span class="sd">            stage: Stage name (e.g., "val")</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">attention_stats</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"No attention stats to plot"</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Sort layers</span>
+        <span class="n">layer_indices</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">attention_stats</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+        <span class="c1"># Extract existing metrics</span>
+        <span class="n">entropies</span> <span class="o">=</span> <span class="p">[</span><span class="n">attention_stats</span><span class="p">[</span><span class="n">layer</span><span class="p">][</span><span class="s2">"entropy"</span><span class="p">]</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layer_indices</span><span class="p">]</span>
+        <span class="n">effective_ranks</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">attention_stats</span><span class="p">[</span><span class="n">layer</span><span class="p">][</span><span class="s2">"effective_rank"</span><span class="p">]</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layer_indices</span>
+        <span class="p">]</span>
+        <span class="n">top5s</span> <span class="o">=</span> <span class="p">[</span><span class="n">attention_stats</span><span class="p">[</span><span class="n">layer</span><span class="p">][</span><span class="s2">"top5"</span><span class="p">]</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layer_indices</span><span class="p">]</span>
+        <span class="n">top10s</span> <span class="o">=</span> <span class="p">[</span><span class="n">attention_stats</span><span class="p">[</span><span class="n">layer</span><span class="p">][</span><span class="s2">"top10"</span><span class="p">]</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layer_indices</span><span class="p">]</span>
+        <span class="n">top50s</span> <span class="o">=</span> <span class="p">[</span><span class="n">attention_stats</span><span class="p">[</span><span class="n">layer</span><span class="p">][</span><span class="s2">"top50"</span><span class="p">]</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layer_indices</span><span class="p">]</span>
+
+        <span class="c1"># Extract NEW metrics</span>
+        <span class="n">max_row_weights</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">attention_stats</span><span class="p">[</span><span class="n">layer</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"max_row_weight"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layer_indices</span>
+        <span class="p">]</span>
+        <span class="n">col_entropies</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">attention_stats</span><span class="p">[</span><span class="n">layer</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"col_entropy"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layer_indices</span>
+        <span class="p">]</span>
+        <span class="n">max_col_sums</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">attention_stats</span><span class="p">[</span><span class="n">layer</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"max_col_sum"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layer_indices</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Create grid layout: 3 rows × 2 columns - always 6 subplots</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">15</span><span class="p">))</span>
+        <span class="n">axes</span> <span class="o">=</span> <span class="n">axes</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>  <span class="c1"># Flatten to 1D array for easier indexing</span>
+        <span class="n">ax1</span><span class="p">,</span> <span class="n">ax2</span><span class="p">,</span> <span class="n">ax3</span><span class="p">,</span> <span class="n">ax4</span><span class="p">,</span> <span class="n">ax5</span><span class="p">,</span> <span class="n">ax6</span> <span class="o">=</span> <span class="n">axes</span>
+
+        <span class="c1"># Subplot 1: Attention Entropy</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">layer_indices</span><span class="p">,</span>
+            <span class="n">entropies</span><span class="p">,</span>
+            <span class="n">marker</span><span class="o">=</span><span class="s2">"o"</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">markersize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>  <span class="c1"># Steel blue</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">"Attention Entropy"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">layer</span><span class="p">,</span> <span class="n">entropy</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">layer_indices</span><span class="p">,</span> <span class="n">entropies</span><span class="p">):</span>
+            <span class="n">ax1</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+                <span class="n">layer</span><span class="p">,</span>
+                <span class="n">entropy</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">entropy</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="n">ha</span><span class="o">=</span><span class="s2">"center"</span><span class="p">,</span>
+                <span class="n">va</span><span class="o">=</span><span class="s2">"bottom"</span><span class="p">,</span>
+                <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+                <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"Transformer Layer"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"Entropy (nats)"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"Attention Entropy per Layer"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">layer_indices</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">"best"</span><span class="p">)</span>
+
+        <span class="c1"># Subplot 2: Effective Rank</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">layer_indices</span><span class="p">,</span>
+            <span class="n">effective_ranks</span><span class="p">,</span>
+            <span class="n">marker</span><span class="o">=</span><span class="s2">"s"</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">markersize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span>  <span class="c1"># Warm red</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">"Effective Rank"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">layer</span><span class="p">,</span> <span class="n">eff_rank</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">layer_indices</span><span class="p">,</span> <span class="n">effective_ranks</span><span class="p">):</span>
+            <span class="n">ax2</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+                <span class="n">layer</span><span class="p">,</span>
+                <span class="n">eff_rank</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">eff_rank</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="n">ha</span><span class="o">=</span><span class="s2">"center"</span><span class="p">,</span>
+                <span class="n">va</span><span class="o">=</span><span class="s2">"bottom"</span><span class="p">,</span>
+                <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+                <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"Transformer Layer"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"Effective Rank (# effective positions)"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span>
+            <span class="s2">"Attention Concentration (Effective Rank)"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span>
+        <span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">layer_indices</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s2">"log"</span><span class="p">)</span>  <span class="c1"># Log scale for better visibility</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s2">"both"</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">"best"</span><span class="p">)</span>
+
+        <span class="c1"># Subplot 3: Top-K Concentration</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">layer_indices</span><span class="p">,</span>
+            <span class="n">top5s</span><span class="p">,</span>
+            <span class="n">marker</span><span class="o">=</span><span class="s2">"o"</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">markersize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>  <span class="c1"># Black</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">"Top-5 Mass"</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">layer_indices</span><span class="p">,</span>
+            <span class="n">top10s</span><span class="p">,</span>
+            <span class="n">marker</span><span class="o">=</span><span class="s2">"s"</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">markersize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>  <span class="c1"># Warm orange</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">"Top-10 Mass"</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">layer_indices</span><span class="p">,</span>
+            <span class="n">top50s</span><span class="p">,</span>
+            <span class="n">marker</span><span class="o">=</span><span class="s2">"^"</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">markersize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>  <span class="c1"># Olive green</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">"Top-50 Mass"</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"Transformer Layer"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"Fraction of Attention Mass"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"Top-K Attention Concentration"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">layer_indices</span><span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># Natural bounds [0, 1]</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">"best"</span><span class="p">)</span>
+
+        <span class="c1"># Subplot 4: Max Row Weight (One-Hot Detection)</span>
+        <span class="n">ax4</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">layer_indices</span><span class="p">,</span>
+            <span class="n">max_row_weights</span><span class="p">,</span>
+            <span class="n">marker</span><span class="o">=</span><span class="s2">"d"</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">markersize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span>  <span class="c1"># Deep blue</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">"Max Row Weight"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">layer</span><span class="p">,</span> <span class="n">weight</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">layer_indices</span><span class="p">,</span> <span class="n">max_row_weights</span><span class="p">):</span>
+            <span class="n">ax4</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+                <span class="n">layer</span><span class="p">,</span>
+                <span class="n">weight</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">weight</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="n">ha</span><span class="o">=</span><span class="s2">"center"</span><span class="p">,</span>
+                <span class="n">va</span><span class="o">=</span><span class="s2">"bottom"</span><span class="p">,</span>
+                <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+                <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">ax4</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"Transformer Layer"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">ax4</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"Max Attention Weight"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">ax4</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span>
+            <span class="s2">"Max Row Weight (One-Hot Detection)"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span>
+        <span class="p">)</span>
+        <span class="n">ax4</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">layer_indices</span><span class="p">)</span>
+        <span class="n">ax4</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">ax4</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+        <span class="n">ax4</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">"best"</span><span class="p">)</span>
+
+        <span class="c1"># Subplot 5: Column Concentration (Sink Collapse Detection)</span>
+        <span class="n">ax5_twin</span> <span class="o">=</span> <span class="n">ax5</span><span class="o">.</span><span class="n">twinx</span><span class="p">()</span>
+
+        <span class="c1"># Plot column entropy on left axis</span>
+        <span class="n">line1</span> <span class="o">=</span> <span class="n">ax5</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">layer_indices</span><span class="p">,</span>
+            <span class="n">col_entropies</span><span class="p">,</span>
+            <span class="n">marker</span><span class="o">=</span><span class="s2">"o"</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">markersize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span>  <span class="c1"># Teal</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">"Column Entropy"</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Plot max column sum on right axis (different scale)</span>
+        <span class="n">line2</span> <span class="o">=</span> <span class="n">ax5_twin</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">layer_indices</span><span class="p">,</span>
+            <span class="n">max_col_sums</span><span class="p">,</span>
+            <span class="n">marker</span><span class="o">=</span><span class="s2">"s"</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">markersize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="mi">7</span><span class="p">],</span>  <span class="c1"># Green</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">"Max Column Sum"</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Formatting</span>
+        <span class="n">ax5</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"Transformer Layer"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">ax5</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"Column Entropy (nats)"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="mi">6</span><span class="p">])</span>
+        <span class="n">ax5_twin</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"Max Column Sum"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="mi">7</span><span class="p">])</span>
+        <span class="n">ax5</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span>
+            <span class="s2">"Column Concentration (Sink Collapse Detection)"</span><span class="p">,</span>
+            <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span>
+            <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ax5</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">layer_indices</span><span class="p">)</span>
+        <span class="n">ax5</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+        <span class="c1"># Combined legend</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">line1</span> <span class="o">+</span> <span class="n">line2</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">get_label</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">]</span>
+        <span class="n">ax5</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s2">"best"</span><span class="p">)</span>
+
+        <span class="c1"># Subplot 6: Residual Update Ratio (Layer Health)</span>
+        <span class="k">if</span> <span class="n">residual_ratios</span><span class="p">:</span>
+            <span class="n">ratios</span> <span class="o">=</span> <span class="p">[</span><span class="n">residual_ratios</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layer_indices</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ratios</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">layer_indices</span><span class="p">)</span>
+
+        <span class="n">ax6</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">layer_indices</span><span class="p">,</span>
+            <span class="n">ratios</span><span class="p">,</span>
+            <span class="n">marker</span><span class="o">=</span><span class="s2">"d"</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">markersize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span>  <span class="c1"># Purple</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">"Residual Update Ratio"</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Add reference lines for healthy range</span>
+        <span class="n">ax6</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span>
+            <span class="n">y</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>
+            <span class="n">linestyle</span><span class="o">=</span><span class="s2">"--"</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">"Healthy Lower Bound"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ax6</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span>
+            <span class="n">y</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span>
+            <span class="n">linestyle</span><span class="o">=</span><span class="s2">"--"</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">"Healthy Upper Bound"</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Add value labels</span>
+        <span class="k">for</span> <span class="n">layer</span><span class="p">,</span> <span class="n">ratio</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">layer_indices</span><span class="p">,</span> <span class="n">ratios</span><span class="p">):</span>
+            <span class="n">ax6</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+                <span class="n">layer</span><span class="p">,</span>
+                <span class="n">ratio</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">ratio</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="n">ha</span><span class="o">=</span><span class="s2">"center"</span><span class="p">,</span>
+                <span class="n">va</span><span class="o">=</span><span class="s2">"bottom"</span><span class="p">,</span>
+                <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+                <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">ax6</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"Transformer Layer"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">ax6</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"Update Ratio (||Δx|| / ||x||)"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">ax6</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span>
+            <span class="s2">"Residual Update Ratio (Layer Health)"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span>
+        <span class="p">)</span>
+        <span class="n">ax6</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">layer_indices</span><span class="p">)</span>
+        <span class="n">ax6</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s2">"log"</span><span class="p">)</span>  <span class="c1"># Log scale to see both small and large values</span>
+        <span class="n">ax6</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s2">"both"</span><span class="p">)</span>
+        <span class="n">ax6</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">"best"</span><span class="p">)</span>
+
+        <span class="c1"># Overall title</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Transformer Attention Diagnostics - Epoch </span><span class="si">{</span><span class="n">num_epochs</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
+            <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="mf">0.995</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+
+        <span class="c1"># Save and log</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">_transformer_diagnostics/summary"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_and_log_figure</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

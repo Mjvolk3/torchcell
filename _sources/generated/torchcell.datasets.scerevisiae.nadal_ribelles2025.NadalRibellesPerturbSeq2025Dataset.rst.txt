@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.nadal\_ribelles2025.NadalRibellesPerturbSeq2025Dataset
+=====================================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.nadal_ribelles2025
+
+.. autoclass:: NadalRibellesPerturbSeq2025Dataset
+   :show-inheritance:
+   :members:

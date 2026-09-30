@@ -1,0 +1,8 @@
+﻿torchcell.adapters.SmfODuibhir2014Adapter
+=========================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: SmfODuibhir2014Adapter
+   :show-inheritance:
+   :members:

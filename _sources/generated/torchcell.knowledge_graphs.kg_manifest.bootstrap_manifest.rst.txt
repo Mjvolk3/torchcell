@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.bootstrap\_manifest
+============================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autofunction:: bootstrap_manifest

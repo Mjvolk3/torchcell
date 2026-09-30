@@ -1,0 +1,6 @@
+﻿torchcell.metabolism.parameters.resolve\_kcat\_table
+====================================================
+
+.. currentmodule:: torchcell.metabolism.parameters
+
+.. autofunction:: resolve_kcat_table

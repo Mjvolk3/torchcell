@@ -1,0 +1,6 @@
+﻿torchcell.metabolism.parameters.load\_swissprot
+===============================================
+
+.. currentmodule:: torchcell.metabolism.parameters
+
+.. autofunction:: load_swissprot

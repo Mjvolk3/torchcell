@@ -1,0 +1,8 @@
+﻿torchcell.models.dango.Dango
+============================
+
+.. currentmodule:: torchcell.models.dango
+
+.. autoclass:: Dango
+   :show-inheritance:
+   :members:

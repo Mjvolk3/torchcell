@@ -1,0 +1,975 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.models.cell_diffpool_sparse &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/models/cell_diffpool_sparse.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.models.cell_diffpool_sparse</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.models.cell_diffpool_sparse</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Sparse DiffPool cell model with GAT-based pooling over multiple graphs."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.nn</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BatchNorm</span><span class="p">,</span>
+    <span class="n">GATv2Conv</span><span class="p">,</span>
+    <span class="n">GraphNorm</span><span class="p">,</span>
+    <span class="n">InstanceNorm</span><span class="p">,</span>
+    <span class="n">LayerNorm</span><span class="p">,</span>
+    <span class="n">MeanSubtractionNorm</span><span class="p">,</span>
+    <span class="n">PairNorm</span><span class="p">,</span>
+    <span class="n">dense_diff_pool</span><span class="p">,</span>
+    <span class="n">global_add_pool</span><span class="p">,</span>
+    <span class="n">global_mean_pool</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">dense_to_sparse</span><span class="p">,</span> <span class="n">to_dense_adj</span><span class="p">,</span> <span class="n">to_dense_batch</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.models.act</span><span class="w"> </span><span class="kn">import</span> <span class="n">act_register</span>
+
+
+<div class="viewcode-block" id="from_dense_batch">
+<a class="viewcode-back" href="../../../generated/torchcell.models.cell_diffpool_sparse.from_dense_batch.html#torchcell.models.cell_diffpool_sparse.from_dense_batch">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">from_dense_batch</span><span class="p">(</span><span class="n">dense_x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Inverts the `to_dense_batch` operation when the mask is all `True`,</span>
+<span class="sd">    meaning there are no fake nodes (i.e., all nodes are valid).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dense_x (Tensor): The dense node feature tensor</span>
+<span class="sd">            :math:`\mathbf{X} \in \mathbb{R}^{B \times N_{\max} \times F}`.</span>
+
+<span class="sd">    :rtype: (:class:`Tensor`, :class:`Tensor`)</span>
+<span class="sd">    """</span>
+    <span class="c1"># Flatten the dense tensor</span>
+    <span class="n">batch_size</span><span class="p">,</span> <span class="n">max_num_nodes</span><span class="p">,</span> <span class="n">num_features</span> <span class="o">=</span> <span class="n">dense_x</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">flattened_x</span> <span class="o">=</span> <span class="n">dense_x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span> <span class="o">*</span> <span class="n">max_num_nodes</span><span class="p">,</span> <span class="n">num_features</span><span class="p">)</span>
+
+    <span class="c1"># Create the batch tensor</span>
+    <span class="n">batch</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">dense_x</span><span class="o">.</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">repeat_interleave</span><span class="p">(</span>
+        <span class="n">max_num_nodes</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Remove any padding rows (optional depending on whether they exist)</span>
+    <span class="n">valid_mask</span> <span class="o">=</span> <span class="n">flattened_x</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span>
+    <span class="n">sparse_x</span> <span class="o">=</span> <span class="n">flattened_x</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+    <span class="n">sparse_batch</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">sparse_x</span><span class="p">,</span> <span class="n">sparse_batch</span></div>
+
+
+
+<div class="viewcode-block" id="SingleDiffPool">
+<a class="viewcode-back" href="../../../generated/torchcell.models.cell_diffpool_sparse.SingleDiffPool.html#torchcell.models.cell_diffpool_sparse.SingleDiffPool">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SingleDiffPool</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A single DiffPool block: GAT embedding plus learned cluster assignment."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">max_num_nodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">in_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">pool_gat_hidden_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">num_pool_gat_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">embed_gat_hidden_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">num_embed_gat_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">num_pooling_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">cluster_size_decay_factor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"relu"</span><span class="p">,</span>
+        <span class="n">norm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">target_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">cluster_aggregation</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"mean"</span><span class="p">,</span> <span class="s2">"sum"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"mean"</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Build the pooling/embedding GAT stacks and the prediction head."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="c1"># Set parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_num_nodes</span> <span class="o">=</span> <span class="n">max_num_nodes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">in_channels</span> <span class="o">=</span> <span class="n">in_channels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="o">=</span> <span class="n">act_register</span><span class="p">[</span><span class="n">activation</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_dim</span> <span class="o">=</span> <span class="n">target_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cluster_aggregation</span> <span class="o">=</span> <span class="n">cluster_aggregation</span>
+
+        <span class="c1"># Calculate cluster sizes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cluster_sizes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_pooling_layers</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">max_num_nodes</span> <span class="o">/</span> <span class="p">(</span><span class="n">cluster_size_decay_factor</span><span class="o">**</span><span class="n">i</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cluster_sizes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cluster_sizes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Cluster sizes: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cluster_sizes</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="c1"># Create cluster prediction heads</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cluster_heads</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pooling_layers</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cluster_heads</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">embed_gat_hidden_channels</span><span class="p">,</span> <span class="n">target_dim</span><span class="p">))</span>
+
+        <span class="c1"># Create pooling networks (GAT) for each layer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pool_networks</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pooling_layers</span><span class="p">):</span>
+            <span class="n">pool_gnn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">()</span>
+            <span class="n">curr_in_channels</span> <span class="o">=</span> <span class="n">in_channels</span> <span class="k">if</span> <span class="n">layer</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">embed_gat_hidden_channels</span>
+
+            <span class="c1"># Add GAT layers for pooling</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pool_gat_layers</span><span class="p">):</span>
+                <span class="n">is_last</span> <span class="o">=</span> <span class="n">i</span> <span class="o">==</span> <span class="n">num_pool_gat_layers</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="n">out_channels</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cluster_sizes</span><span class="p">[</span><span class="n">layer</span><span class="p">]</span> <span class="k">if</span> <span class="n">is_last</span> <span class="k">else</span> <span class="n">pool_gat_hidden_channels</span>
+                <span class="p">)</span>
+
+                <span class="n">pool_gnn</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">GATv2Conv</span><span class="p">(</span>
+                        <span class="n">in_channels</span><span class="o">=</span><span class="n">curr_in_channels</span><span class="p">,</span>
+                        <span class="n">out_channels</span><span class="o">=</span><span class="n">out_channels</span><span class="p">,</span>
+                        <span class="n">heads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                        <span class="n">concat</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                        <span class="n">add_self_loops</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">norm</span><span class="p">:</span>
+                    <span class="n">pool_gnn</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_norm_layer</span><span class="p">(</span><span class="n">norm</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">))</span>
+                <span class="n">curr_in_channels</span> <span class="o">=</span> <span class="n">out_channels</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">pool_networks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pool_gnn</span><span class="p">)</span>
+
+        <span class="c1"># Create embedding networks (GAT) for each layer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">embed_networks</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pooling_layers</span><span class="p">):</span>
+            <span class="n">embed_gnn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">()</span>
+            <span class="n">curr_in_channels</span> <span class="o">=</span> <span class="n">in_channels</span> <span class="k">if</span> <span class="n">layer</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">embed_gat_hidden_channels</span>
+
+            <span class="c1"># Add GAT layers for embedding</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_embed_gat_layers</span><span class="p">):</span>
+                <span class="n">embed_gnn</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">GATv2Conv</span><span class="p">(</span>
+                        <span class="n">in_channels</span><span class="o">=</span><span class="n">curr_in_channels</span><span class="p">,</span>
+                        <span class="n">out_channels</span><span class="o">=</span><span class="n">embed_gat_hidden_channels</span><span class="p">,</span>
+                        <span class="n">heads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                        <span class="n">concat</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                        <span class="n">add_self_loops</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">norm</span><span class="p">:</span>
+                    <span class="n">embed_gnn</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">get_norm_layer</span><span class="p">(</span><span class="n">norm</span><span class="p">,</span> <span class="n">embed_gat_hidden_channels</span><span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="n">curr_in_channels</span> <span class="o">=</span> <span class="n">embed_gat_hidden_channels</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">embed_networks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">embed_gnn</span><span class="p">)</span>
+
+        <span class="c1"># Final prediction layer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lin</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">embed_gat_hidden_channels</span><span class="p">,</span> <span class="n">target_dim</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SingleDiffPool.get_norm_layer">
+<a class="viewcode-back" href="../../../generated/torchcell.models.cell_diffpool_sparse.SingleDiffPool.html#torchcell.models.cell_diffpool_sparse.SingleDiffPool.get_norm_layer">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_norm_layer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">norm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the normalization layer matching the given norm name."""</span>
+        <span class="k">if</span> <span class="n">norm</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Identity</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">norm</span> <span class="o">==</span> <span class="s2">"batch"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">BatchNorm</span><span class="p">(</span><span class="n">channels</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">norm</span> <span class="o">==</span> <span class="s2">"instance"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">InstanceNorm</span><span class="p">(</span><span class="n">channels</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">norm</span> <span class="o">==</span> <span class="s2">"layer"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">LayerNorm</span><span class="p">(</span><span class="n">channels</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">norm</span> <span class="o">==</span> <span class="s2">"graph"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">GraphNorm</span><span class="p">(</span><span class="n">channels</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">norm</span> <span class="o">==</span> <span class="s2">"pair"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">PairNorm</span><span class="p">())</span>
+        <span class="k">elif</span> <span class="n">norm</span> <span class="o">==</span> <span class="s2">"mean_subtraction"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">MeanSubtractionNorm</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unsupported normalization type: </span><span class="si">{</span><span class="n">norm</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SingleDiffPool.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.models.cell_diffpool_sparse.SingleDiffPool.html#torchcell.models.cell_diffpool_sparse.SingleDiffPool.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">edge_index</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+        <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+        <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+        <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+        <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+        <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Embed and pool the graph, returning pooled features and DiffPool losses."""</span>
+        <span class="c1"># Initialize variables to store outputs</span>
+        <span class="n">pool_attention_weights</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># Store pooling GAT attention weights</span>
+        <span class="n">embed_attention_weights</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># Store embedding GAT attention weights</span>
+        <span class="n">cluster_assignments_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">link_losses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">entropy_losses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">clusters_out</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">max_num_nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_num_nodes</span>
+        <span class="c1"># Process each pooling layer</span>
+        <span class="k">for</span> <span class="n">layer</span><span class="p">,</span> <span class="p">(</span><span class="n">pool_gnn</span><span class="p">,</span> <span class="n">embed_gnn</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+            <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pool_networks</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">embed_networks</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="c1"># # Compute cluster assignment matrix (S) using GAT</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">x</span>
+            <span class="n">pool_layer</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pool_layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">Iterable</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">],</span> <span class="n">pool_gnn</span><span class="p">)):</span>
+                <span class="n">pool_layer_attention</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="c1"># GAT layer</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pool_layer</span><span class="p">,</span> <span class="n">GATv2Conv</span><span class="p">):</span>
+                    <span class="c1"># Get output and attention weights</span>
+                    <span class="n">s</span><span class="p">,</span> <span class="n">pool_att</span> <span class="o">=</span> <span class="n">pool_layer</span><span class="p">(</span>
+                        <span class="n">s</span><span class="p">,</span> <span class="n">edge_index</span><span class="p">,</span> <span class="n">return_attention_weights</span><span class="o">=</span><span class="kc">True</span>
+                    <span class="p">)</span>
+                    <span class="n">pool_layer_attention</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pool_att</span><span class="p">)</span>
+
+                <span class="c1"># Normalization layer</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
+                        <span class="n">pool_layer</span><span class="p">,</span> <span class="p">(</span><span class="n">GraphNorm</span><span class="p">,</span> <span class="n">PairNorm</span><span class="p">,</span> <span class="n">MeanSubtractionNorm</span><span class="p">)</span>
+                    <span class="p">):</span>
+                        <span class="c1"># TODO troubleshoot</span>
+                        <span class="n">s</span> <span class="o">=</span> <span class="n">pool_layer</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">s</span> <span class="o">=</span> <span class="n">pool_layer</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                    <span class="c1"># Activation function after normalization</span>
+                    <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+            <span class="n">pool_attention_weights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pool_layer_attention</span><span class="p">)</span>
+            <span class="c1"># Store cluster assignments</span>
+            <span class="n">cluster_assignments_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+            <span class="c1"># Compute node embeddings (Z) using GAT</span>
+            <span class="n">z</span> <span class="o">=</span> <span class="n">x</span>
+            <span class="n">embed_layer</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">embed_layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">Iterable</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">],</span> <span class="n">embed_gnn</span><span class="p">)):</span>
+                <span class="n">embed_layer_attention</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="c1"># GAT layer</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">embed_layer</span><span class="p">,</span> <span class="n">GATv2Conv</span><span class="p">):</span>
+                    <span class="n">z</span><span class="p">,</span> <span class="n">embed_att</span> <span class="o">=</span> <span class="n">embed_layer</span><span class="p">(</span>
+                        <span class="n">z</span><span class="p">,</span> <span class="n">edge_index</span><span class="p">,</span> <span class="n">return_attention_weights</span><span class="o">=</span><span class="kc">True</span>
+                    <span class="p">)</span>
+                    <span class="n">embed_layer_attention</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">embed_att</span><span class="p">)</span>
+                <span class="c1"># Normalization layer</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
+                        <span class="n">embed_layer</span><span class="p">,</span> <span class="p">(</span><span class="n">GraphNorm</span><span class="p">,</span> <span class="n">PairNorm</span><span class="p">,</span> <span class="n">MeanSubtractionNorm</span><span class="p">)</span>
+                    <span class="p">):</span>
+                        <span class="n">z</span> <span class="o">=</span> <span class="n">embed_layer</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">z</span> <span class="o">=</span> <span class="n">embed_layer</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+                    <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+
+            <span class="n">embed_attention_weights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">embed_layer_attention</span><span class="p">)</span>
+
+            <span class="c1"># Dense Conversion</span>
+            <span class="n">adj</span> <span class="o">=</span> <span class="n">to_dense_adj</span><span class="p">(</span>
+                <span class="n">edge_index</span><span class="o">=</span><span class="n">edge_index</span><span class="p">,</span> <span class="n">batch</span><span class="o">=</span><span class="n">batch</span><span class="p">,</span> <span class="n">max_num_nodes</span><span class="o">=</span><span class="n">max_num_nodes</span>
+            <span class="p">)</span>
+            <span class="n">z</span><span class="p">,</span> <span class="n">mask</span> <span class="o">=</span> <span class="n">to_dense_batch</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">batch</span><span class="o">=</span><span class="n">batch</span><span class="p">,</span> <span class="n">max_num_nodes</span><span class="o">=</span><span class="n">max_num_nodes</span><span class="p">)</span>
+            <span class="n">s</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">to_dense_batch</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">s</span><span class="p">,</span> <span class="n">batch</span><span class="o">=</span><span class="n">batch</span><span class="p">,</span> <span class="n">max_num_nodes</span><span class="o">=</span><span class="n">max_num_nodes</span><span class="p">)</span>
+
+            <span class="c1"># update max_num_nodes for next layer</span>
+            <span class="n">max_num_nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster_sizes</span><span class="p">[</span><span class="n">layer</span><span class="p">]</span>
+
+            <span class="c1"># Apply diffpool</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">adj</span><span class="p">,</span> <span class="n">link_loss</span><span class="p">,</span> <span class="n">ent_loss</span> <span class="o">=</span> <span class="n">dense_diff_pool</span><span class="p">(</span>
+                <span class="n">x</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">adj</span><span class="o">=</span><span class="n">adj</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="n">s</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Sparse conversion</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">batch</span> <span class="o">=</span> <span class="n">from_dense_batch</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">edge_index</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">dense_to_sparse</span><span class="p">(</span><span class="n">adj</span><span class="o">=</span><span class="n">adj</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+            <span class="c1"># Store losses</span>
+            <span class="n">link_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">link_loss</span><span class="p">)</span>
+            <span class="n">entropy_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ent_loss</span><span class="p">)</span>
+
+            <span class="c1"># Compute cluster-level predictions</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster_aggregation</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>
+                <span class="n">cluster_x</span> <span class="o">=</span> <span class="n">global_mean_pool</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster_aggregation</span> <span class="o">==</span> <span class="s2">"sum"</span><span class="p">:</span>
+                <span class="n">cluster_x</span> <span class="o">=</span> <span class="n">global_add_pool</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+            <span class="n">cluster_pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster_heads</span><span class="p">[</span><span class="n">layer</span><span class="p">](</span><span class="n">cluster_x</span><span class="p">)</span>
+
+            <span class="n">clusters_out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cluster_pred</span><span class="p">)</span>
+
+        <span class="c1"># Final prediction</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">out</span><span class="p">,</span>
+            <span class="n">link_losses</span><span class="p">,</span>
+            <span class="n">entropy_losses</span><span class="p">,</span>
+            <span class="n">pool_attention_weights</span><span class="p">,</span>
+            <span class="n">embed_attention_weights</span><span class="p">,</span>
+            <span class="n">cluster_assignments_list</span><span class="p">,</span>
+            <span class="n">clusters_out</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="CellDiffPool">
+<a class="viewcode-back" href="../../../generated/torchcell.models.cell_diffpool_sparse.CellDiffPool.html#torchcell.models.cell_diffpool_sparse.CellDiffPool">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CellDiffPool</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""DiffPool model running per-graph pooling stacks and fusing their readouts."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">graph_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>  <span class="c1"># e.g. ["physical", "regulatory"]</span>
+        <span class="n">max_num_nodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">in_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">pool_gat_hidden_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">num_pool_gat_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">embed_gat_hidden_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">num_embed_gat_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">num_pooling_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">cluster_size_decay_factor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"relu"</span><span class="p">,</span>
+        <span class="n">norm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">target_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">cluster_aggregation</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"mean"</span><span class="p">,</span> <span class="s2">"sum"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"mean"</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Build a per-graph SingleDiffPool stack and the fused prediction head."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">graph_names</span><span class="p">)</span>  <span class="c1"># Sort for consistent ordering</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_dim</span> <span class="o">=</span> <span class="n">target_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="o">=</span> <span class="n">act_register</span><span class="p">[</span><span class="n">activation</span><span class="p">]</span>
+
+        <span class="c1"># Create models for each graph type using ModuleDict</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph_models</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="n">name</span><span class="p">:</span> <span class="n">SingleDiffPool</span><span class="p">(</span>
+                    <span class="n">max_num_nodes</span><span class="o">=</span><span class="n">max_num_nodes</span><span class="p">,</span>
+                    <span class="n">in_channels</span><span class="o">=</span><span class="n">in_channels</span><span class="p">,</span>
+                    <span class="n">pool_gat_hidden_channels</span><span class="o">=</span><span class="n">pool_gat_hidden_channels</span><span class="p">,</span>
+                    <span class="n">num_pool_gat_layers</span><span class="o">=</span><span class="n">num_pool_gat_layers</span><span class="p">,</span>
+                    <span class="n">embed_gat_hidden_channels</span><span class="o">=</span><span class="n">embed_gat_hidden_channels</span><span class="p">,</span>
+                    <span class="n">num_embed_gat_layers</span><span class="o">=</span><span class="n">num_embed_gat_layers</span><span class="p">,</span>
+                    <span class="n">num_pooling_layers</span><span class="o">=</span><span class="n">num_pooling_layers</span><span class="p">,</span>
+                    <span class="n">cluster_size_decay_factor</span><span class="o">=</span><span class="n">cluster_size_decay_factor</span><span class="p">,</span>
+                    <span class="n">activation</span><span class="o">=</span><span class="n">activation</span><span class="p">,</span>
+                    <span class="n">norm</span><span class="o">=</span><span class="n">norm</span><span class="p">,</span>
+                    <span class="n">target_dim</span><span class="o">=</span><span class="n">target_dim</span><span class="p">,</span>
+                    <span class="n">cluster_aggregation</span><span class="o">=</span><span class="n">cluster_aggregation</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Final combination layers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">final_combination</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">target_dim</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">),</span> <span class="n">target_dim</span> <span class="o">*</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">,</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">target_dim</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">target_dim</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Verify parameter registration</span>
+        <span class="n">expected_params_per_model</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_models</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">total_expected</span> <span class="o">=</span> <span class="n">expected_params_per_model</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">)</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_combination</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">actual_total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Parameters per model: </span><span class="si">{</span><span class="n">expected_params_per_model</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Expected total parameters: </span><span class="si">{</span><span class="n">total_expected</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Actual total parameters: </span><span class="si">{</span><span class="n">actual_total</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">total_expected</span> <span class="o">!=</span> <span class="n">actual_total</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Parameter registration mismatch! Expected </span><span class="si">{</span><span class="n">total_expected</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> but got </span><span class="si">{</span><span class="n">actual_total</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+
+<div class="viewcode-block" id="CellDiffPool.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.models.cell_diffpool_sparse.CellDiffPool.html#torchcell.models.cell_diffpool_sparse.CellDiffPool.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">edge_indices</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">batch</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span>
+        <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span>
+        <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]],</span>
+        <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]],</span>
+        <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span>
+        <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span>
+        <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Forward pass through all graph models."""</span>
+        <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">edge_indices</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Expected edge indices for graphs </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="si">}</span><span class="s2">, "</span>
+                <span class="sa">f</span><span class="s2">"but got </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">edge_indices</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Process each graph</span>
+        <span class="n">graph_outputs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">graph_link_losses</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">graph_entropy_losses</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">graph_pool_attention</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">graph_embed_attention</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">graph_cluster_assignments</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">graph_cluster_outputs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">individual_predictions</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Process each graph in consistent order</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">:</span>
+            <span class="c1"># Forward pass through corresponding model</span>
+            <span class="p">(</span>
+                <span class="n">out</span><span class="p">,</span>
+                <span class="n">link_losses</span><span class="p">,</span>
+                <span class="n">entropy_losses</span><span class="p">,</span>
+                <span class="n">pool_attention</span><span class="p">,</span>
+                <span class="n">embed_attention</span><span class="p">,</span>
+                <span class="n">cluster_assignments</span><span class="p">,</span>
+                <span class="n">clusters_out</span><span class="p">,</span>
+            <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_models</span><span class="p">[</span><span class="n">name</span><span class="p">](</span><span class="n">x</span><span class="p">,</span> <span class="n">edge_indices</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="n">batch</span><span class="p">)</span>
+
+            <span class="c1"># Store all outputs</span>
+            <span class="n">graph_outputs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span>
+            <span class="n">graph_link_losses</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">link_losses</span>
+            <span class="n">graph_entropy_losses</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">entropy_losses</span>
+            <span class="n">graph_pool_attention</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pool_attention</span>
+            <span class="n">graph_embed_attention</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">embed_attention</span>
+            <span class="n">graph_cluster_assignments</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">cluster_assignments</span>
+            <span class="n">graph_cluster_outputs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">clusters_out</span>
+            <span class="n">individual_predictions</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span>
+
+        <span class="c1"># Combine predictions in consistent order</span>
+        <span class="n">combined_features</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">graph_outputs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
+        <span class="p">)</span>
+        <span class="n">final_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_combination</span><span class="p">(</span><span class="n">combined_features</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">final_output</span><span class="p">,</span>
+            <span class="n">graph_link_losses</span><span class="p">,</span>
+            <span class="n">graph_entropy_losses</span><span class="p">,</span>
+            <span class="n">graph_pool_attention</span><span class="p">,</span>
+            <span class="n">graph_embed_attention</span><span class="p">,</span>
+            <span class="n">graph_cluster_assignments</span><span class="p">,</span>
+            <span class="n">graph_cluster_outputs</span><span class="p">,</span>
+            <span class="n">individual_predictions</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">num_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Count parameters in all submodules."""</span>
+        <span class="n">model_params</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>
+            <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_models</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">combination_params</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_combination</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"per_model"</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_models</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span>
+            <span class="p">),</span>
+            <span class="s2">"all_models"</span><span class="p">:</span> <span class="n">model_params</span><span class="p">,</span>
+            <span class="s2">"combination_layer"</span><span class="p">:</span> <span class="n">combination_params</span><span class="p">,</span>
+            <span class="s2">"total"</span><span class="p">:</span> <span class="n">model_params</span> <span class="o">+</span> <span class="n">combination_params</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+
+<span class="c1"># batch return is a dynamically produced PyG HeteroData batch from the dataloader</span>
+<div class="viewcode-block" id="load_sample_data_batch">
+<a class="viewcode-back" href="../../../generated/torchcell.models.cell_diffpool_sparse.load_sample_data_batch.html#torchcell.models.cell_diffpool_sparse.load_sample_data_batch">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_sample_data_batch</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Load a sample batch for exercising the model during development."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">GenotypeAggregator</span><span class="p">,</span>
+        <span class="n">MeanExperimentDeduplicator</span><span class="p">,</span>
+        <span class="n">Neo4jCellDataset</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.neo4j_cell</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># type: ignore[attr-defined]  # dev-only helper; symbol lives in graph_processor</span>
+        <span class="n">SubgraphRepresentation</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.fitness_composite_conversion</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">CompositeFitnessConverter</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodules</span><span class="w"> </span><span class="kn">import</span> <span class="n">CellDataModule</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodules.perturbation_subset</span><span class="w"> </span><span class="kn">import</span> <span class="n">PerturbationSubsetDataModule</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">CodonFrequencyDataset</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGraph</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae.s288c</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">DATA_ROOT</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"DATA_ROOT"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">DATA_ROOT</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">))</span>
+    <span class="n">genome</span><span class="o">.</span><span class="n">drop_chrmt</span><span class="p">()</span>
+    <span class="n">genome</span><span class="o">.</span><span class="n">drop_empty_go</span><span class="p">()</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">SCerevisiaeGraph</span><span class="p">(</span>
+        <span class="n">data_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>  <span class="c1"># type: ignore[call-arg]  # dev-only helper; SCerevisiaeGraph uses sgd_root</span>
+            <span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span>
+        <span class="p">),</span>
+        <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">codon_frequency</span> <span class="o">=</span> <span class="n">CodonFrequencyDataset</span><span class="p">(</span>
+        <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/scerevisiae/codon_frequency_embedding"</span><span class="p">),</span>
+        <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">"experiments/003-fit-int/queries/001-small-build.cql"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="n">dataset_root</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/experiments/003-fit-int/001-small-build"</span>
+    <span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">Neo4jCellDataset</span><span class="p">(</span>
+        <span class="n">root</span><span class="o">=</span><span class="n">dataset_root</span><span class="p">,</span>
+        <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
+        <span class="n">gene_set</span><span class="o">=</span><span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">,</span>
+        <span class="n">graphs</span><span class="o">=</span><span class="p">{</span>  <span class="c1"># type: ignore[arg-type]  # dev-only helper; runtime accepts dict of graphs</span>
+            <span class="s2">"physical"</span><span class="p">:</span> <span class="n">graph</span><span class="o">.</span><span class="n">G_physical</span><span class="p">,</span>
+            <span class="s2">"regulatory"</span><span class="p">:</span> <span class="n">graph</span><span class="o">.</span><span class="n">G_regulatory</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="n">node_embeddings</span><span class="o">=</span><span class="p">{</span><span class="s2">"codon_frequency"</span><span class="p">:</span> <span class="n">codon_frequency</span><span class="p">},</span>
+        <span class="n">converter</span><span class="o">=</span><span class="n">CompositeFitnessConverter</span><span class="p">,</span>
+        <span class="n">deduplicator</span><span class="o">=</span><span class="n">MeanExperimentDeduplicator</span><span class="p">,</span>
+        <span class="n">aggregator</span><span class="o">=</span><span class="n">GenotypeAggregator</span><span class="p">,</span>
+        <span class="n">graph_processor</span><span class="o">=</span><span class="n">SubgraphRepresentation</span><span class="p">(),</span>
+    <span class="p">)</span>
+
+    <span class="n">seed</span> <span class="o">=</span> <span class="mi">42</span>
+    <span class="c1"># Base Module</span>
+    <span class="n">cell_data_module</span> <span class="o">=</span> <span class="n">CellDataModule</span><span class="p">(</span>
+        <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
+        <span class="n">cache_dir</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dataset_root</span><span class="p">,</span> <span class="s2">"data_module_cache"</span><span class="p">),</span>
+        <span class="n">split_indices</span><span class="o">=</span><span class="p">[</span><span class="s2">"phenotype_label_index"</span><span class="p">,</span> <span class="s2">"perturbation_count_index"</span><span class="p">],</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">random_seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span>
+        <span class="n">num_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+        <span class="n">pin_memory</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">cell_data_module</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+    <span class="c1"># 1e4 Module</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="mf">1e1</span>
+    <span class="n">perturbation_subset_data_module</span> <span class="o">=</span> <span class="n">PerturbationSubsetDataModule</span><span class="p">(</span>
+        <span class="n">cell_data_module</span><span class="o">=</span><span class="n">cell_data_module</span><span class="p">,</span>
+        <span class="n">size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">size</span><span class="p">),</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">num_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+        <span class="n">pin_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">prefetch</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">perturbation_subset_data_module</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">perturbation_subset_data_module</span><span class="o">.</span><span class="n">train_dataloader</span><span class="p">()):</span>
+        <span class="k">break</span>
+
+    <span class="n">max_num_nodes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">gene_set</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">batch</span><span class="p">,</span> <span class="n">max_num_nodes</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main_single</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Run a SingleDiffPool smoke test on a sample batch."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.losses.multi_dim_nan_tolerant</span><span class="w"> </span><span class="kn">import</span> <span class="n">CombinedRegressionLoss</span>
+
+    <span class="c1"># Load the sample data batch</span>
+    <span class="n">batch</span><span class="p">,</span> <span class="n">max_num_nodes</span> <span class="o">=</span> <span class="n">load_sample_data_batch</span><span class="p">()</span>
+
+    <span class="c1"># Extract relevant information from the batch</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">x</span>
+    <span class="n">edge_index_physical</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">,</span> <span class="s2">"physical_interaction"</span><span class="p">,</span> <span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">edge_index</span>
+    <span class="n">batch_index</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">batch</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">fitness</span><span class="p">,</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">gene_interaction</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Model configuration</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">SingleDiffPool</span><span class="p">(</span>
+        <span class="n">max_num_nodes</span><span class="o">=</span><span class="n">max_num_nodes</span><span class="p">,</span>
+        <span class="n">in_channels</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+        <span class="n">pool_gat_hidden_channels</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+        <span class="n">num_pool_gat_layers</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">embed_gat_hidden_channels</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+        <span class="n">num_embed_gat_layers</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">num_pooling_layers</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="n">cluster_size_decay_factor</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span>
+        <span class="n">activation</span><span class="o">=</span><span class="s2">"relu"</span><span class="p">,</span>
+        <span class="n">norm</span><span class="o">=</span><span class="s2">"batch"</span><span class="p">,</span>
+        <span class="n">target_dim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Count and print total parameters</span>
+    <span class="n">total_params</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>
+    <span class="n">trainable_params</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Total parameters: </span><span class="si">{</span><span class="n">total_params</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Trainable parameters: </span><span class="si">{</span><span class="n">trainable_params</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># Print parameter details for each named component</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Parameter shapes by layer:"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">param</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># Initialize loss and optimizer</span>
+    <span class="n">criterion</span> <span class="o">=</span> <span class="n">CombinedRegressionLoss</span><span class="p">(</span><span class="n">loss_type</span><span class="o">=</span><span class="s2">"mse"</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
+
+    <span class="c1"># Training loop</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>  <span class="c1"># Increased to 10 epochs</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+
+        <span class="c1"># Forward pass</span>
+        <span class="p">(</span>
+            <span class="n">out</span><span class="p">,</span>
+            <span class="n">link_losses</span><span class="p">,</span>
+            <span class="n">entropy_losses</span><span class="p">,</span>
+            <span class="n">pool_attention_weights</span><span class="p">,</span>
+            <span class="n">embed_attention_weights</span><span class="p">,</span>
+            <span class="n">cluster_assignments_list</span><span class="p">,</span>
+            <span class="n">clusters_out</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">edge_index_physical</span><span class="p">,</span> <span class="n">batch_index</span><span class="p">)</span>
+
+        <span class="c1"># Compute losses</span>
+        <span class="n">main_loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">y</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">cluster_losses</span> <span class="o">=</span> <span class="p">[</span><span class="n">criterion</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">y</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">pred</span> <span class="ow">in</span> <span class="n">clusters_out</span><span class="p">]</span>
+
+        <span class="c1"># Combine all losses</span>
+        <span class="n">total_link_loss</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">link_losses</span><span class="p">)</span>
+        <span class="n">total_entropy_loss</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">entropy_losses</span><span class="p">)</span>
+        <span class="n">total_loss</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">main_loss</span>
+            <span class="o">+</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">total_link_loss</span>
+            <span class="o">+</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">total_entropy_loss</span>
+            <span class="o">+</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="nb">sum</span><span class="p">(</span><span class="n">cluster_losses</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Backward pass</span>
+        <span class="n">total_loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+
+        <span class="c1"># Check for NaN gradients</span>
+        <span class="n">has_nan</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Epoch </span><span class="si">{</span><span class="n">epoch</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">grad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">grad</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"NaN gradient detected in </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                    <span class="n">has_nan</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">grad_norm</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">norm</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">grad_norm</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">:</span>  <span class="c1"># Print large gradients</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Large gradient in </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">grad_norm</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">has_nan</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Training stopped due to NaN gradients"</span><span class="p">)</span>
+            <span class="k">break</span>
+
+        <span class="c1"># Print losses</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Main loss: </span><span class="si">{</span><span class="n">main_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total link prediction loss: </span><span class="si">{</span><span class="n">total_link_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total entropy loss: </span><span class="si">{</span><span class="n">total_entropy_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c_loss</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cluster_losses</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Cluster </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> loss: </span><span class="si">{</span><span class="n">c_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total loss: </span><span class="si">{</span><span class="n">main_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="c1"># Optimizer step</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+        <span class="c1"># Print sample predictions vs actual</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Predictions vs Actual (first batch):"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Predictions: </span><span class="si">{</span><span class="n">out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Actual: </span><span class="si">{</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Run a CellDiffPool smoke test on a sample batch."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.losses.multi_dim_nan_tolerant</span><span class="w"> </span><span class="kn">import</span> <span class="n">CombinedRegressionLoss</span>
+
+    <span class="c1"># Load the sample data batch</span>
+    <span class="n">batch</span><span class="p">,</span> <span class="n">max_num_nodes</span> <span class="o">=</span> <span class="n">load_sample_data_batch</span><span class="p">()</span>
+
+    <span class="c1"># Extract relevant information from the batch</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">x</span>
+    <span class="n">edge_index_physical</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">,</span> <span class="s2">"physical_interaction"</span><span class="p">,</span> <span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">edge_index</span>
+    <span class="n">edge_index_regulatory</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">,</span> <span class="s2">"regulatory_interaction"</span><span class="p">,</span> <span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">edge_index</span>
+    <span class="n">batch_index</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">batch</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">fitness</span><span class="p">,</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">gene_interaction</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Create dictionary of edge indices</span>
+    <span class="n">edge_indices</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"physical"</span><span class="p">:</span> <span class="n">edge_index_physical</span><span class="p">,</span>
+        <span class="s2">"regulatory"</span><span class="p">:</span> <span class="n">edge_index_regulatory</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Model configuration</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">CellDiffPool</span><span class="p">(</span>
+        <span class="n">graph_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"physical"</span><span class="p">,</span> <span class="s2">"regulatory"</span><span class="p">],</span>
+        <span class="n">max_num_nodes</span><span class="o">=</span><span class="n">max_num_nodes</span><span class="p">,</span>
+        <span class="n">in_channels</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+        <span class="n">pool_gat_hidden_channels</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+        <span class="n">num_pool_gat_layers</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">embed_gat_hidden_channels</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+        <span class="n">num_embed_gat_layers</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">num_pooling_layers</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="n">cluster_size_decay_factor</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span>
+        <span class="n">activation</span><span class="o">=</span><span class="s2">"relu"</span><span class="p">,</span>
+        <span class="n">norm</span><span class="o">=</span><span class="s2">"layer"</span><span class="p">,</span>
+        <span class="n">target_dim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">num_parameters</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Parameters per model: </span><span class="si">{</span><span class="n">params</span><span class="p">[</span><span class="s1">'per_model'</span><span class="p">]</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total parameters: </span><span class="si">{</span><span class="n">params</span><span class="p">[</span><span class="s1">'total'</span><span class="p">]</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># Count and print total parameters</span>
+    <span class="n">total_params</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>
+    <span class="n">trainable_params</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Total parameters: </span><span class="si">{</span><span class="n">total_params</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Trainable parameters: </span><span class="si">{</span><span class="n">trainable_params</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># Print parameter details for each named component</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Parameter shapes by layer:"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">param</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># Initialize loss and optimizer</span>
+    <span class="n">criterion</span> <span class="o">=</span> <span class="n">CombinedRegressionLoss</span><span class="p">(</span><span class="n">loss_type</span><span class="o">=</span><span class="s2">"mse"</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
+
+    <span class="c1"># Training loop</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+
+        <span class="c1"># Forward pass</span>
+        <span class="p">(</span>
+            <span class="n">final_output</span><span class="p">,</span>
+            <span class="n">graph_link_losses</span><span class="p">,</span>
+            <span class="n">graph_entropy_losses</span><span class="p">,</span>
+            <span class="n">graph_pool_attention</span><span class="p">,</span>
+            <span class="n">graph_embed_attention</span><span class="p">,</span>
+            <span class="n">graph_cluster_assignments</span><span class="p">,</span>
+            <span class="n">graph_cluster_outputs</span><span class="p">,</span>
+            <span class="n">individual_predictions</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">edge_indices</span><span class="p">,</span> <span class="n">batch_index</span><span class="p">)</span>
+
+        <span class="c1"># Compute main loss</span>
+        <span class="n">main_loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">final_output</span><span class="p">,</span> <span class="n">y</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Compute individual graph losses</span>
+        <span class="n">individual_losses</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">graph_name</span><span class="p">:</span> <span class="n">criterion</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">y</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">graph_name</span><span class="p">,</span> <span class="n">pred</span> <span class="ow">in</span> <span class="n">individual_predictions</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Compute cluster losses for each graph</span>
+        <span class="n">cluster_losses</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">graph_name</span><span class="p">:</span> <span class="p">[</span><span class="n">criterion</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">y</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">pred</span> <span class="ow">in</span> <span class="n">clusters</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">graph_name</span><span class="p">,</span> <span class="n">clusters</span> <span class="ow">in</span> <span class="n">graph_cluster_outputs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Combine all losses</span>
+        <span class="n">total_link_loss</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">losses</span><span class="p">)</span> <span class="k">for</span> <span class="n">losses</span> <span class="ow">in</span> <span class="n">graph_link_losses</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="p">)</span>
+        <span class="n">total_entropy_loss</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">losses</span><span class="p">)</span> <span class="k">for</span> <span class="n">losses</span> <span class="ow">in</span> <span class="n">graph_entropy_losses</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="p">)</span>
+        <span class="n">total_cluster_loss</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">losses</span><span class="p">)</span> <span class="k">for</span> <span class="n">losses</span> <span class="ow">in</span> <span class="n">cluster_losses</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+        <span class="c1"># Total loss with weights</span>
+        <span class="n">total_loss</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">main_loss</span>  <span class="c1"># Main prediction loss</span>
+            <span class="o">+</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">total_link_loss</span>  <span class="c1"># Link prediction losses</span>
+            <span class="o">+</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">total_entropy_loss</span>  <span class="c1"># Entropy losses</span>
+            <span class="o">+</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">total_cluster_loss</span>  <span class="c1"># Cluster prediction losses</span>
+            <span class="o">+</span> <span class="mf">0.1</span>
+            <span class="o">*</span> <span class="nb">sum</span><span class="p">(</span><span class="n">individual_losses</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>  <span class="c1"># Individual graph prediction losses</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Backward pass</span>
+        <span class="n">total_loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+
+        <span class="c1"># Check for NaN gradients</span>
+        <span class="n">has_nan</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Epoch </span><span class="si">{</span><span class="n">epoch</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">grad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">grad</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"NaN gradient detected in </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                    <span class="n">has_nan</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">grad_norm</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">norm</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">grad_norm</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">:</span>  <span class="c1"># Print large gradients</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Large gradient in </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">grad_norm</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">has_nan</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Training stopped due to NaN gradients"</span><span class="p">)</span>
+            <span class="k">break</span>
+
+        <span class="c1"># Print losses</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Main loss: </span><span class="si">{</span><span class="n">main_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Individual graph losses:"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">graph_name</span><span class="p">,</span> <span class="n">loss</span> <span class="ow">in</span> <span class="n">individual_losses</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">graph_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total link prediction loss: </span><span class="si">{</span><span class="n">total_link_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total entropy loss: </span><span class="si">{</span><span class="n">total_entropy_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Cluster losses:"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">graph_name</span><span class="p">,</span> <span class="n">losses</span> <span class="ow">in</span> <span class="n">cluster_losses</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">graph_name</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">loss</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">losses</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Layer </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total loss: </span><span class="si">{</span><span class="n">total_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="c1"># Optimizer step</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+        <span class="c1"># Print sample predictions vs actual</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Predictions vs Actual (first batch):"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Combined prediction:"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Prediction: </span><span class="si">{</span><span class="n">final_output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Actual: </span><span class="si">{</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Individual graph predictions:"</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">graph_name</span><span class="p">,</span> <span class="n">pred</span> <span class="ow">in</span> <span class="n">individual_predictions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">graph_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">pred</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

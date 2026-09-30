@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.FitnessExperimentReference
+======================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: FitnessExperimentReference
+   :show-inheritance:
+   :members:

@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.PhysicalFactor
+==========================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: PhysicalFactor
+   :show-inheritance:
+   :members:

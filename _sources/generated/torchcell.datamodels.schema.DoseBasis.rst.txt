@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.DoseBasis
+=====================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: DoseBasis
+   :show-inheritance:
+   :members:

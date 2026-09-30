@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.releases.compatibility
+==================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.releases
+
+.. autofunction:: compatibility

@@ -1,0 +1,6 @@
+﻿torchcell.database.browser\_style.lane\_of
+==========================================
+
+.. currentmodule:: torchcell.database.browser_style
+
+.. autofunction:: lane_of

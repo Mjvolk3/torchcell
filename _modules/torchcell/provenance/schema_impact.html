@@ -1,0 +1,549 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.provenance.schema_impact &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/provenance/schema_impact.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.provenance.schema_impact</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.provenance.schema_impact</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/provenance/schema_impact.py</span>
+<span class="c1"># [[torchcell.provenance.schema_impact]]</span>
+<span class="sd">"""Static schema-impact gate: which datasets a schema change forces to rebuild.</span>
+
+<span class="sd">Compares the working-tree schema surface against a git ref (default ``HEAD``), classifies each</span>
+<span class="sd">changed symbol as ``breaking`` (loader build fails or stored records become invalid) or</span>
+<span class="sd">``stale`` (build still works but records would differ), and maps each change to the dataset</span>
+<span class="sd">LOADERS whose transitive closure contains it. Run as a pre-commit hook it stops a schema edit</span>
+<span class="sd">from silently breaking an unchanged loader (the exact latent break that motivated this).</span>
+
+<span class="sd">Needs no stored state -- git plus the recomputed dependency graph IS the state, so it runs</span>
+<span class="sd">per-machine against local git with no coordination. The authoritative "which built LMDB is</span>
+<span class="sd">stale" question is answered separately by ``build_manifest.py`` (retroactive, content-hashed).</span>
+
+<span class="sd">Exit codes: ``0`` no breaking impact; ``1`` breaking impact present (unless ``TORCHCELL_SCHEMA_ACK``</span>
+<span class="sd">is set to acknowledge). ``--strict`` also fails on stale-only impact.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ast</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrEnum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.provenance.schema_deps</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ContractSpec</span><span class="p">,</span>
+    <span class="n">SchemaSurface</span><span class="p">,</span>
+    <span class="n">default_surface_modules</span><span class="p">,</span>
+    <span class="n">load_surface</span><span class="p">,</span>
+    <span class="n">load_surface_from_sources</span><span class="p">,</span>
+    <span class="n">loader_closure</span><span class="p">,</span>
+    <span class="n">loader_schema_deps</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"ChangeKind"</span><span class="p">,</span>
+    <span class="s2">"SymbolChange"</span><span class="p">,</span>
+    <span class="s2">"LoaderImpact"</span><span class="p">,</span>
+    <span class="s2">"ImpactReport"</span><span class="p">,</span>
+    <span class="s2">"classify_change"</span><span class="p">,</span>
+    <span class="s2">"diff_surfaces"</span><span class="p">,</span>
+    <span class="s2">"map_impacts"</span><span class="p">,</span>
+    <span class="s2">"build_impact_report"</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">_ACK_ENV</span> <span class="o">=</span> <span class="s2">"TORCHCELL_SCHEMA_ACK"</span>
+
+
+<div class="viewcode-block" id="ChangeKind">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.ChangeKind.html#torchcell.provenance.ChangeKind">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ChangeKind</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Severity of a schema-symbol change for its dependent datasets."""</span>
+
+    <span class="n">breaking</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"breaking"</span>  <span class="c1"># construction fails or stored records invalid -&gt; must fix + rebuild</span>
+    <span class="p">)</span>
+    <span class="n">stale</span> <span class="o">=</span> <span class="s2">"stale"</span>  <span class="c1"># build still works but records would differ -&gt; rebuild to refresh</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_max_kind</span><span class="p">(</span><span class="n">kinds</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">ChangeKind</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">ChangeKind</span><span class="p">:</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">ChangeKind</span><span class="o">.</span><span class="n">breaking</span> <span class="k">if</span> <span class="n">ChangeKind</span><span class="o">.</span><span class="n">breaking</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">kinds</span><span class="p">)</span> <span class="k">else</span> <span class="n">ChangeKind</span><span class="o">.</span><span class="n">stale</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="SymbolChange">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.SymbolChange.html#torchcell.provenance.SymbolChange">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SymbolChange</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A schema symbol that changed contract between two surfaces, with its severity."""</span>
+
+    <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">kind</span><span class="p">:</span> <span class="n">ChangeKind</span>
+    <span class="n">status</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"added"</span><span class="p">,</span> <span class="s2">"removed"</span><span class="p">,</span> <span class="s2">"modified"</span><span class="p">]</span>
+    <span class="n">reasons</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="LoaderImpact">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.LoaderImpact.html#torchcell.provenance.LoaderImpact">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LoaderImpact</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A dataset loader whose closure contains one or more changed symbols."""</span>
+
+    <span class="n">loader</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># repo-relative path</span>
+    <span class="n">dataset_classes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">changed_symbols</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">kind</span><span class="p">:</span> <span class="n">ChangeKind</span></div>
+
+
+
+<div class="viewcode-block" id="ImpactReport">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.ImpactReport.html#torchcell.provenance.ImpactReport">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ImpactReport</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The full result of diffing a schema change: changed symbols and impacted loaders."""</span>
+
+    <span class="n">base</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">changed_symbols</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SymbolChange</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">impacted_loaders</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">LoaderImpact</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_breaking</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""True if any impacted loader is hit by a breaking change."""</span>
+        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="n">impact</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">ChangeKind</span><span class="o">.</span><span class="n">breaking</span> <span class="k">for</span> <span class="n">impact</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">impacted_loaders</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_impact</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""True if any loader is impacted at all."""</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">impacted_loaders</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="classify_change">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.classify_change.html#torchcell.provenance.classify_change">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">classify_change</span><span class="p">(</span>
+    <span class="n">old</span><span class="p">:</span> <span class="n">ContractSpec</span><span class="p">,</span> <span class="n">new</span><span class="p">:</span> <span class="n">ContractSpec</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ChangeKind</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Classify a fingerprint-changed symbol into breaking/stale with human-readable reasons."""</span>
+    <span class="n">reasons</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">kinds</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ChangeKind</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="n">old</span><span class="o">.</span><span class="n">bases</span> <span class="o">!=</span> <span class="n">new</span><span class="o">.</span><span class="n">bases</span><span class="p">:</span>
+        <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"base classes changed: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">old</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">new</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">kinds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ChangeKind</span><span class="o">.</span><span class="n">breaking</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">old</span><span class="o">.</span><span class="n">config</span> <span class="o">!=</span> <span class="n">new</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
+        <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"model Config changed"</span><span class="p">)</span>
+        <span class="n">kinds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ChangeKind</span><span class="o">.</span><span class="n">breaking</span><span class="p">)</span>
+
+    <span class="n">old_fields</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">old</span><span class="o">.</span><span class="n">fields</span><span class="p">)</span>
+    <span class="n">new_fields</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">new</span><span class="o">.</span><span class="n">fields</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">new_fields</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">old_fields</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">new_fields</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">required</span><span class="p">:</span>
+            <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"added required field '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+            <span class="n">kinds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ChangeKind</span><span class="o">.</span><span class="n">breaking</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"added optional field '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+            <span class="n">kinds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ChangeKind</span><span class="o">.</span><span class="n">stale</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">old_fields</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">new_fields</span><span class="p">)):</span>
+        <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"removed field '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+        <span class="n">kinds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ChangeKind</span><span class="o">.</span><span class="n">breaking</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">old_fields</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">new_fields</span><span class="p">)):</span>
+        <span class="n">old_field</span> <span class="o">=</span> <span class="n">old_fields</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="n">new_field</span> <span class="o">=</span> <span class="n">new_fields</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">old_field</span> <span class="o">==</span> <span class="n">new_field</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">old_field</span><span class="o">.</span><span class="n">annotation</span> <span class="o">!=</span> <span class="n">new_field</span><span class="o">.</span><span class="n">annotation</span><span class="p">:</span>
+            <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"field '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' type changed: </span><span class="si">{</span><span class="n">old_field</span><span class="o">.</span><span class="n">annotation</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">new_field</span><span class="o">.</span><span class="n">annotation</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+            <span class="n">kinds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ChangeKind</span><span class="o">.</span><span class="n">breaking</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">old_field</span><span class="o">.</span><span class="n">required</span> <span class="o">!=</span> <span class="n">new_field</span><span class="o">.</span><span class="n">required</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">new_field</span><span class="o">.</span><span class="n">required</span><span class="p">:</span>
+                <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"field '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' became required"</span><span class="p">)</span>
+                <span class="n">kinds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ChangeKind</span><span class="o">.</span><span class="n">breaking</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"field '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' became optional"</span><span class="p">)</span>
+                <span class="n">kinds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ChangeKind</span><span class="o">.</span><span class="n">stale</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">old_field</span><span class="o">.</span><span class="n">default</span> <span class="o">!=</span> <span class="n">new_field</span><span class="o">.</span><span class="n">default</span><span class="p">:</span>
+            <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"field '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' default changed"</span><span class="p">)</span>
+            <span class="n">kinds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ChangeKind</span><span class="o">.</span><span class="n">stale</span><span class="p">)</span>
+
+    <span class="n">old_assigns</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">old</span><span class="o">.</span><span class="n">assigns</span><span class="p">)</span>
+    <span class="n">new_assigns</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">new</span><span class="o">.</span><span class="n">assigns</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">new_assigns</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">old_assigns</span><span class="p">)):</span>
+        <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"added member/const '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+        <span class="n">kinds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ChangeKind</span><span class="o">.</span><span class="n">stale</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">old_assigns</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">new_assigns</span><span class="p">)):</span>
+        <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"removed member/const '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+        <span class="n">kinds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ChangeKind</span><span class="o">.</span><span class="n">breaking</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">old_assigns</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">new_assigns</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">old_assigns</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">!=</span> <span class="n">new_assigns</span><span class="p">[</span><span class="n">name</span><span class="p">]:</span>
+            <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"member/const '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' value changed"</span><span class="p">)</span>
+            <span class="n">kinds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ChangeKind</span><span class="o">.</span><span class="n">breaking</span><span class="p">)</span>
+
+    <span class="n">old_methods</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">old</span><span class="o">.</span><span class="n">methods</span><span class="p">)</span>
+    <span class="n">new_methods</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">new</span><span class="o">.</span><span class="n">methods</span><span class="p">)</span>
+    <span class="n">changed_methods</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="n">name</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">old_methods</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">new_methods</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">old_methods</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">!=</span> <span class="n">new_methods</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">changed_methods</span><span class="p">:</span>
+        <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"validator/serializer changed: </span><span class="si">{</span><span class="n">changed_methods</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">kinds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ChangeKind</span><span class="o">.</span><span class="n">stale</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="ow">not</span> <span class="n">reasons</span>
+    <span class="p">):</span>  <span class="c1"># fingerprint differed but no structural reason surfaced -&gt; be conservative</span>
+        <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"contract fingerprint changed"</span><span class="p">)</span>
+        <span class="n">kinds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ChangeKind</span><span class="o">.</span><span class="n">stale</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_max_kind</span><span class="p">(</span><span class="n">kinds</span><span class="p">),</span> <span class="n">reasons</span></div>
+
+
+
+<div class="viewcode-block" id="diff_surfaces">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.diff_surfaces.html#torchcell.provenance.diff_surfaces">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">diff_surfaces</span><span class="p">(</span><span class="n">old</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">,</span> <span class="n">new</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">SymbolChange</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Every symbol whose contract changed between two surfaces, classified."""</span>
+    <span class="n">changes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SymbolChange</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">old</span><span class="o">.</span><span class="n">names</span> <span class="o">|</span> <span class="n">new</span><span class="o">.</span><span class="n">names</span><span class="p">):</span>
+        <span class="n">old_spec</span> <span class="o">=</span> <span class="n">old</span><span class="o">.</span><span class="n">specs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">new_spec</span> <span class="o">=</span> <span class="n">new</span><span class="o">.</span><span class="n">specs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">old_spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">changes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SymbolChange</span><span class="p">(</span>
+                    <span class="n">symbol</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">kind</span><span class="o">=</span><span class="n">ChangeKind</span><span class="o">.</span><span class="n">stale</span><span class="p">,</span>
+                    <span class="n">status</span><span class="o">=</span><span class="s2">"added"</span><span class="p">,</span>
+                    <span class="n">reasons</span><span class="o">=</span><span class="p">[</span><span class="s2">"new symbol"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">new_spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">changes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SymbolChange</span><span class="p">(</span>
+                    <span class="n">symbol</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">kind</span><span class="o">=</span><span class="n">ChangeKind</span><span class="o">.</span><span class="n">breaking</span><span class="p">,</span>
+                    <span class="n">status</span><span class="o">=</span><span class="s2">"removed"</span><span class="p">,</span>
+                    <span class="n">reasons</span><span class="o">=</span><span class="p">[</span><span class="s2">"symbol removed"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">old</span><span class="o">.</span><span class="n">fingerprints</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">!=</span> <span class="n">new</span><span class="o">.</span><span class="n">fingerprints</span><span class="p">[</span><span class="n">name</span><span class="p">]:</span>
+            <span class="n">kind</span><span class="p">,</span> <span class="n">reasons</span> <span class="o">=</span> <span class="n">classify_change</span><span class="p">(</span><span class="n">old_spec</span><span class="p">,</span> <span class="n">new_spec</span><span class="p">)</span>
+            <span class="n">changes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SymbolChange</span><span class="p">(</span><span class="n">symbol</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="n">kind</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="s2">"modified"</span><span class="p">,</span> <span class="n">reasons</span><span class="o">=</span><span class="n">reasons</span><span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">changes</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_dataset_classes</span><span class="p">(</span><span class="n">loader_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Names of dataset classes declared in a loader (``@register_dataset`` or ``*Dataset``)."""</span>
+    <span class="n">names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">loader_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">))</span><span class="o">.</span><span class="n">body</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">ClassDef</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">decorated</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">d</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s2">"register_dataset"</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">)</span> <span class="ow">and</span> <span class="n">d</span><span class="o">.</span><span class="n">attr</span> <span class="o">==</span> <span class="s2">"register_dataset"</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">decorator_list</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">decorated</span> <span class="ow">or</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"Dataset"</span><span class="p">):</span>
+            <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">names</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_loader_paths</span><span class="p">(</span><span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""All dataset-loader modules under ``torchcell/datasets`` (excluding dunder/deprecated)."""</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">((</span><span class="n">repo_root</span> <span class="o">/</span> <span class="s2">"torchcell"</span> <span class="o">/</span> <span class="s2">"datasets"</span><span class="p">)</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">"*.py"</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"__"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"deprecated"</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_git_show</span><span class="p">(</span><span class="n">ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">relpath</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Contents of ``relpath`` at ``ref``; empty string if the path did not exist there."""</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="p">[</span><span class="s2">"git"</span><span class="p">,</span> <span class="s2">"-C"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">repo_root</span><span class="p">),</span> <span class="s2">"show"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">ref</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">relpath</span><span class="si">}</span><span class="s2">"</span><span class="p">],</span>
+        <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">stdout</span> <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="s2">""</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">map_impacts</span><span class="p">(</span>
+    <span class="n">changes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SymbolChange</span><span class="p">],</span>
+    <span class="n">loader_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span>
+    <span class="n">old_surface</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">,</span>
+    <span class="n">new_surface</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">,</span>
+    <span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">LoaderImpact</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Map changed symbols to the loaders whose closure contains them (breaking first)."""</span>
+    <span class="n">change_by_symbol</span> <span class="o">=</span> <span class="p">{</span><span class="n">change</span><span class="o">.</span><span class="n">symbol</span><span class="p">:</span> <span class="n">change</span> <span class="k">for</span> <span class="n">change</span> <span class="ow">in</span> <span class="n">changes</span><span class="p">}</span>
+    <span class="n">changed_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">change_by_symbol</span><span class="p">)</span>
+    <span class="n">impacts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">LoaderImpact</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">changed_names</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">impacts</span>
+    <span class="k">for</span> <span class="n">loader_path</span> <span class="ow">in</span> <span class="n">loader_paths</span><span class="p">:</span>
+        <span class="c1"># union of new+old closure so a REMOVED symbol still flags loaders that imported it</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="n">loader_schema_deps</span><span class="p">(</span><span class="n">loader_path</span><span class="p">,</span> <span class="n">new_surface</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="n">loader_schema_deps</span><span class="p">(</span><span class="n">loader_path</span><span class="p">,</span> <span class="n">old_surface</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">closure</span> <span class="o">=</span> <span class="n">loader_closure</span><span class="p">(</span><span class="n">loader_path</span><span class="p">,</span> <span class="n">new_surface</span><span class="p">)</span> <span class="o">|</span> <span class="n">loader_closure</span><span class="p">(</span>
+            <span class="n">loader_path</span><span class="p">,</span> <span class="n">old_surface</span>
+        <span class="p">)</span>
+        <span class="n">hit</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">closure</span> <span class="o">&amp;</span> <span class="n">changed_names</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">hit</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">impacts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">LoaderImpact</span><span class="p">(</span>
+                <span class="n">loader</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">loader_path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">repo_root</span><span class="p">)),</span>
+                <span class="n">dataset_classes</span><span class="o">=</span><span class="n">_dataset_classes</span><span class="p">(</span><span class="n">loader_path</span><span class="p">),</span>
+                <span class="n">changed_symbols</span><span class="o">=</span><span class="n">hit</span><span class="p">,</span>
+                <span class="n">kind</span><span class="o">=</span><span class="n">_max_kind</span><span class="p">(</span><span class="n">change_by_symbol</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span><span class="o">.</span><span class="n">kind</span> <span class="k">for</span> <span class="n">symbol</span> <span class="ow">in</span> <span class="n">hit</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="n">impacts</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">impact</span><span class="p">:</span> <span class="p">(</span><span class="n">impact</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="n">ChangeKind</span><span class="o">.</span><span class="n">breaking</span><span class="p">,</span> <span class="n">impact</span><span class="o">.</span><span class="n">loader</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">impacts</span>
+
+
+<div class="viewcode-block" id="build_impact_report">
+<a class="viewcode-back" href="../../../generated/torchcell.provenance.build_impact_report.html#torchcell.provenance.build_impact_report">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_impact_report</span><span class="p">(</span><span class="n">base</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ImpactReport</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Diff the working-tree schema surface against ``base`` and map changes to loaders."""</span>
+    <span class="n">module_paths</span> <span class="o">=</span> <span class="n">default_surface_modules</span><span class="p">()</span>
+    <span class="n">new_surface</span> <span class="o">=</span> <span class="n">load_surface</span><span class="p">(</span><span class="n">module_paths</span><span class="p">)</span>
+    <span class="n">old_surface</span> <span class="o">=</span> <span class="n">load_surface_from_sources</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">):</span> <span class="n">_git_show</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">repo_root</span><span class="p">)),</span> <span class="n">repo_root</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">module_paths</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+    <span class="n">changes</span> <span class="o">=</span> <span class="n">diff_surfaces</span><span class="p">(</span><span class="n">old_surface</span><span class="p">,</span> <span class="n">new_surface</span><span class="p">)</span>
+    <span class="n">impacts</span> <span class="o">=</span> <span class="n">map_impacts</span><span class="p">(</span>
+        <span class="n">changes</span><span class="p">,</span> <span class="n">_loader_paths</span><span class="p">(</span><span class="n">repo_root</span><span class="p">),</span> <span class="n">old_surface</span><span class="p">,</span> <span class="n">new_surface</span><span class="p">,</span> <span class="n">repo_root</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ImpactReport</span><span class="p">(</span><span class="n">base</span><span class="o">=</span><span class="n">base</span><span class="p">,</span> <span class="n">changed_symbols</span><span class="o">=</span><span class="n">changes</span><span class="p">,</span> <span class="n">impacted_loaders</span><span class="o">=</span><span class="n">impacts</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">format_report</span><span class="p">(</span><span class="n">report</span><span class="p">:</span> <span class="n">ImpactReport</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">report</span><span class="o">.</span><span class="n">changed_symbols</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"No schema contract changes vs </span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">base</span><span class="si">}</span><span class="s2">."</span>
+    <span class="n">lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"Schema impact vs </span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">base</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">""</span><span class="p">]</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Changed symbols (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">changed_symbols</span><span class="p">)</span><span class="si">}</span><span class="s2">):"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">change</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">changed_symbols</span><span class="p">:</span>
+        <span class="n">tag</span> <span class="o">=</span> <span class="s2">"BREAKING"</span> <span class="k">if</span> <span class="n">change</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">ChangeKind</span><span class="o">.</span><span class="n">breaking</span> <span class="k">else</span> <span class="s2">"stale"</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  [</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">change</span><span class="o">.</span><span class="n">symbol</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">change</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">reason</span> <span class="ow">in</span> <span class="n">change</span><span class="o">.</span><span class="n">reasons</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"      - </span><span class="si">{</span><span class="n">reason</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">report</span><span class="o">.</span><span class="n">impacted_loaders</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="s2">"Impacted datasets: none (no built loader depends on the changed symbols)."</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+    <span class="n">breaking</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">impacted_loaders</span> <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">ChangeKind</span><span class="o">.</span><span class="n">breaking</span><span class="p">]</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"Impacted datasets (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">impacted_loaders</span><span class="p">)</span><span class="si">}</span><span class="s2">; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">breaking</span><span class="p">)</span><span class="si">}</span><span class="s2"> breaking) -&gt; rebuild:"</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">impact</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">impacted_loaders</span><span class="p">:</span>
+        <span class="n">tag</span> <span class="o">=</span> <span class="s2">"BREAKING"</span> <span class="k">if</span> <span class="n">impact</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">ChangeKind</span><span class="o">.</span><span class="n">breaking</span> <span class="k">else</span> <span class="s2">"stale"</span>
+        <span class="n">classes</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">impact</span><span class="o">.</span><span class="n">dataset_classes</span><span class="p">)</span> <span class="ow">or</span> <span class="n">impact</span><span class="o">.</span><span class="n">loader</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  [</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">classes</span><span class="si">}</span><span class="s2">  via </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">impact</span><span class="o">.</span><span class="n">changed_symbols</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_repo_root</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="p">[</span><span class="s2">"git"</span><span class="p">,</span> <span class="s2">"rev-parse"</span><span class="p">,</span> <span class="s2">"--show-toplevel"</span><span class="p">],</span>
+        <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="n">prog</span><span class="o">=</span><span class="s2">"python -m torchcell.provenance.schema_impact"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Report which datasets a schema change forces to rebuild."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--base"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">"HEAD"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"git ref to diff against (default: HEAD)"</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--strict"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"exit nonzero on ANY impact, not just breaking"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># pre-commit passes staged filenames as positional args; accept and ignore them (we always</span>
+    <span class="c1"># analyze the whole surface, since one staged schema hunk can affect the whole graph).</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"files"</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s2">"*"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">SUPPRESS</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
+
+    <span class="n">report</span> <span class="o">=</span> <span class="n">build_impact_report</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">base</span><span class="p">,</span> <span class="n">_repo_root</span><span class="p">())</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">format_report</span><span class="p">(</span><span class="n">report</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">report</span><span class="o">.</span><span class="n">has_impact</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_ACK_ENV</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="n">_ACK_ENV</span><span class="si">}</span><span class="s2"> set -&gt; impact acknowledged; proceeding."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">report</span><span class="o">.</span><span class="n">has_breaking</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">BREAKING schema change: update + rebuild the datasets above, "</span>
+            <span class="sa">f</span><span class="s2">"then re-run with </span><span class="si">{</span><span class="n">_ACK_ENV</span><span class="si">}</span><span class="s2">=1 to acknowledge."</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">strict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="mi">0</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

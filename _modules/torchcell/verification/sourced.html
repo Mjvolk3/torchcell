@@ -1,0 +1,452 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.verification.sourced &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/verification/sourced.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.verification.sourced</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.verification.sourced</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/verification/sourced</span>
+<span class="c1"># [[torchcell.verification.sourced]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/verification/sourced</span>
+<span class="sd">"""Provenance-bound constants: bind ONE extracted value to its source (WS2/WS3).</span>
+
+<span class="sd">A ``SourcedValue`` pins a hardcoded number (e.g. ``n_samples = 2``) to the exact</span>
+<span class="sd">paper artifact it came from -- ``citation_key`` + a path inside the MinerU</span>
+<span class="sd">``torchcell-library`` + the file ``sha256`` + a verbatim ``quote``. Reading</span>
+<span class="sd">``.value`` needs nothing but Python (the ML env never touches MinerU or the</span>
+<span class="sd">library). An OPTIONAL audit (``audit_sourced_value``) re-opens the source, checks</span>
+<span class="sd">the hash still matches, and confirms the quote is still present -- run on demand,</span>
+<span class="sd">never at dataset load.</span>
+
+<span class="sd">Design notes:</span>
+<span class="sd">- **No line numbers.** OCR output reflows when the extractor updates, so a line</span>
+<span class="sd">  reference silently rots. The file ``sha256`` is the reproducibility anchor: if</span>
+<span class="sd">  the source is re-OCR'd the hash changes and the audit flags it for re-location;</span>
+<span class="sd">  the ``quote`` substring is what actually locates the value.</span>
+<span class="sd">- This layers on ``torchcell.literature.manifest.Manifest`` (which already stores</span>
+<span class="sd">  the per-file ``sha256``) once that subsystem is in scope. Until then it is</span>
+<span class="sd">  self-contained.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrEnum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">model_validator</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Level</span><span class="p">,</span> <span class="n">LevelResult</span><span class="p">,</span> <span class="n">Provenance</span><span class="p">,</span> <span class="n">sha256_file</span>
+
+
+<span class="c1"># NOTE: intentionally NON-generic. A parametrized pydantic generic (``SourcedValue</span>
+<span class="c1"># [Any]``) has a bracketed ``__qualname__`` that ``pickle`` cannot resolve by name,</span>
+<span class="c1"># so any object embedding one (a Media provenance list inside a dataset's reference</span>
+<span class="c1"># index) fails to pickle across a ``multiprocessing.Queue`` / ``ProcessPoolExecutor``</span>
+<span class="c1"># -- surfacing as a silent adapter hang. ``value: Any`` matches every real usage</span>
+<span class="c1"># (all were ``SourcedValue[Any]``) with zero loss of typing.</span>
+<div class="viewcode-block" id="SourcedValue">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.SourcedValue.html#torchcell.verification.SourcedValue">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SourcedValue</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A hardcoded value plus the provenance that justifies it.</span>
+
+<span class="sd">    ``provenance.source_uri`` is interpreted as the path RELATIVE to</span>
+<span class="sd">    ``&lt;library_root&gt;/&lt;citation_key&gt;/`` (e.g. ``"si/si1.md"``). ``citation_key``</span>
+<span class="sd">    and ``sha256`` are required so the value is always auditable.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">value</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="n">Provenance</span>
+    <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Verbatim substring from the source that justifies the value."</span>
+    <span class="p">)</span>
+    <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Optional reasoning linking the quote to the value."</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_require_auditable_provenance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">provenance</span><span class="o">.</span><span class="n">citation_key</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"SourcedValue.provenance.citation_key is required"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">provenance</span><span class="o">.</span><span class="n">sha256</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"SourcedValue.provenance.sha256 is required (audit anchor)"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">quote</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"SourcedValue.quote cannot be empty"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+<div class="viewcode-block" id="SourcedValue.source_path">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.SourcedValue.html#torchcell.verification.SourcedValue.source_path">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">source_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">library_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Resolve the artifact path within the MinerU library."""</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">Path</span><span class="p">(</span><span class="n">library_root</span><span class="p">)</span>
+            <span class="o">/</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">provenance</span><span class="o">.</span><span class="n">citation_key</span><span class="p">)</span>
+            <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">provenance</span><span class="o">.</span><span class="n">source_uri</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="audit_sourced_value">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.audit_sourced_value.html#torchcell.verification.audit_sourced_value">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">audit_sourced_value</span><span class="p">(</span><span class="n">sv</span><span class="p">:</span> <span class="n">SourcedValue</span><span class="p">,</span> <span class="n">library_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Verify a ``SourcedValue`` against its source artifact.</span>
+
+<span class="sd">    Checks (1) the file hash still equals the pinned ``sha256`` and (2) the quote</span>
+<span class="sd">    is still present in the file. Raises ``FileNotFoundError`` when the artifact</span>
+<span class="sd">    is not on disk -- callers skip when the library isn't mounted (see</span>
+<span class="sd">    ``library_available``), so CI without the library stays green.</span>
+<span class="sd">    """</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">sv</span><span class="o">.</span><span class="n">source_path</span><span class="p">(</span><span class="n">library_root</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"source artifact not found: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="n">actual_sha</span> <span class="o">=</span> <span class="n">sha256_file</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">integrity</span> <span class="o">=</span> <span class="n">actual_sha</span> <span class="o">==</span> <span class="n">sv</span><span class="o">.</span><span class="n">provenance</span><span class="o">.</span><span class="n">sha256</span>
+
+    <span class="n">quote_present</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">integrity</span><span class="p">:</span>
+        <span class="c1"># Only trust the text if the bytes are what we pinned.</span>
+        <span class="n">quote_present</span> <span class="o">=</span> <span class="n">sv</span><span class="o">.</span><span class="n">quote</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"replace"</span><span class="p">)</span>
+
+    <span class="n">passed</span> <span class="o">=</span> <span class="n">integrity</span> <span class="ow">and</span> <span class="n">quote_present</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">integrity</span><span class="p">:</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"sha256 drift: source re-OCR'd or edited (</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">quote_present</span><span class="p">:</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"quote no longer found in </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"value backed by verbatim quote in </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span>
+
+    <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L3</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"provenance_audit"</span><span class="p">,</span>
+        <span class="n">passed</span><span class="o">=</span><span class="n">passed</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="n">message</span><span class="p">,</span>
+        <span class="n">details</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"citation_key"</span><span class="p">:</span> <span class="n">sv</span><span class="o">.</span><span class="n">provenance</span><span class="o">.</span><span class="n">citation_key</span><span class="p">,</span>
+            <span class="s2">"source"</span><span class="p">:</span> <span class="n">sv</span><span class="o">.</span><span class="n">provenance</span><span class="o">.</span><span class="n">source_uri</span><span class="p">,</span>
+            <span class="s2">"value"</span><span class="p">:</span> <span class="nb">repr</span><span class="p">(</span><span class="n">sv</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+            <span class="s2">"sha256_ok"</span><span class="p">:</span> <span class="n">integrity</span><span class="p">,</span>
+            <span class="s2">"quote_present"</span><span class="p">:</span> <span class="n">quote_present</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="library_available">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.library_available.html#torchcell.verification.library_available">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">library_available</span><span class="p">(</span><span class="n">library_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""True if the MinerU library root exists (audits skip when it doesn't)."""</span>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">library_root</span><span class="p">)</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="ProvenanceGapReason">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.ProvenanceGapReason.html#torchcell.verification.ProvenanceGapReason">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProvenanceGapReason</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""WHERE in the provenance chain a value died -- an honest, typed absence.</span>
+
+<span class="sd">    Ordered by how actionable the gap is. Only ``deferred_pending_source_review``</span>
+<span class="sd">    is recoverable work (comb the primary paper's SI); the other two are terminal</span>
+<span class="sd">    (there is nothing to fetch). This split is what turns the gap-set into a</span>
+<span class="sd">    worklist rather than a pile of nulls.</span>
+<span class="sd">    """</span>
+
+    <span class="n">not_reported_by_primary</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"not_reported_by_primary"</span>  <span class="c1"># original screen never measured/reported it</span>
+    <span class="p">)</span>
+    <span class="n">not_carried_by_curation</span> <span class="o">=</span> <span class="s2">"not_carried_by_curation"</span>  <span class="c1"># primary had it; the secondary DB (YeastPhenome/SPELL) dropped it in aggregation</span>
+    <span class="n">deferred_pending_source_review</span> <span class="o">=</span> <span class="s2">"deferred_pending_source_review"</span>  <span class="c1"># recoverable -- the per-paper SI comb just isn't done yet</span></div>
+
+
+
+<div class="viewcode-block" id="ProvenanceGap">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.ProvenanceGap.html#torchcell.verification.ProvenanceGap">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProvenanceGap</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The complement of :class:`SourcedValue`: a documented, typed ABSENCE.</span>
+
+<span class="sd">    ``SourcedValue`` binds a value to ``(citation_key, sha256, quote)``.</span>
+<span class="sd">    ``ProvenanceGap`` binds a MISSING value to a typed ``reason``, so an unfilled</span>
+<span class="sd">    field (``n_samples``, an uncertainty, a replicate design) is an HONEST typed</span>
+<span class="sd">    absence -- never a guess, never a silent ``None`` the reader cannot tell apart</span>
+<span class="sd">    from "not applicable". The set of gaps across a build is a queryable worklist</span>
+<span class="sd">    (see :func:`provenance_gap_census`).</span>
+
+<span class="sd">    Consuming a secondary curation layer (YeastPhenome, SPELL) is the motivating</span>
+<span class="sd">    case: we capture the whole record as presented and gap-mark every field the</span>
+<span class="sd">    curation does not carry, rather than dropping the record or fabricating a value.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"name of the field on THIS record that is unsourced, e.g. 'n_samples'"</span>
+    <span class="p">)</span>
+    <span class="n">reason</span><span class="p">:</span> <span class="n">ProvenanceGapReason</span>
+    <span class="n">looked_in</span><span class="p">:</span> <span class="n">Provenance</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the secondary source we DID consult (e.g. the YeastPhenome "</span>
+        <span class="s2">"Zenodo re-host) -- anchors even the absence to where we looked"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">resolve_with</span><span class="p">:</span> <span class="n">Provenance</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"deferred_pending_source_review only: the primary artifact "</span>
+        <span class="s2">"whose SI would close the gap (the worklist target)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"optional human reasoning for the gap."</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_require_field</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProvenanceGap</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"ProvenanceGap.field cannot be empty"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+
+<div class="viewcode-block" id="ProvenanceGapCensus">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.ProvenanceGapCensus.html#torchcell.verification.ProvenanceGapCensus">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProvenanceGapCensus</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Aggregate view of the ``ProvenanceGap``\ s across a built dataset -- the worklist.</span>
+
+<span class="sd">    A documented gap is a PASS, not a failure: this census is informational. Its</span>
+<span class="sd">    payoff is ``worklist_fields`` -- the distinct fields carrying a</span>
+<span class="sd">    ``deferred_pending_source_review`` gap, i.e. exactly what a future per-paper SI</span>
+<span class="sd">    comb (or OCR fan-out) would close.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">n_records</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_records_with_gaps</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_gaps</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">by_reason</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">by_field</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">worklist_fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"distinct fields with a deferred_pending_source_review gap"</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="provenance_gap_census">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.provenance_gap_census.html#torchcell.verification.provenance_gap_census">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">provenance_gap_census</span><span class="p">(</span>
+    <span class="n">phenotypes</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProvenanceGapCensus</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Tally the ``provenance_gaps`` carried by a stream of phenotype records.</span>
+
+<span class="sd">    Accepts phenotype MAPPINGS (the JSON dicts a built LMDB yields), reading</span>
+<span class="sd">    ``phenotype["provenance_gaps"]`` (absent/empty -&gt; no gaps). Single-pass and</span>
+<span class="sd">    memory-light: keeps only counters + the distinct deferred worklist fields, so</span>
+<span class="sd">    it scales to a streaming verifier over a large dataset.</span>
+<span class="sd">    """</span>
+    <span class="n">n_records</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">n_records_with_gaps</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">n_gaps</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">by_reason</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+    <span class="n">by_field</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+    <span class="n">worklist</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">phenotype</span> <span class="ow">in</span> <span class="n">phenotypes</span><span class="p">:</span>
+        <span class="n">n_records</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">gaps</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"provenance_gaps"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">gaps</span><span class="p">:</span>
+            <span class="n">n_records_with_gaps</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">gap</span> <span class="ow">in</span> <span class="n">gaps</span><span class="p">:</span>
+            <span class="n">n_gaps</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">reason</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">gap</span><span class="p">[</span><span class="s2">"reason"</span><span class="p">])</span>
+            <span class="n">field</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">gap</span><span class="p">[</span><span class="s2">"field"</span><span class="p">])</span>
+            <span class="n">by_reason</span><span class="p">[</span><span class="n">reason</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">by_field</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">reason</span> <span class="o">==</span> <span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">deferred_pending_source_review</span><span class="p">:</span>
+                <span class="n">worklist</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ProvenanceGapCensus</span><span class="p">(</span>
+        <span class="n">n_records</span><span class="o">=</span><span class="n">n_records</span><span class="p">,</span>
+        <span class="n">n_records_with_gaps</span><span class="o">=</span><span class="n">n_records_with_gaps</span><span class="p">,</span>
+        <span class="n">n_gaps</span><span class="o">=</span><span class="n">n_gaps</span><span class="p">,</span>
+        <span class="n">by_reason</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">by_reason</span><span class="p">),</span>
+        <span class="n">by_field</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">by_field</span><span class="p">),</span>
+        <span class="n">worklist_fields</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">worklist</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="provenance_gap_level_result">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.provenance_gap_level_result.html#torchcell.verification.provenance_gap_level_result">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">provenance_gap_level_result</span><span class="p">(</span><span class="n">census</span><span class="p">:</span> <span class="n">ProvenanceGapCensus</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Wrap a census into the L1 ``provenance_gaps`` result -- ALWAYS passes.</span>
+
+<span class="sd">    A documented gap is honest, not a defect (the honesty invariant is already</span>
+<span class="sd">    enforced at L0 by the ``Phenotype`` model validators), so this level never</span>
+<span class="sd">    fails a build. It surfaces the gap census + the deferred worklist in the report</span>
+<span class="sd">    so "what still needs sourcing" is visible next to the pass/fail gate. Shared by</span>
+<span class="sd">    the eager and streaming verifiers so both emit an identical result.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">census</span><span class="o">.</span><span class="n">n_gaps</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"no provenance gaps across </span><span class="si">{</span><span class="n">census</span><span class="o">.</span><span class="n">n_records</span><span class="si">}</span><span class="s2"> records (fully sourced)"</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">census</span><span class="o">.</span><span class="n">n_gaps</span><span class="si">}</span><span class="s2"> documented provenance gaps over "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">census</span><span class="o">.</span><span class="n">n_records_with_gaps</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">census</span><span class="o">.</span><span class="n">n_records</span><span class="si">}</span><span class="s2"> records; "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">census</span><span class="o">.</span><span class="n">worklist_fields</span><span class="p">)</span><span class="si">}</span><span class="s2"> deferred field(s): "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">census</span><span class="o">.</span><span class="n">worklist_fields</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L1</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"provenance_gaps"</span><span class="p">,</span>
+        <span class="n">passed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="n">message</span><span class="p">,</span>
+        <span class="n">details</span><span class="o">=</span><span class="n">census</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="l1_provenance_gaps">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.l1_provenance_gaps.html#torchcell.verification.l1_provenance_gaps">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">l1_provenance_gaps</span><span class="p">(</span><span class="n">phenotypes</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""L1 informational census of documented provenance gaps over a phenotype stream."""</span>
+    <span class="k">return</span> <span class="n">provenance_gap_level_result</span><span class="p">(</span><span class="n">provenance_gap_census</span><span class="p">(</span><span class="n">phenotypes</span><span class="p">))</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

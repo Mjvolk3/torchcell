@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.releases.behind\_main
+=================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.releases
+
+.. autofunction:: behind_main

@@ -1,0 +1,1251 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.knowledge_graphs.releases &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/knowledge_graphs/releases.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.knowledge_graphs.releases</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.knowledge_graphs.releases</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/knowledge_graphs/releases.py</span>
+<span class="c1"># [[torchcell.knowledge_graphs.releases]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/releases</span>
+<span class="sd">"""Knowledge-graph releases: what version a served store is, which datasets it holds,</span>
+<span class="sd">and whether a dataset's bytes changed between two versions.</span>
+
+<span class="sd">A **release** is one built store. Its id is ``&lt;build date&gt;-&lt;torchcell commit&gt;`` in the</span>
+<span class="sd">shape the iBioFoundry deployments use (``2026.09.17-7715ee35``): the immutable identity a</span>
+<span class="sd">dump, a backup, and a served database all carry. Its **version** is ``&lt;major&gt;.&lt;minor&gt;``:</span>
+<span class="sd">a full rebuild bumps the major, an incremental admission bumps the minor. The store</span>
+<span class="sd">describes itself with one ``KgRelease`` node written before it is served, so a dump loaded</span>
+<span class="sd">anywhere answers "what are you" with a one-line query, and the manifest file beside the</span>
+<span class="sd">store carries the same fields.</span>
+
+<span class="sd">**Byte identity.** Every ``Experiment`` node id is the sha256 of the serialized record</span>
+<span class="sd">(``CellAdapter`` builds ids that way), so the sorted list of a dataset's experiment ids is</span>
+<span class="sd">a fingerprint of its content. ``content_sha256`` is the sha256 of those ids, sorted and</span>
+<span class="sd">newline-joined. Two releases with the same hash for a dataset hold the same serialized</span>
+<span class="sd">experiment records; a changed value, medium, or schema closure changes it. The hash is</span>
+<span class="sd">computed from the CSVs at build time and from the store for a cross-check, and</span>
+<span class="sd">:func:`diff` turns two releases into unchanged / changed / added / removed datasets.</span>
+
+<span class="sd">**Choosing a version from code.** Clients name a version, not a database:</span>
+<span class="sd">``latest`` (the default) and ``pinned`` are aliases in the served DBMS, retargeted when a</span>
+<span class="sd">release is published; an explicit release id or version resolves to the physical</span>
+<span class="sd">database that carries it. ``TORCHCELL_KG_VERSION`` sets the default for a whole run.</span>
+
+<span class="sd">**Source code moving with the store.** Records are serialized under the schema contract</span>
+<span class="sd">of the commit that built them. :func:`compatibility` compares the release's per-dataset</span>
+<span class="sd">closure fingerprints against the local schema surface and names the datasets whose</span>
+<span class="sd">records the local code would serialize differently, the same drift the admission gate</span>
+<span class="sd">checks before an increment.</span>
+
+<span class="sd">**The package version a release names.** ``stamp`` records ``torchcell_version`` (the</span>
+<span class="sd">stamping checkout's ``torchcell.__version__``) and ``torchcell_tag`` (``git describe</span>
+<span class="sd">--tags --exact-match HEAD``, None between package releases) in the manifest, and the</span>
+<span class="sd">node and the committed snapshot (``snapshot``, ``torchcell.knowledge_graphs</span>
+<span class="sd">.release_snapshot``) carry them, so ``scripts/kg_compat_page.py`` can say which package</span>
+<span class="sd">tags read which release without the machine-local manifest.</span>
+
+<span class="sd">    python -m torchcell.knowledge_graphs.releases status --label gilahyper</span>
+<span class="sd">    python -m torchcell.knowledge_graphs.releases datasets --version latest</span>
+<span class="sd">    python -m torchcell.knowledge_graphs.releases diff 2026.09.17-7715ee35 latest</span>
+<span class="sd">    python -m torchcell.knowledge_graphs.releases snapshot --manifest kg_manifest.json</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.kg_manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">KgBuildManifest</span><span class="p">,</span>
+    <span class="n">checkout_package_version</span><span class="p">,</span>
+    <span class="n">surface_in_worktree</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.provenance.schema_deps</span><span class="w"> </span><span class="kn">import</span> <span class="n">SchemaSurface</span>
+
+<span class="n">RELEASE_LABEL</span> <span class="o">=</span> <span class="s2">"KgRelease"</span>
+<span class="n">LATEST_ALIAS</span> <span class="o">=</span> <span class="s2">"latest"</span>
+<span class="n">PINNED_ALIAS</span> <span class="o">=</span> <span class="s2">"pinned"</span>
+<span class="n">DEFAULT_VERSION</span> <span class="o">=</span> <span class="n">LATEST_ALIAS</span>
+<span class="n">SYSTEM_DATABASES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"system"</span><span class="p">,)</span>
+<span class="n">_COMMIT_CHARS</span> <span class="o">=</span> <span class="mi">8</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- models</span>
+
+
+<div class="viewcode-block" id="ReleaseDataset">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.ReleaseDataset.html#torchcell.knowledge_graphs.releases.ReleaseDataset">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReleaseDataset</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One dataset as one release serves it."""</span>
+
+    <span class="n">dataset_class</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">n_experiments</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">content_sha256</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="KgRelease">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.KgRelease.html#torchcell.knowledge_graphs.releases.KgRelease">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">KgRelease</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The self-description a served store carries as its ``KgRelease`` node."""</span>
+
+    <span class="n">release</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># &lt;YYYY.MM.DD&gt;-&lt;commit[:8]&gt;; the build date, the generation commit</span>
+    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># &lt;major&gt;.&lt;minor&gt;</span>
+    <span class="n">torchcell_commit</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="c1"># ``torchcell.__version__`` of the checkout that stamped the release and the git tag</span>
+    <span class="c1"># on its HEAD (None when the build ran from an untagged commit); both recorded at</span>
+    <span class="c1"># the stamp, never inferred later. None on a node written before the versioning</span>
+    <span class="c1"># spine ([[plan.data-release-program.2026.09.29]]).</span>
+    <span class="n">torchcell_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">torchcell_tag</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">built_at</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">biocypher_out</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">neo4j_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">n_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">datasets</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ReleaseDataset</span><span class="p">]</span>
+    <span class="c1"># dataset -&gt; schema symbol -&gt; contract fingerprint at build; the compatibility check</span>
+    <span class="n">closures</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">n_datasets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Number of datasets in the release."""</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">)</span>
+
+<div class="viewcode-block" id="KgRelease.to_properties">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.KgRelease.html#torchcell.knowledge_graphs.releases.KgRelease.to_properties">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Flat property map for the graph node (maps go in as JSON strings)."""</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"release"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">release</span><span class="p">,</span>
+            <span class="s2">"version"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+            <span class="s2">"torchcell_commit"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">torchcell_commit</span><span class="p">,</span>
+            <span class="s2">"torchcell_version"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">torchcell_version</span><span class="p">,</span>
+            <span class="s2">"torchcell_tag"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">torchcell_tag</span><span class="p">,</span>
+            <span class="s2">"built_at"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">built_at</span><span class="p">,</span>
+            <span class="s2">"biocypher_out"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">biocypher_out</span><span class="p">,</span>
+            <span class="s2">"neo4j_version"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">neo4j_version</span><span class="p">,</span>
+            <span class="s2">"n_nodes"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_nodes</span><span class="p">,</span>
+            <span class="s2">"n_datasets"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_datasets</span><span class="p">,</span>
+            <span class="s2">"datasets_json"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">items</span><span class="p">())},</span>
+                <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">":"</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="s2">"closures_json"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">closures</span><span class="p">,</span> <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">":"</span><span class="p">)),</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="KgRelease.from_properties">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.KgRelease.html#torchcell.knowledge_graphs.releases.KgRelease.from_properties">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_properties</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">props</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">KgRelease</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Inverse of :meth:`to_properties`."""</span>
+        <span class="n">datasets</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">ReleaseDataset</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">props</span><span class="p">[</span><span class="s2">"datasets_json"</span><span class="p">])</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">release</span><span class="o">=</span><span class="n">props</span><span class="p">[</span><span class="s2">"release"</span><span class="p">],</span>
+            <span class="n">version</span><span class="o">=</span><span class="n">props</span><span class="p">[</span><span class="s2">"version"</span><span class="p">],</span>
+            <span class="n">torchcell_commit</span><span class="o">=</span><span class="n">props</span><span class="p">[</span><span class="s2">"torchcell_commit"</span><span class="p">],</span>
+            <span class="n">torchcell_version</span><span class="o">=</span><span class="n">props</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"torchcell_version"</span><span class="p">),</span>
+            <span class="n">torchcell_tag</span><span class="o">=</span><span class="n">props</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"torchcell_tag"</span><span class="p">),</span>
+            <span class="n">built_at</span><span class="o">=</span><span class="n">props</span><span class="p">[</span><span class="s2">"built_at"</span><span class="p">],</span>
+            <span class="n">biocypher_out</span><span class="o">=</span><span class="n">props</span><span class="p">[</span><span class="s2">"biocypher_out"</span><span class="p">],</span>
+            <span class="n">neo4j_version</span><span class="o">=</span><span class="n">props</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"neo4j_version"</span><span class="p">),</span>
+            <span class="n">n_nodes</span><span class="o">=</span><span class="n">props</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"n_nodes"</span><span class="p">),</span>
+            <span class="n">datasets</span><span class="o">=</span><span class="n">datasets</span><span class="p">,</span>
+            <span class="n">closures</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">props</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"closures_json"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"</span><span class="si">{}</span><span class="s2">"</span><span class="p">),</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ServedDatabase">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.ServedDatabase.html#torchcell.knowledge_graphs.releases.ServedDatabase">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ServedDatabase</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One database of a DBMS as ``SHOW DATABASES`` and its release node describe it."""</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">aliases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">default</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">status</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># currentStatus</span>
+    <span class="n">release</span><span class="p">:</span> <span class="n">KgRelease</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">n_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">n_datasets</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">fault</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># the error a store read raised, if any</span></div>
+
+
+
+<div class="viewcode-block" id="ReleaseDiff">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.ReleaseDiff.html#torchcell.knowledge_graphs.releases.ReleaseDiff">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReleaseDiff</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Datasets by what happened to their bytes between two releases."""</span>
+
+    <span class="n">from_release</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">to_release</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">unchanged</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>  <span class="c1"># same content_sha256: byte-identical serialized records</span>
+    <span class="n">changed</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">added</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">removed</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="DatasetDrift">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.DatasetDrift.html#torchcell.knowledge_graphs.releases.DatasetDrift">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DatasetDrift</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A served dataset the local code would serialize under a different contract."""</span>
+
+    <span class="n">dataset_class</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">changed_symbols</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="ReleaseCompatibility">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.ReleaseCompatibility.html#torchcell.knowledge_graphs.releases.ReleaseCompatibility">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReleaseCompatibility</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Whether the local schema surface matches the contracts a release was built under."""</span>
+
+    <span class="n">release</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">torchcell_commit</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">compatible</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">drifted</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DatasetDrift</span><span class="p">]</span>
+    <span class="n">unchecked</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>  <span class="c1"># datasets whose closure the release did not record</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ok</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""True when no served dataset drifted from the local schema surface."""</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">drifted</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------- identity</span>
+
+
+<div class="viewcode-block" id="release_id">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.release_id.html#torchcell.knowledge_graphs.releases.release_id">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">release_id</span><span class="p">(</span><span class="n">built_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">commit</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``&lt;YYYY.MM.DD&gt;-&lt;commit[:8]&gt;``: the build date and the generation commit."""</span>
+    <span class="n">when</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">built_at</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">built_at</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">built_at</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">when</span><span class="si">:</span><span class="s2">%Y.%m.%d</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">commit</span><span class="p">[:</span><span class="n">_COMMIT_CHARS</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span></div>
+
+
+
+<div class="viewcode-block" id="next_version">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.next_version.html#torchcell.knowledge_graphs.releases.next_version">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">next_version</span><span class="p">(</span><span class="n">current</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"full"</span><span class="p">,</span> <span class="s2">"incremental"</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``major.minor`` after a full build (major + 1, minor 0) or an admission (minor + 1)."""</span>
+    <span class="k">if</span> <span class="n">current</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"1.0"</span>
+    <span class="n">major</span><span class="p">,</span> <span class="n">minor</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">part</span><span class="p">)</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">current</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"full"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">major</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">.0"</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">major</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">minor</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span></div>
+
+
+
+<div class="viewcode-block" id="content_sha256">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.content_sha256.html#torchcell.knowledge_graphs.releases.content_sha256">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">content_sha256</span><span class="p">(</span><span class="n">ids</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""sha256 of the sorted, newline-joined ids (trailing newline)."""</span>
+    <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">ids</span><span class="p">):</span>
+        <span class="n">digest</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span>
+        <span class="n">digest</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="sa">b</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">digest</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="content_hashes_from_csv">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.content_hashes_from_csv.html#torchcell.knowledge_graphs.releases.content_hashes_from_csv">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">content_hashes_from_csv</span><span class="p">(</span><span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""``Dataset.id -&gt; content_sha256`` from a BioCypher output directory.</span>
+
+<span class="sd">    Reads the ``ExperimentMemberOf`` edge files: ``:START_ID`` is the experiment id,</span>
+<span class="sd">    ``:END_ID`` the dataset id (the dataset class name). Every id is held in memory,</span>
+<span class="sd">    grouped by dataset, so this belongs on the build node.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.incremental_import</span><span class="w"> </span><span class="kn">import</span> <span class="n">discover_csv_groups</span>
+
+    <span class="n">csv</span><span class="o">.</span><span class="n">field_size_limit</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">maxsize</span><span class="p">)</span>
+    <span class="n">group</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+        <span class="n">g</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">discover_csv_groups</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">g</span><span class="o">.</span><span class="n">label</span> <span class="o">==</span> <span class="s2">"ExperimentMemberOf"</span>
+    <span class="p">)</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">":START_ID"</span><span class="p">)</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">":END_ID"</span><span class="p">)</span>
+    <span class="n">ids</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">group</span><span class="o">.</span><span class="n">part_paths</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">part</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">,</span> <span class="n">quotechar</span><span class="o">=</span><span class="s2">"'"</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                <span class="n">ids</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="n">end</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"'"</span><span class="p">)]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">start</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"'"</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">content_sha256</span><span class="p">(</span><span class="n">members</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">members</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">ids</span><span class="o">.</span><span class="n">items</span><span class="p">())}</span></div>
+
+
+
+<div class="viewcode-block" id="content_hashes_from_store">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.content_hashes_from_store.html#torchcell.knowledge_graphs.releases.content_hashes_from_store">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">content_hashes_from_store</span><span class="p">(</span>
+    <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">user</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">database</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""``Dataset.id -&gt; content_sha256`` streamed from a running store, one dataset at a time."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">neo4j</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphDatabase</span>
+
+    <span class="n">driver</span> <span class="o">=</span> <span class="n">GraphDatabase</span><span class="o">.</span><span class="n">driver</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">))</span>
+    <span class="n">hashes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">with</span> <span class="n">driver</span><span class="o">.</span><span class="n">session</span><span class="p">(</span><span class="n">database</span><span class="o">=</span><span class="n">database</span><span class="p">,</span> <span class="n">fetch_size</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">session</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                <span class="s2">"MATCH (d:Dataset) RETURN d.id ORDER BY d.id"</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="p">]</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                <span class="s2">"MATCH (d:Dataset {id: $id})&lt;-[:ExperimentMemberOf]-(e:Experiment) "</span>
+                <span class="s2">"RETURN e.id AS id"</span><span class="p">,</span>
+                <span class="nb">id</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">hashes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">content_sha256</span><span class="p">(</span><span class="n">record</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]</span> <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">result</span><span class="p">)</span>
+    <span class="n">driver</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">hashes</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------- the node</span>
+
+
+<div class="viewcode-block" id="read_release">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.read_release.html#torchcell.knowledge_graphs.releases.read_release">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_release</span><span class="p">(</span><span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">user</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">database</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KgRelease</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The store's release node, or None when the store predates release nodes."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">neo4j</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphDatabase</span>
+
+    <span class="n">driver</span> <span class="o">=</span> <span class="n">GraphDatabase</span><span class="o">.</span><span class="n">driver</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">))</span>
+    <span class="k">with</span> <span class="n">driver</span><span class="o">.</span><span class="n">session</span><span class="p">(</span><span class="n">database</span><span class="o">=</span><span class="n">database</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="sa">f</span><span class="s2">"MATCH (r:</span><span class="si">{</span><span class="n">RELEASE_LABEL</span><span class="si">}</span><span class="s2">) RETURN r"</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+    <span class="n">driver</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">database</span><span class="si">}</span><span class="s2"> carries </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">RELEASE_LABEL</span><span class="si">}</span><span class="s2"> nodes"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">KgRelease</span><span class="o">.</span><span class="n">from_properties</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">rows</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]))</span></div>
+
+
+
+<div class="viewcode-block" id="write_release">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.write_release.html#torchcell.knowledge_graphs.releases.write_release">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_release</span><span class="p">(</span>
+    <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">user</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">database</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">release</span><span class="p">:</span> <span class="n">KgRelease</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Write (or replace) the store's single release node; the database must be writable."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">neo4j</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphDatabase</span>
+
+    <span class="n">driver</span> <span class="o">=</span> <span class="n">GraphDatabase</span><span class="o">.</span><span class="n">driver</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">))</span>
+    <span class="k">with</span> <span class="n">driver</span><span class="o">.</span><span class="n">session</span><span class="p">(</span><span class="n">database</span><span class="o">=</span><span class="n">database</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+        <span class="n">session</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"MERGE (r:</span><span class="si">{</span><span class="n">RELEASE_LABEL</span><span class="si">}</span><span class="s2"> </span><span class="se">{{</span><span class="s2">singleton: true</span><span class="se">}}</span><span class="s2">) SET r += $props"</span><span class="p">,</span>
+            <span class="n">props</span><span class="o">=</span><span class="n">release</span><span class="o">.</span><span class="n">to_properties</span><span class="p">(),</span>
+        <span class="p">)</span>
+    <span class="n">driver</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="release_from_manifest">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.release_from_manifest.html#torchcell.knowledge_graphs.releases.release_from_manifest">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">release_from_manifest</span><span class="p">(</span>
+    <span class="n">manifest</span><span class="p">:</span> <span class="n">KgBuildManifest</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">built_at</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">content_hashes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+    <span class="n">n_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KgRelease</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The release record a manifest describes, with the measured content hashes."""</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">content_hashes</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no content hash for served datasets </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">torchcell_commit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"the manifest records no full-build commit"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">version</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">manifest</span><span class="o">.</span><span class="n">release</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"the manifest carries no version/release; stamp it first"</span><span class="p">)</span>
+    <span class="n">datasets</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">ReleaseDataset</span><span class="p">(</span>
+            <span class="n">dataset_class</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">n_experiments</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">n_experiments</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">),</span>
+            <span class="n">content_sha256</span><span class="o">=</span><span class="n">content_hashes</span><span class="p">[</span><span class="n">name</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">KgRelease</span><span class="p">(</span>
+        <span class="n">release</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">release</span><span class="p">,</span>
+        <span class="n">version</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+        <span class="n">torchcell_commit</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">torchcell_commit</span><span class="p">,</span>
+        <span class="n">torchcell_version</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">torchcell_version</span><span class="p">,</span>
+        <span class="n">torchcell_tag</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">torchcell_tag</span><span class="p">,</span>
+        <span class="n">built_at</span><span class="o">=</span><span class="n">built_at</span><span class="p">,</span>
+        <span class="n">biocypher_out</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">events</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">biocypher_out</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="n">neo4j_version</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">neo4j_version</span><span class="p">,</span>
+        <span class="n">n_nodes</span><span class="o">=</span><span class="n">n_nodes</span><span class="p">,</span>
+        <span class="n">datasets</span><span class="o">=</span><span class="n">datasets</span><span class="p">,</span>
+        <span class="n">closures</span><span class="o">=</span><span class="p">{</span>
+            <span class="n">name</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">closure</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">},</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="stamp_manifest">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.stamp_manifest.html#torchcell.knowledge_graphs.releases.stamp_manifest">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">stamp_manifest</span><span class="p">(</span>
+    <span class="n">manifest</span><span class="p">:</span> <span class="n">KgBuildManifest</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">kind</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"full"</span><span class="p">,</span> <span class="s2">"incremental"</span><span class="p">],</span>
+    <span class="n">built_at</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">content_hashes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+    <span class="n">previous_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">torchcell_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">torchcell_tag</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KgBuildManifest</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Give a manifest its version, release id, package version, and content hashes.</span>
+
+<span class="sd">    A full build passes a hash for every dataset. An incremental admission passes the</span>
+<span class="sd">    hashes of the datasets it imported; the rest keep the hash they already carry,</span>
+<span class="sd">    since incremental import never touches existing nodes. Any dataset left without a</span>
+<span class="sd">    hash is an error. ``torchcell_version`` and ``torchcell_tag`` are what the stamping</span>
+<span class="sd">    checkout reports (``checkout_package_version``); the release names them from now on.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">torchcell_commit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"the manifest records no full-build commit"</span><span class="p">)</span>
+    <span class="n">manifest</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="n">next_version</span><span class="p">(</span><span class="n">previous_version</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span>
+    <span class="n">commit</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">events</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">torchcell_commit</span> <span class="ow">or</span> <span class="n">manifest</span><span class="o">.</span><span class="n">torchcell_commit</span>
+    <span class="n">manifest</span><span class="o">.</span><span class="n">release</span> <span class="o">=</span> <span class="n">release_id</span><span class="p">(</span><span class="n">built_at</span><span class="p">,</span> <span class="n">commit</span><span class="p">)</span>
+    <span class="n">manifest</span><span class="o">.</span><span class="n">torchcell_version</span> <span class="o">=</span> <span class="n">torchcell_version</span>
+    <span class="n">manifest</span><span class="o">.</span><span class="n">torchcell_tag</span> <span class="o">=</span> <span class="n">torchcell_tag</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">content_hashes</span><span class="p">:</span>
+            <span class="n">entry</span><span class="o">.</span><span class="n">content_sha256</span> <span class="o">=</span> <span class="n">content_hashes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">content_sha256</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no content hash for served datasets </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">manifest</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------- serving</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fault_text</span><span class="p">(</span><span class="n">exc</span><span class="p">:</span> <span class="ne">BaseException</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">else</span> <span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+    <span class="k">return</span> <span class="n">text</span><span class="p">[:</span><span class="mi">120</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="list_databases">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.list_databases.html#torchcell.knowledge_graphs.releases.list_databases">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">list_databases</span><span class="p">(</span>
+    <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">user</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">probe</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ServedDatabase</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Every user database of the DBMS at ``uri`` with its aliases, release, and health.</span>
+
+<span class="sd">    ``probe`` reads one ``Dataset`` node from each online database: the count store</span>
+<span class="sd">    answers even when the files underneath fault, so a real property read is what tells</span>
+<span class="sd">    a healthy store from one whose cold pages raise ``IOException``.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">neo4j</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphDatabase</span>
+
+    <span class="n">driver</span> <span class="o">=</span> <span class="n">GraphDatabase</span><span class="o">.</span><span class="n">driver</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">),</span> <span class="n">connection_timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">driver</span><span class="o">.</span><span class="n">session</span><span class="p">(</span><span class="n">database</span><span class="o">=</span><span class="s2">"system"</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                <span class="s2">"SHOW DATABASES YIELD name, aliases, default, currentStatus, type "</span>
+                <span class="s2">"RETURN name, aliases, default, currentStatus, type"</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># a DBMS whose system database itself faults</span>
+        <span class="n">driver</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">ServedDatabase</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"(dbms)"</span><span class="p">,</span>
+                <span class="n">aliases</span><span class="o">=</span><span class="p">[],</span>
+                <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">status</span><span class="o">=</span><span class="s2">"?"</span><span class="p">,</span>
+                <span class="n">fault</span><span class="o">=</span><span class="n">_fault_text</span><span class="p">(</span><span class="n">exc</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+    <span class="n">served</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ServedDatabase</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">aliases</span><span class="p">,</span> <span class="n">default</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"system"</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">SYSTEM_DATABASES</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="n">ServedDatabase</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">aliases</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">aliases</span><span class="p">),</span> <span class="n">default</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">default</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="n">status</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">probe</span> <span class="ow">and</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">"online"</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">driver</span><span class="o">.</span><span class="n">session</span><span class="p">(</span><span class="n">database</span><span class="o">=</span><span class="n">name</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+                    <span class="n">entry</span><span class="o">.</span><span class="n">n_nodes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+                        <span class="n">session</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">"MATCH (n) RETURN count(n)"</span><span class="p">)</span><span class="o">.</span><span class="n">single</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="n">entry</span><span class="o">.</span><span class="n">n_datasets</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+                        <span class="n">session</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">"MATCH (d:Dataset) RETURN count(d)"</span><span class="p">)</span><span class="o">.</span><span class="n">single</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="n">session</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">"MATCH (d:Dataset) RETURN d.id LIMIT 1"</span><span class="p">)</span><span class="o">.</span><span class="n">consume</span><span class="p">()</span>
+                    <span class="n">node</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="sa">f</span><span class="s2">"MATCH (r:</span><span class="si">{</span><span class="n">RELEASE_LABEL</span><span class="si">}</span><span class="s2">) RETURN r"</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">node</span><span class="p">:</span>
+                    <span class="n">entry</span><span class="o">.</span><span class="n">release</span> <span class="o">=</span> <span class="n">KgRelease</span><span class="o">.</span><span class="n">from_properties</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">node</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># the probe's purpose is to report the fault</span>
+                <span class="n">entry</span><span class="o">.</span><span class="n">fault</span> <span class="o">=</span> <span class="n">_fault_text</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+        <span class="n">served</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+    <span class="n">driver</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">served</span></div>
+
+
+
+<div class="viewcode-block" id="list_databases_bounded">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.list_databases_bounded.html#torchcell.knowledge_graphs.releases.list_databases_bounded">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">list_databases_bounded</span><span class="p">(</span>
+    <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">user</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">timeout_s</span><span class="p">:</span> <span class="nb">float</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ServedDatabase</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">""":func:`list_databases` with a wall-clock bound; a hung host yields one row."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="ne">TimeoutError</span> <span class="k">as</span> <span class="n">FutureTimeout</span>
+
+    <span class="n">pool</span> <span class="o">=</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">future</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">list_databases</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="n">timeout_s</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">FutureTimeout</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">ServedDatabase</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"(dbms)"</span><span class="p">,</span>
+                <span class="n">aliases</span><span class="o">=</span><span class="p">[],</span>
+                <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">status</span><span class="o">=</span><span class="s2">"?"</span><span class="p">,</span>
+                <span class="n">fault</span><span class="o">=</span><span class="sa">f</span><span class="s2">"no answer within </span><span class="si">{</span><span class="n">timeout_s</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">s"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># connection refused, auth, DNS: one row, not a crash</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">ServedDatabase</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"(dbms)"</span><span class="p">,</span>
+                <span class="n">aliases</span><span class="o">=</span><span class="p">[],</span>
+                <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">status</span><span class="o">=</span><span class="s2">"?"</span><span class="p">,</span>
+                <span class="n">fault</span><span class="o">=</span><span class="n">_fault_text</span><span class="p">(</span><span class="n">exc</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">shutdown</span><span class="p">(</span><span class="n">wait</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="resolve_database">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.resolve_database.html#torchcell.knowledge_graphs.releases.resolve_database">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_database</span><span class="p">(</span><span class="n">version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">user</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The database name to open for ``version``.</span>
+
+<span class="sd">    ``latest`` and ``pinned`` are aliases and pass through once the DBMS has them; a</span>
+<span class="sd">    physical database name passes through; a release id or a ``major.minor`` version</span>
+<span class="sd">    resolves through the release nodes. Anything else raises ``LookupError``.</span>
+<span class="sd">    """</span>
+    <span class="n">served</span> <span class="o">=</span> <span class="n">list_databases</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">probe</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">{</span><span class="n">db</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">db</span> <span class="ow">in</span> <span class="n">served</span><span class="p">}</span>
+    <span class="n">aliases</span> <span class="o">=</span> <span class="p">{</span><span class="n">alias</span> <span class="k">for</span> <span class="n">db</span> <span class="ow">in</span> <span class="n">served</span> <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">db</span><span class="o">.</span><span class="n">aliases</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">version</span> <span class="ow">in</span> <span class="n">aliases</span> <span class="ow">or</span> <span class="n">version</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">version</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">neo4j</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphDatabase</span>
+
+    <span class="n">driver</span> <span class="o">=</span> <span class="n">GraphDatabase</span><span class="o">.</span><span class="n">driver</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">))</span>
+    <span class="n">matches</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">db</span> <span class="ow">in</span> <span class="n">served</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">db</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="s2">"online"</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">with</span> <span class="n">driver</span><span class="o">.</span><span class="n">session</span><span class="p">(</span><span class="n">database</span><span class="o">=</span><span class="n">db</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"MATCH (r:</span><span class="si">{</span><span class="n">RELEASE_LABEL</span><span class="si">}</span><span class="s2">) RETURN r.release, r.version"</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">rows</span> <span class="ow">and</span> <span class="n">version</span> <span class="ow">in</span> <span class="p">(</span><span class="n">rows</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">rows</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">driver</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">matches</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">matches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">matches</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"no database at </span><span class="si">{</span><span class="n">uri</span><span class="si">}</span><span class="s2"> serves version </span><span class="si">{</span><span class="n">version</span><span class="si">!r}</span><span class="s2">; "</span>
+            <span class="sa">f</span><span class="s2">"databases </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">names</span><span class="p">)</span><span class="si">}</span><span class="s2">, aliases </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">aliases</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"version </span><span class="si">{</span><span class="n">version</span><span class="si">!r}</span><span class="s2"> is served by several databases: </span><span class="si">{</span><span class="n">matches</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="datasets">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.datasets.html#torchcell.knowledge_graphs.releases.datasets">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">datasets</span><span class="p">(</span><span class="n">version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">user</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReleaseDataset</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The datasets a version serves, with record counts and content hashes."""</span>
+    <span class="n">database</span> <span class="o">=</span> <span class="n">resolve_database</span><span class="p">(</span><span class="n">version</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span>
+    <span class="n">release</span> <span class="o">=</span> <span class="n">read_release</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">database</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">release</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">database</span><span class="si">}</span><span class="s2"> carries no </span><span class="si">{</span><span class="n">RELEASE_LABEL</span><span class="si">}</span><span class="s2"> node"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">release</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">release</span><span class="o">.</span><span class="n">datasets</span><span class="p">)]</span></div>
+
+
+
+<div class="viewcode-block" id="diff">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.diff.html#torchcell.knowledge_graphs.releases.diff">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">diff</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">KgRelease</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">KgRelease</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReleaseDiff</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Datasets unchanged (byte-identical), changed, added, and removed from ``a`` to ``b``."""</span>
+    <span class="n">shared</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">datasets</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">datasets</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">ReleaseDiff</span><span class="p">(</span>
+        <span class="n">from_release</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">release</span><span class="p">,</span>
+        <span class="n">to_release</span><span class="o">=</span><span class="n">b</span><span class="o">.</span><span class="n">release</span><span class="p">,</span>
+        <span class="n">unchanged</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">n</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">shared</span>
+            <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">content_sha256</span> <span class="o">==</span> <span class="n">b</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">content_sha256</span>
+        <span class="p">],</span>
+        <span class="n">changed</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">n</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">shared</span>
+            <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">content_sha256</span> <span class="o">!=</span> <span class="n">b</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">content_sha256</span>
+        <span class="p">],</span>
+        <span class="n">added</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">datasets</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">datasets</span><span class="p">)),</span>
+        <span class="n">removed</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">datasets</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">datasets</span><span class="p">)),</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="compatibility">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.compatibility.html#torchcell.knowledge_graphs.releases.compatibility">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compatibility</span><span class="p">(</span><span class="n">release</span><span class="p">:</span> <span class="n">KgRelease</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReleaseCompatibility</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Which served datasets the checkout at ``repo_root`` would serialize differently."""</span>
+    <span class="k">return</span> <span class="n">compatibility_with_surface</span><span class="p">(</span><span class="n">release</span><span class="p">,</span> <span class="n">surface_in_worktree</span><span class="p">(</span><span class="n">repo_root</span><span class="p">))</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">compatibility_with_surface</span><span class="p">(</span>
+    <span class="n">release</span><span class="p">:</span> <span class="n">KgRelease</span><span class="p">,</span> <span class="n">surface</span><span class="p">:</span> <span class="n">SchemaSurface</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReleaseCompatibility</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">""":func:`compatibility` against an already-loaded schema surface."""</span>
+    <span class="k">return</span> <span class="n">closure_compatibility</span><span class="p">(</span>
+        <span class="n">release</span><span class="o">.</span><span class="n">release</span><span class="p">,</span>
+        <span class="n">release</span><span class="o">.</span><span class="n">torchcell_commit</span><span class="p">,</span>
+        <span class="n">release</span><span class="o">.</span><span class="n">datasets</span><span class="p">,</span>
+        <span class="n">release</span><span class="o">.</span><span class="n">closures</span><span class="p">,</span>
+        <span class="n">surface</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">closure_compatibility</span><span class="p">(</span>
+    <span class="n">release</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">torchcell_commit</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">dataset_names</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">closures</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+    <span class="n">surface</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReleaseCompatibility</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The compatibility verdict from a release's closures and any schema surface.</span>
+
+<span class="sd">    The surface may come from the working tree, from ``git show`` at a package tag</span>
+<span class="sd">    (``scripts/kg_compat_page.py`` reads the closures from the committed snapshot), or</span>
+<span class="sd">    from any two files parsed by ``torchcell.provenance.schema_deps.load_surface``.</span>
+<span class="sd">    """</span>
+    <span class="n">compatible</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">drifted</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DatasetDrift</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">unchecked</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">dataset_names</span><span class="p">):</span>
+        <span class="n">closure</span> <span class="o">=</span> <span class="n">closures</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">closure</span><span class="p">:</span>
+            <span class="n">unchecked</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">changed</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">symbol</span>
+            <span class="k">for</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">fingerprint</span> <span class="ow">in</span> <span class="n">closure</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">surface</span><span class="o">.</span><span class="n">fingerprints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span> <span class="o">!=</span> <span class="n">fingerprint</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">changed</span><span class="p">:</span>
+            <span class="n">drifted</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">DatasetDrift</span><span class="p">(</span><span class="n">dataset_class</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">changed_symbols</span><span class="o">=</span><span class="n">changed</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">compatible</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ReleaseCompatibility</span><span class="p">(</span>
+        <span class="n">release</span><span class="o">=</span><span class="n">release</span><span class="p">,</span>
+        <span class="n">torchcell_commit</span><span class="o">=</span><span class="n">torchcell_commit</span><span class="p">,</span>
+        <span class="n">compatible</span><span class="o">=</span><span class="n">compatible</span><span class="p">,</span>
+        <span class="n">drifted</span><span class="o">=</span><span class="n">drifted</span><span class="p">,</span>
+        <span class="n">unchecked</span><span class="o">=</span><span class="n">unchecked</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- reporting</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">package_checkout</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The checkout this ``torchcell`` was imported from (the parent of the package)."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">torchcell</span>
+
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">torchcell</span><span class="o">.</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_git</span><span class="p">(</span><span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="p">[</span><span class="s2">"git"</span><span class="p">,</span> <span class="s2">"-C"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">repo_root</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">],</span>
+        <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="commit_index">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.commit_index.html#torchcell.knowledge_graphs.releases.commit_index">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">commit_index</span><span class="p">(</span><span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">sha</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Position of ``sha`` on linear main, ``(off-main)``, or ``(unknown)``."""</span>
+    <span class="k">if</span> <span class="n">_git</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="s2">"cat-file"</span><span class="p">,</span> <span class="s2">"-e"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">sha</span><span class="si">}</span><span class="s2">^</span><span class="se">{{</span><span class="s2">commit</span><span class="se">}}</span><span class="s2">"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"(unknown)"</span>
+    <span class="k">if</span> <span class="n">_git</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="s2">"merge-base"</span><span class="p">,</span> <span class="s2">"--is-ancestor"</span><span class="p">,</span> <span class="n">sha</span><span class="p">,</span> <span class="s2">"main"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"(off-main)"</span>
+    <span class="k">return</span> <span class="n">_git</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="s2">"rev-list"</span><span class="p">,</span> <span class="s2">"--count"</span><span class="p">,</span> <span class="n">sha</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"(unknown)"</span></div>
+
+
+
+<div class="viewcode-block" id="commit_date">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.commit_date.html#torchcell.knowledge_graphs.releases.commit_date">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">commit_date</span><span class="p">(</span><span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">sha</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Committer date of ``sha`` as ``YYYY.MM.DD``."""</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">_git</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="s2">"show"</span><span class="p">,</span> <span class="s2">"-s"</span><span class="p">,</span> <span class="s2">"--format=</span><span class="si">%c</span><span class="s2">d"</span><span class="p">,</span> <span class="s2">"--date=format:%Y.%m.</span><span class="si">%d</span><span class="s2">"</span><span class="p">,</span> <span class="n">sha</span><span class="p">)</span>
+        <span class="ow">or</span> <span class="s2">"(unknown)"</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main_build</span><span class="p">(</span><span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""``(&lt;date&gt;-&lt;sha&gt;, subject)`` of local main, the reference a served release lags."""</span>
+    <span class="n">sha</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">_git</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="s2">"rev-parse"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"--short=</span><span class="si">{</span><span class="n">_COMMIT_CHARS</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"main"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"(no main)"</span>
+    <span class="p">)</span>
+    <span class="n">date</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">_git</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="s2">"show"</span><span class="p">,</span> <span class="s2">"-s"</span><span class="p">,</span> <span class="s2">"--format=</span><span class="si">%c</span><span class="s2">d"</span><span class="p">,</span> <span class="s2">"--date=format:%Y.%m.</span><span class="si">%d</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"main"</span><span class="p">)</span>
+        <span class="ow">or</span> <span class="s2">"????.??.??"</span>
+    <span class="p">)</span>
+    <span class="n">subject</span> <span class="o">=</span> <span class="n">_git</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">,</span> <span class="s2">"-1"</span><span class="p">,</span> <span class="s2">"--format=</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"main"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">date</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">sha</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">subject</span>
+
+
+<div class="viewcode-block" id="behind_main">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.behind_main.html#torchcell.knowledge_graphs.releases.behind_main">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">behind_main</span><span class="p">(</span><span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">sha</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""How far a served commit lags local main."""</span>
+    <span class="k">if</span> <span class="n">_git</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="s2">"cat-file"</span><span class="p">,</span> <span class="s2">"-e"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">sha</span><span class="si">}</span><span class="s2">^</span><span class="se">{{</span><span class="s2">commit</span><span class="se">}}</span><span class="s2">"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"(commit </span><span class="si">{</span><span class="n">sha</span><span class="si">}</span><span class="s2"> not in local history)"</span>
+    <span class="n">behind</span> <span class="o">=</span> <span class="n">_git</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="s2">"rev-list"</span><span class="p">,</span> <span class="s2">"--count"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">sha</span><span class="si">}</span><span class="s2">..main"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"?"</span>
+    <span class="n">ahead</span> <span class="o">=</span> <span class="n">_git</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="s2">"rev-list"</span><span class="p">,</span> <span class="s2">"--count"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"main..</span><span class="si">{</span><span class="n">sha</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"?"</span>
+    <span class="k">if</span> <span class="n">behind</span> <span class="o">==</span> <span class="s2">"0"</span> <span class="ow">and</span> <span class="n">ahead</span> <span class="o">==</span> <span class="s2">"0"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"up to date with main"</span>
+    <span class="k">if</span> <span class="n">ahead</span> <span class="o">==</span> <span class="s2">"0"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">behind</span><span class="si">}</span><span class="s2"> behind main"</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">behind</span><span class="si">}</span><span class="s2"> behind, </span><span class="si">{</span><span class="n">ahead</span><span class="si">}</span><span class="s2"> ahead of main"</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">package_label</span><span class="p">(</span><span class="n">release</span><span class="p">:</span> <span class="n">KgRelease</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The PKG cell: the tag when the build ran from one, else the version marked untagged."""</span>
+    <span class="k">if</span> <span class="n">release</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">release</span><span class="o">.</span><span class="n">torchcell_version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"-"</span>
+    <span class="k">if</span> <span class="n">release</span><span class="o">.</span><span class="n">torchcell_tag</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">release</span><span class="o">.</span><span class="n">torchcell_version</span><span class="si">}</span><span class="s2"> (untagged)"</span>
+    <span class="k">return</span> <span class="n">release</span><span class="o">.</span><span class="n">torchcell_tag</span>
+
+
+<div class="viewcode-block" id="status_rows">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.status_rows.html#torchcell.knowledge_graphs.releases.status_rows">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">status_rows</span><span class="p">(</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">served</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ServedDatabase</span><span class="p">],</span> <span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Table rows for one host: HOST DATABASE VERSION RELEASE PKG COMMIT# DATE DATASETS NODES ALIASES STATUS."""</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">db</span> <span class="ow">in</span> <span class="n">served</span><span class="p">:</span>
+        <span class="n">release</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">release</span>
+        <span class="n">commit</span> <span class="o">=</span> <span class="n">release</span><span class="o">.</span><span class="n">torchcell_commit</span> <span class="k">if</span> <span class="n">release</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">status</span>
+        <span class="k">if</span> <span class="n">db</span><span class="o">.</span><span class="n">fault</span><span class="p">:</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"faulting (</span><span class="si">{</span><span class="n">db</span><span class="o">.</span><span class="n">fault</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="k">elif</span> <span class="n">db</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"online"</span> <span class="ow">and</span> <span class="n">release</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">db</span><span class="o">.</span><span class="n">n_datasets</span><span class="p">:</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="s2">"online (no release node)"</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">label</span><span class="p">,</span>
+                <span class="n">db</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="p">(</span><span class="s2">" [default]"</span> <span class="k">if</span> <span class="n">db</span><span class="o">.</span><span class="n">default</span> <span class="k">else</span> <span class="s2">""</span><span class="p">),</span>
+                <span class="n">release</span><span class="o">.</span><span class="n">version</span> <span class="k">if</span> <span class="n">release</span> <span class="k">else</span> <span class="s2">"-"</span><span class="p">,</span>
+                <span class="n">release</span><span class="o">.</span><span class="n">release</span> <span class="k">if</span> <span class="n">release</span> <span class="k">else</span> <span class="s2">"-"</span><span class="p">,</span>
+                <span class="n">package_label</span><span class="p">(</span><span class="n">release</span><span class="p">),</span>
+                <span class="n">commit_index</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="n">commit</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">repo_root</span> <span class="ow">and</span> <span class="n">commit</span><span class="p">)</span> <span class="k">else</span> <span class="s2">"-"</span><span class="p">,</span>
+                <span class="n">commit_date</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="n">commit</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">repo_root</span> <span class="ow">and</span> <span class="n">commit</span><span class="p">)</span> <span class="k">else</span> <span class="s2">"-"</span><span class="p">,</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">n_datasets</span><span class="p">)</span> <span class="k">if</span> <span class="n">db</span><span class="o">.</span><span class="n">n_datasets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">"-"</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">db</span><span class="o">.</span><span class="n">n_nodes</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">db</span><span class="o">.</span><span class="n">n_nodes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">"-"</span><span class="p">,</span>
+                <span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">aliases</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"-"</span><span class="p">,</span>
+                <span class="n">status</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">rows</span></div>
+
+
+
+<div class="viewcode-block" id="format_table">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.format_table.html#torchcell.knowledge_graphs.releases.format_table">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">format_table</span><span class="p">(</span><span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Fixed-width table with the header row."""</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">"HOST"</span><span class="p">,</span> <span class="s2">"DATABASE"</span><span class="p">,</span> <span class="s2">"VERSION"</span><span class="p">,</span> <span class="s2">"RELEASE"</span><span class="p">,</span> <span class="s2">"PKG"</span><span class="p">,</span> <span class="s2">"COMMIT#"</span><span class="p">,</span> <span class="s2">"DATE"</span><span class="p">,</span>
+        <span class="s2">"DATASETS"</span><span class="p">,</span> <span class="s2">"NODES"</span><span class="p">,</span> <span class="s2">"ALIASES"</span><span class="p">,</span> <span class="s2">"STATUS"</span><span class="p">,</span>
+    <span class="p">]</span>  <span class="c1"># fmt: skip</span>
+    <span class="n">table</span> <span class="o">=</span> <span class="p">[</span><span class="n">header</span><span class="p">,</span> <span class="o">*</span><span class="n">rows</span><span class="p">]</span>
+    <span class="n">widths</span> <span class="o">=</span> <span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">table</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">))]</span>
+    <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="s2">"  "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">widths</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cell</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">row</span><span class="p">))</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">table</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------- CLI</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_connection</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.database.connection</span><span class="w"> </span><span class="kn">import</span> <span class="n">neo4j_connection_settings</span>
+
+    <span class="n">settings</span> <span class="o">=</span> <span class="n">neo4j_connection_settings</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">uri</span> <span class="ow">or</span> <span class="n">settings</span><span class="o">.</span><span class="n">uri</span><span class="p">,</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">user</span> <span class="ow">or</span> <span class="n">settings</span><span class="o">.</span><span class="n">username</span><span class="p">,</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">password</span> <span class="ow">or</span> <span class="n">settings</span><span class="o">.</span><span class="n">password</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_release_for</span><span class="p">(</span><span class="n">version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">user</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KgRelease</span><span class="p">:</span>
+    <span class="n">database</span> <span class="o">=</span> <span class="n">resolve_database</span><span class="p">(</span><span class="n">version</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span>
+    <span class="n">release</span> <span class="o">=</span> <span class="n">read_release</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">database</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">release</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">database</span><span class="si">}</span><span class="s2"> carries no </span><span class="si">{</span><span class="n">RELEASE_LABEL</span><span class="si">}</span><span class="s2"> node"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">release</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Command-line entry: status, datasets, diff, compat, hashes, write-node, stamp."""</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="n">prog</span><span class="o">=</span><span class="s2">"python -m torchcell.knowledge_graphs.releases"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="vm">__doc__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--uri"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"bolt URI (default NEO4J_URI)"</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--user"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--password"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--repo"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"torchcell checkout for git columns"</span>
+    <span class="p">)</span>
+    <span class="n">sub</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">dest</span><span class="o">=</span><span class="s2">"command"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">p_status</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"status"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"one table row per served database"</span><span class="p">)</span>
+    <span class="n">p_status</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--label"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">"gilahyper"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"the HOST column"</span><span class="p">)</span>
+    <span class="n">p_status</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--host"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"append"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"LABEL=URI[|USER|PASSWORD]; repeat for several hosts in one aligned "</span>
+        <span class="s2">"table (overrides --uri/--label; a host that does not answer within "</span>
+        <span class="s2">"--host-timeout seconds gets one unreachable row)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_status</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--host-timeout"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">20.0</span><span class="p">)</span>
+    <span class="n">p_status</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--no-header"</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">)</span>
+    <span class="n">p_status</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--json"</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">)</span>
+
+    <span class="n">p_ds</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"datasets"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"datasets a version serves"</span><span class="p">)</span>
+    <span class="n">p_ds</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--version"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_VERSION</span><span class="p">)</span>
+    <span class="n">p_ds</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--json"</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">)</span>
+
+    <span class="n">p_diff</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"diff"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"byte-identity diff between two versions"</span><span class="p">)</span>
+    <span class="n">p_diff</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"a"</span><span class="p">)</span>
+    <span class="n">p_diff</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"b"</span><span class="p">)</span>
+    <span class="n">p_diff</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--json"</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">)</span>
+
+    <span class="n">p_compat</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"compat"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"local schema surface vs a served release"</span><span class="p">)</span>
+    <span class="n">p_compat</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--version"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_VERSION</span><span class="p">)</span>
+
+    <span class="n">p_hash</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"hashes"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"content hashes from CSVs or the store"</span><span class="p">)</span>
+    <span class="n">p_hash</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--csv-dir"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"BioCypher output directory"</span><span class="p">)</span>
+    <span class="n">p_hash</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--database"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"stream from this database"</span><span class="p">)</span>
+    <span class="n">p_hash</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--output"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"write Dataset.id -&gt; sha256 JSON"</span>
+    <span class="p">)</span>
+
+    <span class="n">p_stamp</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"stamp"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"give a manifest its version, release id, and content hashes"</span>
+    <span class="p">)</span>
+    <span class="n">p_stamp</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--manifest"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">p_stamp</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--kind"</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">"full"</span><span class="p">,</span> <span class="s2">"incremental"</span><span class="p">],</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">p_stamp</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--built-at"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">p_stamp</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--hashes"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"JSON from `hashes`"</span><span class="p">)</span>
+    <span class="n">p_stamp</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--previous-version"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"version of the store this replaces"</span>
+    <span class="p">)</span>
+
+    <span class="n">p_snap</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"snapshot"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"write database/releases/&lt;release&gt;.json (+ .closures.json) from a "</span>
+        <span class="s2">"stamped manifest, for the committed compatibility page"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_snap</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--manifest"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">p_snap</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--n-nodes"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">p_snap</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--built-at"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"the stamp's timestamp (default: the manifest's last event time)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_snap</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--repo-root"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"checkout whose database/releases/ receives the files (default: the "</span>
+        <span class="s2">"checkout this torchcell was imported from)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_snap</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--torchcell-version"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"BOOTSTRAP ONLY: the package version for a manifest stamped before "</span>
+        <span class="s2">"the versioning spine (refused when the manifest already records one)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_snap</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--torchcell-tag"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"BOOTSTRAP ONLY: the tag on the release commit, with --torchcell-version"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_snap</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--note"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"BOOTSTRAP ONLY: how the two values were derived; appended to the "</span>
+        <span class="s2">"snapshot's last event note"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">p_node</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"write-node"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"write the KgRelease node from a manifest"</span>
+    <span class="p">)</span>
+    <span class="n">p_node</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--manifest"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">p_node</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--database"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">p_node</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--built-at"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">p_node</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--n-nodes"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
+    <span class="n">repo_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">repo</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">repo</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"hashes"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">csv_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">database</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"give exactly one of --csv-dir or --database"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">csv_dir</span><span class="p">:</span>
+            <span class="n">hashes</span> <span class="o">=</span> <span class="n">content_hashes_from_csv</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">csv_dir</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">uri</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span> <span class="o">=</span> <span class="n">_connection</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+            <span class="n">hashes</span> <span class="o">=</span> <span class="n">content_hashes_from_store</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">database</span><span class="p">)</span>
+        <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">hashes</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">hashes</span><span class="p">)</span><span class="si">}</span><span class="s2"> content hashes -&gt; </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"stamp"</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.kg_manifest</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_manifest</span><span class="p">,</span> <span class="n">save_manifest</span>
+
+        <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">manifest</span><span class="p">))</span>
+        <span class="n">hashes</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">hashes</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">))</span>
+        <span class="n">torchcell_version</span><span class="p">,</span> <span class="n">torchcell_tag</span> <span class="o">=</span> <span class="n">checkout_package_version</span><span class="p">(</span>
+            <span class="n">repo_root</span> <span class="ow">or</span> <span class="n">package_checkout</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">stamp_manifest</span><span class="p">(</span>
+            <span class="n">manifest</span><span class="p">,</span>
+            <span class="n">kind</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">kind</span><span class="p">,</span>
+            <span class="n">built_at</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">built_at</span><span class="p">,</span>
+            <span class="n">content_hashes</span><span class="o">=</span><span class="n">hashes</span><span class="p">,</span>
+            <span class="n">previous_version</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">previous_version</span><span class="p">,</span>
+            <span class="n">torchcell_version</span><span class="o">=</span><span class="n">torchcell_version</span><span class="p">,</span>
+            <span class="n">torchcell_tag</span><span class="o">=</span><span class="n">torchcell_tag</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">save_manifest</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">manifest</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">manifest</span><span class="si">}</span><span class="s2">: version </span><span class="si">{</span><span class="n">manifest</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2">, release </span><span class="si">{</span><span class="n">manifest</span><span class="o">.</span><span class="n">release</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"torchcell </span><span class="si">{</span><span class="n">torchcell_version</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">torchcell_tag</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'untagged'</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"snapshot"</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.kg_manifest</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_manifest</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.release_snapshot</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+            <span class="n">bootstrap_package_version</span><span class="p">,</span>
+            <span class="n">snapshot_from_manifest</span><span class="p">,</span>
+            <span class="n">write_snapshot</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">manifest</span><span class="p">))</span>
+        <span class="n">snapshot</span> <span class="o">=</span> <span class="n">snapshot_from_manifest</span><span class="p">(</span>
+            <span class="n">manifest</span><span class="p">,</span> <span class="n">n_nodes</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">n_nodes</span><span class="p">,</span> <span class="n">built_at</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">built_at</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">torchcell_version</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">snapshot</span> <span class="o">=</span> <span class="n">bootstrap_package_version</span><span class="p">(</span>
+                <span class="n">snapshot</span><span class="p">,</span>
+                <span class="n">torchcell_version</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">torchcell_version</span><span class="p">,</span>
+                <span class="n">torchcell_tag</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">torchcell_tag</span><span class="p">,</span>
+                <span class="n">note</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">note</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">repo_root</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">repo_root</span> <span class="k">else</span> <span class="n">package_checkout</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="n">write_snapshot</span><span class="p">(</span>
+            <span class="n">snapshot</span><span class="p">,</span>
+            <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">closure</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+            <span class="n">target</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">snapshot</span><span class="o">.</span><span class="n">release</span><span class="si">}</span><span class="s2">: torchcell </span><span class="si">{</span><span class="n">snapshot</span><span class="o">.</span><span class="n">torchcell_version</span><span class="si">}</span><span class="s2"> "</span>
+            <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">snapshot</span><span class="o">.</span><span class="n">torchcell_tag</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'untagged'</span><span class="si">}</span><span class="s2">), composite "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">snapshot</span><span class="o">.</span><span class="n">composite_sha256</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">paths</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">paths</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="n">uri</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span> <span class="o">=</span> <span class="n">_connection</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"write-node"</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.kg_manifest</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_manifest</span>
+
+        <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">manifest</span><span class="p">))</span>
+        <span class="n">hashes</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">name</span><span class="p">:</span> <span class="n">entry</span><span class="o">.</span><span class="n">content_sha256</span> <span class="ow">or</span> <span class="s2">""</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="ow">not</span> <span class="n">h</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">hashes</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+            <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span>
+                <span class="s2">"manifest has datasets without content_sha256; stamp it first"</span>
+            <span class="p">)</span>
+        <span class="n">release</span> <span class="o">=</span> <span class="n">release_from_manifest</span><span class="p">(</span>
+            <span class="n">manifest</span><span class="p">,</span>
+            <span class="n">built_at</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">built_at</span><span class="p">,</span>
+            <span class="n">content_hashes</span><span class="o">=</span><span class="n">hashes</span><span class="p">,</span>
+            <span class="n">n_nodes</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">n_nodes</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">write_release</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">database</span><span class="p">,</span> <span class="n">release</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">database</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">RELEASE_LABEL</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">release</span><span class="o">.</span><span class="n">release</span><span class="si">}</span><span class="s2"> (version </span><span class="si">{</span><span class="n">release</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"status"</span><span class="p">:</span>
+        <span class="n">hosts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[(</span><span class="n">args</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">host</span><span class="p">:</span>
+            <span class="n">hosts</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">host</span><span class="p">:</span>
+                <span class="n">label</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">rest</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s2">"="</span><span class="p">)</span>
+                <span class="n">parts</span> <span class="o">=</span> <span class="n">rest</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"|"</span><span class="p">)</span>
+                <span class="n">hosts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="n">label</span><span class="p">,</span>
+                        <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                        <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">user</span><span class="p">,</span>
+                        <span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="k">else</span> <span class="n">password</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+        <span class="n">by_host</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">label</span><span class="p">:</span> <span class="n">list_databases_bounded</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">usr</span><span class="p">,</span> <span class="n">pw</span><span class="p">,</span> <span class="n">timeout_s</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">host_timeout</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">usr</span><span class="p">,</span> <span class="n">pw</span> <span class="ow">in</span> <span class="n">hosts</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">json</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                    <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">[</span><span class="n">db</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span> <span class="k">for</span> <span class="n">db</span> <span class="ow">in</span> <span class="n">v</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">by_host</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+                    <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">row</span>
+            <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">served</span> <span class="ow">in</span> <span class="n">by_host</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">status_rows</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">served</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">format_table</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="mi">1</span><span class="p">:])</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">no_header</span> <span class="k">else</span> <span class="n">text</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"datasets"</span><span class="p">:</span>
+        <span class="n">listed</span> <span class="o">=</span> <span class="n">datasets</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">json</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">d</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">listed</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">listed</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">dataset_class</span><span class="si">}</span><span class="se">\t</span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">n_experiments</span><span class="si">}</span><span class="se">\t</span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">content_sha256</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"diff"</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">diff</span><span class="p">(</span>
+            <span class="n">_release_for</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">),</span>
+            <span class="n">_release_for</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">json</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">from_release</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">to_release</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"unchanged"</span><span class="p">,</span> <span class="s2">"changed"</span><span class="p">,</span> <span class="s2">"added"</span><span class="p">,</span> <span class="s2">"removed"</span><span class="p">):</span>
+            <span class="n">names</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">names</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'-'</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"compat"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">repo_root</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"--repo is required for compat"</span><span class="p">)</span>
+        <span class="n">report</span> <span class="o">=</span> <span class="n">compatibility</span><span class="p">(</span>
+            <span class="n">_release_for</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">),</span> <span class="n">repo_root</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"release </span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">release</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">torchcell_commit</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span><span class="si">}</span><span class="s2">) vs </span><span class="si">{</span><span class="n">repo_root</span><span class="si">}</span><span class="s2">: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">compatible</span><span class="p">)</span><span class="si">}</span><span class="s2"> compatible, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">drifted</span><span class="p">)</span><span class="si">}</span><span class="s2"> drifted, "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">unchecked</span><span class="p">)</span><span class="si">}</span><span class="s2"> unchecked"</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">drift</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">drifted</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">drift</span><span class="o">.</span><span class="n">dataset_class</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">drift</span><span class="o">.</span><span class="n">changed_symbols</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">report</span><span class="o">.</span><span class="n">ok</span> <span class="k">else</span> <span class="mi">1</span>
+
+    <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">command</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

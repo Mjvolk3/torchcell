@@ -1,0 +1,848 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.losses.mle_dist_supcr &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/losses/mle_dist_supcr.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.losses.mle_dist_supcr</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.losses.mle_dist_supcr</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/losses/mle_dist_supcr</span>
+<span class="c1"># [[torchcell.losses.mle_dist_supcr]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/losses/mle_dist_supcr</span>
+<span class="c1"># Test file: tests/torchcell/losses/test_mle_dist_supcr.py</span>
+
+<span class="sd">"""Combined MLE, distribution, and supervised contrastive loss with buffering."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.distributed</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dist</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.losses.multi_dim_nan_tolerant</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">WeightedDistLoss</span><span class="p">,</span>
+    <span class="n">WeightedMSELoss</span><span class="p">,</span>
+    <span class="n">WeightedSupCRCell</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="AdaptiveWeighting">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_dist_supcr.AdaptiveWeighting.html#torchcell.losses.mle_dist_supcr.AdaptiveWeighting">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AdaptiveWeighting</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Manages adaptive weighting for buffer contributions during training."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">warmup_epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">stable_epoch</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Store the warmup and stabilization epoch thresholds."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">warmup_epochs</span> <span class="o">=</span> <span class="n">warmup_epochs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stable_epoch</span> <span class="o">=</span> <span class="n">stable_epoch</span>
+
+<div class="viewcode-block" id="AdaptiveWeighting.get_buffer_weight">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_dist_supcr.AdaptiveWeighting.html#torchcell.losses.mle_dist_supcr.AdaptiveWeighting.get_buffer_weight">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_buffer_weight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Get buffer weight based on training epoch."""</span>
+        <span class="k">if</span> <span class="n">epoch</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">warmup_epochs</span><span class="p">:</span>
+            <span class="c1"># Linear ramp from 0.1 to 0.3</span>
+            <span class="k">return</span> <span class="mf">0.1</span> <span class="o">+</span> <span class="mf">0.2</span> <span class="o">*</span> <span class="p">(</span><span class="n">epoch</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">warmup_epochs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">epoch</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">stable_epoch</span><span class="p">:</span>
+            <span class="c1"># Sigmoid transition from 0.3 to 0.9</span>
+            <span class="n">progress</span> <span class="o">=</span> <span class="p">(</span><span class="n">epoch</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">warmup_epochs</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">stable_epoch</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">warmup_epochs</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="mf">0.3</span> <span class="o">+</span> <span class="mf">0.6</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">10</span> <span class="o">*</span> <span class="p">(</span><span class="n">progress</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Stable at 0.9</span>
+            <span class="k">return</span> <span class="mf">0.9</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TemperatureScheduler">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_dist_supcr.TemperatureScheduler.html#torchcell.losses.mle_dist_supcr.TemperatureScheduler">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TemperatureScheduler</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Manages temperature scheduling for SupCR loss."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">init_temp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">final_temp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">schedule</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"exponential"</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Store the initial/final temperatures and schedule type."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_temp</span> <span class="o">=</span> <span class="n">init_temp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">final_temp</span> <span class="o">=</span> <span class="n">final_temp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span> <span class="o">=</span> <span class="n">schedule</span>
+
+<div class="viewcode-block" id="TemperatureScheduler.get_temperature">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_dist_supcr.TemperatureScheduler.html#torchcell.losses.mle_dist_supcr.TemperatureScheduler.get_temperature">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_temperature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">max_epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Get temperature based on training epoch."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span> <span class="o">==</span> <span class="s2">"exponential"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">init_temp</span>
+                <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">final_temp</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_temp</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="n">epoch</span> <span class="o">/</span> <span class="n">max_epochs</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span> <span class="o">==</span> <span class="s2">"cosine"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_temp</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">init_temp</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_temp</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span>
+                <span class="mi">1</span> <span class="o">+</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">epoch</span> <span class="o">/</span> <span class="n">max_epochs</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_temp</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="BufferedWeightedDistLoss">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_dist_supcr.BufferedWeightedDistLoss.html#torchcell.losses.mle_dist_supcr.BufferedWeightedDistLoss">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BufferedWeightedDistLoss</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Enhanced distribution loss with circular buffer for small batch training."""</span>
+
+    <span class="c1"># Registered buffers (declared for type checking; created via register_buffer).</span>
+    <span class="n">pred_buffer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">target_buffer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">buffer_ptr</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">buffer_full</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">total_samples</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">buffer_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
+        <span class="n">bandwidth</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
+        <span class="n">weights</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">min_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Initialize the base dist loss and the circular prediction/target buffers."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span> <span class="o">=</span> <span class="n">buffer_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_samples</span> <span class="o">=</span> <span class="n">min_samples</span>
+
+        <span class="c1"># Initialize base dist loss</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_dist_loss</span> <span class="o">=</span> <span class="n">WeightedDistLoss</span><span class="p">(</span><span class="n">bandwidth</span><span class="o">=</span><span class="n">bandwidth</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+
+        <span class="c1"># Circular buffer for predictions and targets</span>
+        <span class="c1"># For single phenotype (gene interaction), num_dims should be 1</span>
+        <span class="c1"># For multi-phenotype, it should match the number of phenotypes</span>
+        <span class="n">num_dims</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"pred_buffer"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">buffer_size</span><span class="p">,</span> <span class="n">num_dims</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"target_buffer"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">buffer_size</span><span class="p">,</span> <span class="n">num_dims</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"buffer_ptr"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"buffer_full"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"total_samples"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">))</span>
+
+<div class="viewcode-block" id="BufferedWeightedDistLoss.update_buffer">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_dist_supcr.BufferedWeightedDistLoss.html#torchcell.losses.mle_dist_supcr.BufferedWeightedDistLoss.update_buffer">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_buffer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">predictions</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">targets</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Update circular buffer with new samples."""</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">predictions</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">ptr</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer_ptr</span><span class="p">)</span>
+
+        <span class="c1"># The buffer width is guessed from `weights` at init (1 when weights is</span>
+        <span class="c1"># None), but the true number of phenotype dims is only known once data</span>
+        <span class="c1"># arrives. While the buffer is still empty, (re)allocate it to match the</span>
+        <span class="c1"># incoming width so multi-dim predictions with weights=None work.</span>
+        <span class="n">num_dims</span> <span class="o">=</span> <span class="n">predictions</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_buffer</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">!=</span> <span class="n">num_dims</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">device</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_buffer</span><span class="o">.</span><span class="n">device</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pred_buffer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">,</span> <span class="n">num_dims</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target_buffer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">,</span> <span class="n">num_dims</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Handle wrap-around</span>
+        <span class="k">if</span> <span class="n">ptr</span> <span class="o">+</span> <span class="n">batch_size</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pred_buffer</span><span class="p">[</span><span class="n">ptr</span> <span class="p">:</span> <span class="n">ptr</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">]</span> <span class="o">=</span> <span class="n">predictions</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target_buffer</span><span class="p">[</span><span class="n">ptr</span> <span class="p">:</span> <span class="n">ptr</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">]</span> <span class="o">=</span> <span class="n">targets</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Split across boundary</span>
+            <span class="n">first_part</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span> <span class="o">-</span> <span class="n">ptr</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pred_buffer</span><span class="p">[</span><span class="n">ptr</span><span class="p">:]</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[:</span><span class="n">first_part</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target_buffer</span><span class="p">[</span><span class="n">ptr</span><span class="p">:]</span> <span class="o">=</span> <span class="n">targets</span><span class="p">[:</span><span class="n">first_part</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+
+            <span class="n">second_part</span> <span class="o">=</span> <span class="n">batch_size</span> <span class="o">-</span> <span class="n">first_part</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pred_buffer</span><span class="p">[:</span><span class="n">second_part</span><span class="p">]</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[</span><span class="n">first_part</span><span class="p">:]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target_buffer</span><span class="p">[:</span><span class="n">second_part</span><span class="p">]</span> <span class="o">=</span> <span class="n">targets</span><span class="p">[</span><span class="n">first_part</span><span class="p">:]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+
+        <span class="c1"># Update pointer and status</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buffer_ptr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">ptr</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
+            <span class="s2">"torch.Tensor | int"</span><span class="p">,</span>
+            <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buffer_full</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="BufferedWeightedDistLoss.get_buffer_samples">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_dist_supcr.BufferedWeightedDistLoss.html#torchcell.losses.mle_dist_supcr.BufferedWeightedDistLoss.get_buffer_samples">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_buffer_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get all valid samples from buffer."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_full</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_buffer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_buffer</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n_samples</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_buffer</span><span class="p">[:</span><span class="n">n_samples</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_buffer</span><span class="p">[:</span><span class="n">n_samples</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="BufferedWeightedDistLoss.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_dist_supcr.BufferedWeightedDistLoss.html#torchcell.losses.mle_dist_supcr.BufferedWeightedDistLoss.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">predictions</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">targets</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">all_predictions</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">all_targets</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">buffer_weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Compute distribution loss with buffer support.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            predictions: Local batch predictions</span>
+<span class="sd">            targets: Local batch targets</span>
+<span class="sd">            all_predictions: Gathered predictions from all GPUs (optional)</span>
+<span class="sd">            all_targets: Gathered targets from all GPUs (optional)</span>
+<span class="sd">            buffer_weight: Weight for buffer contribution (0-1)</span>
+<span class="sd">        """</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">predictions</span><span class="o">.</span><span class="n">device</span>
+
+        <span class="c1"># CRITICAL FIX: Update buffer with gathered data when available</span>
+        <span class="c1"># This ensures all GPUs have consistent buffer contents in DDP</span>
+        <span class="k">if</span> <span class="n">all_predictions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">all_targets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># In DDP mode with gathering, update buffer with full gathered batch</span>
+            <span class="c1"># This prevents distribution mismatch between buffer and current batch</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_buffer</span><span class="p">(</span><span class="n">all_predictions</span><span class="p">,</span> <span class="n">all_targets</span><span class="p">)</span>
+            <span class="n">current_preds</span> <span class="o">=</span> <span class="n">all_predictions</span>
+            <span class="n">current_targets</span> <span class="o">=</span> <span class="n">all_targets</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Single GPU or no gathering, use local batch</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_buffer</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+            <span class="n">current_preds</span> <span class="o">=</span> <span class="n">predictions</span>
+            <span class="n">current_targets</span> <span class="o">=</span> <span class="n">targets</span>
+
+        <span class="c1"># Check if we have enough samples</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_samples</span><span class="p">:</span>
+            <span class="c1"># Not enough samples yet, return zero loss</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Get buffer samples</span>
+        <span class="n">buffer_preds</span><span class="p">,</span> <span class="n">buffer_targets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_buffer_samples</span><span class="p">()</span>
+        <span class="n">buffer_preds</span> <span class="o">=</span> <span class="n">buffer_preds</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">buffer_targets</span> <span class="o">=</span> <span class="n">buffer_targets</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Combine current batch with buffer based on buffer_weight</span>
+        <span class="k">if</span> <span class="n">buffer_weight</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="c1"># Weighted combination</span>
+            <span class="n">n_current</span> <span class="o">=</span> <span class="n">current_preds</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">n_buffer</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_current</span> <span class="o">*</span> <span class="n">buffer_weight</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">buffer_weight</span><span class="p">))</span>
+            <span class="n">n_buffer</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">n_buffer</span><span class="p">,</span> <span class="n">buffer_preds</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">n_buffer</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># Random sample from buffer</span>
+                <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="n">buffer_preds</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">))[:</span><span class="n">n_buffer</span><span class="p">]</span>
+                <span class="n">combined_preds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">current_preds</span><span class="p">,</span> <span class="n">buffer_preds</span><span class="p">[</span><span class="n">indices</span><span class="p">]],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span>
+                <span class="p">)</span>
+                <span class="n">combined_targets</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">current_targets</span><span class="p">,</span> <span class="n">buffer_targets</span><span class="p">[</span><span class="n">indices</span><span class="p">]],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">combined_preds</span> <span class="o">=</span> <span class="n">current_preds</span>
+                <span class="n">combined_targets</span> <span class="o">=</span> <span class="n">current_targets</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Use all buffer samples</span>
+            <span class="n">combined_preds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">current_preds</span><span class="p">,</span> <span class="n">buffer_preds</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">combined_targets</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">current_targets</span><span class="p">,</span> <span class="n">buffer_targets</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Compute distribution loss on combined samples</span>
+        <span class="c1"># But only return gradients for the current batch portion</span>
+        <span class="n">loss</span><span class="p">,</span> <span class="n">dim_losses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_dist_loss</span><span class="p">(</span><span class="n">combined_preds</span><span class="p">,</span> <span class="n">combined_targets</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="n">dim_losses</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="BufferedWeightedSupCRCell">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_dist_supcr.BufferedWeightedSupCRCell.html#torchcell.losses.mle_dist_supcr.BufferedWeightedSupCRCell">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BufferedWeightedSupCRCell</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Enhanced SupCR loss with circular buffer for small batch training."""</span>
+
+    <span class="c1"># Registered buffers (declared for type checking; created via register_buffer).</span>
+    <span class="n">embedding_buffer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">label_buffer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">buffer_ptr</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">buffer_full</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">total_samples</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">buffer_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
+        <span class="n">embedding_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+        <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">weights</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">min_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Initialize the SupCR loss and its circular embedding/label buffers."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span> <span class="o">=</span> <span class="n">buffer_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">embedding_dim</span> <span class="o">=</span> <span class="n">embedding_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_samples</span> <span class="o">=</span> <span class="n">min_samples</span>
+
+        <span class="c1"># Initialize base SupCR loss</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_supcr</span> <span class="o">=</span> <span class="n">WeightedSupCRCell</span><span class="p">(</span><span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+
+        <span class="c1"># Circular buffer for embeddings and labels</span>
+        <span class="c1"># For single phenotype (gene interaction), num_dims should be 1</span>
+        <span class="c1"># For multi-phenotype, it should match the number of phenotypes</span>
+        <span class="n">num_dims</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
+            <span class="s2">"embedding_buffer"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">buffer_size</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"label_buffer"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">buffer_size</span><span class="p">,</span> <span class="n">num_dims</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"buffer_ptr"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"buffer_full"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"total_samples"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">))</span>
+
+<div class="viewcode-block" id="BufferedWeightedSupCRCell.update_buffer">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_dist_supcr.BufferedWeightedSupCRCell.html#torchcell.losses.mle_dist_supcr.BufferedWeightedSupCRCell.update_buffer">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_buffer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">labels</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Update circular buffer with new samples."""</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">ptr</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer_ptr</span><span class="p">)</span>
+
+        <span class="c1"># The label-buffer width is guessed from `weights` at init (1 when</span>
+        <span class="c1"># weights is None), but the true number of label dims is only known once</span>
+        <span class="c1"># data arrives. While the buffer is still empty, (re)allocate it to match</span>
+        <span class="c1"># the incoming width so multi-dim labels with weights=None work.</span>
+        <span class="n">num_dims</span> <span class="o">=</span> <span class="n">labels</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_buffer</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">!=</span> <span class="n">num_dims</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">label_buffer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">,</span> <span class="n">num_dims</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label_buffer</span><span class="o">.</span><span class="n">device</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Handle wrap-around</span>
+        <span class="k">if</span> <span class="n">ptr</span> <span class="o">+</span> <span class="n">batch_size</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">embedding_buffer</span><span class="p">[</span><span class="n">ptr</span> <span class="p">:</span> <span class="n">ptr</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">]</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">label_buffer</span><span class="p">[</span><span class="n">ptr</span> <span class="p">:</span> <span class="n">ptr</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">]</span> <span class="o">=</span> <span class="n">labels</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Split across boundary</span>
+            <span class="n">first_part</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span> <span class="o">-</span> <span class="n">ptr</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">embedding_buffer</span><span class="p">[</span><span class="n">ptr</span><span class="p">:]</span> <span class="o">=</span> <span class="n">embeddings</span><span class="p">[:</span><span class="n">first_part</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">label_buffer</span><span class="p">[</span><span class="n">ptr</span><span class="p">:]</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[:</span><span class="n">first_part</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+
+            <span class="n">second_part</span> <span class="o">=</span> <span class="n">batch_size</span> <span class="o">-</span> <span class="n">first_part</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">embedding_buffer</span><span class="p">[:</span><span class="n">second_part</span><span class="p">]</span> <span class="o">=</span> <span class="n">embeddings</span><span class="p">[</span><span class="n">first_part</span><span class="p">:]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">label_buffer</span><span class="p">[:</span><span class="n">second_part</span><span class="p">]</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="n">first_part</span><span class="p">:]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+
+        <span class="c1"># Update pointer and status</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buffer_ptr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">ptr</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
+            <span class="s2">"torch.Tensor | int"</span><span class="p">,</span>
+            <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buffer_full</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="BufferedWeightedSupCRCell.get_buffer_samples">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_dist_supcr.BufferedWeightedSupCRCell.html#torchcell.losses.mle_dist_supcr.BufferedWeightedSupCRCell.get_buffer_samples">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_buffer_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get all valid samples from buffer."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_full</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_buffer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_buffer</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n_samples</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_buffer</span><span class="p">[:</span><span class="n">n_samples</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_buffer</span><span class="p">[:</span><span class="n">n_samples</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="BufferedWeightedSupCRCell.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_dist_supcr.BufferedWeightedSupCRCell.html#torchcell.losses.mle_dist_supcr.BufferedWeightedSupCRCell.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">embeddings</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">labels</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">all_embeddings</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">all_labels</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">buffer_weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Compute SupCR loss with buffer support.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            embeddings: Local batch embeddings</span>
+<span class="sd">            labels: Local batch labels</span>
+<span class="sd">            all_embeddings: Gathered embeddings from all GPUs (optional)</span>
+<span class="sd">            all_labels: Gathered labels from all GPUs (optional)</span>
+<span class="sd">            buffer_weight: Weight for buffer contribution (0-1)</span>
+<span class="sd">            temperature: Optional temperature override</span>
+<span class="sd">        """</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">device</span>
+
+        <span class="c1"># CRITICAL FIX: Update buffer with gathered data when available</span>
+        <span class="c1"># This ensures all GPUs have consistent buffer contents in DDP</span>
+        <span class="k">if</span> <span class="n">all_embeddings</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">all_labels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># In DDP mode with gathering, update buffer with full gathered batch</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_buffer</span><span class="p">(</span><span class="n">all_embeddings</span><span class="p">,</span> <span class="n">all_labels</span><span class="p">)</span>
+            <span class="n">current_embeddings</span> <span class="o">=</span> <span class="n">all_embeddings</span>
+            <span class="n">current_labels</span> <span class="o">=</span> <span class="n">all_labels</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Single GPU or no gathering, use local batch</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_buffer</span><span class="p">(</span><span class="n">embeddings</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+            <span class="n">current_embeddings</span> <span class="o">=</span> <span class="n">embeddings</span>
+            <span class="n">current_labels</span> <span class="o">=</span> <span class="n">labels</span>
+
+        <span class="c1"># Check if we have enough samples</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_samples</span><span class="p">:</span>
+            <span class="c1"># Not enough samples yet, return zero loss</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Update temperature if provided</span>
+        <span class="k">if</span> <span class="n">temperature</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">base_supcr</span><span class="o">.</span><span class="n">supcr</span><span class="o">.</span><span class="n">temperature</span> <span class="o">=</span> <span class="n">temperature</span>
+
+        <span class="c1"># Get buffer samples</span>
+        <span class="n">buffer_embeddings</span><span class="p">,</span> <span class="n">buffer_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_buffer_samples</span><span class="p">()</span>
+        <span class="n">buffer_embeddings</span> <span class="o">=</span> <span class="n">buffer_embeddings</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">buffer_labels</span> <span class="o">=</span> <span class="n">buffer_labels</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># For SupCR, we always want to use buffer as negative samples</span>
+        <span class="c1"># But only compute gradients for current batch as anchors</span>
+        <span class="n">combined_embeddings</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">current_embeddings</span><span class="p">,</span> <span class="n">buffer_embeddings</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">combined_labels</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">current_labels</span><span class="p">,</span> <span class="n">buffer_labels</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Compute SupCR loss</span>
+        <span class="c1"># The base implementation will handle gradient flow correctly</span>
+        <span class="n">loss</span><span class="p">,</span> <span class="n">dim_losses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_supcr</span><span class="p">(</span><span class="n">combined_embeddings</span><span class="p">,</span> <span class="n">combined_labels</span><span class="p">)</span>
+
+        <span class="c1"># Scale by buffer weight to reduce influence when buffer is stale</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="mf">1.0</span> <span class="o">-</span> <span class="n">buffer_weight</span> <span class="o">+</span> <span class="n">buffer_weight</span> <span class="o">*</span> <span class="mf">0.5</span>
+        <span class="p">)</span>  <span class="c1"># Reduce buffer influence</span>
+
+        <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="n">dim_losses</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MleDistSupCR">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_dist_supcr.MleDistSupCR.html#torchcell.losses.mle_dist_supcr.MleDistSupCR">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MleDistSupCR</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Composite loss combining MSE, distribution matching, and SupCR.</span>
+
+<span class="sd">    Adds circular buffers, DDP synchronization, and adaptive weighting.</span>
+<span class="sd">    """</span>
+
+    <span class="c1"># Component losses differ depending on ``use_buffer`` (declared as unions so</span>
+    <span class="c1"># both the buffered and unbuffered assignments type-check).</span>
+    <span class="n">dist_loss</span><span class="p">:</span> <span class="s2">"BufferedWeightedDistLoss | WeightedDistLoss"</span>
+    <span class="n">supcr_loss</span><span class="p">:</span> <span class="s2">"BufferedWeightedSupCRCell | WeightedSupCRCell"</span>
+    <span class="c1"># Registered buffers (declared for type checking; created via register_buffer).</span>
+    <span class="n">forward_count</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">current_epoch</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="c1"># Component configuration</span>
+        <span class="n">lambda_mse</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">lambda_dist</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">lambda_supcr</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
+        <span class="c1"># Component-specific parameters</span>
+        <span class="n">dist_bandwidth</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">supcr_temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">embedding_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+        <span class="c1"># Buffer configuration</span>
+        <span class="n">use_buffer</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">buffer_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
+        <span class="n">min_samples_for_dist</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
+        <span class="n">min_samples_for_supcr</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
+        <span class="c1"># DDP configuration</span>
+        <span class="n">use_ddp_gather</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">gather_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="c1"># Adaptive weighting</span>
+        <span class="n">use_adaptive_weighting</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">warmup_epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># If None, set to max_epochs * 0.1</span>
+        <span class="n">stable_epoch</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># If None, set to max_epochs * 0.5</span>
+        <span class="c1"># Temperature scheduling</span>
+        <span class="n">use_temp_scheduling</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">init_temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">final_temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">temp_schedule</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"exponential"</span><span class="p">,</span>
+        <span class="c1"># Other parameters</span>
+        <span class="n">weights</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">max_epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Set up component losses, lambda weights, and scheduling configuration."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="c1"># Lambda weights</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_mse</span> <span class="o">=</span> <span class="n">lambda_mse</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_dist</span> <span class="o">=</span> <span class="n">lambda_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_supcr</span> <span class="o">=</span> <span class="n">lambda_supcr</span>
+
+        <span class="c1"># Configuration flags</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_buffer</span> <span class="o">=</span> <span class="n">use_buffer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_ddp_gather</span> <span class="o">=</span> <span class="n">use_ddp_gather</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gather_interval</span> <span class="o">=</span> <span class="n">gather_interval</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_adaptive_weighting</span> <span class="o">=</span> <span class="n">use_adaptive_weighting</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_temp_scheduling</span> <span class="o">=</span> <span class="n">use_temp_scheduling</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_epochs</span> <span class="o">=</span> <span class="n">max_epochs</span>
+
+        <span class="c1"># Initialize loss components</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mse_loss</span> <span class="o">=</span> <span class="n">WeightedMSELoss</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">use_buffer</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dist_loss</span> <span class="o">=</span> <span class="n">BufferedWeightedDistLoss</span><span class="p">(</span>
+                <span class="n">buffer_size</span><span class="o">=</span><span class="n">buffer_size</span><span class="p">,</span>
+                <span class="n">bandwidth</span><span class="o">=</span><span class="n">dist_bandwidth</span><span class="p">,</span>
+                <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span>
+                <span class="n">min_samples</span><span class="o">=</span><span class="n">min_samples_for_dist</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">supcr_loss</span> <span class="o">=</span> <span class="n">BufferedWeightedSupCRCell</span><span class="p">(</span>
+                <span class="n">buffer_size</span><span class="o">=</span><span class="n">buffer_size</span><span class="p">,</span>
+                <span class="n">embedding_dim</span><span class="o">=</span><span class="n">embedding_dim</span><span class="p">,</span>
+                <span class="n">temperature</span><span class="o">=</span><span class="n">supcr_temperature</span><span class="p">,</span>
+                <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span>
+                <span class="n">min_samples</span><span class="o">=</span><span class="n">min_samples_for_supcr</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dist_loss</span> <span class="o">=</span> <span class="n">WeightedDistLoss</span><span class="p">(</span><span class="n">bandwidth</span><span class="o">=</span><span class="n">dist_bandwidth</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">supcr_loss</span> <span class="o">=</span> <span class="n">WeightedSupCRCell</span><span class="p">(</span>
+                <span class="n">temperature</span><span class="o">=</span><span class="n">supcr_temperature</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Initialize adaptive components with dynamic defaults</span>
+        <span class="k">if</span> <span class="n">use_adaptive_weighting</span><span class="p">:</span>
+            <span class="c1"># Set dynamic defaults based on max_epochs if not specified</span>
+            <span class="n">actual_warmup_epochs</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">warmup_epochs</span> <span class="k">if</span> <span class="n">warmup_epochs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">int</span><span class="p">(</span><span class="n">max_epochs</span> <span class="o">*</span> <span class="mf">0.1</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">actual_stable_epoch</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">stable_epoch</span> <span class="k">if</span> <span class="n">stable_epoch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">int</span><span class="p">(</span><span class="n">max_epochs</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">adaptive_weighting</span> <span class="o">=</span> <span class="n">AdaptiveWeighting</span><span class="p">(</span>
+                <span class="n">actual_warmup_epochs</span><span class="p">,</span> <span class="n">actual_stable_epoch</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">use_temp_scheduling</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">temp_scheduler</span> <span class="o">=</span> <span class="n">TemperatureScheduler</span><span class="p">(</span>
+                <span class="n">init_temperature</span><span class="p">,</span> <span class="n">final_temperature</span><span class="p">,</span> <span class="n">temp_schedule</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Tracking</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"forward_count"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"current_epoch"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">))</span>
+
+<div class="viewcode-block" id="MleDistSupCR.gather_across_gpus">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_dist_supcr.MleDistSupCR.html#torchcell.losses.mle_dist_supcr.MleDistSupCR.gather_across_gpus">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gather_across_gpus</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Gather tensors from all GPUs."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">dist</span><span class="o">.</span><span class="n">is_initialized</span><span class="p">()</span> <span class="ow">or</span> <span class="n">dist</span><span class="o">.</span><span class="n">get_world_size</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">tensor</span>
+
+        <span class="n">world_size</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">get_world_size</span><span class="p">()</span>
+        <span class="n">gathered</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">world_size</span><span class="p">)]</span>
+        <span class="n">dist</span><span class="o">.</span><span class="n">all_gather</span><span class="p">(</span><span class="n">gathered</span><span class="p">,</span> <span class="n">tensor</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">gathered</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MleDistSupCR.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.mle_dist_supcr.MleDistSupCR.html#torchcell.losses.mle_dist_supcr.MleDistSupCR.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">predictions</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">targets</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">z_P</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Forward pass computing composite loss.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            predictions: Model predictions [batch_size, num_dims]</span>
+<span class="sd">            targets: Target values [batch_size, num_dims]</span>
+<span class="sd">            z_P: Perturbed embeddings for SupCR [batch_size, embedding_dim]</span>
+<span class="sd">            epoch: Current training epoch (optional)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (total_loss, loss_dict)</span>
+<span class="sd">        """</span>
+        <span class="c1"># Update epoch if provided</span>
+        <span class="k">if</span> <span class="n">epoch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_epoch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">epoch</span>
+
+        <span class="n">device</span> <span class="o">=</span> <span class="n">predictions</span><span class="o">.</span><span class="n">device</span>
+
+        <span class="c1"># Initialize loss components</span>
+        <span class="n">total_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">loss_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Get adaptive weights</span>
+        <span class="n">buffer_weight</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_adaptive_weighting</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_buffer</span><span class="p">:</span>
+            <span class="n">buffer_weight</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">adaptive_weighting</span><span class="o">.</span><span class="n">get_buffer_weight</span><span class="p">(</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_epoch</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="p">)</span>
+            <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"buffer_weight"</span><span class="p">]</span> <span class="o">=</span> <span class="n">buffer_weight</span>
+
+        <span class="c1"># Get temperature</span>
+        <span class="n">temperature</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_temp_scheduling</span><span class="p">:</span>
+            <span class="n">temperature</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">temp_scheduler</span><span class="o">.</span><span class="n">get_temperature</span><span class="p">(</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_epoch</span><span class="o">.</span><span class="n">item</span><span class="p">()),</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_epochs</span>
+            <span class="p">)</span>
+            <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"temperature"</span><span class="p">]</span> <span class="o">=</span> <span class="n">temperature</span>
+
+        <span class="c1"># Gather samples across GPUs if needed</span>
+        <span class="n">all_predictions</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">all_targets</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">all_embeddings</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_ddp_gather</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward_count</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">gather_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">all_predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gather_across_gpus</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
+            <span class="n">all_targets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gather_across_gpus</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span>
+            <span class="n">all_embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gather_across_gpus</span><span class="p">(</span><span class="n">z_P</span><span class="p">)</span>
+
+        <span class="c1"># Compute MSE loss (always on local batch only) if lambda &gt; 0</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_mse</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">mse_val</span><span class="p">,</span> <span class="n">mse_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mse_loss</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+            <span class="n">weighted_mse</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_mse</span> <span class="o">*</span> <span class="n">mse_val</span>
+            <span class="n">total_loss</span> <span class="o">=</span> <span class="n">total_loss</span> <span class="o">+</span> <span class="n">weighted_mse</span>
+            <span class="n">loss_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"mse_loss"</span><span class="p">:</span> <span class="n">mse_val</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+                    <span class="s2">"mse_dim_losses"</span><span class="p">:</span> <span class="n">mse_dims</span><span class="p">,</span>
+                    <span class="s2">"weighted_mse"</span><span class="p">:</span> <span class="n">weighted_mse</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Set to zero for consistency in logging</span>
+            <span class="n">mse_val</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">mse_dims</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># Assuming 2 dimensions</span>
+            <span class="n">loss_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span><span class="s2">"mse_loss"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">"mse_dim_losses"</span><span class="p">:</span> <span class="n">mse_dims</span><span class="p">,</span> <span class="s2">"weighted_mse"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Compute distribution loss if lambda &gt; 0</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_dist</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_buffer</span><span class="p">:</span>
+                <span class="n">dist_val</span><span class="p">,</span> <span class="n">dist_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dist_loss</span><span class="p">(</span>
+                    <span class="n">predictions</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="n">all_predictions</span><span class="p">,</span> <span class="n">all_targets</span><span class="p">,</span> <span class="n">buffer_weight</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">dist_val</span><span class="p">,</span> <span class="n">dist_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dist_loss</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+
+            <span class="n">weighted_dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_dist</span> <span class="o">*</span> <span class="n">dist_val</span>
+            <span class="n">total_loss</span> <span class="o">=</span> <span class="n">total_loss</span> <span class="o">+</span> <span class="n">weighted_dist</span>
+            <span class="n">loss_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"dist_loss"</span><span class="p">:</span> <span class="n">dist_val</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+                    <span class="s2">"dist_dim_losses"</span><span class="p">:</span> <span class="n">dist_dims</span><span class="p">,</span>
+                    <span class="s2">"weighted_dist"</span><span class="p">:</span> <span class="n">weighted_dist</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Set to zero for consistency in logging</span>
+            <span class="n">dist_val</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">dist_dims</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># Assuming 2 dimensions</span>
+            <span class="n">loss_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span><span class="s2">"dist_loss"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">"dist_dim_losses"</span><span class="p">:</span> <span class="n">dist_dims</span><span class="p">,</span> <span class="s2">"weighted_dist"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Compute SupCR loss if lambda &gt; 0</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_supcr</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_buffer</span><span class="p">:</span>
+                <span class="n">supcr_val</span><span class="p">,</span> <span class="n">supcr_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">supcr_loss</span><span class="p">(</span>
+                    <span class="n">z_P</span><span class="p">,</span>
+                    <span class="n">targets</span><span class="p">,</span>
+                    <span class="n">all_embeddings</span><span class="p">,</span>
+                    <span class="n">all_targets</span><span class="p">,</span>
+                    <span class="n">buffer_weight</span><span class="p">,</span>
+                    <span class="n">temperature</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">temperature</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="c1"># The unbuffered cell has no temperature argument; apply the</span>
+                    <span class="c1"># scheduled value the same way the buffered cell does.</span>
+                    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">supcr_loss</span><span class="p">,</span> <span class="n">WeightedSupCRCell</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">supcr_loss</span><span class="o">.</span><span class="n">supcr</span><span class="o">.</span><span class="n">temperature</span> <span class="o">=</span> <span class="n">temperature</span>
+                <span class="n">supcr_val</span><span class="p">,</span> <span class="n">supcr_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">supcr_loss</span><span class="p">(</span><span class="n">z_P</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+
+            <span class="n">weighted_supcr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_supcr</span> <span class="o">*</span> <span class="n">supcr_val</span>
+            <span class="n">total_loss</span> <span class="o">=</span> <span class="n">total_loss</span> <span class="o">+</span> <span class="n">weighted_supcr</span>
+            <span class="n">loss_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"supcr_loss"</span><span class="p">:</span> <span class="n">supcr_val</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+                    <span class="s2">"supcr_dim_losses"</span><span class="p">:</span> <span class="n">supcr_dims</span><span class="p">,</span>
+                    <span class="s2">"weighted_supcr"</span><span class="p">:</span> <span class="n">weighted_supcr</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Set to zero for consistency in logging</span>
+            <span class="n">supcr_val</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">supcr_dims</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># Assuming 2 dimensions</span>
+            <span class="n">loss_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"supcr_loss"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                    <span class="s2">"supcr_dim_losses"</span><span class="p">:</span> <span class="n">supcr_dims</span><span class="p">,</span>
+                    <span class="s2">"weighted_supcr"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Compute normalized contributions</span>
+        <span class="k">if</span> <span class="n">total_loss</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"mse"</span><span class="p">,</span> <span class="s2">"dist"</span><span class="p">,</span> <span class="s2">"supcr"</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="sa">f</span><span class="s2">"weighted_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span> <span class="ow">in</span> <span class="n">loss_dict</span><span class="p">:</span>
+                    <span class="n">loss_dict</span><span class="p">[</span><span class="sa">f</span><span class="s2">"norm_weighted_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">loss_dict</span><span class="p">[</span><span class="sa">f</span><span class="s2">"weighted_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">/</span> <span class="n">total_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                    <span class="p">)</span>
+
+        <span class="c1"># Add unweighted totals for compatibility</span>
+        <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"total_weighted"</span><span class="p">]</span> <span class="o">=</span> <span class="n">total_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"total_loss"</span><span class="p">]</span> <span class="o">=</span> <span class="n">total_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+        <span class="c1"># Add unweighted normalized (for compatibility with ICLoss)</span>
+        <span class="n">total_unweighted</span> <span class="o">=</span> <span class="n">mse_val</span> <span class="o">+</span> <span class="n">dist_val</span> <span class="o">+</span> <span class="n">supcr_val</span>
+        <span class="k">if</span> <span class="n">total_unweighted</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"norm_unweighted_mse"</span><span class="p">]</span> <span class="o">=</span> <span class="n">mse_val</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">/</span> <span class="n">total_unweighted</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"norm_unweighted_dist"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">dist_val</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">/</span> <span class="n">total_unweighted</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="p">)</span>
+            <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"norm_unweighted_supcr"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">supcr_val</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">/</span> <span class="n">total_unweighted</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Update forward counter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">forward_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">total_loss</span><span class="p">,</span> <span class="n">loss_dict</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

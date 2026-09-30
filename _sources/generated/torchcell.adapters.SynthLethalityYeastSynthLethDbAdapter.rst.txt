@@ -1,0 +1,8 @@
+﻿torchcell.adapters.SynthLethalityYeastSynthLethDbAdapter
+========================================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: SynthLethalityYeastSynthLethDbAdapter
+   :show-inheritance:
+   :members:

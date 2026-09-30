@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.identity.identity\_sha256
+==============================================
+
+.. currentmodule:: torchcell.datamodels.identity
+
+.. autofunction:: identity_sha256

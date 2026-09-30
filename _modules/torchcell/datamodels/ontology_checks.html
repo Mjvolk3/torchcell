@@ -1,0 +1,1140 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datamodels.ontology_checks &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/datamodels/ontology_checks.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.datamodels.ontology_checks</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.datamodels.ontology_checks</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/datamodels/ontology_checks.py</span>
+<span class="c1"># [[torchcell.datamodels.ontology-checks]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/ontology_checks</span>
+<span class="c1"># Test file: tests/torchcell/datamodels/test_ontology_coherence.py</span>
+<span class="sd">"""Programmatic coherence checks over the torchcell ontology.</span>
+
+<span class="sd">``schema.py`` is the ontology, but it is only half of the contract. A record that</span>
+<span class="sd">validates in pydantic still fails to reach the knowledge graph unless the BioCypher</span>
+<span class="sd">graph schema declares its node class, the adapter emits exactly the declared</span>
+<span class="sd">properties, and the identity keys a cross-dataset join needs (a resolvable</span>
+<span class="sd">``Compound``, a shared ``Media`` base, a ``Temperature``) are actually carried.</span>
+
+<span class="sd">The existing test modules cover ONE artifact each: ``test_ontology_invariants`` and</span>
+<span class="sd">``test_ontology_all_trees`` the pydantic trees, ``test_adapter_schema_consistency``</span>
+<span class="sd">the adapter conf against the graph schema. This module covers the SEAMS between</span>
+<span class="sd">them, and the identity keys the joins stand on. Every function here is pure and</span>
+<span class="sd">offline: it reads the live pydantic models, the committed</span>
+<span class="sd">``torchcell_schema_config.yaml``, and the ``cell_adapter.py`` source as an AST.</span>
+<span class="sd">Nothing opens an LMDB, a database, or the network.</span>
+
+<span class="sd">The four properties the checks defend (the review brief's framing):</span>
+
+<span class="sd">1. **Faithful representation.** A persistent entity (genotype, medium, compound,</span>
+<span class="sd">   temperature) and a contingent observation (the phenotype) stay separable, and</span>
+<span class="sd">   neither can quietly compose the other.</span>
+<span class="sd">2. **Additive expansion.** A new phenotype family is a new leaf plus a new node</span>
+<span class="sd">   class plus a new adapter method; the bijection checks fail the moment one of the</span>
+<span class="sd">   three is missing, which is exactly the failure BioCypher otherwise swallows.</span>
+<span class="sd">3. **Cross-dataset joins.** Identity keys are present and resolvable: a</span>
+<span class="sd">   ``Compound`` carries a structure identifier or a typed gap, a derived medium</span>
+<span class="sd">   names a base that exists, a base's components survive into its derivatives.</span>
+<span class="sd">4. **Room for a per-experiment protocol.** Nothing here forbids new lanes or new</span>
+<span class="sd">   leaves; the lane checks constrain DIRECTION (no back-edge into the experiment</span>
+<span class="sd">   lane), not membership.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">ast</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">enum</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">types</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">typing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchcell</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels</span><span class="w"> </span><span class="kn">import</span> <span class="n">schema</span> <span class="k">as</span> <span class="n">s</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalize_compound_name</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">MEDIA_LIBRARY</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.kg_manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CELL_ADAPTER_RELPATH</span><span class="p">,</span>
+    <span class="n">SCHEMA_CONFIG_RELPATH</span><span class="p">,</span>
+    <span class="n">GraphSchemaEntry</span><span class="p">,</span>
+    <span class="n">graph_schema_from_yaml</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourcedValue</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"REPO_ROOT"</span><span class="p">,</span>
+    <span class="s2">"IDENTITY_FIELDS"</span><span class="p">,</span>
+    <span class="s2">"PHENOTYPE_ENVELOPE_PROPERTIES"</span><span class="p">,</span>
+    <span class="s2">"AdapterNodeSite"</span><span class="p">,</span>
+    <span class="s2">"CompoundIdentityIssue"</span><span class="p">,</span>
+    <span class="s2">"EnvironmentCompoundCollision"</span><span class="p">,</span>
+    <span class="s2">"JoinKeyCensus"</span><span class="p">,</span>
+    <span class="s2">"MediaBaseIssue"</span><span class="p">,</span>
+    <span class="s2">"MediaDerivationIssue"</span><span class="p">,</span>
+    <span class="s2">"OptionalTraversal"</span><span class="p">,</span>
+    <span class="s2">"PhenotypeLabelMap"</span><span class="p">,</span>
+    <span class="s2">"PropertyMismatch"</span><span class="p">,</span>
+    <span class="s2">"adapter_node_sites"</span><span class="p">,</span>
+    <span class="s2">"adapter_optional_traversals"</span><span class="p">,</span>
+    <span class="s2">"adapter_property_mismatches"</span><span class="p">,</span>
+    <span class="s2">"cell_adapter_source"</span><span class="p">,</span>
+    <span class="s2">"compound_has_identity"</span><span class="p">,</span>
+    <span class="s2">"compound_has_identity_gap"</span><span class="p">,</span>
+    <span class="s2">"composition_targets"</span><span class="p">,</span>
+    <span class="s2">"enum_value_collisions"</span><span class="p">,</span>
+    <span class="s2">"environment_compound_collisions"</span><span class="p">,</span>
+    <span class="s2">"experiment_closure"</span><span class="p">,</span>
+    <span class="s2">"graph_schema"</span><span class="p">,</span>
+    <span class="s2">"isolated_graph_node_classes"</span><span class="p">,</span>
+    <span class="s2">"join_key_audit"</span><span class="p">,</span>
+    <span class="s2">"lane_back_edges"</span><span class="p">,</span>
+    <span class="s2">"lane_membership"</span><span class="p">,</span>
+    <span class="s2">"media_base_issues"</span><span class="p">,</span>
+    <span class="s2">"media_derivation_issues"</span><span class="p">,</span>
+    <span class="s2">"media_library_compound_issues"</span><span class="p">,</span>
+    <span class="s2">"orphan_models"</span><span class="p">,</span>
+    <span class="s2">"phenotype_label_map"</span><span class="p">,</span>
+    <span class="s2">"schema_enums"</span><span class="p">,</span>
+    <span class="s2">"schema_models"</span><span class="p">,</span>
+    <span class="s2">"sourced_value_fields"</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">REPO_ROOT</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">torchcell</span><span class="o">.</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span>
+
+<span class="c1"># A structure identifier is anything that resolves the molecule to a structure. The</span>
+<span class="c1"># ordering mirrors Compound's own docstring: inchikey is the primary key, the rest</span>
+<span class="c1"># are cross-references or auxiliary structure strings.</span>
+<span class="n">IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"inchikey"</span><span class="p">,</span>
+    <span class="s2">"chebi_id"</span><span class="p">,</span>
+    <span class="s2">"pubchem_cid"</span><span class="p">,</span>
+    <span class="s2">"smiles"</span><span class="p">,</span>
+    <span class="s2">"inchi"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Properties every phenotype node class carries regardless of family, so they carry</span>
+<span class="c1"># no information about WHICH phenotype the class models.</span>
+<span class="n">PHENOTYPE_ENVELOPE_PROPERTIES</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span><span class="s2">"graph_level"</span><span class="p">,</span> <span class="s2">"label_name"</span><span class="p">,</span> <span class="s2">"label_statistic_name"</span><span class="p">,</span> <span class="s2">"serialized_data"</span><span class="p">}</span>
+<span class="p">)</span>
+
+<span class="c1"># Attribute chains the adapter walks, and the model each is rooted in. These are the</span>
+<span class="c1"># two entrypoints every node method starts from: the chunked methods take a record</span>
+<span class="c1"># dict, the reference methods take an experiment-reference-index entry.</span>
+<span class="n">ADAPTER_ROOTS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"data['experiment']"</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">Experiment</span><span class="p">,</span>
+    <span class="s2">"data.reference"</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">ExperimentReference</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Report models. Pydantic-first: every check returns typed records, never tuples,</span>
+<span class="c1"># so a caller (a test, a verifier, a future admission gate) reads fields by name.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<div class="viewcode-block" id="AdapterNodeSite">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.AdapterNodeSite.html#torchcell.datamodels.ontology_checks.AdapterNodeSite">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AdapterNodeSite</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One ``BioCypherNode(...)`` construction in ``cell_adapter.py``."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">function</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"enclosing CellAdapter method name"</span><span class="p">)</span>
+    <span class="n">lineno</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">node_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"the emitted graph class; None if not a literal"</span>
+    <span class="p">)</span>
+    <span class="n">property_keys</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"emitted property names; None when the properties argument is "</span>
+        <span class="s2">"not statically resolvable (a form this reader does not understand)"</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="PropertyMismatch">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.PropertyMismatch.html#torchcell.datamodels.ontology_checks.PropertyMismatch">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PropertyMismatch</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A node class whose emitted properties differ from its declared properties."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">node_label</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">function</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">lineno</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">emitted_not_declared</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">declared_not_emitted</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="OptionalTraversal">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.OptionalTraversal.html#torchcell.datamodels.ontology_checks.OptionalTraversal">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OptionalTraversal</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""An adapter attribute chain that walks THROUGH a field the schema may null."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">lineno</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">chain</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the full attribute expression, as written"</span><span class="p">)</span>
+    <span class="n">optional_hop</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"Model.field whose annotation admits None"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="PhenotypeLabelMap">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.PhenotypeLabelMap.html#torchcell.datamodels.ontology_checks.PhenotypeLabelMap">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PhenotypeLabelMap</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Bijection between concrete phenotype classes and phenotype node classes.</span>
+
+<span class="sd">    The mapping is derived from DATA, not from a naming convention: a node class's</span>
+<span class="sd">    non-envelope properties must be field names of exactly one concrete phenotype.</span>
+<span class="sd">    That is why ``RNASeqExpressionPhenotype`` &lt;-&gt; ``rnaseq expression phenotype``</span>
+<span class="sd">    and ``CalMorphPhenotype`` &lt;-&gt; ``calmorph phenotype`` resolve without a hand</span>
+<span class="sd">    alias table, and why a property drifting off its class is caught.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">matched</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"graph node class -&gt; phenotype class name"</span>
+    <span class="p">)</span>
+    <span class="n">ambiguous</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"node class -&gt; several candidate classes"</span>
+    <span class="p">)</span>
+    <span class="n">unmatched_labels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"node classes matching no phenotype class"</span>
+    <span class="p">)</span>
+    <span class="n">unmapped_classes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"phenotype classes with no node class"</span>
+    <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_bijective</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""True when every class has exactly one node class and vice versa."""</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ambiguous</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">unmatched_labels</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">unmapped_classes</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="CompoundIdentityIssue">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.CompoundIdentityIssue.html#torchcell.datamodels.ontology_checks.CompoundIdentityIssue">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CompoundIdentityIssue</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A ``Compound`` that is neither identified nor honestly gapped."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">context</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"where the compound was found, e.g. 'SC.component'"</span>
+    <span class="p">)</span>
+    <span class="n">compound_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">definition</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"ComponentDefinition value, or 'dropout'"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="MediaBaseIssue">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.MediaBaseIssue.html#torchcell.datamodels.ontology_checks.MediaBaseIssue">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MediaBaseIssue</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A ``Media.base_medium`` that names nothing in ``MEDIA_LIBRARY``."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">media_key</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">base_medium</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="MediaDerivationIssue">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.MediaDerivationIssue.html#torchcell.datamodels.ontology_checks.MediaDerivationIssue">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MediaDerivationIssue</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A derived medium that dropped a base component without declaring a dropout."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">media_key</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">base_medium</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">missing_components</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="EnvironmentCompoundCollision">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.EnvironmentCompoundCollision.html#torchcell.datamodels.ontology_checks.EnvironmentCompoundCollision">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EnvironmentCompoundCollision</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One compound encoded twice in an environment: as a component AND as an edit."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">identity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the join key that collided (InChIKey or name)"</span><span class="p">)</span>
+    <span class="n">component_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">perturbation_name</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="JoinKeyCensus">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.JoinKeyCensus.html#torchcell.datamodels.ontology_checks.JoinKeyCensus">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">JoinKeyCensus</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""How many records of a built dataset are joinable on each identity key.</span>
+
+<span class="sd">    Reads the stored experiment mappings (the JSON dicts an LMDB yields), so a</span>
+<span class="sd">    verifier can point it at any built dataset without importing its loader.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">n_records</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">n_with_genome</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">n_with_systematic_gene_names</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">n_with_media_name</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">n_with_media_base</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">n_with_temperature</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">n_with_temperature_gap</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">n_with_every_compound_identified</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">distinct_genomes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">distinct_media_bases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">distinct_compound_identities</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">unidentified_compound_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Schema introspection.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<div class="viewcode-block" id="schema_models">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.schema_models.html#torchcell.datamodels.ontology_checks.schema_models">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">schema_models</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Every pydantic model DEFINED in ``schema.py`` (not merely imported)."""</span>
+    <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span>
+        <span class="n">obj</span>
+        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">==</span> <span class="n">s</span><span class="o">.</span><span class="vm">__name__</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="schema_enums">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.schema_enums.html#torchcell.datamodels.ontology_checks.schema_enums">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">schema_enums</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Every enum DEFINED in ``schema.py``."""</span>
+    <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span>
+        <span class="n">obj</span>
+        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">==</span> <span class="n">s</span><span class="o">.</span><span class="vm">__name__</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_models_in</span><span class="p">(</span><span class="n">annotation</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Every pydantic model named anywhere inside a (nested) type annotation."""</span>
+    <span class="n">found</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">walk</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">):</span>
+            <span class="n">found</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">typing</span><span class="o">.</span><span class="n">get_args</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+            <span class="n">walk</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+
+    <span class="n">walk</span><span class="p">(</span><span class="n">annotation</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">found</span>
+
+
+<div class="viewcode-block" id="composition_targets">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.composition_targets.html#torchcell.datamodels.ontology_checks.composition_targets">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">composition_targets</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Schema models this model COMPOSES (holds in one of its fields)."""</span>
+    <span class="n">known</span> <span class="o">=</span> <span class="n">schema_models</span><span class="p">()</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">model_fields</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">out</span> <span class="o">|=</span> <span class="p">{</span>
+            <span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">_models_in</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">annotation</span><span class="p">)</span> <span class="k">if</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">known</span> <span class="ow">and</span> <span class="n">m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">model</span>
+        <span class="p">}</span>
+    <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">out</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="experiment_closure">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.experiment_closure.html#torchcell.datamodels.ontology_checks.experiment_closure">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">experiment_closure</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Models reachable from ``Experiment`` / ``ExperimentReference``.</span>
+
+<span class="sd">    Reachability is composition PLUS inheritance in both directions: a union slot</span>
+<span class="sd">    typed on a leaf makes the leaf's abstract bases part of the ontology, and a slot</span>
+<span class="sd">    typed on a base admits every subclass. Composition alone would call every</span>
+<span class="sd">    abstract base an orphan, which is noise rather than a finding.</span>
+<span class="sd">    """</span>
+    <span class="n">known</span> <span class="o">=</span> <span class="n">schema_models</span><span class="p">()</span>
+    <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">known</span> <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">ExperimentReference</span><span class="p">))</span>
+    <span class="p">}</span>
+    <span class="n">stack</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">seen</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">stack</span><span class="p">:</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="n">nxt</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">composition_targets</span><span class="p">(</span><span class="n">node</span><span class="p">))</span>
+        <span class="n">nxt</span> <span class="o">|=</span> <span class="p">{</span><span class="n">b</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="vm">__mro__</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">if</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">known</span><span class="p">}</span>
+        <span class="n">nxt</span> <span class="o">|=</span> <span class="p">{</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">known</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">nxt</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">item</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">seen</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="orphan_models">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.orphan_models.html#torchcell.datamodels.ontology_checks.orphan_models">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">orphan_models</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Schema models no experiment record can ever reach, sorted by name."""</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">schema_models</span><span class="p">()</span> <span class="o">-</span> <span class="n">experiment_closure</span><span class="p">())</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_inheritance_subtree</span><span class="p">(</span><span class="n">roots</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]]:</span>
+    <span class="n">known</span> <span class="o">=</span> <span class="n">schema_models</span><span class="p">()</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">stack</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">roots</span><span class="p">]</span>
+    <span class="k">while</span> <span class="n">stack</span><span class="p">:</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="n">stack</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">known</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<div class="viewcode-block" id="lane_membership">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.lane_membership.html#torchcell.datamodels.ontology_checks.lane_membership">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">lane_membership</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">"""The three record lanes, each closed under inheritance AND composition.</span>
+
+<span class="sd">    A lane is what an experiment's three slots point at: the genotype it applied,</span>
+<span class="sd">    the environment it applied it in, and the phenotype it observed. Keeping these</span>
+<span class="sd">    disjoint is what makes a persistent entity separable from a contingent</span>
+<span class="sd">    observation: a medium that could also be reached from a phenotype would mean the</span>
+<span class="sd">    observation carries part of the thing observed.</span>
+<span class="sd">    """</span>
+    <span class="n">lanes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">roots</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">],</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"genotype"</span><span class="p">:</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">Genotype</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">SegregantGenotype</span><span class="p">),</span>
+        <span class="s2">"environment"</span><span class="p">:</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">Environment</span><span class="p">,),</span>
+        <span class="s2">"phenotype"</span><span class="p">:</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">Phenotype</span><span class="p">,),</span>
+    <span class="p">}</span>
+    <span class="k">for</span> <span class="n">lane</span><span class="p">,</span> <span class="n">lane_roots</span> <span class="ow">in</span> <span class="n">roots</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">members</span> <span class="o">=</span> <span class="n">_inheritance_subtree</span><span class="p">(</span><span class="n">lane_roots</span><span class="p">)</span>
+        <span class="n">stack</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">members</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">stack</span><span class="p">:</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">composition_targets</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">related</span> <span class="ow">in</span> <span class="n">_inheritance_subtree</span><span class="p">([</span><span class="n">target</span><span class="p">]):</span>
+                    <span class="k">if</span> <span class="n">related</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">members</span><span class="p">:</span>
+                        <span class="n">members</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">related</span><span class="p">)</span>
+                        <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">related</span><span class="p">)</span>
+        <span class="n">lanes</span><span class="p">[</span><span class="n">lane</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">members</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">lanes</span></div>
+
+
+
+<div class="viewcode-block" id="lane_back_edges">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.lane_back_edges.html#torchcell.datamodels.ontology_checks.lane_back_edges">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">lane_back_edges</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Composition edges pointing UP from a lane into the experiment lane.</span>
+
+<span class="sd">    The ontology is a DAG with a declared direction: an experiment composes a</span>
+<span class="sd">    genotype, an environment and a phenotype, never the reverse. A phenotype that</span>
+<span class="sd">    composed an experiment would make the record self-referential and would break</span>
+<span class="sd">    every content-addressed node id (the phenotype's hash would depend on the</span>
+<span class="sd">    experiment's, which depends on the phenotype's).</span>
+<span class="sd">    """</span>
+    <span class="n">experiments</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">m</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">schema_models</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">ExperimentReference</span><span class="p">))</span>
+    <span class="p">}</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">lane</span><span class="p">,</span> <span class="n">members</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">lane_membership</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">members</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="vm">__name__</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">composition_targets</span><span class="p">(</span><span class="n">model</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="vm">__name__</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">experiments</span><span class="p">:</span>
+                    <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">lane</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">target</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="sourced_value_fields">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.sourced_value_fields.html#torchcell.datamodels.ontology_checks.sourced_value_fields">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sourced_value_fields</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""``Model.field -&gt; rendered annotation`` for every field carrying SourcedValue."""</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">schema_models</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="vm">__name__</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">model_fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">SourcedValue</span> <span class="ow">in</span> <span class="n">_models_in</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">annotation</span><span class="p">):</span>
+                <span class="n">out</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">annotation</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="enum_value_collisions">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.enum_value_collisions.html#torchcell.datamodels.ontology_checks.enum_value_collisions">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">enum_value_collisions</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Schema enums whose members share a value (a silent Python alias).</span>
+
+<span class="sd">    ``a = "x"`` followed by ``b = "x"`` does not error: ``b`` becomes an ALIAS of</span>
+<span class="sd">    ``a``, iteration yields one member, and two ontology concepts collapse into one</span>
+<span class="sd">    with no diagnostic anywhere.</span>
+<span class="sd">    """</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">schema_enums</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="vm">__name__</span><span class="p">):</span>
+        <span class="n">by_value</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">member</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__members__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">by_value</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">member</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">collided</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">n</span> <span class="k">for</span> <span class="n">names</span> <span class="ow">in</span> <span class="n">by_value</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">collided</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">]</span> <span class="o">=</span> <span class="n">collided</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Graph schema + adapter source.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<div class="viewcode-block" id="graph_schema">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.graph_schema.html#torchcell.datamodels.ontology_checks.graph_schema">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">graph_schema</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">GraphSchemaEntry</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The committed BioCypher graph schema, parsed into per-class entries."""</span>
+    <span class="k">return</span> <span class="n">graph_schema_from_yaml</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">REPO_ROOT</span> <span class="o">/</span> <span class="n">SCHEMA_CONFIG_RELPATH</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="cell_adapter_source">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.cell_adapter_source.html#torchcell.datamodels.ontology_checks.cell_adapter_source">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">cell_adapter_source</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The ``CellAdapter`` module source (read as text; never imported for this)."""</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">REPO_ROOT</span> <span class="o">/</span> <span class="n">CELL_ADAPTER_RELPATH</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="isolated_graph_node_classes">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.isolated_graph_node_classes.html#torchcell.datamodels.ontology_checks.isolated_graph_node_classes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">isolated_graph_node_classes</span><span class="p">(</span><span class="n">schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">GraphSchemaEntry</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Node classes no edge class connects (invisible to any traversal query)."""</span>
+    <span class="n">connected</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"edge"</span><span class="p">:</span>
+            <span class="n">connected</span> <span class="o">|=</span> <span class="nb">set</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">source</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">target</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="n">name</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"node"</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">connected</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="phenotype_label_map">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.phenotype_label_map.html#torchcell.datamodels.ontology_checks.phenotype_label_map">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">phenotype_label_map</span><span class="p">(</span><span class="n">schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">GraphSchemaEntry</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">PhenotypeLabelMap</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Match each phenotype node class to its concrete pydantic phenotype class."""</span>
+    <span class="n">concrete</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">typing</span><span class="o">.</span><span class="n">get_args</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">PhenotypeType</span><span class="p">)</span> <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">Phenotype</span><span class="p">]</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="n">name</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"node"</span> <span class="ow">and</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"phenotype"</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">PhenotypeLabelMap</span><span class="p">()</span>
+    <span class="n">claimed</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">:</span>
+        <span class="n">discriminating</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">schema</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">properties</span><span class="p">)</span> <span class="o">-</span> <span class="n">PHENOTYPE_ENVELOPE_PROPERTIES</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span>
+            <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">concrete</span>
+            <span class="k">if</span> <span class="n">discriminating</span> <span class="ow">and</span> <span class="n">discriminating</span> <span class="o">&lt;=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">model_fields</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">matched</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">claimed</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">candidates</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">ambiguous</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">candidates</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">unmatched_labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">unmapped_classes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">concrete</span> <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">claimed</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_dict_keys</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""String keys of a dict literal; a non-literal key makes the site unreadable."""</span>
+    <span class="n">keys</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">keys</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="n">keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_local_dict</span><span class="p">(</span>
+    <span class="n">function</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span> <span class="o">|</span> <span class="n">ast</span><span class="o">.</span><span class="n">AsyncFunctionDef</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ast</span><span class="o">.</span><span class="n">Dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">function</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Assign</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+            <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">name</span>
+            <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Dict</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_returned_dicts</span><span class="p">(</span><span class="n">tree</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Dict</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Helper functions whose body returns a dict literal (the shared property builders)."""</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">AsyncFunctionDef</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">statement</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Return</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
+                    <span class="n">statement</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Dict</span>
+                <span class="p">):</span>
+                    <span class="n">out</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">statement</span><span class="o">.</span><span class="n">value</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<div class="viewcode-block" id="adapter_node_sites">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.adapter_node_sites.html#torchcell.datamodels.ontology_checks.adapter_node_sites">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">adapter_node_sites</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">AdapterNodeSite</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Every ``BioCypherNode(...)`` the adapter constructs, with what it emits.</span>
+
+<span class="sd">    Read from the AST rather than by running the adapter: running one needs a built</span>
+<span class="sd">    LMDB, and the property set is a static contract the graph schema must match</span>
+<span class="sd">    whether or not any dataset is currently on disk.</span>
+<span class="sd">    """</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+    <span class="n">helpers</span> <span class="o">=</span> <span class="n">_returned_dicts</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
+    <span class="n">sites</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AdapterNodeSite</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">function</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">function</span><span class="p">,</span> <span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">AsyncFunctionDef</span><span class="p">)):</span>
+            <span class="k">continue</span>
+        <span class="k">for</span> <span class="n">call</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">function</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">call</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Call</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">call</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="n">call</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s2">"BioCypherNode"</span>
+            <span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">keywords</span> <span class="o">=</span> <span class="p">{</span><span class="n">kw</span><span class="o">.</span><span class="n">arg</span><span class="p">:</span> <span class="n">kw</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">call</span><span class="o">.</span><span class="n">keywords</span><span class="p">}</span>
+            <span class="n">label_node</span> <span class="o">=</span> <span class="n">keywords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"node_label"</span><span class="p">)</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">label_node</span><span class="o">.</span><span class="n">value</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">label_node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">label_node</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+                <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">)</span>
+            <span class="n">properties</span> <span class="o">=</span> <span class="n">keywords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">)</span>
+            <span class="n">keys</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">properties</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">keys</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">properties</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Dict</span><span class="p">):</span>
+                <span class="n">keys</span> <span class="o">=</span> <span class="n">_dict_keys</span><span class="p">(</span><span class="n">properties</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">properties</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">):</span>
+                <span class="n">local</span> <span class="o">=</span> <span class="n">_local_dict</span><span class="p">(</span><span class="n">function</span><span class="p">,</span> <span class="n">properties</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+                <span class="n">keys</span> <span class="o">=</span> <span class="n">_dict_keys</span><span class="p">(</span><span class="n">local</span><span class="p">)</span> <span class="k">if</span> <span class="n">local</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">properties</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Call</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">properties</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span>
+            <span class="p">):</span>
+                <span class="n">helper</span> <span class="o">=</span> <span class="n">helpers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">properties</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">attr</span><span class="p">)</span>
+                <span class="n">keys</span> <span class="o">=</span> <span class="n">_dict_keys</span><span class="p">(</span><span class="n">helper</span><span class="p">)</span> <span class="k">if</span> <span class="n">helper</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">keys</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">sites</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">AdapterNodeSite</span><span class="p">(</span>
+                    <span class="n">function</span><span class="o">=</span><span class="n">function</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">lineno</span><span class="o">=</span><span class="n">call</span><span class="o">.</span><span class="n">lineno</span><span class="p">,</span>
+                    <span class="n">node_label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+                    <span class="n">property_keys</span><span class="o">=</span><span class="n">keys</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">sites</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">site</span><span class="p">:</span> <span class="n">site</span><span class="o">.</span><span class="n">lineno</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="adapter_property_mismatches">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.adapter_property_mismatches.html#torchcell.datamodels.ontology_checks.adapter_property_mismatches">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">adapter_property_mismatches</span><span class="p">(</span>
+    <span class="n">sites</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">AdapterNodeSite</span><span class="p">],</span> <span class="n">schema</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">GraphSchemaEntry</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">PropertyMismatch</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Node classes where emitted properties != declared properties, either way.</span>
+
+<span class="sd">    BioCypher drops a node class whose label the schema does not declare, and drops</span>
+<span class="sd">    a property the schema does not list, both without an error. A declared property</span>
+<span class="sd">    nothing emits is the mirror failure: the column exists in the store and is</span>
+<span class="sd">    always null, so a query written against it silently returns nothing.</span>
+<span class="sd">    """</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PropertyMismatch</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">sites</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">site</span><span class="o">.</span><span class="n">node_label</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">site</span><span class="o">.</span><span class="n">property_keys</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">site</span><span class="o">.</span><span class="n">node_label</span><span class="p">)</span>
+        <span class="n">declared</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">properties</span><span class="p">)</span> <span class="k">if</span> <span class="n">entry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">emitted</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">site</span><span class="o">.</span><span class="n">property_keys</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">entry</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">declared</span> <span class="o">!=</span> <span class="n">emitted</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">PropertyMismatch</span><span class="p">(</span>
+                    <span class="n">node_label</span><span class="o">=</span><span class="n">site</span><span class="o">.</span><span class="n">node_label</span><span class="p">,</span>
+                    <span class="n">function</span><span class="o">=</span><span class="n">site</span><span class="o">.</span><span class="n">function</span><span class="p">,</span>
+                    <span class="n">lineno</span><span class="o">=</span><span class="n">site</span><span class="o">.</span><span class="n">lineno</span><span class="p">,</span>
+                    <span class="n">emitted_not_declared</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">emitted</span> <span class="o">-</span> <span class="n">declared</span><span class="p">),</span>
+                    <span class="n">declared_not_emitted</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">declared</span> <span class="o">-</span> <span class="n">emitted</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_admits_none</span><span class="p">(</span><span class="n">annotation</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">typing</span><span class="o">.</span><span class="n">get_origin</span><span class="p">(</span><span class="n">annotation</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="n">typing</span><span class="o">.</span><span class="n">Union</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">UnionType</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">arg</span> <span class="ow">is</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">typing</span><span class="o">.</span><span class="n">get_args</span><span class="p">(</span><span class="n">annotation</span><span class="p">))</span>
+    <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_model_of</span><span class="p">(</span><span class="n">annotation</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">annotation</span>
+    <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">typing</span><span class="o">.</span><span class="n">get_args</span><span class="p">(</span><span class="n">annotation</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">arg</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_attribute_chain</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""``(root expression text, attribute names)`` for a dotted chain."""</span>
+    <span class="n">attributes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">cursor</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">expr</span> <span class="o">=</span> <span class="n">node</span>
+    <span class="k">while</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">):</span>
+        <span class="n">attributes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cursor</span><span class="o">.</span><span class="n">attr</span><span class="p">)</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">value</span>
+    <span class="k">return</span> <span class="n">ast</span><span class="o">.</span><span class="n">unparse</span><span class="p">(</span><span class="n">cursor</span><span class="p">),</span> <span class="nb">list</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">attributes</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="adapter_optional_traversals">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.adapter_optional_traversals.html#torchcell.datamodels.ontology_checks.adapter_optional_traversals">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">adapter_optional_traversals</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">OptionalTraversal</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Adapter chains that dereference THROUGH a schema field that may be None.</span>
+
+<span class="sd">    ``Environment.temperature`` is optional because a secondary curation layer may</span>
+<span class="sd">    not carry it (a typed gap, not a guess). Any adapter chain that walks past such</span>
+<span class="sd">    a field unguarded turns a legal record into an AttributeError at KG-build time,</span>
+<span class="sd">    which is the schema and the adapter disagreeing about what a record may be.</span>
+<span class="sd">    """</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+    <span class="n">found</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">OptionalTraversal</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">root_text</span><span class="p">,</span> <span class="n">attributes</span> <span class="o">=</span> <span class="n">_attribute_chain</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="n">full</span> <span class="o">=</span> <span class="s2">"."</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">root_text</span><span class="p">,</span> <span class="o">*</span><span class="n">attributes</span><span class="p">])</span>
+        <span class="n">model</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">remainder</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">candidate</span><span class="p">,</span> <span class="n">root_model</span> <span class="ow">in</span> <span class="n">ADAPTER_ROOTS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">full</span> <span class="o">==</span> <span class="n">candidate</span> <span class="ow">or</span> <span class="n">full</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">candidate</span> <span class="o">+</span> <span class="s2">"."</span><span class="p">):</span>
+                <span class="n">model</span> <span class="o">=</span> <span class="n">root_model</span>
+                <span class="n">remainder</span> <span class="o">=</span> <span class="n">full</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span> <span class="p">:]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span>
+                <span class="n">remainder</span> <span class="o">=</span> <span class="p">[</span><span class="n">part</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">remainder</span> <span class="k">if</span> <span class="n">part</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">remainder</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">cursor</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">attribute</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">remainder</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">cursor</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">field</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">model_fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">attribute</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">field</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">remainder</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">_admits_none</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">annotation</span><span class="p">):</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">full</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">cursor</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">attribute</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="n">found</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
+                    <span class="n">key</span><span class="p">,</span>
+                    <span class="n">OptionalTraversal</span><span class="p">(</span>
+                        <span class="n">lineno</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">lineno</span><span class="p">,</span> <span class="n">chain</span><span class="o">=</span><span class="n">full</span><span class="p">,</span> <span class="n">optional_hop</span><span class="o">=</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+                <span class="k">break</span>
+            <span class="n">cursor</span> <span class="o">=</span> <span class="n">_model_of</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">annotation</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">found</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">lineno</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">chain</span><span class="p">))</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Identity keys: compounds, media, temperature, systematic gene names.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<div class="viewcode-block" id="compound_has_identity">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.compound_has_identity.html#torchcell.datamodels.ontology_checks.compound_has_identity">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compound_has_identity</span><span class="p">(</span><span class="n">compound</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">Compound</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""True when the compound carries at least one structure identifier."""</span>
+    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">compound</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">IDENTITY_FIELDS</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="compound_has_identity_gap">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.compound_has_identity_gap.html#torchcell.datamodels.ontology_checks.compound_has_identity_gap">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compound_has_identity_gap</span><span class="p">(</span><span class="n">compound</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">Compound</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""True when an identifier's absence is declared as a typed ``ProvenanceGap``."""</span>
+    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">gap</span><span class="o">.</span><span class="n">field</span> <span class="ow">in</span> <span class="n">IDENTITY_FIELDS</span> <span class="k">for</span> <span class="n">gap</span> <span class="ow">in</span> <span class="n">compound</span><span class="o">.</span><span class="n">provenance_gaps</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_compound_key</span><span class="p">(</span><span class="n">compound</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">Compound</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The join key for a compound: its InChIKey, else its normalized name."""</span>
+    <span class="k">if</span> <span class="n">compound</span><span class="o">.</span><span class="n">inchikey</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">compound</span><span class="o">.</span><span class="n">inchikey</span>
+    <span class="k">return</span> <span class="n">normalize_compound_name</span><span class="p">(</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="media_library_compound_issues">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.media_library_compound_issues.html#torchcell.datamodels.ontology_checks.media_library_compound_issues">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">media_library_compound_issues</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">CompoundIdentityIssue</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Shared-library compounds that are neither identified nor honestly gapped.</span>
+
+<span class="sd">    Scoped to compounds that name ONE substance: a ``defined`` component and every</span>
+<span class="sd">    dropout. ``composition_deferred`` (commercial YNB) and</span>
+<span class="sd">    ``intrinsically_undefined`` (peptone, yeast extract) are mixtures, so no</span>
+<span class="sd">    structure identifier exists to demand.</span>
+<span class="sd">    """</span>
+    <span class="n">issues</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CompoundIdentityIssue</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">media</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">MEDIA_LIBRARY</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">media</span><span class="o">.</span><span class="n">components</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">component</span><span class="o">.</span><span class="n">definition</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">ComponentDefinition</span><span class="o">.</span><span class="n">defined</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">compound</span> <span class="o">=</span> <span class="n">component</span><span class="o">.</span><span class="n">compound</span>
+            <span class="k">if</span> <span class="n">compound_has_identity</span><span class="p">(</span><span class="n">compound</span><span class="p">)</span> <span class="ow">or</span> <span class="n">compound_has_identity_gap</span><span class="p">(</span><span class="n">compound</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">CompoundIdentityIssue</span><span class="p">(</span>
+                    <span class="n">context</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">.components"</span><span class="p">,</span>
+                    <span class="n">compound_name</span><span class="o">=</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">definition</span><span class="o">=</span><span class="n">component</span><span class="o">.</span><span class="n">definition</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">dropout</span> <span class="ow">in</span> <span class="n">media</span><span class="o">.</span><span class="n">dropouts</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">compound_has_identity</span><span class="p">(</span><span class="n">dropout</span><span class="p">)</span> <span class="ow">or</span> <span class="n">compound_has_identity_gap</span><span class="p">(</span><span class="n">dropout</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">CompoundIdentityIssue</span><span class="p">(</span>
+                    <span class="n">context</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">.dropouts"</span><span class="p">,</span>
+                    <span class="n">compound_name</span><span class="o">=</span><span class="n">dropout</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">definition</span><span class="o">=</span><span class="s2">"dropout"</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">issues</span></div>
+
+
+
+<div class="viewcode-block" id="media_base_issues">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.media_base_issues.html#torchcell.datamodels.ontology_checks.media_base_issues">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">media_base_issues</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">MediaBaseIssue</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Library media whose ``base_medium`` names no member of ``MEDIA_LIBRARY``.</span>
+
+<span class="sd">    A base label that resolves to nothing joins nothing: aggregating "every record</span>
+<span class="sd">    on an SD base" needs the base to BE an object, with components and provenance,</span>
+<span class="sd">    not a string two datasets happen to spell the same way.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">MediaBaseIssue</span><span class="p">(</span><span class="n">media_key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">base_medium</span><span class="o">=</span><span class="n">media</span><span class="o">.</span><span class="n">base_medium</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">media</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">MEDIA_LIBRARY</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">media</span><span class="o">.</span><span class="n">base_medium</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">media</span><span class="o">.</span><span class="n">base_medium</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">MEDIA_LIBRARY</span>
+    <span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="media_derivation_issues">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.media_derivation_issues.html#torchcell.datamodels.ontology_checks.media_derivation_issues">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">media_derivation_issues</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">MediaDerivationIssue</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Derived media that silently lost a base component.</span>
+
+<span class="sd">    For a medium naming a base that exists, every (compound name, role) of the base</span>
+<span class="sd">    must reappear in the derivative or be declared in ``dropouts``. That is what</span>
+<span class="sd">    makes "SC-Ura" a typed edit of SC rather than a separate recipe that happens to</span>
+<span class="sd">    look similar.</span>
+<span class="sd">    """</span>
+    <span class="n">issues</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MediaDerivationIssue</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">media</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">MEDIA_LIBRARY</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="n">base_key</span> <span class="o">=</span> <span class="n">media</span><span class="o">.</span><span class="n">base_medium</span>
+        <span class="k">if</span> <span class="n">base_key</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">base_key</span> <span class="o">==</span> <span class="n">key</span> <span class="ow">or</span> <span class="n">base_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">MEDIA_LIBRARY</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="n">MEDIA_LIBRARY</span><span class="p">[</span><span class="n">base_key</span><span class="p">]</span>
+        <span class="n">own</span> <span class="o">=</span> <span class="p">{(</span><span class="n">c</span><span class="o">.</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">role</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">media</span><span class="o">.</span><span class="n">components</span><span class="p">}</span>
+        <span class="n">dropped</span> <span class="o">=</span> <span class="p">{</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">media</span><span class="o">.</span><span class="n">dropouts</span><span class="p">}</span>
+        <span class="n">missing</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">name</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">role</span> <span class="ow">in</span> <span class="p">{(</span><span class="n">c</span><span class="o">.</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">role</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">base</span><span class="o">.</span><span class="n">components</span><span class="p">}</span>
+            <span class="o">-</span> <span class="n">own</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dropped</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+            <span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">MediaDerivationIssue</span><span class="p">(</span>
+                    <span class="n">media_key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">base_medium</span><span class="o">=</span><span class="n">base_key</span><span class="p">,</span> <span class="n">missing_components</span><span class="o">=</span><span class="n">missing</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">issues</span></div>
+
+
+
+<div class="viewcode-block" id="environment_compound_collisions">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.environment_compound_collisions.html#torchcell.datamodels.ontology_checks.environment_compound_collisions">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">environment_compound_collisions</span><span class="p">(</span>
+    <span class="n">environment</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">Environment</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EnvironmentCompoundCollision</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Compounds encoded twice in one environment: as a component AND as an edit.</span>
+
+<span class="sd">    A chemical stress is an ``EnvironmentPerturbation``; a constant ingredient is a</span>
+<span class="sd">    ``MediaComponent``. The same species in both roles is double-counted, and any</span>
+<span class="sd">    aggregate over "records dosed with X" then disagrees with the medium's own</span>
+<span class="sd">    composition. Identity is the InChIKey when both sides carry one, else the</span>
+<span class="sd">    normalized name.</span>
+<span class="sd">    """</span>
+    <span class="n">components</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">_compound_key</span><span class="p">(</span><span class="n">component</span><span class="o">.</span><span class="n">compound</span><span class="p">):</span> <span class="n">component</span><span class="o">.</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">environment</span><span class="o">.</span><span class="n">media</span><span class="o">.</span><span class="n">components</span>
+        <span class="k">if</span> <span class="n">component</span><span class="o">.</span><span class="n">definition</span> <span class="ow">is</span> <span class="n">s</span><span class="o">.</span><span class="n">ComponentDefinition</span><span class="o">.</span><span class="n">defined</span>
+    <span class="p">}</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EnvironmentCompoundCollision</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">environment</span><span class="o">.</span><span class="n">perturbations</span><span class="p">:</span>
+        <span class="n">compound</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="s2">"compound"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">compound</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">compound</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="s2">"agent"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">compound</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">Compound</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">_compound_key</span><span class="p">(</span><span class="n">compound</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">components</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">EnvironmentCompoundCollision</span><span class="p">(</span>
+                    <span class="n">identity</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
+                    <span class="n">component_name</span><span class="o">=</span><span class="n">components</span><span class="p">[</span><span class="n">key</span><span class="p">],</span>
+                    <span class="n">perturbation_name</span><span class="o">=</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_compound_identity_from_mapping</span><span class="p">(</span><span class="n">compound</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">IDENTITY_FIELDS</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">compound</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="join_key_audit">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.join_key_audit.html#torchcell.datamodels.ontology_checks.join_key_audit">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">join_key_audit</span><span class="p">(</span>
+    <span class="n">records</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JoinKeyCensus</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Census of the identity keys a built dataset actually carries.</span>
+
+<span class="sd">    Takes ``(experiment, reference)`` mapping pairs -- exactly what an LMDB yields</span>
+<span class="sd">    -- so a verifier can run it over any dataset without importing its loader. The</span>
+<span class="sd">    counts answer the question a multimodal training set turns on: at which level</span>
+<span class="sd">    can these records be joined to another dataset's records at all.</span>
+<span class="sd">    """</span>
+    <span class="n">census</span> <span class="o">=</span> <span class="n">JoinKeyCensus</span><span class="p">()</span>
+    <span class="n">genomes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">bases</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">identities</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">unidentified</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
+        <span class="n">census</span><span class="o">.</span><span class="n">n_records</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">genome</span> <span class="o">=</span> <span class="n">reference</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"genome_reference"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">genome</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"species"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">genome</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"strain"</span><span class="p">):</span>
+            <span class="n">census</span><span class="o">.</span><span class="n">n_with_genome</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">genomes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">genome</span><span class="p">[</span><span class="s1">'species'</span><span class="p">]</span><span class="si">}</span><span class="s2">|</span><span class="si">{</span><span class="n">genome</span><span class="p">[</span><span class="s1">'strain'</span><span class="p">]</span><span class="si">}</span><span class="s2">|</span><span class="si">{</span><span class="n">genome</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'ploidy'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"genotype"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">perturbations</span> <span class="o">=</span> <span class="n">genotype</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbations"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">perturbations</span>
+            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">names</span><span class="p">:</span>
+            <span class="n">census</span><span class="o">.</span><span class="n">n_with_systematic_gene_names</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">environment</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"environment"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">media</span> <span class="o">=</span> <span class="n">environment</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"media"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">media</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">):</span>
+            <span class="n">census</span><span class="o">.</span><span class="n">n_with_media_name</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">media</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"base_medium"</span><span class="p">):</span>
+            <span class="n">census</span><span class="o">.</span><span class="n">n_with_media_base</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">bases</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">media</span><span class="p">[</span><span class="s2">"base_medium"</span><span class="p">]))</span>
+        <span class="k">if</span> <span class="n">environment</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"temperature"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">census</span><span class="o">.</span><span class="n">n_with_temperature</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="n">gap</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"field"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"temperature"</span>
+            <span class="k">for</span> <span class="n">gap</span> <span class="ow">in</span> <span class="p">(</span><span class="n">environment</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"provenance_gaps"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[])</span>
+        <span class="p">):</span>
+            <span class="n">census</span><span class="o">.</span><span class="n">n_with_temperature_gap</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">compounds</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">media</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"components"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]:</span>
+            <span class="k">if</span> <span class="n">component</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"definition"</span><span class="p">)</span> <span class="o">==</span> <span class="n">s</span><span class="o">.</span><span class="n">ComponentDefinition</span><span class="o">.</span><span class="n">defined</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+                <span class="n">compounds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">component</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"compound"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span>
+        <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">environment</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbations"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]:</span>
+            <span class="n">compound</span> <span class="o">=</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"compound"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"agent"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">compound</span><span class="p">:</span>
+                <span class="n">compounds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">compound</span><span class="p">)</span>
+        <span class="n">resolved</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">for</span> <span class="n">compound</span> <span class="ow">in</span> <span class="n">compounds</span><span class="p">:</span>
+            <span class="n">identity</span> <span class="o">=</span> <span class="n">_compound_identity_from_mapping</span><span class="p">(</span><span class="n">compound</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">identity</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">resolved</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="n">unidentified</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">compound</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">identities</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">identity</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resolved</span><span class="p">:</span>
+            <span class="n">census</span><span class="o">.</span><span class="n">n_with_every_compound_identified</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">census</span><span class="o">.</span><span class="n">distinct_genomes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">genomes</span><span class="p">)</span>
+    <span class="n">census</span><span class="o">.</span><span class="n">distinct_media_bases</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">bases</span><span class="p">)</span>
+    <span class="n">census</span><span class="o">.</span><span class="n">distinct_compound_identities</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">identities</span><span class="p">)</span>
+    <span class="n">census</span><span class="o">.</span><span class="n">unidentified_compound_names</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">unidentified</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">census</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

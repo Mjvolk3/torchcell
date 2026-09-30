@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.split\_dataset\_args
+=============================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autofunction:: split_dataset_args

@@ -1,0 +1,8 @@
+﻿torchcell.metabolism.constraints.CatalyticUnits
+===============================================
+
+.. currentmodule:: torchcell.metabolism.constraints
+
+.. autoclass:: CatalyticUnits
+   :show-inheritance:
+   :members:

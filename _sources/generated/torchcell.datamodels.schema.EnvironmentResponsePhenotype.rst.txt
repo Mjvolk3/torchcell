@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.EnvironmentResponsePhenotype
+========================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: EnvironmentResponsePhenotype
+   :show-inheritance:
+   :members:

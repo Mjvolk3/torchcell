@@ -1,0 +1,6 @@
+﻿torchcell.provenance.load\_default\_surface
+===========================================
+
+.. currentmodule:: torchcell.provenance
+
+.. autofunction:: load_default_surface

@@ -1,0 +1,6 @@
+﻿torchcell.viz.genetic\_interaction\_score.box\_plot
+===================================================
+
+.. currentmodule:: torchcell.viz.genetic_interaction_score
+
+.. autofunction:: box_plot

@@ -1,0 +1,8 @@
+﻿torchcell.sga.StrainScore
+=========================
+
+.. currentmodule:: torchcell.sga
+
+.. autoclass:: StrainScore
+   :show-inheritance:
+   :members:

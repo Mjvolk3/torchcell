@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.closure\_at\_ref
+=========================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autofunction:: closure_at_ref

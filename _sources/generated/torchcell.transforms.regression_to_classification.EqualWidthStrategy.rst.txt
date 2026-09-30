@@ -1,0 +1,8 @@
+﻿torchcell.transforms.regression\_to\_classification.EqualWidthStrategy
+======================================================================
+
+.. currentmodule:: torchcell.transforms.regression_to_classification
+
+.. autoclass:: EqualWidthStrategy
+   :show-inheritance:
+   :members:

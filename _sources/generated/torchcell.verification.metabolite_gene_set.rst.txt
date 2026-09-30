@@ -1,0 +1,6 @@
+﻿torchcell.verification.metabolite\_gene\_set
+============================================
+
+.. currentmodule:: torchcell.verification
+
+.. autofunction:: metabolite_gene_set

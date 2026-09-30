@@ -1,0 +1,8 @@
+﻿torchcell.knowledge\_graphs.build\_time\_projection.BuildTimeProjection
+=======================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.build_time_projection
+
+.. autoclass:: BuildTimeProjection
+   :show-inheritance:
+   :members:

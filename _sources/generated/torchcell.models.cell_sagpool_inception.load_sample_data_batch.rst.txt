@@ -1,0 +1,6 @@
+﻿torchcell.models.cell\_sagpool\_inception.load\_sample\_data\_batch
+===================================================================
+
+.. currentmodule:: torchcell.models.cell_sagpool_inception
+
+.. autofunction:: load_sample_data_batch

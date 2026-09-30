@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.cooper2010.AminoAcidCooper2010Dataset
+====================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.cooper2010
+
+.. autoclass:: AminoAcidCooper2010Dataset
+   :show-inheritance:
+   :members:

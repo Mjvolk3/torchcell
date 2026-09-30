@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.GenePerturbation
+============================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: GenePerturbation
+   :show-inheritance:
+   :members:

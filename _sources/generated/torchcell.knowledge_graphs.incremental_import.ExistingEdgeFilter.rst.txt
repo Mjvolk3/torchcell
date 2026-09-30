@@ -1,0 +1,8 @@
+﻿torchcell.knowledge\_graphs.incremental\_import.ExistingEdgeFilter
+==================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.incremental_import
+
+.. autoclass:: ExistingEdgeFilter
+   :show-inheritance:
+   :members:

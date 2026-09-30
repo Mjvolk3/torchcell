@@ -1,0 +1,8 @@
+﻿torchcell.paper.ontology\_graph.CompositionEdge
+===============================================
+
+.. currentmodule:: torchcell.paper.ontology_graph
+
+.. autoclass:: CompositionEdge
+   :show-inheritance:
+   :members:

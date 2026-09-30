@@ -1,0 +1,6 @@
+﻿torchcell.metabolism.betaxanthin.build\_betaxanthin\_pathway
+============================================================
+
+.. currentmodule:: torchcell.metabolism.betaxanthin
+
+.. autofunction:: build_betaxanthin_pathway

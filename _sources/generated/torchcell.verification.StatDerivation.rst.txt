@@ -1,0 +1,8 @@
+﻿torchcell.verification.StatDerivation
+=====================================
+
+.. currentmodule:: torchcell.verification
+
+.. autoclass:: StatDerivation
+   :show-inheritance:
+   :members:

@@ -1,0 +1,6 @@
+﻿torchcell.losses.distributional.masked\_mean
+============================================
+
+.. currentmodule:: torchcell.losses.distributional
+
+.. autofunction:: masked_mean

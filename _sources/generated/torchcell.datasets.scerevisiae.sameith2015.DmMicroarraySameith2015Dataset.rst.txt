@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.sameith2015.DmMicroarraySameith2015Dataset
+=========================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.sameith2015
+
+.. autoclass:: DmMicroarraySameith2015Dataset
+   :show-inheritance:
+   :members:

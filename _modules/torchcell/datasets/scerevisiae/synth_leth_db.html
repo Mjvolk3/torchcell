@@ -1,0 +1,636 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datasets.scerevisiae.synth_leth_db &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/datasets/scerevisiae/synth_leth_db.html" />
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html">
+            
+              <img src="../../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.datasets.scerevisiae.synth_leth_db</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.datasets.scerevisiae.synth_leth_db</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""SynLethDB-derived yeast synthetic lethality and synthetic rescue datasets."""</span>
+
+<span class="c1"># torchcell/datasets/scerevisiae/syn_leth_db_yeast</span>
+<span class="c1"># [[torchcell.datasets.scerevisiae.syn_leth_db_yeast]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/syn_leth_db_yeast</span>
+<span class="c1"># Test file: tests/torchcell/datasets/scerevisiae/test_syn_leth_db_yeast.py</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Environment</span><span class="p">,</span>
+    <span class="n">Genotype</span><span class="p">,</span>
+    <span class="n">Media</span><span class="p">,</span>
+    <span class="n">Publication</span><span class="p">,</span>
+    <span class="n">ReferenceGenome</span><span class="p">,</span>
+    <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">,</span>
+    <span class="n">SyntheticLethalityExperiment</span><span class="p">,</span>
+    <span class="n">SyntheticLethalityExperimentReference</span><span class="p">,</span>
+    <span class="n">SyntheticLethalityPhenotype</span><span class="p">,</span>
+    <span class="n">SyntheticRescueExperiment</span><span class="p">,</span>
+    <span class="n">SyntheticRescueExperimentReference</span><span class="p">,</span>
+    <span class="n">SyntheticRescuePhenotype</span><span class="p">,</span>
+    <span class="n">Temperature</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae.s288c</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="SynthLethalityYeastSynthLethDbDataset">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset.html#torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset">[docs]</a>
+<span class="nd">@register_dataset</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SynthLethalityYeastSynthLethDbDataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Yeast synthetic lethality gene-pair experiments from SynLethDB."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/syn_leth_db_yeast"</span><span class="p">,</span>
+        <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build the gene-name mapping from the genome and initialize the dataset."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gene_name_to_systematic</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build_gene_name_mapping</span><span class="p">()</span>
+        <span class="c1"># delete to remove: cannot pickle 'sqlite3.Connection' object</span>
+        <span class="k">del</span> <span class="n">genome</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_gene_name_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Map gene names, systematic IDs, and aliases to systematic names."""</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Building gene name to systematic name mapping..."</span><span class="p">)</span>
+        <span class="n">genome</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">genome</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">all_features</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="n">feature</span><span class="o">.</span><span class="n">featuretype</span> <span class="o">==</span> <span class="s2">"gene"</span><span class="p">:</span>
+                <span class="n">systematic_name</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">id</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">gene_name_to_systematic</span><span class="p">[</span><span class="n">systematic_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">systematic_name</span>
+                <span class="k">if</span> <span class="s2">"gene"</span> <span class="ow">in</span> <span class="n">feature</span><span class="o">.</span><span class="n">attributes</span><span class="p">:</span>
+                    <span class="n">gene_name</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">gene_name_to_systematic</span><span class="p">[</span><span class="n">gene_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">systematic_name</span>
+                <span class="k">if</span> <span class="s2">"Alias"</span> <span class="ow">in</span> <span class="n">feature</span><span class="o">.</span><span class="n">attributes</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">feature</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="s2">"Alias"</span><span class="p">]:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">gene_name_to_systematic</span><span class="p">[</span><span class="n">alias</span><span class="p">]</span> <span class="o">=</span> <span class="n">systematic_name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the raw synthetic-lethality CSV filename."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">"Yeast_SL.csv"</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">processed_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the processed LMDB directory name."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">"lmdb"</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">SyntheticLethalityExperiment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the synthetic-lethality experiment schema class."""</span>
+        <span class="k">return</span> <span class="n">SyntheticLethalityExperiment</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reference_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">SyntheticLethalityExperimentReference</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the synthetic-lethality experiment-reference schema class."""</span>
+        <span class="k">return</span> <span class="n">SyntheticLethalityExperimentReference</span>
+
+<div class="viewcode-block" id="SynthLethalityYeastSynthLethDbDataset.download">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset.html#torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset.download">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Download the synthetic-lethality CSV from Google Drive."""</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="s2">"https://drive.google.com/uc?export=download&amp;id=1_56ebyBatapNml8S5HlJW7Dz1l0DZZIq"</span>
+        <span class="n">download_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_file_names</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Downloading </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">download_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="n">session</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s2">"download_warning"</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">cookies</span><span class="p">:</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"confirm"</span><span class="p">:</span> <span class="n">response</span><span class="o">.</span><span class="n">cookies</span><span class="p">[</span><span class="s2">"download_warning"</span><span class="p">]}</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">download_path</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">iter_content</span><span class="p">(</span><span class="n">chunk_size</span><span class="o">=</span><span class="mi">8192</span><span class="p">):</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Download completed successfully."</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SynthLethalityYeastSynthLethDbDataset.preprocess_raw">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset.html#torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset.preprocess_raw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Add systematic-name columns for both interacting genes."""</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Converting gene names to systematic names..."</span><span class="p">)</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"n1.systematic_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"n1.name"</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_systematic_name</span><span class="p">)</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"n2.systematic_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"n2.name"</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_systematic_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="SynthLethalityYeastSynthLethDbDataset.get_systematic_name">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset.html#torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset.get_systematic_name">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_systematic_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gene_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the systematic name for a gene, falling back to the input name."""</span>
+        <span class="c1"># Remove the prime character if present</span>
+        <span class="n">clean_gene_name</span> <span class="o">=</span> <span class="n">gene_name</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"'"</span><span class="p">)</span>
+
+        <span class="n">systematic_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gene_name_to_systematic</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">clean_gene_name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">systematic_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Warning: No systematic name found for gene </span><span class="si">{</span><span class="n">gene_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">gene_name</span>  <span class="c1"># Return original name if no match found</span>
+
+        <span class="k">return</span> <span class="n">systematic_name</span></div>
+
+
+<div class="viewcode-block" id="SynthLethalityYeastSynthLethDbDataset.process">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset.html#torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset.process">[docs]</a>
+    <span class="nd">@post_process</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Read the raw CSV, build experiments, and write them to LMDB."""</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Processing Synthetic Lethality Yeast Data..."</span><span class="p">)</span>
+
+        <span class="n">raw_data_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_file_names</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">raw_data_path</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_raw</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e12</span><span class="p">))</span>
+
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)):</span>
+                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">row</span>
+                <span class="p">)</span>
+
+                <span class="n">serialized_data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                        <span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                        <span class="s2">"publication"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">serialized_data</span><span class="p">)</span>
+
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="SynthLethalityYeastSynthLethDbDataset.create_experiment">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset.html#torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset.create_experiment">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span>  <span class="c1"># type: ignore[override]  # dataset-specific signature</span>
+        <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
+        <span class="n">SyntheticLethalityExperiment</span><span class="p">,</span> <span class="n">SyntheticLethalityExperimentReference</span><span class="p">,</span> <span class="n">Publication</span>
+    <span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Build the experiment, reference, and publication objects for one row."""</span>
+        <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"S288C"</span>
+        <span class="p">)</span>
+
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"n1.systematic_name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"n1.name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="s2">"S288C"</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"n2.systematic_name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"n2.name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="s2">"S288C"</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
+            <span class="n">media</span><span class="o">=</span><span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"YEPD"</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"solid"</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">30</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">SyntheticLethalityPhenotype</span><span class="p">(</span>
+            <span class="n">is_synthetic_lethal</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">synthetic_lethality_statistic_score</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"r.statistic_score"</span><span class="p">]),</span>
+        <span class="p">)</span>
+
+        <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">SyntheticLethalityPhenotype</span><span class="p">(</span>
+            <span class="n">is_synthetic_lethal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">synthetic_lethality_statistic_score</span><span class="o">=</span><span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="n">experiment</span> <span class="o">=</span> <span class="n">SyntheticLethalityExperiment</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">genotype</span><span class="o">=</span><span class="n">genotype</span><span class="p">,</span>
+            <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">phenotype</span><span class="o">=</span><span class="n">phenotype</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">reference</span> <span class="o">=</span> <span class="n">SyntheticLethalityExperimentReference</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="n">genome_reference</span><span class="p">,</span>
+            <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">phenotype_reference</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span>
+            <span class="n">pubmed_id</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"r.pubmed_id"</span><span class="p">]),</span>
+            <span class="n">pubmed_url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"https://pubmed.ncbi.nlm.nih.gov/</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">'r.pubmed_id'</span><span class="p">]</span><span class="si">}</span><span class="s2">/"</span><span class="p">,</span>
+            <span class="n">doi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">doi_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SynthRescueYeastSynthLethDbDataset">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.synth_leth_db.SynthRescueYeastSynthLethDbDataset.html#torchcell.datasets.scerevisiae.synth_leth_db.SynthRescueYeastSynthLethDbDataset">[docs]</a>
+<span class="nd">@register_dataset</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SynthRescueYeastSynthLethDbDataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Yeast synthetic rescue gene-pair experiments from SynLethDB."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/syn_rescue_db_yeast"</span><span class="p">,</span>
+        <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build the gene-name mapping from the genome and initialize the dataset."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gene_name_to_systematic</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build_gene_name_mapping</span><span class="p">()</span>
+        <span class="c1"># delete to remove: cannot pickle 'sqlite3.Connection' object</span>
+        <span class="k">del</span> <span class="n">genome</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_gene_name_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Map gene names, systematic IDs, and aliases to systematic names."""</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Building gene name to systematic name mapping..."</span><span class="p">)</span>
+        <span class="n">genome</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">genome</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">all_features</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="n">feature</span><span class="o">.</span><span class="n">featuretype</span> <span class="o">==</span> <span class="s2">"gene"</span><span class="p">:</span>
+                <span class="n">systematic_name</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">id</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">gene_name_to_systematic</span><span class="p">[</span><span class="n">systematic_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">systematic_name</span>
+                <span class="k">if</span> <span class="s2">"gene"</span> <span class="ow">in</span> <span class="n">feature</span><span class="o">.</span><span class="n">attributes</span><span class="p">:</span>
+                    <span class="n">gene_name</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">gene_name_to_systematic</span><span class="p">[</span><span class="n">gene_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">systematic_name</span>
+                <span class="k">if</span> <span class="s2">"Alias"</span> <span class="ow">in</span> <span class="n">feature</span><span class="o">.</span><span class="n">attributes</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">feature</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="s2">"Alias"</span><span class="p">]:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">gene_name_to_systematic</span><span class="p">[</span><span class="n">alias</span><span class="p">]</span> <span class="o">=</span> <span class="n">systematic_name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the raw synthetic-rescue CSV filename."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">"Yeast_SR.csv"</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">processed_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the processed LMDB directory name."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">"lmdb"</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">SyntheticRescueExperiment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the synthetic-rescue experiment schema class."""</span>
+        <span class="k">return</span> <span class="n">SyntheticRescueExperiment</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reference_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">SyntheticRescueExperimentReference</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the synthetic-rescue experiment-reference schema class."""</span>
+        <span class="k">return</span> <span class="n">SyntheticRescueExperimentReference</span>
+
+<div class="viewcode-block" id="SynthRescueYeastSynthLethDbDataset.download">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.synth_leth_db.SynthRescueYeastSynthLethDbDataset.html#torchcell.datasets.scerevisiae.synth_leth_db.SynthRescueYeastSynthLethDbDataset.download">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Download the synthetic-rescue CSV from Google Drive."""</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="s2">"https://drive.google.com/uc?export=download&amp;id=1lBaApm70E05JnkrE1Hwmn8gT1cV5Bzlt"</span>
+        <span class="n">download_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_file_names</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Downloading </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">download_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="n">session</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s2">"download_warning"</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">cookies</span><span class="p">:</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"confirm"</span><span class="p">:</span> <span class="n">response</span><span class="o">.</span><span class="n">cookies</span><span class="p">[</span><span class="s2">"download_warning"</span><span class="p">]}</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">download_path</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">iter_content</span><span class="p">(</span><span class="n">chunk_size</span><span class="o">=</span><span class="mi">8192</span><span class="p">):</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Download completed successfully."</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SynthRescueYeastSynthLethDbDataset.preprocess_raw">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.synth_leth_db.SynthRescueYeastSynthLethDbDataset.html#torchcell.datasets.scerevisiae.synth_leth_db.SynthRescueYeastSynthLethDbDataset.preprocess_raw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Add systematic-name columns for both interacting genes."""</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Converting gene names to systematic names..."</span><span class="p">)</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"n1.systematic_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"n1.name"</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_systematic_name</span><span class="p">)</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"n2.systematic_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"n2.name"</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_systematic_name</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="SynthRescueYeastSynthLethDbDataset.get_systematic_name">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.synth_leth_db.SynthRescueYeastSynthLethDbDataset.html#torchcell.datasets.scerevisiae.synth_leth_db.SynthRescueYeastSynthLethDbDataset.get_systematic_name">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_systematic_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gene_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the systematic name for a gene, falling back to the input name."""</span>
+        <span class="c1"># Remove the prime character if present</span>
+        <span class="n">clean_gene_name</span> <span class="o">=</span> <span class="n">gene_name</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"'"</span><span class="p">)</span>
+
+        <span class="n">systematic_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gene_name_to_systematic</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">clean_gene_name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">systematic_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Warning: No systematic name found for gene </span><span class="si">{</span><span class="n">gene_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">gene_name</span>  <span class="c1"># Return original name if no match found</span>
+
+        <span class="k">return</span> <span class="n">systematic_name</span></div>
+
+
+<div class="viewcode-block" id="SynthRescueYeastSynthLethDbDataset.process">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.synth_leth_db.SynthRescueYeastSynthLethDbDataset.html#torchcell.datasets.scerevisiae.synth_leth_db.SynthRescueYeastSynthLethDbDataset.process">[docs]</a>
+    <span class="nd">@post_process</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Read the raw CSV, build experiments, and write them to LMDB."""</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Processing Synthetic Rescue Yeast Data..."</span><span class="p">)</span>
+
+        <span class="n">raw_data_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_file_names</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">raw_data_path</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_raw</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e12</span><span class="p">))</span>
+
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)):</span>
+                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">row</span>
+                <span class="p">)</span>
+
+                <span class="n">serialized_data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                        <span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                        <span class="s2">"publication"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">serialized_data</span><span class="p">)</span>
+
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="SynthRescueYeastSynthLethDbDataset.create_experiment">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.synth_leth_db.SynthRescueYeastSynthLethDbDataset.html#torchcell.datasets.scerevisiae.synth_leth_db.SynthRescueYeastSynthLethDbDataset.create_experiment">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span>  <span class="c1"># type: ignore[override]  # dataset-specific signature</span>
+        <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
+        <span class="n">SyntheticRescueExperiment</span><span class="p">,</span> <span class="n">SyntheticRescueExperimentReference</span><span class="p">,</span> <span class="n">Publication</span>
+    <span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Build the experiment, reference, and publication objects for one row."""</span>
+        <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"S288C"</span>
+        <span class="p">)</span>
+
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"n1.systematic_name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"n1.name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="s2">"S288C"</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"n2.systematic_name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"n2.name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="s2">"S288C"</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
+            <span class="n">media</span><span class="o">=</span><span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"YEPD"</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"solid"</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">30</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">SyntheticRescuePhenotype</span><span class="p">(</span>
+            <span class="n">is_synthetic_rescue</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">synthetic_rescue_statistic_score</span><span class="o">=</span><span class="p">(</span>
+                <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"r.statistic_score"</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"r.statistic_score"</span><span class="p">])</span>
+                <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">SyntheticRescuePhenotype</span><span class="p">(</span>
+            <span class="n">is_synthetic_rescue</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">synthetic_rescue_statistic_score</span><span class="o">=</span><span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="n">experiment</span> <span class="o">=</span> <span class="n">SyntheticRescueExperiment</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">genotype</span><span class="o">=</span><span class="n">genotype</span><span class="p">,</span>
+            <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">phenotype</span><span class="o">=</span><span class="n">phenotype</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">reference</span> <span class="o">=</span> <span class="n">SyntheticRescueExperimentReference</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="n">genome_reference</span><span class="p">,</span>
+            <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">phenotype_reference</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span>
+            <span class="n">pubmed_id</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"r.pubmed_id"</span><span class="p">]),</span>
+            <span class="n">pubmed_url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"https://pubmed.ncbi.nlm.nih.gov/</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">'r.pubmed_id'</span><span class="p">]</span><span class="si">}</span><span class="s2">/"</span><span class="p">,</span>
+            <span class="n">doi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">doi_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build and inspect both SynLethDB datasets from a local genome."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">DATA_ROOT</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
+
+    <span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
+        <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
+        <span class="n">go_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/go"</span><span class="p">),</span>
+        <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">lethality_dataset</span> <span class="o">=</span> <span class="n">SynthLethalityYeastSynthLethDbDataset</span><span class="p">(</span><span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">lethality_dataset</span><span class="p">)</span>
+
+    <span class="n">rescue_dataset</span> <span class="o">=</span> <span class="n">SynthRescueYeastSynthLethDbDataset</span><span class="p">(</span><span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">rescue_dataset</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

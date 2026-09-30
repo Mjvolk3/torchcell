@@ -1,0 +1,514 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.losses.point_dist_graph_reg &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/losses/point_dist_graph_reg.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.losses.point_dist_graph_reg</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.losses.point_dist_graph_reg</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/losses/point_dist_graph_reg</span>
+<span class="c1"># [[torchcell.losses.point_dist_graph_reg]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/losses/point_dist_graph_reg</span>
+<span class="c1"># Test file: tests/torchcell/losses/test_point_dist_graph_reg.py</span>
+<span class="sd">"""Composite point + distribution + graph-regularization loss for the cell transformer."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.distributed</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dist</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.losses.logcosh</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogCoshLoss</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.losses.multi_dim_nan_tolerant</span><span class="w"> </span><span class="kn">import</span> <span class="n">WeightedDistLoss</span><span class="p">,</span> <span class="n">WeightedMSELoss</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.losses.mle_dist_supcr</span><span class="w"> </span><span class="kn">import</span> <span class="n">BufferedWeightedDistLoss</span>
+
+<span class="c1"># Import Wasserstein loss components from mle_wasserstein</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.losses.mle_wasserstein</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">BufferedWeightedWassersteinLoss</span><span class="p">,</span>
+        <span class="n">WeightedWassersteinLoss</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">WASSERSTEIN_AVAILABLE</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">WASSERSTEIN_AVAILABLE</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+<div class="viewcode-block" id="PointDistGraphReg">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.point_dist_graph_reg.PointDistGraphReg.html#torchcell.losses.point_dist_graph_reg.PointDistGraphReg">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PointDistGraphReg</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Modular composite loss for Cell Graph Transformer combining:</span>
+<span class="sd">    1. Point estimator (MSE or LogCosh) - required</span>
+<span class="sd">    2. Distribution loss (Dist or Wasserstein) - optional</span>
+<span class="sd">    3. Graph regularization (from model) - optional</span>
+
+<span class="sd">    Designed for single-phenotype predictions with graph-regularized attention.</span>
+<span class="sd">    """</span>
+
+    <span class="c1"># Point/distribution components vary with configuration; declared as unions so</span>
+    <span class="c1"># every conditional assignment in __init__ type-checks.</span>
+    <span class="n">point_loss</span><span class="p">:</span> <span class="s2">"LogCoshLoss | WeightedMSELoss"</span>
+    <span class="n">dist_loss</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"BufferedWeightedDistLoss | WeightedDistLoss | "</span>
+        <span class="s2">"BufferedWeightedWassersteinLoss | WeightedWassersteinLoss | None"</span>
+    <span class="p">)</span>
+    <span class="c1"># Registered buffers (declared for type checking; created via register_buffer).</span>
+    <span class="n">forward_count</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">_zero</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="c1"># Point estimator configuration</span>
+        <span class="n">point_estimator</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="c1"># Distribution loss configuration</span>
+        <span class="n">distribution_loss</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="c1"># Graph regularization configuration</span>
+        <span class="n">graph_regularization</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="c1"># Buffer configuration</span>
+        <span class="n">buffer</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="c1"># DDP configuration</span>
+        <span class="n">ddp</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="c1"># Other</span>
+        <span class="n">weights</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="c1"># Backward compatibility - deprecated, use nested dicts</span>
+        <span class="n">point_loss_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">lambda_point</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dist_loss_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">lambda_dist</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">lambda_graph_reg</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dist_bandwidth</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">wasserstein_blur</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">wasserstein_p</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">wasserstein_scaling</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">use_buffer</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">buffer_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">min_samples_for_dist</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">use_ddp_gather</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">gather_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Configure point, distribution, graph-reg, buffer, and DDP loss components.</span>
+
+<span class="sd">        Accepts either the nested-dict configuration (``point_estimator``,</span>
+<span class="sd">        ``distribution_loss``, ``graph_regularization``, ``buffer``, ``ddp``) or the</span>
+<span class="sd">        deprecated flat keyword arguments, which are kept for backward compatibility.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="c1"># Parse configuration from nested dicts (new structure) or flat params (backward compat)</span>
+        <span class="c1"># Point estimator config</span>
+        <span class="k">if</span> <span class="n">point_estimator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_point_type</span> <span class="o">=</span> <span class="n">point_estimator</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">,</span> <span class="s2">"logcosh"</span><span class="p">)</span>
+            <span class="n">_lambda_point</span> <span class="o">=</span> <span class="n">point_estimator</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"lambda"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_point_type</span> <span class="o">=</span> <span class="n">point_loss_type</span> <span class="ow">or</span> <span class="s2">"logcosh"</span>
+            <span class="n">_lambda_point</span> <span class="o">=</span> <span class="n">lambda_point</span> <span class="k">if</span> <span class="n">lambda_point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">1.0</span>
+
+        <span class="c1"># Distribution loss config</span>
+        <span class="k">if</span> <span class="n">distribution_loss</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_dist_type</span> <span class="o">=</span> <span class="n">distribution_loss</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">,</span> <span class="s2">"dist"</span><span class="p">)</span>
+            <span class="n">_lambda_dist</span> <span class="o">=</span> <span class="n">distribution_loss</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"lambda"</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+            <span class="n">_dist_bandwidth</span> <span class="o">=</span> <span class="n">distribution_loss</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"dist_bandwidth"</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+            <span class="n">_wasserstein_blur</span> <span class="o">=</span> <span class="n">distribution_loss</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"wasserstein_blur"</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
+            <span class="n">_wasserstein_p</span> <span class="o">=</span> <span class="n">distribution_loss</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"wasserstein_p"</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">_wasserstein_scaling</span> <span class="o">=</span> <span class="n">distribution_loss</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"wasserstein_scaling"</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">)</span>
+            <span class="n">_min_samples_dist</span> <span class="o">=</span> <span class="n">distribution_loss</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"min_samples_for_dist"</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
+            <span class="n">_min_samples_wasserstein</span> <span class="o">=</span> <span class="n">distribution_loss</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="s2">"min_samples_for_wasserstein"</span><span class="p">,</span> <span class="mi">224</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_dist_type</span> <span class="o">=</span> <span class="n">dist_loss_type</span> <span class="ow">or</span> <span class="s2">"dist"</span>
+            <span class="n">_lambda_dist</span> <span class="o">=</span> <span class="n">lambda_dist</span> <span class="k">if</span> <span class="n">lambda_dist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">0.1</span>
+            <span class="n">_dist_bandwidth</span> <span class="o">=</span> <span class="n">dist_bandwidth</span> <span class="k">if</span> <span class="n">dist_bandwidth</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">0.5</span>
+            <span class="n">_wasserstein_blur</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">wasserstein_blur</span> <span class="k">if</span> <span class="n">wasserstein_blur</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">0.05</span>
+            <span class="p">)</span>
+            <span class="n">_wasserstein_p</span> <span class="o">=</span> <span class="n">wasserstein_p</span> <span class="k">if</span> <span class="n">wasserstein_p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">2</span>
+            <span class="n">_wasserstein_scaling</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">wasserstein_scaling</span> <span class="k">if</span> <span class="n">wasserstein_scaling</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">0.9</span>
+            <span class="p">)</span>
+            <span class="n">_min_samples_dist</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">min_samples_for_dist</span> <span class="k">if</span> <span class="n">min_samples_for_dist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">64</span>
+            <span class="p">)</span>
+            <span class="n">_min_samples_wasserstein</span> <span class="o">=</span> <span class="mi">224</span>
+
+        <span class="c1"># Graph regularization config</span>
+        <span class="k">if</span> <span class="n">graph_regularization</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_lambda_graph_reg</span> <span class="o">=</span> <span class="n">graph_regularization</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"lambda"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_lambda_graph_reg</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">lambda_graph_reg</span> <span class="k">if</span> <span class="n">lambda_graph_reg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">1.0</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Buffer config</span>
+        <span class="k">if</span> <span class="n">buffer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_use_buffer</span> <span class="o">=</span> <span class="n">buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"use_buffer"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="n">_buffer_size</span> <span class="o">=</span> <span class="n">buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"buffer_size"</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_use_buffer</span> <span class="o">=</span> <span class="n">use_buffer</span> <span class="k">if</span> <span class="n">use_buffer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">True</span>
+            <span class="n">_buffer_size</span> <span class="o">=</span> <span class="n">buffer_size</span> <span class="k">if</span> <span class="n">buffer_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">256</span>
+
+        <span class="c1"># DDP config</span>
+        <span class="k">if</span> <span class="n">ddp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_use_ddp_gather</span> <span class="o">=</span> <span class="n">ddp</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"use_ddp_gather"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="n">_gather_interval</span> <span class="o">=</span> <span class="n">ddp</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"gather_interval"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_use_ddp_gather</span> <span class="o">=</span> <span class="n">use_ddp_gather</span> <span class="k">if</span> <span class="n">use_ddp_gather</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">True</span>
+            <span class="n">_gather_interval</span> <span class="o">=</span> <span class="n">gather_interval</span> <span class="k">if</span> <span class="n">gather_interval</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">1</span>
+
+        <span class="c1"># Store configuration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_point</span> <span class="o">=</span> <span class="n">_lambda_point</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_dist</span> <span class="o">=</span> <span class="n">_lambda_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_graph_reg</span> <span class="o">=</span> <span class="n">_lambda_graph_reg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">point_loss_type</span> <span class="o">=</span> <span class="n">_point_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dist_loss_type</span> <span class="o">=</span> <span class="n">_dist_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_buffer</span> <span class="o">=</span> <span class="n">_use_buffer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_ddp_gather</span> <span class="o">=</span> <span class="n">_use_ddp_gather</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gather_interval</span> <span class="o">=</span> <span class="n">_gather_interval</span>
+
+        <span class="c1"># Initialize point estimator loss</span>
+        <span class="k">if</span> <span class="n">_point_type</span> <span class="o">==</span> <span class="s2">"logcosh"</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">point_loss</span> <span class="o">=</span> <span class="n">LogCoshLoss</span><span class="p">(</span><span class="n">reduction</span><span class="o">=</span><span class="s2">"mean"</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">_point_type</span> <span class="o">==</span> <span class="s2">"mse"</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">point_loss</span> <span class="o">=</span> <span class="n">WeightedMSELoss</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown point_loss_type: </span><span class="si">{</span><span class="n">_point_type</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="c1"># Initialize distribution loss (optional)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dist_loss</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">_dist_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">_lambda_dist</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">_dist_type</span> <span class="o">==</span> <span class="s2">"dist"</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">_use_buffer</span><span class="p">:</span>
+                    <span class="c1"># Import buffered version</span>
+                    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.losses.mle_dist_supcr</span><span class="w"> </span><span class="kn">import</span> <span class="n">BufferedWeightedDistLoss</span>
+
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dist_loss</span> <span class="o">=</span> <span class="n">BufferedWeightedDistLoss</span><span class="p">(</span>
+                        <span class="n">buffer_size</span><span class="o">=</span><span class="n">_buffer_size</span><span class="p">,</span>
+                        <span class="n">bandwidth</span><span class="o">=</span><span class="n">_dist_bandwidth</span><span class="p">,</span>
+                        <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span>
+                        <span class="n">min_samples</span><span class="o">=</span><span class="n">_min_samples_dist</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dist_loss</span> <span class="o">=</span> <span class="n">WeightedDistLoss</span><span class="p">(</span>
+                        <span class="n">bandwidth</span><span class="o">=</span><span class="n">_dist_bandwidth</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span>
+                    <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">_dist_type</span> <span class="o">==</span> <span class="s2">"wasserstein"</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">WASSERSTEIN_AVAILABLE</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                        <span class="s2">"Wasserstein loss requires geomloss. "</span>
+                        <span class="s2">"Install with: pip install geomloss"</span>
+                    <span class="p">)</span>
+                <span class="c1"># Use wasserstein-specific min_samples</span>
+                <span class="n">_min_samples</span> <span class="o">=</span> <span class="n">_min_samples_wasserstein</span>
+                <span class="k">if</span> <span class="n">_use_buffer</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dist_loss</span> <span class="o">=</span> <span class="n">BufferedWeightedWassersteinLoss</span><span class="p">(</span>
+                        <span class="n">buffer_size</span><span class="o">=</span><span class="n">_buffer_size</span><span class="p">,</span>
+                        <span class="n">blur</span><span class="o">=</span><span class="n">_wasserstein_blur</span><span class="p">,</span>
+                        <span class="n">p</span><span class="o">=</span><span class="n">_wasserstein_p</span><span class="p">,</span>
+                        <span class="n">scaling</span><span class="o">=</span><span class="n">_wasserstein_scaling</span><span class="p">,</span>
+                        <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span>
+                        <span class="n">min_samples</span><span class="o">=</span><span class="n">_min_samples</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dist_loss</span> <span class="o">=</span> <span class="n">WeightedWassersteinLoss</span><span class="p">(</span>
+                        <span class="n">blur</span><span class="o">=</span><span class="n">_wasserstein_blur</span><span class="p">,</span>
+                        <span class="n">p</span><span class="o">=</span><span class="n">_wasserstein_p</span><span class="p">,</span>
+                        <span class="n">scaling</span><span class="o">=</span><span class="n">_wasserstein_scaling</span><span class="p">,</span>
+                        <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span>
+                    <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Unknown dist_loss_type: </span><span class="si">{</span><span class="n">_dist_type</span><span class="si">}</span><span class="s2">. "</span>
+                    <span class="s2">"Must be 'dist', 'wasserstein', or None"</span>
+                <span class="p">)</span>
+
+        <span class="c1"># Tracking</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"forward_count"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">))</span>
+
+        <span class="c1"># Pre-allocate zero tensors to avoid dynamic tensor creation in forward()</span>
+        <span class="c1"># This prevents torch.compile graph breaks when loss components are disabled</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"_zero"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">))</span>
+
+<div class="viewcode-block" id="PointDistGraphReg.gather_across_gpus">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.point_dist_graph_reg.PointDistGraphReg.html#torchcell.losses.point_dist_graph_reg.PointDistGraphReg.gather_across_gpus">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gather_across_gpus</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Gather tensors from all GPUs for DDP synchronization.</span>
+
+<span class="sd">        Ensures all ranks see same data for buffer updates, preventing</span>
+<span class="sd">        distribution mismatch across GPUs.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">dist</span><span class="o">.</span><span class="n">is_initialized</span><span class="p">()</span> <span class="ow">or</span> <span class="n">dist</span><span class="o">.</span><span class="n">get_world_size</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">tensor</span>
+
+        <span class="n">world_size</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">get_world_size</span><span class="p">()</span>
+        <span class="n">gathered</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">world_size</span><span class="p">)]</span>
+        <span class="n">dist</span><span class="o">.</span><span class="n">all_gather</span><span class="p">(</span><span class="n">gathered</span><span class="p">,</span> <span class="n">tensor</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">gathered</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PointDistGraphReg.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.losses.point_dist_graph_reg.PointDistGraphReg.html#torchcell.losses.point_dist_graph_reg.PointDistGraphReg.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">predictions</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">targets</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">representations</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Forward pass computing composite loss.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            predictions: Model predictions [batch_size, 1]</span>
+<span class="sd">            targets: Target values [batch_size, 1]</span>
+<span class="sd">            representations: Dict from model containing "graph_reg_loss"</span>
+<span class="sd">            epoch: Current training epoch (optional, for adaptive weighting)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (total_loss, loss_dict)</span>
+<span class="sd">        """</span>
+        <span class="c1"># Use pre-allocated zero buffer to avoid dynamic tensor creation</span>
+        <span class="c1"># This prevents torch.compile graph breaks</span>
+        <span class="n">total_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_zero</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="n">loss_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># 1. Point estimator loss (required)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">point_loss_type</span> <span class="o">==</span> <span class="s2">"logcosh"</span><span class="p">:</span>
+            <span class="n">point_val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">point_loss</span><span class="p">(</span><span class="n">predictions</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(),</span> <span class="n">targets</span><span class="o">.</span><span class="n">squeeze</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># mse</span>
+            <span class="n">point_val</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">point_loss</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+
+        <span class="n">weighted_point</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_point</span> <span class="o">*</span> <span class="n">point_val</span>
+        <span class="n">total_loss</span> <span class="o">=</span> <span class="n">total_loss</span> <span class="o">+</span> <span class="n">weighted_point</span>
+
+        <span class="n">loss_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="p">{</span><span class="s2">"point_loss"</span><span class="p">:</span> <span class="n">point_val</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="s2">"weighted_point"</span><span class="p">:</span> <span class="n">weighted_point</span><span class="o">.</span><span class="n">item</span><span class="p">()}</span>
+        <span class="p">)</span>
+
+        <span class="c1"># 2. Distribution loss (optional)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dist_loss</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_dist</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># DDP Synchronization: Gather samples from all GPUs</span>
+            <span class="c1"># CRITICAL: When using buffers, all ranks must see same data to prevent</span>
+            <span class="c1"># distribution mismatch (following pattern from mle_wasserstein.py:245-253)</span>
+            <span class="n">all_predictions</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">all_targets</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_ddp_gather</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward_count</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">gather_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">all_predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gather_across_gpus</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
+                <span class="n">all_targets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gather_across_gpus</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span>
+
+            <span class="c1"># Compute distribution loss</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_buffer</span><span class="p">:</span>
+                <span class="c1"># Buffered version: Pass gathered data for consistent buffer updates</span>
+                <span class="c1"># The buffered loss will update its buffer with all_* if provided,</span>
+                <span class="c1"># ensuring all GPUs maintain identical buffer contents</span>
+                <span class="n">dist_val</span><span class="p">,</span> <span class="n">dist_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dist_loss</span><span class="p">(</span>
+                    <span class="n">predictions</span><span class="p">,</span>  <span class="c1"># Local batch for gradient computation</span>
+                    <span class="n">targets</span><span class="p">,</span>
+                    <span class="n">all_predictions</span><span class="p">,</span>  <span class="c1"># Gathered for buffer update</span>
+                    <span class="n">all_targets</span><span class="p">,</span>
+                    <span class="n">buffer_weight</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>  <span class="c1"># Can be made adaptive if needed</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Non-buffered version: Uses only local batch</span>
+                <span class="n">dist_val</span><span class="p">,</span> <span class="n">dist_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dist_loss</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+
+            <span class="n">weighted_dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_dist</span> <span class="o">*</span> <span class="n">dist_val</span>
+            <span class="n">total_loss</span> <span class="o">=</span> <span class="n">total_loss</span> <span class="o">+</span> <span class="n">weighted_dist</span>
+
+            <span class="n">loss_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span><span class="s2">"dist_loss"</span><span class="p">:</span> <span class="n">dist_val</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="s2">"weighted_dist"</span><span class="p">:</span> <span class="n">weighted_dist</span><span class="o">.</span><span class="n">item</span><span class="p">()}</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Use pre-allocated zero to prevent torch.compile graph breaks</span>
+            <span class="n">dist_val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_zero</span>
+            <span class="n">loss_dict</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"dist_loss"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">"weighted_dist"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">})</span>
+
+        <span class="c1"># 3. Graph regularization loss (from model)</span>
+        <span class="k">if</span> <span class="s2">"graph_reg_loss"</span> <span class="ow">in</span> <span class="n">representations</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_graph_reg</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">graph_reg_val</span> <span class="o">=</span> <span class="n">representations</span><span class="p">[</span><span class="s2">"graph_reg_loss"</span><span class="p">]</span>
+            <span class="n">weighted_graph_reg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_graph_reg</span> <span class="o">*</span> <span class="n">graph_reg_val</span>
+
+            <span class="n">total_loss</span> <span class="o">=</span> <span class="n">total_loss</span> <span class="o">+</span> <span class="n">weighted_graph_reg</span>
+
+            <span class="n">loss_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"graph_reg_loss"</span><span class="p">:</span> <span class="n">graph_reg_val</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+                    <span class="s2">"weighted_graph_reg"</span><span class="p">:</span> <span class="n">weighted_graph_reg</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Use pre-allocated zero to prevent torch.compile graph breaks</span>
+            <span class="n">graph_reg_val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_zero</span>
+            <span class="n">loss_dict</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"graph_reg_loss"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">"weighted_graph_reg"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">})</span>
+
+        <span class="c1"># Compute normalized contributions</span>
+        <span class="k">if</span> <span class="n">total_loss</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"norm_weighted_point"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"weighted_point"</span><span class="p">]</span> <span class="o">/</span> <span class="n">total_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="p">)</span>
+            <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"norm_weighted_dist"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"weighted_dist"</span><span class="p">]</span> <span class="o">/</span> <span class="n">total_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="p">)</span>
+            <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"norm_weighted_graph_reg"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"weighted_graph_reg"</span><span class="p">]</span> <span class="o">/</span> <span class="n">total_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Add totals</span>
+        <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"total_loss"</span><span class="p">]</span> <span class="o">=</span> <span class="n">total_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"total_weighted"</span><span class="p">]</span> <span class="o">=</span> <span class="n">total_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+        <span class="c1"># Compute unweighted normalized (for analysis)</span>
+        <span class="n">total_unweighted</span> <span class="o">=</span> <span class="n">point_val</span> <span class="o">+</span> <span class="n">dist_val</span> <span class="o">+</span> <span class="n">graph_reg_val</span>
+        <span class="k">if</span> <span class="n">total_unweighted</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"norm_unweighted_point"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">point_val</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">/</span> <span class="n">total_unweighted</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="p">)</span>
+            <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"norm_unweighted_dist"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">dist_val</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">/</span> <span class="n">total_unweighted</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="p">)</span>
+            <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"norm_unweighted_graph_reg"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">graph_reg_val</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">/</span> <span class="n">total_unweighted</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Update forward counter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">forward_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">total_loss</span><span class="p">,</span> <span class="n">loss_dict</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

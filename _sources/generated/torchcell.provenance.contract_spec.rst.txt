@@ -1,0 +1,6 @@
+﻿torchcell.provenance.contract\_spec
+===================================
+
+.. currentmodule:: torchcell.provenance
+
+.. autofunction:: contract_spec

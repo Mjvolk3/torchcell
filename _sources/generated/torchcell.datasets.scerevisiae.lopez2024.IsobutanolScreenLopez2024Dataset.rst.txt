@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.lopez2024.IsobutanolScreenLopez2024Dataset
+=========================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.lopez2024
+
+.. autoclass:: IsobutanolScreenLopez2024Dataset
+   :show-inheritance:
+   :members:

@@ -1,0 +1,8 @@
+﻿torchcell.datasets.NucleotideTransformerDataset
+===============================================
+
+.. currentmodule:: torchcell.datasets
+
+.. autoclass:: NucleotideTransformerDataset
+   :show-inheritance:
+   :members:

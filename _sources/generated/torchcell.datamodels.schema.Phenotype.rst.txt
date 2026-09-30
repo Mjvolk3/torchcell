@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.Phenotype
+=====================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: Phenotype
+   :show-inheritance:
+   :members:

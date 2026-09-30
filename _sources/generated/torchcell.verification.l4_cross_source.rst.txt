@@ -1,0 +1,6 @@
+﻿torchcell.verification.l4\_cross\_source
+========================================
+
+.. currentmodule:: torchcell.verification
+
+.. autofunction:: l4_cross_source

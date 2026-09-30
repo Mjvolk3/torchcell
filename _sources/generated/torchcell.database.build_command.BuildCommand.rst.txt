@@ -1,0 +1,8 @@
+﻿torchcell.database.build\_command.BuildCommand
+==============================================
+
+.. currentmodule:: torchcell.database.build_command
+
+.. autoclass:: BuildCommand
+   :show-inheritance:
+   :members:

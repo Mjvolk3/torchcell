@@ -1,0 +1,8 @@
+﻿torchcell.transforms.regression\_to\_classification.AutoBinStrategy
+===================================================================
+
+.. currentmodule:: torchcell.transforms.regression_to_classification
+
+.. autoclass:: AutoBinStrategy
+   :show-inheritance:
+   :members:

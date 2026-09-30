@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.hoepfner2014.EnvChemgenHoepfner2014Dataset
+=========================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.hoepfner2014
+
+.. autoclass:: EnvChemgenHoepfner2014Dataset
+   :show-inheritance:
+   :members:

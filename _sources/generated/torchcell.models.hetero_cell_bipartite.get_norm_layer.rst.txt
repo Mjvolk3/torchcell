@@ -1,0 +1,6 @@
+﻿torchcell.models.hetero\_cell\_bipartite.get\_norm\_layer
+=========================================================
+
+.. currentmodule:: torchcell.models.hetero_cell_bipartite
+
+.. autofunction:: get_norm_layer

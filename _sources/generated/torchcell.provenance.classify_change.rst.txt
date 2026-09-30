@@ -1,0 +1,6 @@
+﻿torchcell.provenance.classify\_change
+=====================================
+
+.. currentmodule:: torchcell.provenance
+
+.. autofunction:: classify_change

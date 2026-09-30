@@ -1,0 +1,8 @@
+﻿torchcell.metabolism.yeast\_GEM.YeastGEM
+========================================
+
+.. currentmodule:: torchcell.metabolism.yeast_GEM
+
+.. autoclass:: YeastGEM
+   :show-inheritance:
+   :members:

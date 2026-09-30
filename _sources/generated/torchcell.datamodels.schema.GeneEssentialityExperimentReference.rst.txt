@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.GeneEssentialityExperimentReference
+===============================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: GeneEssentialityExperimentReference
+   :show-inheritance:
+   :members:

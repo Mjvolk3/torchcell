@@ -1,0 +1,8 @@
+﻿torchcell.adapters.BetaxanthinCachera2023Adapter
+================================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: BetaxanthinCachera2023Adapter
+   :show-inheritance:
+   :members:

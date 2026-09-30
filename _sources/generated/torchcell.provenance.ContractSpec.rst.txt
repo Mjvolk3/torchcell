@@ -1,0 +1,8 @@
+﻿torchcell.provenance.ContractSpec
+=================================
+
+.. currentmodule:: torchcell.provenance
+
+.. autoclass:: ContractSpec
+   :show-inheritance:
+   :members:

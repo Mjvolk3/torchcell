@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.yeastphenome.YeastPhenomeDataset
+===============================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.yeastphenome
+
+.. autoclass:: YeastPhenomeDataset
+   :show-inheritance:
+   :members:

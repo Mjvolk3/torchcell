@@ -1,0 +1,8 @@
+﻿torchcell.adapters.Bloom2019Adapter
+===================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: Bloom2019Adapter
+   :show-inheritance:
+   :members:

@@ -1,0 +1,992 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.trainers.fit_int_hetero_cell_multiset_decomposition &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/trainers/fit_int_hetero_cell_multiset_decomposition.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.trainers.fit_int_hetero_cell_multiset_decomposition</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.trainers.fit_int_hetero_cell_multiset_decomposition</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Lightning trainer for hetero-cell gene-interaction regression with multiset decomposition."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">lightning</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">L</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">wandb</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">lightning.pytorch.core.optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">LightningOptimizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">lightning.pytorch.utilities.parsing</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttributeDict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim.lr_scheduler</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReduceLROnPlateau</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">Batch</span><span class="p">,</span> <span class="n">HeteroData</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchmetrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanSquaredError</span><span class="p">,</span> <span class="n">MetricCollection</span><span class="p">,</span> <span class="n">PearsonCorrCoef</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.viz</span><span class="w"> </span><span class="kn">import</span> <span class="n">fitness</span><span class="p">,</span> <span class="n">genetic_interaction_score</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.viz.visual_graph_degen</span><span class="w"> </span><span class="kn">import</span> <span class="n">VisGraphDegen</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.viz.visual_regression</span><span class="w"> </span><span class="kn">import</span> <span class="n">Visualization</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="RegressionTask">
+<a class="viewcode-back" href="../../../generated/torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.html#torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RegressionTask</span><span class="p">(</span><span class="n">L</span><span class="o">.</span><span class="n">LightningModule</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Lightning task training a hetero-cell model with multiset interaction decomposition."""</span>
+
+    <span class="n">_cell_graph_device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span>
+    <span class="n">df</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">train_samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="n">val_samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="n">train_metrics</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span>
+    <span class="n">val_metrics</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span>
+    <span class="n">test_metrics</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span>
+    <span class="n">train_transformed_metrics</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span>
+    <span class="n">val_transformed_metrics</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span>
+    <span class="n">test_transformed_metrics</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span>
+    <span class="n">train_combined_metrics</span><span class="p">:</span> <span class="n">MetricCollection</span>
+    <span class="n">val_combined_metrics</span><span class="p">:</span> <span class="n">MetricCollection</span>
+    <span class="n">test_combined_metrics</span><span class="p">:</span> <span class="n">MetricCollection</span>
+    <span class="n">train_transformed_combined</span><span class="p">:</span> <span class="n">MetricCollection</span>
+    <span class="n">val_transformed_combined</span><span class="p">:</span> <span class="n">MetricCollection</span>
+    <span class="n">test_transformed_combined</span><span class="p">:</span> <span class="n">MetricCollection</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
+        <span class="n">cell_graph</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">optimizer_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span>
+        <span class="n">lr_scheduler_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">clip_grad_norm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">clip_grad_norm_max_norm</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">plot_sample_ceiling</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="n">plot_every_n_epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>  <span class="c1"># New parameter for plotting frequency</span>
+        <span class="n">loss_func</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">grad_accumulation_schedule</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">device</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"cuda"</span><span class="p">,</span>
+        <span class="n">forward_transform</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">inverse_transform</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">graph_processor</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Store the model, optimizer/scheduler configs, transforms, and metrics."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_hyperparameters</span><span class="p">(</span><span class="n">ignore</span><span class="o">=</span><span class="p">[</span><span class="s2">"model"</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cell_graph</span> <span class="o">=</span> <span class="n">cell_graph</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inverse_transform</span> <span class="o">=</span> <span class="n">inverse_transform</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_accumulation_steps</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loss_func</span> <span class="o">=</span> <span class="n">loss_func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph_processor</span> <span class="o">=</span> <span class="n">graph_processor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">df</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cell_graph</span> <span class="o">=</span> <span class="n">cell_graph</span>
+        <span class="n">reg_metrics</span> <span class="o">=</span> <span class="n">MetricCollection</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">"MSE"</span><span class="p">:</span> <span class="n">MeanSquaredError</span><span class="p">(</span><span class="n">squared</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+                <span class="s2">"RMSE"</span><span class="p">:</span> <span class="n">MeanSquaredError</span><span class="p">(</span><span class="n">squared</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+                <span class="s2">"Pearson"</span><span class="p">:</span> <span class="n">PearsonCorrCoef</span><span class="p">(),</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Create per-label metrics as you already have</span>
+        <span class="k">for</span> <span class="n">stage</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"train"</span><span class="p">,</span> <span class="s2">"val"</span><span class="p">,</span> <span class="s2">"test"</span><span class="p">]:</span>
+            <span class="n">metrics_dict</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"fitness"</span><span class="p">:</span> <span class="n">reg_metrics</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">/fitness/"</span><span class="p">),</span>
+                    <span class="s2">"gene_interaction"</span><span class="p">:</span> <span class="n">reg_metrics</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span>
+                        <span class="n">prefix</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">/gene_interaction/"</span>
+                    <span class="p">),</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">_metrics"</span><span class="p">,</span> <span class="n">metrics_dict</span><span class="p">)</span>
+
+            <span class="c1"># Add new combined metrics with Pearson</span>
+            <span class="n">combined_metrics</span> <span class="o">=</span> <span class="n">MetricCollection</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"MSE"</span><span class="p">:</span> <span class="n">MeanSquaredError</span><span class="p">(</span><span class="n">squared</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+                    <span class="s2">"RMSE"</span><span class="p">:</span> <span class="n">MeanSquaredError</span><span class="p">(</span><span class="n">squared</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+                    <span class="s2">"Pearson"</span><span class="p">:</span> <span class="n">PearsonCorrCoef</span><span class="p">(),</span>  <span class="c1"># Add Pearson to combined metrics</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">_combined_metrics"</span><span class="p">,</span>
+                <span class="n">combined_metrics</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">/combined/"</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="c1"># Add new metrics operating in transformed space</span>
+            <span class="n">transformed_metrics</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"fitness"</span><span class="p">:</span> <span class="n">reg_metrics</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span>
+                        <span class="n">prefix</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">/transformed/fitness/"</span>
+                    <span class="p">),</span>
+                    <span class="s2">"gene_interaction"</span><span class="p">:</span> <span class="n">reg_metrics</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span>
+                        <span class="n">prefix</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">/transformed/gene_interaction/"</span>
+                    <span class="p">),</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">_transformed_metrics"</span><span class="p">,</span> <span class="n">transformed_metrics</span><span class="p">)</span>
+
+            <span class="n">transformed_combined</span> <span class="o">=</span> <span class="n">reg_metrics</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span>
+                <span class="n">prefix</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">/transformed/combined/"</span>
+            <span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">_transformed_combined"</span><span class="p">,</span> <span class="n">transformed_combined</span><span class="p">)</span>
+
+        <span class="c1"># Separate accumulators for train and validation samples.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_samples</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"true_values"</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">"predictions"</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">"latents"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"z_p"</span><span class="p">:</span> <span class="p">[]},</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">val_samples</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"true_values"</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">"predictions"</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">"latents"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"z_p"</span><span class="p">:</span> <span class="p">[]},</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">automatic_optimization</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_hp</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AttributeDict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Typed view of ``self.hparams`` (always an ``AttributeDict`` at runtime)."""</span>
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">AttributeDict</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hparams</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RegressionTask.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.html#torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Move the cell graph to the batch device and run the model."""</span>
+        <span class="n">batch_device</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">device</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_cell_graph_device"</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cell_graph_device</span> <span class="o">!=</span> <span class="n">batch_device</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cell_graph</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_graph</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">batch_device</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cell_graph_device</span> <span class="o">=</span> <span class="n">batch_device</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cell_graph</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_no_unused_params_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="n">dummy_loss</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">requires_grad</span> <span class="ow">and</span> <span class="n">param</span><span class="o">.</span><span class="n">grad</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">dummy_loss</span> <span class="o">=</span> <span class="n">dummy_loss</span> <span class="o">+</span> <span class="mf">0.0</span> <span class="o">*</span> <span class="n">param</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">dummy_loss</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_shared_step</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">,</span> <span class="n">batch_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">stage</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"train"</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="n">predictions</span><span class="p">,</span> <span class="n">representations</span> <span class="o">=</span> <span class="bp">self</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">predictions</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Use transformed values for loss computation</span>
+        <span class="n">fitness_vals</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">fitness</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">gene_interaction_vals</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">gene_interaction</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">targets</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">fitness_vals</span><span class="p">,</span> <span class="n">gene_interaction_vals</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Get original values for metrics and visualization</span>
+        <span class="n">fitness_orig</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">fitness_original</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">"fitness_original"</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span>
+            <span class="k">else</span> <span class="n">fitness_vals</span>
+        <span class="p">)</span>
+        <span class="n">gene_interaction_orig</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">gene_interaction_original</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">"gene_interaction_original"</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span>
+            <span class="k">else</span> <span class="n">gene_interaction_vals</span>
+        <span class="p">)</span>
+        <span class="n">orig_targets</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">fitness_orig</span><span class="p">,</span> <span class="n">gene_interaction_orig</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">loss</span><span class="p">,</span> <span class="n">loss_dict</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_func</span><span class="p">)(</span>
+            <span class="n">predictions</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="n">representations</span><span class="p">[</span><span class="s2">"z_p"</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="c1"># HACK - start</span>
+        <span class="n">dummy_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_no_unused_params_loss</span><span class="p">()</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span> <span class="o">+</span> <span class="n">dummy_loss</span>
+        <span class="c1"># HACK - end</span>
+
+        <span class="c1"># Log loss components</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="p">(</span><span class="s2">"loss"</span><span class="p">,</span> <span class="n">loss</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"fitness_loss"</span><span class="p">,</span> <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"mse_dim_losses"</span><span class="p">][</span><span class="mi">0</span><span class="p">]),</span>
+            <span class="p">(</span><span class="s2">"gene_interaction_loss"</span><span class="p">,</span> <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"mse_dim_losses"</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="p">(</span><span class="s2">"mse_loss"</span><span class="p">,</span> <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"mse_loss"</span><span class="p">]),</span>
+            <span class="p">(</span><span class="s2">"dist_loss"</span><span class="p">,</span> <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"dist_loss"</span><span class="p">]),</span>
+            <span class="p">(</span><span class="s2">"supcr_loss"</span><span class="p">,</span> <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"supcr_loss"</span><span class="p">]),</span>
+            <span class="p">(</span><span class="s2">"total_loss"</span><span class="p">,</span> <span class="n">loss_dict</span><span class="p">[</span><span class="s2">"total_loss"</span><span class="p">]),</span>
+        <span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Additional loss component logging</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="s2">"weighted_mse"</span><span class="p">,</span>
+            <span class="s2">"weighted_dist"</span><span class="p">,</span>
+            <span class="s2">"weighted_supcr"</span><span class="p">,</span>
+            <span class="s2">"total_weighted"</span><span class="p">,</span>
+            <span class="s2">"norm_weighted_mse"</span><span class="p">,</span>
+            <span class="s2">"norm_weighted_dist"</span><span class="p">,</span>
+            <span class="s2">"norm_weighted_supcr"</span><span class="p">,</span>
+            <span class="s2">"norm_unweighted_mse"</span><span class="p">,</span>
+            <span class="s2">"norm_unweighted_dist"</span><span class="p">,</span>
+            <span class="s2">"norm_unweighted_supcr"</span><span class="p">,</span>
+        <span class="p">]:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">loss_dict</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                    <span class="n">loss_dict</span><span class="p">[</span><span class="n">key</span><span class="p">],</span>
+                    <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+                    <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
+
+        <span class="c1"># Log z_p norm</span>
+        <span class="k">if</span> <span class="s2">"z_p"</span> <span class="ow">in</span> <span class="n">representations</span><span class="p">:</span>
+            <span class="n">z_p_norm</span> <span class="o">=</span> <span class="n">representations</span><span class="p">[</span><span class="s2">"z_p"</span><span class="p">]</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">/z_p_norm"</span><span class="p">,</span> <span class="n">z_p_norm</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+
+        <span class="n">transformed_metrics</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">_transformed_metrics"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">([</span><span class="s2">"fitness"</span><span class="p">,</span> <span class="s2">"gene_interaction"</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]):</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">targets</span><span class="p">[:,</span> <span class="n">col</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">metric_collection</span> <span class="o">=</span> <span class="n">transformed_metrics</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                <span class="n">metric_collection</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">predictions</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="n">col</span><span class="p">],</span> <span class="n">targets</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="n">col</span><span class="p">])</span>
+
+        <span class="c1"># Update combined transformed metrics</span>
+        <span class="n">combined_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">combined_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">transformed_combined</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">_transformed_combined"</span><span class="p">)</span>
+            <span class="n">transformed_combined</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="n">predictions</span><span class="p">[</span><span class="n">combined_mask</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                <span class="n">targets</span><span class="p">[</span><span class="n">combined_mask</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+            <span class="p">)</span>
+
+        <span class="n">inv_predictions</span> <span class="o">=</span> <span class="n">predictions</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"inverse_transform"</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">inverse_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Create a temp HeteroData object with predictions</span>
+            <span class="n">temp_data</span> <span class="o">=</span> <span class="n">HeteroData</span><span class="p">()</span>
+            <span class="n">temp_data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"fitness"</span><span class="p">:</span> <span class="n">predictions</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span>
+                <span class="s2">"gene_interaction"</span><span class="p">:</span> <span class="n">predictions</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span>
+            <span class="p">}</span>
+
+            <span class="c1"># Apply the proper inverse transform</span>
+            <span class="n">inv_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">temp_data</span><span class="p">)</span>
+
+            <span class="c1"># Extract the inversed predictions</span>
+            <span class="n">inv_predictions</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">inv_data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">][</span><span class="s2">"fitness"</span><span class="p">],</span> <span class="n">inv_data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">][</span><span class="s2">"gene_interaction"</span><span class="p">]],</span>
+                <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Update metrics - important for val/fitness/MSE</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">([</span><span class="s2">"fitness"</span><span class="p">,</span> <span class="s2">"gene_interaction"</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]):</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">orig_targets</span><span class="p">[:,</span> <span class="n">col</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">metric_collection</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">_metrics"</span><span class="p">)[</span><span class="n">key</span><span class="p">]</span>
+                <span class="n">metric_collection</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                    <span class="n">inv_predictions</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="n">col</span><span class="p">],</span> <span class="n">orig_targets</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span>
+                <span class="p">)</span>
+
+        <span class="c1"># Update combined metrics (across all dimensions)</span>
+        <span class="n">combined_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">orig_targets</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">combined_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">combined_metrics</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">_combined_metrics"</span><span class="p">)</span>
+            <span class="c1"># Reshape to flatten all predictions and targets</span>
+            <span class="n">combined_metrics</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="n">inv_predictions</span><span class="p">[</span><span class="n">combined_mask</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                <span class="n">orig_targets</span><span class="p">[</span><span class="n">combined_mask</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">stage</span> <span class="o">==</span> <span class="s2">"train"</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_epoch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hp</span><span class="o">.</span><span class="n">plot_every_n_epochs</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="p">):</span>
+            <span class="n">current_count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_samples</span><span class="p">[</span><span class="s2">"true_values"</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">current_count</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hp</span><span class="o">.</span><span class="n">plot_sample_ceiling</span><span class="p">:</span>
+                <span class="n">remaining</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hp</span><span class="o">.</span><span class="n">plot_sample_ceiling</span> <span class="o">-</span> <span class="n">current_count</span>
+                <span class="k">if</span> <span class="n">batch_size</span> <span class="o">&gt;</span> <span class="n">remaining</span><span class="p">:</span>
+                    <span class="n">idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)[:</span><span class="n">remaining</span><span class="p">]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">train_samples</span><span class="p">[</span><span class="s2">"true_values"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">orig_targets</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">train_samples</span><span class="p">[</span><span class="s2">"predictions"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">inv_predictions</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="s2">"z_p"</span> <span class="ow">in</span> <span class="n">representations</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">train_samples</span><span class="p">[</span><span class="s2">"latents"</span><span class="p">][</span><span class="s2">"z_p"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="n">representations</span><span class="p">[</span><span class="s2">"z_p"</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+                        <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">train_samples</span><span class="p">[</span><span class="s2">"true_values"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">orig_targets</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">train_samples</span><span class="p">[</span><span class="s2">"predictions"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inv_predictions</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>
+                    <span class="k">if</span> <span class="s2">"z_p"</span> <span class="ow">in</span> <span class="n">representations</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">train_samples</span><span class="p">[</span><span class="s2">"latents"</span><span class="p">][</span><span class="s2">"z_p"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="n">representations</span><span class="p">[</span><span class="s2">"z_p"</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+                        <span class="p">)</span>
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="n">stage</span> <span class="o">==</span> <span class="s2">"val"</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_epoch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hp</span><span class="o">.</span><span class="n">plot_every_n_epochs</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="p">):</span>
+            <span class="c1"># Only collect validation samples on epochs we'll plot</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">val_samples</span><span class="p">[</span><span class="s2">"true_values"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">orig_targets</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">val_samples</span><span class="p">[</span><span class="s2">"predictions"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inv_predictions</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>
+            <span class="k">if</span> <span class="s2">"z_p"</span> <span class="ow">in</span> <span class="n">representations</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">val_samples</span><span class="p">[</span><span class="s2">"latents"</span><span class="p">][</span><span class="s2">"z_p"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">representations</span><span class="p">[</span><span class="s2">"z_p"</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+                <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">orig_targets</span>
+
+<div class="viewcode-block" id="RegressionTask.training_step">
+<a class="viewcode-back" href="../../../generated/torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.html#torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.training_step">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">training_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">,</span> <span class="n">batch_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Run a manual-optimization training step with gradient accumulation."""</span>
+        <span class="n">loss</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shared_step</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">batch_idx</span><span class="p">,</span> <span class="s2">"train"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hp</span><span class="o">.</span><span class="n">grad_accumulation_schedule</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_accumulation_steps</span>
+        <span class="n">opt</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">LightningOptimizer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">manual_backward</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_hp</span><span class="o">.</span><span class="n">grad_accumulation_schedule</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="n">batch_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_accumulation_steps</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hp</span><span class="o">.</span><span class="n">clip_grad_norm</span><span class="p">:</span>
+                <span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">max_norm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_hp</span><span class="o">.</span><span class="n">clip_grad_norm_max_norm</span>
+                <span class="p">)</span>
+            <span class="n">opt</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="n">opt</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+            <span class="s2">"learning_rate"</span><span class="p">,</span>
+            <span class="n">cast</span><span class="p">(</span><span class="n">LightningOptimizer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span><span class="p">())</span><span class="o">.</span><span class="n">param_groups</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"lr"</span><span class="p">],</span>
+            <span class="n">batch_size</span><span class="o">=</span><span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+            <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">loss</span></div>
+
+
+<div class="viewcode-block" id="RegressionTask.validation_step">
+<a class="viewcode-back" href="../../../generated/torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.html#torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.validation_step">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validation_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">,</span> <span class="n">batch_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Run the shared step in validation mode and return the loss."""</span>
+        <span class="n">loss</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shared_step</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">batch_idx</span><span class="p">,</span> <span class="s2">"val"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">loss</span></div>
+
+
+<div class="viewcode-block" id="RegressionTask.test_step">
+<a class="viewcode-back" href="../../../generated/torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.html#torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.test_step">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">,</span> <span class="n">batch_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Accumulate true/predicted interaction scores into the results table."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Initialize table with specified columns as empty lists</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">df</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"epsilon_true"</span><span class="p">:</span> <span class="p">[],</span>
+                <span class="s2">"epsilon_pred"</span><span class="p">:</span> <span class="p">[],</span>
+                <span class="s2">"epsilon_from_fitness_pred"</span><span class="p">:</span> <span class="p">[],</span>
+                <span class="s2">"num_gene_deletions"</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="p">}</span>
+
+        <span class="p">(</span>
+            <span class="n">epsilon_true</span><span class="p">,</span>
+            <span class="n">epsilon_pred</span><span class="p">,</span>
+            <span class="n">epsilon_from_fitness_pred</span><span class="p">,</span>
+            <span class="n">num_gene_interactions</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_multiset_breakout</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">batch_idx</span><span class="p">)</span>
+
+        <span class="c1"># Convert tensor arrays to flat lists and extend the stored lists so that each cell is a single float</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s2">"epsilon_true"</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="n">epsilon_true</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s2">"epsilon_pred"</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="n">epsilon_pred</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s2">"epsilon_from_fitness_pred"</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="n">epsilon_from_fitness_pred</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s2">"num_gene_deletions"</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">num_gene_interactions</span><span class="p">)</span>
+
+        <span class="c1"># Save the updated dataframe to disk as CSV after each update.</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+        <span class="n">df_to_save</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">)</span>
+        <span class="c1"># BUG there is some issue with the trigen true label... but results so bad on digenic we moved on.</span>
+        <span class="n">df_to_save</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
+            <span class="s2">"experiments/003-fit-int/results/test_results_digenic_only.csv "</span><span class="p">,</span>
+            <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="RegressionTask.test_multiset_breakout">
+<a class="viewcode-back" href="../../../generated/torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.html#torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.test_multiset_breakout">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_multiset_breakout</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">,</span> <span class="n">batch_idx</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Evaluate predictions broken out by gene-set cardinality."""</span>
+        <span class="n">num_gene_interactions</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">][</span><span class="s2">"ids_pert"</span><span class="p">]]</span>
+
+        <span class="n">predictions</span><span class="p">,</span> <span class="n">representations</span> <span class="o">=</span> <span class="bp">self</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+
+        <span class="c1"># Use transformed values for loss computation</span>
+        <span class="n">fitness_vals</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">fitness</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">gene_interaction_vals</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">gene_interaction</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">targets</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">fitness_vals</span><span class="p">,</span> <span class="n">gene_interaction_vals</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Get original values for metrics and visualization</span>
+        <span class="n">gene_interaction_orig</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">gene_interaction_original</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">"gene_interaction_original"</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span>
+            <span class="k">else</span> <span class="n">gene_interaction_vals</span>
+        <span class="p">)</span>
+        <span class="n">loss</span><span class="p">,</span> <span class="n">loss_dict</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_func</span><span class="p">)(</span>
+            <span class="n">predictions</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="n">representations</span><span class="p">[</span><span class="s2">"z_p"</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="n">epsilon_true</span> <span class="o">=</span> <span class="n">gene_interaction_orig</span>
+
+        <span class="n">inv_predictions</span> <span class="o">=</span> <span class="n">predictions</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"inverse_transform"</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">inverse_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Create a temp HeteroData object with predictions</span>
+            <span class="n">temp_data</span> <span class="o">=</span> <span class="n">HeteroData</span><span class="p">()</span>
+            <span class="n">temp_data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"fitness"</span><span class="p">:</span> <span class="n">predictions</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span>
+                <span class="s2">"gene_interaction"</span><span class="p">:</span> <span class="n">predictions</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span>
+            <span class="p">}</span>
+
+            <span class="c1"># Apply the proper inverse transform</span>
+            <span class="n">inv_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">temp_data</span><span class="p">)</span>
+
+            <span class="c1"># Extract the inversed predictions</span>
+            <span class="n">inv_predictions</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">inv_data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">][</span><span class="s2">"fitness"</span><span class="p">],</span> <span class="n">inv_data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">][</span><span class="s2">"gene_interaction"</span><span class="p">]],</span>
+                <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">epsilon_pred</span> <span class="o">=</span> <span class="n">inv_predictions</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">epsilon_from_fitness_pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_epsilon_from_fitness_pred</span><span class="p">(</span>
+            <span class="n">batch</span><span class="p">,</span> <span class="n">batch_idx</span><span class="p">,</span> <span class="n">fitness_whole_graph</span><span class="o">=</span><span class="n">inv_predictions</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">epsilon_true</span><span class="p">,</span>
+            <span class="n">epsilon_pred</span><span class="p">,</span>
+            <span class="n">epsilon_from_fitness_pred</span><span class="p">,</span>
+            <span class="n">num_gene_interactions</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RegressionTask.compute_epsilon_from_fitness_pred">
+<a class="viewcode-back" href="../../../generated/torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.html#torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.compute_epsilon_from_fitness_pred">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_epsilon_from_fitness_pred</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">,</span> <span class="n">batch_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">fitness_whole_graph</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Compute gene interaction scores from predicted subset fitness values.</span>
+
+<span class="sd">        For each sample (gene set S given by batch["gene"]["ids_pert"]),</span>
+<span class="sd">        compute the gene interaction using the non‐regressive formulas:</span>
+
+<span class="sd">        - For a pair (digenic interaction):</span>
+
+<span class="sd">            ε₍ᵢⱼ₎ = f₍ᵢⱼ₎ – f₍ᵢ₎ · f₍ⱼ₎,</span>
+
+<span class="sd">        e.g., if f₍ᵢⱼ₎ = 1.0107, f₍ᵢ₎ = 0.9543, f₍ⱼ₎ = 0.9663, then</span>
+<span class="sd">        ε₍ᵢⱼ₎ = 1.0107 – 0.9543×0.9663 ≈ 0.08856.</span>
+
+<span class="sd">        - For a triple (trigenic interaction):</span>
+
+<span class="sd">        τ₍ᵢⱼₖ₎ = f₍ᵢⱼₖ₎ – f₍ᵢ₎·f₍ⱼ₎·f₍ₖ₎</span>
+<span class="sd">                    – [f₍ᵢⱼ₎ – f₍ᵢ₎·f₍ⱼ₎]·f₍ₖ₎</span>
+<span class="sd">                    – [f₍ᵢₖ₎ – f₍ᵢ₎·f₍ₖ₎]·f₍ⱼ₎</span>
+<span class="sd">                    – [f₍ⱼₖ₎ – f₍ⱼ₎·f₍ₖ₎]·f₍ᵢ₎.</span>
+
+<span class="sd">        Here f(T) is obtained by:</span>
+
+<span class="sd">        1. For each nonempty subset T ⊆ S, create a dummy experiment</span>
+<span class="sd">           using _create_dummy_data_for_subset (with each gene’s identifier used as strain_id).</span>
+<span class="sd">        2. Process each dummy experiment individually via self.graph_processor.process.</span>
+<span class="sd">        3. Batch the processed HeteroData objects with PyG’s Batch.from_data_list.</span>
+<span class="sd">        4. Run the model inference on the batch (self(...)) to obtain predictions,</span>
+<span class="sd">           and then apply the inverse transform to the predictions so that the</span>
+<span class="sd">           fitness values are on the correct scale.</span>
+
+<span class="sd">        This implementation only supports 1-, 2-, and 3-gene combinations.</span>
+<span class="sd">        """</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">combinations</span>
+
+        <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">HeteroData</span>
+
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+            <span class="n">Environment</span><span class="p">,</span>
+            <span class="n">FitnessExperiment</span><span class="p">,</span>
+            <span class="n">FitnessExperimentReference</span><span class="p">,</span>
+            <span class="n">FitnessPhenotype</span><span class="p">,</span>
+            <span class="n">Genotype</span><span class="p">,</span>
+            <span class="n">Media</span><span class="p">,</span>
+            <span class="n">ReferenceGenome</span><span class="p">,</span>
+            <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">,</span>
+            <span class="n">Temperature</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">device</span> <span class="o">=</span> <span class="n">fitness_whole_graph</span><span class="o">.</span><span class="n">device</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_get_nonempty_subsets</span><span class="p">(</span><span class="n">genes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
+            <span class="c1"># genes should be sorted for consistency.</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span>
+                <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span>
+                    <span class="n">combinations</span><span class="p">(</span><span class="n">genes</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">genes</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_create_dummy_data_for_subset</span><span class="p">(</span><span class="n">genes</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]:</span>
+            <span class="n">dummy_genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+                <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
+                        <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
+                        <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
+                        <span class="n">strain_id</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">genes</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">dummy_environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
+                <span class="n">media</span><span class="o">=</span><span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"YEPD"</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"solid"</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+                <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">30</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">dummy_fitness</span> <span class="o">=</span> <span class="n">FitnessPhenotype</span><span class="p">(</span><span class="n">fitness</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">fitness_std</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+            <span class="n">dummy_experiment</span> <span class="o">=</span> <span class="n">FitnessExperiment</span><span class="p">(</span>
+                <span class="n">dataset_name</span><span class="o">=</span><span class="s2">"dummy_dataset"</span><span class="p">,</span>
+                <span class="n">genotype</span><span class="o">=</span><span class="n">dummy_genotype</span><span class="p">,</span>
+                <span class="n">environment</span><span class="o">=</span><span class="n">dummy_environment</span><span class="p">,</span>
+                <span class="n">phenotype</span><span class="o">=</span><span class="n">dummy_fitness</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">dummy_experiment_ref</span> <span class="o">=</span> <span class="n">FitnessExperimentReference</span><span class="p">(</span>
+                <span class="n">dataset_name</span><span class="o">=</span><span class="s2">"dummy_dataset"</span><span class="p">,</span>
+                <span class="n">genome_reference</span><span class="o">=</span><span class="n">ReferenceGenome</span><span class="p">(</span><span class="n">species</span><span class="o">=</span><span class="s2">"dummy"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"dummy"</span><span class="p">),</span>
+                <span class="n">environment_reference</span><span class="o">=</span><span class="n">dummy_environment</span><span class="p">,</span>
+                <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">FitnessPhenotype</span><span class="p">(</span><span class="n">fitness</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">fitness_std</span><span class="o">=</span><span class="mf">0.1</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">dummy_experiment</span><span class="p">,</span>
+                <span class="s2">"experiment_reference"</span><span class="p">:</span> <span class="n">dummy_experiment_ref</span><span class="p">,</span>
+            <span class="p">}</span>
+
+        <span class="n">gene_ids_batch</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">][</span><span class="s2">"ids_pert"</span><span class="p">]</span>  <span class="c1"># One list of gene IDs per sample</span>
+        <span class="n">epsilons</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">gene_ids</span> <span class="ow">in</span> <span class="n">gene_ids_batch</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">gene_ids</span><span class="p">:</span>
+                <span class="n">epsilons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">))</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># For consistency, sort the gene list.</span>
+            <span class="n">sorted_genes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">gene_ids</span><span class="p">)</span>
+            <span class="n">subsets</span> <span class="o">=</span> <span class="n">_get_nonempty_subsets</span><span class="p">(</span><span class="n">sorted_genes</span><span class="p">)</span>
+
+            <span class="c1"># Process each dummy experiment individually.</span>
+            <span class="n">processed_list</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">subset</span> <span class="ow">in</span> <span class="n">subsets</span><span class="p">:</span>
+                <span class="n">dummy_data</span> <span class="o">=</span> <span class="n">_create_dummy_data_for_subset</span><span class="p">(</span><span class="n">subset</span><span class="p">)</span>
+                <span class="n">processed_data</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Any</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_processor</span><span class="p">)</span><span class="o">.</span><span class="n">process</span><span class="p">(</span>
+                    <span class="n">cell_graph</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cell_graph</span><span class="p">,</span>
+                    <span class="n">phenotype_info</span><span class="o">=</span><span class="p">[</span><span class="n">FitnessPhenotype</span><span class="p">],</span>
+                    <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="n">dummy_data</span><span class="p">],</span>
+                <span class="p">)</span>
+                <span class="n">processed_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">processed_data</span><span class="p">)</span>
+
+            <span class="c1"># Batch the individually processed data.</span>
+            <span class="n">processed_batch</span> <span class="o">=</span> <span class="n">Batch</span><span class="o">.</span><span class="n">from_data_list</span><span class="p">(</span><span class="n">processed_list</span><span class="p">)</span>
+
+            <span class="c1"># Run model inference to get predictions.</span>
+            <span class="n">predictions</span><span class="p">,</span> <span class="n">representations</span> <span class="o">=</span> <span class="bp">self</span><span class="p">(</span><span class="n">processed_batch</span><span class="p">)</span>
+            <span class="c1"># Apply inverse transform to the predictions (on fitness column) if available.</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"inverse_transform"</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">inverse_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="p">):</span>
+                <span class="n">temp_data</span> <span class="o">=</span> <span class="n">HeteroData</span><span class="p">()</span>
+                <span class="n">temp_data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"fitness"</span><span class="p">:</span> <span class="n">predictions</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)}</span>
+                <span class="n">inv_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">temp_data</span><span class="p">)</span>
+                <span class="n">f_vals</span> <span class="o">=</span> <span class="n">inv_data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">][</span><span class="s2">"fitness"</span><span class="p">]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">f_vals</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+            <span class="c1"># Create mapping from each subset (sorted tuple) to its predicted fitness f(T).</span>
+            <span class="n">f_T</span> <span class="o">=</span> <span class="p">{</span><span class="n">subset</span><span class="p">:</span> <span class="n">f_vals</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">subset</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">subsets</span><span class="p">)}</span>
+
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_genes</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">interaction</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="c1"># For a pair (i,j): ε = f({i,j}) - f({i}) * f({j})</span>
+                <span class="n">interaction</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">f_T</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">sorted_genes</span><span class="p">)]</span>
+                    <span class="o">-</span> <span class="n">f_T</span><span class="p">[(</span><span class="n">sorted_genes</span><span class="p">[</span><span class="mi">0</span><span class="p">],)]</span> <span class="o">*</span> <span class="n">f_T</span><span class="p">[(</span><span class="n">sorted_genes</span><span class="p">[</span><span class="mi">1</span><span class="p">],)]</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="c1"># For a triple (i,j,k):</span>
+                <span class="n">f1</span> <span class="o">=</span> <span class="n">f_T</span><span class="p">[(</span><span class="n">sorted_genes</span><span class="p">[</span><span class="mi">0</span><span class="p">],)]</span>
+                <span class="n">f2</span> <span class="o">=</span> <span class="n">f_T</span><span class="p">[(</span><span class="n">sorted_genes</span><span class="p">[</span><span class="mi">1</span><span class="p">],)]</span>
+                <span class="n">f3</span> <span class="o">=</span> <span class="n">f_T</span><span class="p">[(</span><span class="n">sorted_genes</span><span class="p">[</span><span class="mi">2</span><span class="p">],)]</span>
+                <span class="n">f12</span> <span class="o">=</span> <span class="n">f_T</span><span class="p">[(</span><span class="n">sorted_genes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sorted_genes</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+                <span class="n">f13</span> <span class="o">=</span> <span class="n">f_T</span><span class="p">[(</span><span class="n">sorted_genes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sorted_genes</span><span class="p">[</span><span class="mi">2</span><span class="p">])]</span>
+                <span class="n">f23</span> <span class="o">=</span> <span class="n">f_T</span><span class="p">[(</span><span class="n">sorted_genes</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">sorted_genes</span><span class="p">[</span><span class="mi">2</span><span class="p">])]</span>
+                <span class="n">f123</span> <span class="o">=</span> <span class="n">f_T</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">sorted_genes</span><span class="p">)]</span>
+                <span class="n">interaction</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">f123</span>
+                    <span class="o">-</span> <span class="n">f1</span> <span class="o">*</span> <span class="n">f2</span> <span class="o">*</span> <span class="n">f3</span>
+                    <span class="o">-</span> <span class="p">(</span><span class="n">f12</span> <span class="o">-</span> <span class="n">f1</span> <span class="o">*</span> <span class="n">f2</span><span class="p">)</span> <span class="o">*</span> <span class="n">f3</span>
+                    <span class="o">-</span> <span class="p">(</span><span class="n">f13</span> <span class="o">-</span> <span class="n">f1</span> <span class="o">*</span> <span class="n">f3</span><span class="p">)</span> <span class="o">*</span> <span class="n">f2</span>
+                    <span class="o">-</span> <span class="p">(</span><span class="n">f23</span> <span class="o">-</span> <span class="n">f2</span> <span class="o">*</span> <span class="n">f3</span><span class="p">)</span> <span class="o">*</span> <span class="n">f1</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                    <span class="s2">"Non-regressive interaction defined only for up to 3 genes."</span>
+                <span class="p">)</span>
+            <span class="n">epsilons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">interaction</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">epsilons</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_metrics_safely</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metrics_dict</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">metric_name</span><span class="p">,</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">metrics_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">results</span><span class="p">[</span><span class="n">metric_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">metric</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span>
+                    <span class="n">msg</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="p">[</span>
+                        <span class="s2">"Needs at least two samples"</span><span class="p">,</span>
+                        <span class="s2">"No samples to concatenate"</span><span class="p">,</span>
+                    <span class="p">]</span>
+                <span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="k">raise</span> <span class="n">e</span>
+        <span class="k">return</span> <span class="n">results</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_plot_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">stage</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">true_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="s2">"true_values"</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="s2">"predictions"</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">latents</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">[</span><span class="s2">"latents"</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="n">max_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hp</span><span class="o">.</span><span class="n">plot_sample_ceiling</span>
+        <span class="k">if</span> <span class="n">true_values</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">max_samples</span><span class="p">:</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="n">true_values</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">))[:</span><span class="n">max_samples</span><span class="p">]</span>
+            <span class="n">true_values</span> <span class="o">=</span> <span class="n">true_values</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+            <span class="n">predictions</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">latents</span><span class="p">:</span>
+                <span class="n">latents</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">latents</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span>
+        <span class="n">vis</span> <span class="o">=</span> <span class="n">Visualization</span><span class="p">(</span>
+            <span class="n">base_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">default_root_dir</span><span class="p">,</span> <span class="n">max_points</span><span class="o">=</span><span class="n">max_samples</span>
+        <span class="p">)</span>
+        <span class="n">loss_name</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_hp</span><span class="o">.</span><span class="n">loss_func</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hp</span><span class="o">.</span><span class="n">loss_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="s2">"Loss"</span>
+        <span class="p">)</span>
+        <span class="n">vis</span><span class="o">.</span><span class="n">visualize_model_outputs</span><span class="p">(</span>
+            <span class="n">predictions</span><span class="p">,</span>
+            <span class="n">true_values</span><span class="p">,</span>
+            <span class="n">latents</span><span class="p">,</span>
+            <span class="n">loss_name</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_epoch</span><span class="p">,</span>
+            <span class="kc">None</span><span class="p">,</span>
+            <span class="n">stage</span><span class="o">=</span><span class="n">stage</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Log oversmoothing metrics on latent spaces.</span>
+        <span class="k">if</span> <span class="s2">"z_p"</span> <span class="ow">in</span> <span class="n">latents</span><span class="p">:</span>
+            <span class="n">smoothness_zp</span> <span class="o">=</span> <span class="n">VisGraphDegen</span><span class="o">.</span><span class="n">compute_smoothness</span><span class="p">(</span><span class="n">latents</span><span class="p">[</span><span class="s2">"z_p"</span><span class="p">])</span>
+            <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">({</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">/oversmoothing_zp"</span><span class="p">:</span> <span class="n">smoothness_zp</span><span class="o">.</span><span class="n">item</span><span class="p">()})</span>
+        <span class="c1"># Log additional box plots for fitness and gene interaction scores.</span>
+        <span class="k">if</span> <span class="n">true_values</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">predictions</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="o">~</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">true_values</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])):</span>
+                <span class="n">fig_fitness</span> <span class="o">=</span> <span class="n">fitness</span><span class="o">.</span><span class="n">box_plot</span><span class="p">(</span><span class="n">true_values</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">predictions</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+                <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">({</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">/fitness_box_plot"</span><span class="p">:</span> <span class="n">wandb</span><span class="o">.</span><span class="n">Image</span><span class="p">(</span><span class="n">fig_fitness</span><span class="p">)})</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig_fitness</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="o">~</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">true_values</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])):</span>
+                <span class="n">fig_gi</span> <span class="o">=</span> <span class="n">genetic_interaction_score</span><span class="o">.</span><span class="n">box_plot</span><span class="p">(</span>
+                    <span class="n">true_values</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">predictions</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">({</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">/gene_interaction_box_plot"</span><span class="p">:</span> <span class="n">wandb</span><span class="o">.</span><span class="n">Image</span><span class="p">(</span><span class="n">fig_gi</span><span class="p">)})</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig_gi</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RegressionTask.on_train_epoch_end">
+<a class="viewcode-back" href="../../../generated/torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.html#torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.on_train_epoch_end">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_train_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Log aggregated training metrics and queued plots at epoch end."""</span>
+        <span class="c1"># Log training metrics for individual labels</span>
+        <span class="k">for</span> <span class="n">metric_name</span><span class="p">,</span> <span class="n">metric_dict</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">computed_metrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_metrics_safely</span><span class="p">(</span><span class="n">metric_dict</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">computed_metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">cast</span><span class="p">(</span><span class="n">Any</span><span class="p">,</span> <span class="n">metric_dict</span><span class="p">)</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+
+        <span class="c1"># Compute and log combined metrics</span>
+        <span class="n">combined_metrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_metrics_safely</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_combined_metrics</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">combined_metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_combined_metrics</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+
+        <span class="c1"># Compute and log transformed metrics for individual labels</span>
+        <span class="k">for</span> <span class="n">metric_name</span><span class="p">,</span> <span class="n">metric_dict</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_transformed_metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">computed_metrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_metrics_safely</span><span class="p">(</span><span class="n">metric_dict</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">computed_metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">cast</span><span class="p">(</span><span class="n">Any</span><span class="p">,</span> <span class="n">metric_dict</span><span class="p">)</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+
+        <span class="c1"># Compute and log transformed combined metrics</span>
+        <span class="n">transformed_combined_metrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_metrics_safely</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">train_transformed_combined</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">transformed_combined_metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_transformed_combined</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+
+        <span class="c1"># Plot training samples only on the final epoch</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_epoch</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hp</span><span class="o">.</span><span class="n">plot_every_n_epochs</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_samples</span><span class="p">[</span><span class="s2">"true_values"</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_plot_samples</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_samples</span><span class="p">,</span> <span class="s2">"train_sample"</span><span class="p">)</span>
+            <span class="c1"># Reset the sample containers</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">train_samples</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"true_values"</span><span class="p">:</span> <span class="p">[],</span>
+                <span class="s2">"predictions"</span><span class="p">:</span> <span class="p">[],</span>
+                <span class="s2">"latents"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"z_p"</span><span class="p">:</span> <span class="p">[]},</span>
+            <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="RegressionTask.on_train_epoch_start">
+<a class="viewcode-back" href="../../../generated/torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.html#torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.on_train_epoch_start">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_train_epoch_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Reset training sample buffers on epochs scheduled for plotting."""</span>
+        <span class="c1"># Clear sample containers at the start of epochs where we'll collect samples</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_epoch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hp</span><span class="o">.</span><span class="n">plot_every_n_epochs</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">train_samples</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"true_values"</span><span class="p">:</span> <span class="p">[],</span>
+                <span class="s2">"predictions"</span><span class="p">:</span> <span class="p">[],</span>
+                <span class="s2">"latents"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"z_p"</span><span class="p">:</span> <span class="p">[]},</span>
+            <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="RegressionTask.on_validation_epoch_start">
+<a class="viewcode-back" href="../../../generated/torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.html#torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.on_validation_epoch_start">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_validation_epoch_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Reset validation sample buffers on epochs scheduled for plotting."""</span>
+        <span class="c1"># Clear sample containers at the start of epochs where we'll collect samples</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_epoch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hp</span><span class="o">.</span><span class="n">plot_every_n_epochs</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">val_samples</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"true_values"</span><span class="p">:</span> <span class="p">[],</span>
+                <span class="s2">"predictions"</span><span class="p">:</span> <span class="p">[],</span>
+                <span class="s2">"latents"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"z_p"</span><span class="p">:</span> <span class="p">[]},</span>
+            <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="RegressionTask.on_validation_epoch_end">
+<a class="viewcode-back" href="../../../generated/torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.html#torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.on_validation_epoch_end">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_validation_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Log aggregated validation metrics and queued plots at epoch end."""</span>
+        <span class="c1"># Log validation metrics for individual labels</span>
+        <span class="k">for</span> <span class="n">metric_name</span><span class="p">,</span> <span class="n">metric_dict</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">val_metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">computed_metrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_metrics_safely</span><span class="p">(</span><span class="n">metric_dict</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">computed_metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">cast</span><span class="p">(</span><span class="n">Any</span><span class="p">,</span> <span class="n">metric_dict</span><span class="p">)</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+
+        <span class="c1"># Compute and log combined metrics</span>
+        <span class="n">combined_metrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_metrics_safely</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">val_combined_metrics</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">combined_metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">val_combined_metrics</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+
+        <span class="c1"># Compute and log transformed metrics for individual labels</span>
+        <span class="k">for</span> <span class="n">metric_name</span><span class="p">,</span> <span class="n">metric_dict</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">val_transformed_metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">computed_metrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_metrics_safely</span><span class="p">(</span><span class="n">metric_dict</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">computed_metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">cast</span><span class="p">(</span><span class="n">Any</span><span class="p">,</span> <span class="n">metric_dict</span><span class="p">)</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+
+        <span class="c1"># Compute and log transformed combined metrics</span>
+        <span class="n">transformed_combined_metrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_metrics_safely</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">val_transformed_combined</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">transformed_combined_metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">val_transformed_combined</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+
+        <span class="c1"># Plot validation samples</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">sanity_checking</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_epoch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hp</span><span class="o">.</span><span class="n">plot_every_n_epochs</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">val_samples</span><span class="p">[</span><span class="s2">"true_values"</span><span class="p">]</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_plot_samples</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">val_samples</span><span class="p">,</span> <span class="s2">"val_sample"</span><span class="p">)</span>
+            <span class="c1"># Reset the sample containers</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">val_samples</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"true_values"</span><span class="p">:</span> <span class="p">[],</span>
+                <span class="s2">"predictions"</span><span class="p">:</span> <span class="p">[],</span>
+                <span class="s2">"latents"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"z_p"</span><span class="p">:</span> <span class="p">[]},</span>
+            <span class="p">}</span></div>
+
+
+    <span class="c1"># def on_after_backward(self):</span>
+    <span class="c1">#     for name, param in self.named_parameters():</span>
+    <span class="c1">#         if param.grad is None:</span>
+    <span class="c1">#             print(f"Unused parameter: {name}")</span>
+
+<div class="viewcode-block" id="RegressionTask.configure_optimizers">
+<a class="viewcode-back" href="../../../generated/torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.html#torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.configure_optimizers">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">configure_optimizers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build the optimizer and optional LR scheduler from hyperparameters."""</span>
+        <span class="n">optimizer_class</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hp</span><span class="o">.</span><span class="n">optimizer_config</span><span class="p">[</span><span class="s2">"type"</span><span class="p">])</span>
+        <span class="n">optimizer_params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hp</span><span class="o">.</span><span class="n">optimizer_config</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">"type"</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="s2">"learning_rate"</span> <span class="ow">in</span> <span class="n">optimizer_params</span><span class="p">:</span>
+            <span class="n">optimizer_params</span><span class="p">[</span><span class="s2">"lr"</span><span class="p">]</span> <span class="o">=</span> <span class="n">optimizer_params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"learning_rate"</span><span class="p">)</span>
+        <span class="n">optimizer</span> <span class="o">=</span> <span class="n">optimizer_class</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="o">**</span><span class="n">optimizer_params</span><span class="p">)</span>
+        <span class="n">scheduler_params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hp</span><span class="o">.</span><span class="n">lr_scheduler_config</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">"type"</span>
+        <span class="p">}</span>
+        <span class="n">scheduler</span> <span class="o">=</span> <span class="n">ReduceLROnPlateau</span><span class="p">(</span><span class="n">optimizer</span><span class="p">,</span> <span class="o">**</span><span class="n">scheduler_params</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"optimizer"</span><span class="p">:</span> <span class="n">optimizer</span><span class="p">,</span>
+            <span class="s2">"lr_scheduler"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"scheduler"</span><span class="p">:</span> <span class="n">scheduler</span><span class="p">,</span>
+                <span class="s2">"monitor"</span><span class="p">:</span> <span class="s2">"val/loss"</span><span class="p">,</span>
+                <span class="s2">"interval"</span><span class="p">:</span> <span class="s2">"epoch"</span><span class="p">,</span>
+                <span class="s2">"frequency"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">}</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

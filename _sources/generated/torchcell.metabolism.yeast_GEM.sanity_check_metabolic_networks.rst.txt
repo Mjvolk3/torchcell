@@ -1,0 +1,6 @@
+﻿torchcell.metabolism.yeast\_GEM.sanity\_check\_metabolic\_networks
+==================================================================
+
+.. currentmodule:: torchcell.metabolism.yeast_GEM
+
+.. autofunction:: sanity_check_metabolic_networks

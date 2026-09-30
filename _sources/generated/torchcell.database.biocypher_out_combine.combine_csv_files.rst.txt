@@ -1,0 +1,6 @@
+﻿torchcell.database.biocypher\_out\_combine.combine\_csv\_files
+==============================================================
+
+.. currentmodule:: torchcell.database.biocypher_out_combine
+
+.. autofunction:: combine_csv_files

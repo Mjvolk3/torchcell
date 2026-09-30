@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.load\_report
+=====================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autofunction:: load_report

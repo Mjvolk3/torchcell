@@ -1,0 +1,494 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.database.biocypher_out_combine &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/database/biocypher_out_combine.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.database.biocypher_out_combine</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.database.biocypher_out_combine</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/database/biocypher_out_combine</span>
+<span class="c1"># [[torchcell.database.biocypher_out_combine]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/database/biocypher_out_combine</span>
+<span class="c1"># Test file: tests/torchcell/database/test_biocypher_out_combine.py</span>
+
+<span class="sd">"""Combine multiple BioCypher output directories into a single Neo4j import set."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
+
+
+<div class="viewcode-block" id="merge_dicts">
+<a class="viewcode-back" href="../../../generated/torchcell.database.biocypher_out_combine.merge_dicts.html#torchcell.database.biocypher_out_combine.merge_dicts">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">merge_dicts</span><span class="p">(</span><span class="n">dict1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">dict2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Merge two dictionaries, preferring values from dict2 for common keys."""</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">dict1</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">dict2</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">merge_dicts</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">value</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"present_in_knowledge_graph"</span><span class="p">,</span> <span class="s2">"is_relationship"</span><span class="p">]:</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="ow">or</span> <span class="n">value</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+</span> <span class="n">value</span><span class="p">))</span>  <span class="c1"># Remove duplicates</span>
+            <span class="k">elif</span> <span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">!=</span> <span class="n">value</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Conflict in key '</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">': </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s2"> != </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<div class="viewcode-block" id="check_yaml_compatibility">
+<a class="viewcode-back" href="../../../generated/torchcell.database.biocypher_out_combine.check_yaml_compatibility.html#torchcell.database.biocypher_out_combine.check_yaml_compatibility">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_yaml_compatibility</span><span class="p">(</span><span class="n">yaml_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Merge all schema YAML files, raising on conflicting key values."""</span>
+    <span class="n">combined_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">yaml_files</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">combined_data</span> <span class="o">=</span> <span class="n">merge_dicts</span><span class="p">(</span><span class="n">combined_data</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Conflict in </span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">combined_data</span></div>
+
+
+
+<div class="viewcode-block" id="remove_duplicates">
+<a class="viewcode-back" href="../../../generated/torchcell.database.biocypher_out_combine.remove_duplicates.html#torchcell.database.biocypher_out_combine.remove_duplicates">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">remove_duplicates</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>  <span class="c1"># recursive over arbitrary YAML structure</span>
+<span class="w">    </span><span class="sd">"""Remove duplicate entries from the merged YAML data."""</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">remove_duplicates</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>  <span class="c1"># Remove duplicates while preserving order</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">data</span></div>
+
+
+
+<div class="viewcode-block" id="create_schema_info_csv">
+<a class="viewcode-back" href="../../../generated/torchcell.database.biocypher_out_combine.create_schema_info_csv.html#torchcell.database.biocypher_out_combine.create_schema_info_csv">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_schema_info_csv</span><span class="p">(</span><span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">schema_yaml</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Create a new Schema_info CSV file based on the combined schema YAML."""</span>
+    <span class="n">csv_header</span> <span class="o">=</span> <span class="s2">":ID</span><span class="se">\t</span><span class="s2">schema_info</span><span class="se">\t</span><span class="s2">id</span><span class="se">\t</span><span class="s2">preferred_id</span><span class="se">\t</span><span class="s2">:LABEL"</span>
+
+    <span class="c1"># Ensure is_schema_info: true is within the schema_yaml</span>
+    <span class="n">schema_yaml</span><span class="p">[</span><span class="s2">"is_schema_info"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="c1"># Convert the schema to a JSON string</span>
+    <span class="n">schema_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">schema_yaml</span><span class="p">,</span> <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">":"</span><span class="p">))</span>
+
+    <span class="c1"># Create the CSV data row</span>
+    <span class="n">csv_data</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Schema_info</span><span class="se">\t</span><span class="s2">'</span><span class="si">{</span><span class="n">schema_json</span><span class="si">}</span><span class="s2">'</span><span class="se">\t</span><span class="s2">schema_info</span><span class="se">\t</span><span class="s2">id</span><span class="se">\t</span><span class="s2">Schema_info"</span>
+
+    <span class="c1"># Write the header CSV file</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="s2">"Schema_info-header.csv"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">csv_header</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># Write the data CSV file</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="s2">"Schema_info-part000.csv"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span>
+    <span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">csv_data</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Created Schema_info CSV files in </span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="combine_csv_files">
+<a class="viewcode-back" href="../../../generated/torchcell.database.biocypher_out_combine.combine_csv_files.html#torchcell.database.biocypher_out_combine.combine_csv_files">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">combine_csv_files</span><span class="p">(</span><span class="n">input_dirs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Copy non-schema CSV parts from input dirs into output with renumbered parts."""</span>
+    <span class="n">file_counters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">input_dir</span> <span class="ow">in</span> <span class="n">input_dirs</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">input_dir</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".csv"</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">file</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"Schema_info"</span><span class="p">):</span>
+                <span class="n">base_name</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"-"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"-header.csv"</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">file</span><span class="p">)):</span>
+                        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span>
+                            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">file</span><span class="p">),</span>
+                            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">file</span><span class="p">),</span>
+                        <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">counter</span> <span class="o">=</span> <span class="n">file_counters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">base_name</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="n">new_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">base_name</span><span class="si">}</span><span class="s2">-part</span><span class="si">{</span><span class="n">counter</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">.csv"</span>
+                    <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">file</span><span class="p">),</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">new_name</span><span class="p">),</span>
+                    <span class="p">)</span>
+                    <span class="n">file_counters</span><span class="p">[</span><span class="n">base_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">counter</span> <span class="o">+</span> <span class="mi">1</span></div>
+
+
+
+<div class="viewcode-block" id="load_neo4j_config">
+<a class="viewcode-back" href="../../../generated/torchcell.database.biocypher_out_combine.load_neo4j_config.html#torchcell.database.biocypher_out_combine.load_neo4j_config">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_neo4j_config</span><span class="p">(</span><span class="n">config_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Load and validate the Neo4j config block, requiring all expected keys."""</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+    <span class="c1"># Extract Neo4j configuration, preferring the second neo4j block if it exists</span>
+    <span class="n">neo4j_config</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"neo4j"</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="k">if</span> <span class="s2">"neo4j"</span> <span class="ow">in</span> <span class="n">config</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">"neo4j"</span><span class="p">],</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">neo4j_config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">"neo4j"</span><span class="p">])</span>
+
+    <span class="c1"># Ensure all required keys are present</span>
+    <span class="n">required_keys</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">"database_name"</span><span class="p">,</span>
+        <span class="s2">"wipe"</span><span class="p">,</span>
+        <span class="s2">"delimiter"</span><span class="p">,</span>
+        <span class="s2">"array_delimiter"</span><span class="p">,</span>
+        <span class="s2">"skip_duplicate_nodes"</span><span class="p">,</span>
+        <span class="s2">"skip_bad_relationships"</span><span class="p">,</span>
+        <span class="s2">"import_call_file_prefix"</span><span class="p">,</span>
+        <span class="s2">"import_call_bin_prefix"</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">required_keys</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">neo4j_config</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Missing required Neo4j configuration key: </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">neo4j_config</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="load_schema_info">
+<a class="viewcode-back" href="../../../generated/torchcell.database.biocypher_out_combine.load_schema_info.html#torchcell.database.biocypher_out_combine.load_schema_info">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_schema_info</span><span class="p">(</span><span class="n">schema_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>  <span class="c1"># yaml.safe_load returns Any</span>
+<span class="w">    </span><span class="sd">"""Load and return the schema YAML mapping."""</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">schema_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">schema</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">schema</span></div>
+
+
+
+<div class="viewcode-block" id="generate_neo4j_import_script">
+<a class="viewcode-back" href="../../../generated/torchcell.database.biocypher_out_combine.generate_neo4j_import_script.html#torchcell.database.biocypher_out_combine.generate_neo4j_import_script">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_neo4j_import_script</span><span class="p">(</span>
+    <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">neo4j_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Write a neo4j-admin import shell script for Neo4j 4.x and 5+ from the schema."""</span>
+    <span class="n">output_dir_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+    <span class="n">script_content</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">"#!/bin/bash"</span><span class="p">,</span>
+        <span class="s2">"version=$(bin/neo4j-admin --version | cut -d '.' -f 1)"</span><span class="p">,</span>
+        <span class="s2">"if [[ $version -ge 5 ]]; then"</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"    </span><span class="si">{</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s1">'import_call_bin_prefix'</span><span class="p">]</span><span class="si">}</span><span class="s2">neo4j-admin database import full </span><span class="se">\\</span><span class="s2">"</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">'    --delimiter="</span><span class="si">{</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s2">"delimiter"</span><span class="p">]</span><span class="si">}</span><span class="s1">" </span><span class="se">\\</span><span class="s1">'</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">'    --array-delimiter="</span><span class="si">{</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s2">"array_delimiter"</span><span class="p">]</span><span class="si">}</span><span class="s1">" </span><span class="se">\\</span><span class="s1">'</span><span class="p">,</span>
+        <span class="s1">'    --quote="</span><span class="se">\'</span><span class="s1">" </span><span class="se">\\</span><span class="s1">'</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"    --overwrite-destination=</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s1">'wipe'</span><span class="p">])</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="se">\\</span><span class="s2">"</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"    --skip-bad-relationships=</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s1">'skip_bad_relationships'</span><span class="p">])</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="se">\\</span><span class="s2">"</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"    --skip-duplicate-nodes=</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s1">'skip_duplicate_nodes'</span><span class="p">])</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="se">\\</span><span class="s2">"</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">'    --nodes="</span><span class="si">{</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s2">"import_call_file_prefix"</span><span class="p">]</span><span class="si">}</span><span class="s1">biocypher-out/</span><span class="si">{</span><span class="n">output_dir_name</span><span class="si">}</span><span class="s1">/Schema_info-header.csv,</span><span class="si">{</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s2">"import_call_file_prefix"</span><span class="p">]</span><span class="si">}</span><span class="s1">biocypher-out/</span><span class="si">{</span><span class="n">output_dir_name</span><span class="si">}</span><span class="s1">/Schema_info-part.*" </span><span class="se">\\</span><span class="s1">'</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="c1"># Get actual file names from the directory</span>
+    <span class="n">file_names</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+
+    <span class="c1"># Separate nodes and relationships based on schema</span>
+    <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">relationships</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">entity</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">file_name</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">" "</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"is_relationship"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+                <span class="n">relationships</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"represented_as"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"node"</span><span class="p">:</span>
+                <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
+
+    <span class="c1"># Ensure "Mentions" is in the relationships list if it exists in the directory</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"Mentions-"</span><span class="p">)</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">file_names</span><span class="p">):</span>
+        <span class="n">relationships</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"Mentions"</span><span class="p">)</span>
+
+    <span class="c1"># Function to find the correct case-sensitive file name</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">find_file</span><span class="p">(</span><span class="n">base_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">next</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">file_names</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">base_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">-header.csv"</span><span class="p">),</span>
+            <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Add nodes</span>
+    <span class="k">for</span> <span class="n">base_name</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+        <span class="n">found_file</span> <span class="o">=</span> <span class="n">find_file</span><span class="p">(</span><span class="n">base_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">found_file</span><span class="p">:</span>
+            <span class="n">base_name</span> <span class="o">=</span> <span class="n">found_file</span><span class="p">[:</span><span class="o">-</span><span class="mi">11</span><span class="p">]</span>  <span class="c1"># Remove "-header.csv"</span>
+            <span class="n">script_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'    --nodes="</span><span class="si">{</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s2">"import_call_file_prefix"</span><span class="p">]</span><span class="si">}</span><span class="s1">biocypher-out/</span><span class="si">{</span><span class="n">output_dir_name</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">base_name</span><span class="si">}</span><span class="s1">-header.csv,</span><span class="si">{</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s2">"import_call_file_prefix"</span><span class="p">]</span><span class="si">}</span><span class="s1">biocypher-out/</span><span class="si">{</span><span class="n">output_dir_name</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">base_name</span><span class="si">}</span><span class="s1">-part.*" </span><span class="se">\\</span><span class="s1">'</span>
+            <span class="p">)</span>
+
+    <span class="c1"># Add relationships</span>
+    <span class="k">for</span> <span class="n">base_name</span> <span class="ow">in</span> <span class="n">relationships</span><span class="p">:</span>
+        <span class="n">found_file</span> <span class="o">=</span> <span class="n">find_file</span><span class="p">(</span><span class="n">base_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">found_file</span><span class="p">:</span>
+            <span class="n">base_name</span> <span class="o">=</span> <span class="n">found_file</span><span class="p">[:</span><span class="o">-</span><span class="mi">11</span><span class="p">]</span>  <span class="c1"># Remove "-header.csv"</span>
+            <span class="n">script_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'    --relationships="</span><span class="si">{</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s2">"import_call_file_prefix"</span><span class="p">]</span><span class="si">}</span><span class="s1">biocypher-out/</span><span class="si">{</span><span class="n">output_dir_name</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">base_name</span><span class="si">}</span><span class="s1">-header.csv,</span><span class="si">{</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s2">"import_call_file_prefix"</span><span class="p">]</span><span class="si">}</span><span class="s1">biocypher-out/</span><span class="si">{</span><span class="n">output_dir_name</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">base_name</span><span class="si">}</span><span class="s1">-part.*" </span><span class="se">\\</span><span class="s1">'</span>
+            <span class="p">)</span>
+
+    <span class="c1"># Add database name for Neo4j 5+</span>
+    <span class="n">script_content</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">script_content</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s1">'database_name'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+
+    <span class="c1"># Add Neo4j 4.x version command</span>
+    <span class="n">script_content</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="s2">"else"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"    </span><span class="si">{</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s1">'import_call_bin_prefix'</span><span class="p">]</span><span class="si">}</span><span class="s2">neo4j-admin import </span><span class="se">\\</span><span class="s2">"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s1">'    --delimiter="</span><span class="si">{</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s2">"delimiter"</span><span class="p">]</span><span class="si">}</span><span class="s1">" </span><span class="se">\\</span><span class="s1">'</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s1">'    --array-delimiter="</span><span class="si">{</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s2">"array_delimiter"</span><span class="p">]</span><span class="si">}</span><span class="s1">" </span><span class="se">\\</span><span class="s1">'</span><span class="p">,</span>
+            <span class="s1">'    --quote="</span><span class="se">\'</span><span class="s1">" </span><span class="se">\\</span><span class="s1">'</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"    --force=</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s1">'wipe'</span><span class="p">])</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="se">\\</span><span class="s2">"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"    --skip-bad-relationships=</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s1">'skip_bad_relationships'</span><span class="p">])</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="se">\\</span><span class="s2">"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"    --skip-duplicate-nodes=</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s1">'skip_duplicate_nodes'</span><span class="p">])</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="se">\\</span><span class="s2">"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s1">'    --nodes="</span><span class="si">{</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s2">"import_call_file_prefix"</span><span class="p">]</span><span class="si">}</span><span class="s1">biocypher-out/</span><span class="si">{</span><span class="n">output_dir_name</span><span class="si">}</span><span class="s1">/Schema_info-header.csv,</span><span class="si">{</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s2">"import_call_file_prefix"</span><span class="p">]</span><span class="si">}</span><span class="s1">biocypher-out/</span><span class="si">{</span><span class="n">output_dir_name</span><span class="si">}</span><span class="s1">/Schema_info-part.*" </span><span class="se">\\</span><span class="s1">'</span><span class="p">,</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Add nodes for Neo4j 4.x</span>
+    <span class="k">for</span> <span class="n">base_name</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+        <span class="n">found_file</span> <span class="o">=</span> <span class="n">find_file</span><span class="p">(</span><span class="n">base_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">found_file</span><span class="p">:</span>
+            <span class="n">base_name</span> <span class="o">=</span> <span class="n">found_file</span><span class="p">[:</span><span class="o">-</span><span class="mi">11</span><span class="p">]</span>  <span class="c1"># Remove "-header.csv"</span>
+            <span class="n">script_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'    --nodes="</span><span class="si">{</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s2">"import_call_file_prefix"</span><span class="p">]</span><span class="si">}</span><span class="s1">biocypher-out/</span><span class="si">{</span><span class="n">output_dir_name</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">base_name</span><span class="si">}</span><span class="s1">-header.csv,</span><span class="si">{</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s2">"import_call_file_prefix"</span><span class="p">]</span><span class="si">}</span><span class="s1">biocypher-out/</span><span class="si">{</span><span class="n">output_dir_name</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">base_name</span><span class="si">}</span><span class="s1">-part.*" </span><span class="se">\\</span><span class="s1">'</span>
+            <span class="p">)</span>
+
+    <span class="c1"># Add relationships for Neo4j 4.x</span>
+    <span class="k">for</span> <span class="n">base_name</span> <span class="ow">in</span> <span class="n">relationships</span><span class="p">:</span>
+        <span class="n">found_file</span> <span class="o">=</span> <span class="n">find_file</span><span class="p">(</span><span class="n">base_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">found_file</span><span class="p">:</span>
+            <span class="n">base_name</span> <span class="o">=</span> <span class="n">found_file</span><span class="p">[:</span><span class="o">-</span><span class="mi">11</span><span class="p">]</span>  <span class="c1"># Remove "-header.csv"</span>
+            <span class="n">script_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'    --relationships="</span><span class="si">{</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s2">"import_call_file_prefix"</span><span class="p">]</span><span class="si">}</span><span class="s1">biocypher-out/</span><span class="si">{</span><span class="n">output_dir_name</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">base_name</span><span class="si">}</span><span class="s1">-header.csv,</span><span class="si">{</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s2">"import_call_file_prefix"</span><span class="p">]</span><span class="si">}</span><span class="s1">biocypher-out/</span><span class="si">{</span><span class="n">output_dir_name</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">base_name</span><span class="si">}</span><span class="s1">-part.*" </span><span class="se">\\</span><span class="s1">'</span>
+            <span class="p">)</span>
+
+    <span class="c1"># Add database name for Neo4j 4.x</span>
+    <span class="n">script_content</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">script_content</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">"--database=</span><span class="si">{</span><span class="n">neo4j_config</span><span class="p">[</span><span class="s1">'database_name'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Close the if-else statement</span>
+    <span class="n">script_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"fi"</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="s2">"neo4j-admin-import-call.sh"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">script_content</span><span class="p">))</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">input_dirs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">output_base_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">config_yaml</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Combine BioCypher outputs, write schema CSVs, and generate the import script."""</span>
+    <span class="c1"># Create output directory with timestamp</span>
+    <span class="n">timestamp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y-%m-</span><span class="si">%d</span><span class="s2">_%H-%M-%S"</span><span class="p">)</span>
+    <span class="n">output_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_base_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">timestamp</span><span class="si">}</span><span class="s2">_combined"</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Check YAML compatibility</span>
+    <span class="n">yaml_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="s2">"schema_info.yaml"</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">input_dirs</span><span class="p">]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">combined_yaml</span> <span class="o">=</span> <span class="n">check_yaml_compatibility</span><span class="p">(</span><span class="n">yaml_files</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="c1"># Remove duplicates from combined YAML</span>
+    <span class="n">combined_yaml</span> <span class="o">=</span> <span class="n">remove_duplicates</span><span class="p">(</span><span class="n">combined_yaml</span><span class="p">)</span>
+
+    <span class="c1"># Write combined YAML</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="s2">"schema_info.yaml"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">combined_yaml</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+
+    <span class="c1"># Create new Schema_info CSV files</span>
+    <span class="n">create_schema_info_csv</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">combined_yaml</span><span class="p">)</span>
+
+    <span class="c1"># Verify Schema_info CSV files</span>
+    <span class="n">schema_header</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="s2">"Schema_info-header.csv"</span><span class="p">)</span>
+    <span class="n">schema_part</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="s2">"Schema_info-part000.csv"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">schema_header</span><span class="p">)</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">schema_part</span><span class="p">)):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Error: Schema_info CSV files were not created successfully."</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="c1"># Combine CSV files (excluding Schema_info CSVs)</span>
+    <span class="n">combine_csv_files</span><span class="p">(</span><span class="n">input_dirs</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">)</span>
+
+    <span class="c1"># Load Neo4j configuration</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">neo4j_config</span> <span class="o">=</span> <span class="n">load_neo4j_config</span><span class="p">(</span><span class="n">config_yaml</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error loading Neo4j configuration: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="c1"># Generate Neo4j import script</span>
+    <span class="n">generate_neo4j_import_script</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">neo4j_config</span><span class="p">,</span> <span class="n">combined_yaml</span><span class="p">)</span>
+
+    <span class="c1"># Verify the generated import script</span>
+    <span class="n">import_script</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="s2">"neo4j-admin-import-call.sh"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">import_script</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Error: Neo4j import script was not generated successfully."</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="c1"># Check if Schema_info is included in the import script</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">import_script</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">script_content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s2">"Schema_info-header.csv"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">script_content</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">"Warning: Schema_info node might not be included in the import script."</span>
+            <span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"Combine BioCypher output directories"</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"input_dirs"</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s2">"+"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Input directories containing BioCypher output"</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--output_base_dir"</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Base output directory for combined data"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--config_yaml"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Path to the configuration YAML file"</span>
+    <span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="n">main</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">input_dirs</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">output_base_dir</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">config_yaml</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

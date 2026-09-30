@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.fitness\_composite\_conversion.CompositeFitnessConverter
+=============================================================================
+
+.. currentmodule:: torchcell.datamodels.fitness_composite_conversion
+
+.. autoclass:: CompositeFitnessConverter
+   :show-inheritance:
+   :members:

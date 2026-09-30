@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.compound\_identity.normalize\_compound\_name
+=================================================================
+
+.. currentmodule:: torchcell.datamodels.compound_identity
+
+.. autofunction:: normalize_compound_name

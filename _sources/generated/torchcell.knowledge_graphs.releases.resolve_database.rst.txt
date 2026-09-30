@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.releases.resolve\_database
+======================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.releases
+
+.. autofunction:: resolve_database

@@ -1,0 +1,8 @@
+﻿torchcell.adapters.AminoAcidCooper2010Adapter
+=============================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: AminoAcidCooper2010Adapter
+   :show-inheritance:
+   :members:

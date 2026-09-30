@@ -1,0 +1,6 @@
+﻿torchcell.sga.merge\_layout
+===========================
+
+.. currentmodule:: torchcell.sga
+
+.. autofunction:: merge_layout

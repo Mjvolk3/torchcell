@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.ontology\_checks.graph\_schema
+===================================================
+
+.. currentmodule:: torchcell.datamodels.ontology_checks
+
+.. autofunction:: graph_schema

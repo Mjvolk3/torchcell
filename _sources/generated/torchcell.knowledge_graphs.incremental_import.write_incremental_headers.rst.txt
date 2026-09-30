@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.incremental\_import.write\_incremental\_headers
+===========================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.incremental_import
+
+.. autofunction:: write_incremental_headers

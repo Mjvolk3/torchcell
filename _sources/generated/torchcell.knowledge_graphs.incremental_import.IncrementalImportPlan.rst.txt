@@ -1,0 +1,8 @@
+﻿torchcell.knowledge\_graphs.incremental\_import.IncrementalImportPlan
+=====================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.incremental_import
+
+.. autoclass:: IncrementalImportPlan
+   :show-inheritance:
+   :members:

@@ -1,0 +1,8 @@
+﻿torchcell.adapters.ProteomeMessner2023Adapter
+=============================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: ProteomeMessner2023Adapter
+   :show-inheritance:
+   :members:

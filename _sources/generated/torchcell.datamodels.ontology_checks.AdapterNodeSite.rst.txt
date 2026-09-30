@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.ontology\_checks.AdapterNodeSite
+=====================================================
+
+.. currentmodule:: torchcell.datamodels.ontology_checks
+
+.. autoclass:: AdapterNodeSite
+   :show-inheritance:
+   :members:

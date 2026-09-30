@@ -1,0 +1,8 @@
+﻿torchcell.adapters.EnvChemgenMota2024Adapter
+============================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: EnvChemgenMota2024Adapter
+   :show-inheritance:
+   :members:

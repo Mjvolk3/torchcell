@@ -1,0 +1,8 @@
+﻿torchcell.metabolism.media.ExchangeBound
+========================================
+
+.. currentmodule:: torchcell.metabolism.media
+
+.. autoclass:: ExchangeBound
+   :show-inheritance:
+   :members:

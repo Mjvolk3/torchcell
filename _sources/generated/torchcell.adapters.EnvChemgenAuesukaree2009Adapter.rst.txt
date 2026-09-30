@@ -1,0 +1,8 @@
+﻿torchcell.adapters.EnvChemgenAuesukaree2009Adapter
+==================================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: EnvChemgenAuesukaree2009Adapter
+   :show-inheritance:
+   :members:

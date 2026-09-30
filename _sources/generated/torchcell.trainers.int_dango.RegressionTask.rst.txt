@@ -1,0 +1,8 @@
+﻿torchcell.trainers.int\_dango.RegressionTask
+============================================
+
+.. currentmodule:: torchcell.trainers.int_dango
+
+.. autoclass:: RegressionTask
+   :show-inheritance:
+   :members:

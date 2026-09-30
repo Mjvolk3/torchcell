@@ -1,0 +1,8 @@
+﻿torchcell.verification.ProvenanceGapCensus
+==========================================
+
+.. currentmodule:: torchcell.verification
+
+.. autoclass:: ProvenanceGapCensus
+   :show-inheritance:
+   :members:

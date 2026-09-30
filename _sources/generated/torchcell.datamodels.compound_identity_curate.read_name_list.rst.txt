@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.compound\_identity\_curate.read\_name\_list
+================================================================
+
+.. currentmodule:: torchcell.datamodels.compound_identity_curate
+
+.. autofunction:: read_name_list

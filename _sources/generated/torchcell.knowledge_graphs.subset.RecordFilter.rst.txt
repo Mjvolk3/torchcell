@@ -1,0 +1,8 @@
+﻿torchcell.knowledge\_graphs.subset.RecordFilter
+===============================================
+
+.. currentmodule:: torchcell.knowledge_graphs.subset
+
+.. autoclass:: RecordFilter
+   :show-inheritance:
+   :members:

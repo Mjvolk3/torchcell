@@ -1,0 +1,8 @@
+﻿torchcell.transforms.regression\_to\_classification\_coo.COOLabelBinningTransform
+=================================================================================
+
+.. currentmodule:: torchcell.transforms.regression_to_classification_coo
+
+.. autoclass:: COOLabelBinningTransform
+   :show-inheritance:
+   :members:

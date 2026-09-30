@@ -1,0 +1,603 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.knowledge_graphs.build_time_projection &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/knowledge_graphs/build_time_projection.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.knowledge_graphs.build_time_projection</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.knowledge_graphs.build_time_projection</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/knowledge_graphs/build_time_projection.py</span>
+<span class="c1"># [[torchcell.knowledge_graphs.build_time_projection]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/build_time_projection</span>
+<span class="sd">"""Project the tcdb knowledge-graph BUILD (CSV-generation) time for any subset config.</span>
+
+<span class="sd">The KG build's wall time is dominated by adapter CSV generation -- each adapter</span>
+<span class="sd">iterates its dataset's records and writes BioCypher node/edge CSVs. Dataset</span>
+<span class="sd">*import* (constructing the in-memory pydantic records from the LMDB) is ~0 relative</span>
+<span class="sd">to generation, so this model deliberately covers ONLY adapter generation.</span>
+
+<span class="sd">Model (linear in records processed)</span>
+<span class="sd">-----------------------------------</span>
+<span class="sd">Per adapter ``i`` the generation time is ~linear in the number of records it</span>
+<span class="sd">actually iterates::</span>
+
+<span class="sd">    rate_i          = total_sec_i / records_966_i          # calibrate</span>
+<span class="sd">    projected_sec_i = rate_i * effective_records_i(config)  # project</span>
+<span class="sd">    total           = Σ_i projected_sec_i</span>
+
+<span class="sd">``effective_records_i(config) = min(cap_i, full_records_i)`` (full when uncapped),</span>
+<span class="sd">computed by :meth:`SubsetConfig.effective_records` -- the SAME min(cap, full) rule</span>
+<span class="sd">the build applies via ``torchcell.knowledge_graphs.subset.subset_dataset``. Both</span>
+<span class="sd">calibration and projection route through it, so projecting the calibration config</span>
+<span class="sd">reproduces the measured total by construction.</span>
+
+<span class="sd">Calibration (job 966, config ``kg_full``)</span>
+<span class="sd">-----------------------------------------</span>
+<span class="sd">Job 966 ran ``kg_full``: subsetting OFF (``subset.size: null``) except the two</span>
+<span class="sd">giant Costanzo double-mutant sets (20.7M records each), each capped to 100k via</span>
+<span class="sd">``subset.per_dataset``. So ``records_966_i`` is 100000 for dmf/dmi Costanzo and the</span>
+<span class="sd">full dataset record count for every other adapter -- exactly what</span>
+<span class="sd">``KG_FULL_CONFIG.effective_records`` yields. The per-adapter ``total_sec`` values</span>
+<span class="sd">sum to the measured ``generation_total_sec`` (33180 s = 9.22 h), so the ``kg_full``</span>
+<span class="sd">projection self-check lands at ~0 % error.</span>
+
+<span class="sd">Two calibration caveats, both intentionally captured per-adapter</span>
+<span class="sd">----------------------------------------------------------------</span>
+<span class="sd">1. Serialization-heavy adapters (Caudal RNA-seq, Kemmeren + Sameith microarray)</span>
+<span class="sd">   legitimately carry a high per-record rate -- each record serializes a large</span>
+<span class="sd">   expression vector. That cost is real and is captured in that adapter's own</span>
+<span class="sd">   ``rate_i``; it is not smoothed away.</span>
+<span class="sd">2. ``DmfCostanzo2016Dataset``'s source default ``root`` is a copy-paste of the smf</span>
+<span class="sd">   path (``data/torchcell/smf_costanzo2016``), so in job 966 the Dmf adapter loaded</span>
+<span class="sd">   the SMF LMDB (20,484 records -&gt; 163,883 nodes, identical to the Smf adapter) and,</span>
+<span class="sd">   since its 100k cap exceeded that, processed it in full. Its rate is therefore</span>
+<span class="sd">   modelled per the ``kg_full`` intent (records_966 = 100000) but is NOT a faithful</span>
+<span class="sd">   double-mutant-fitness rate. For an uncapped projection the Dmi rate is the</span>
+<span class="sd">   trustworthy double-mutant analogue; the Dmf uncapped figure is a lower bound.</span>
+<span class="sd">   See ``DmfCostanzo2016Dataset`` in ``torchcell/datasets/scerevisiae/costanzo2016.py``.</span>
+
+<span class="sd">The gathered full record counts (``DATASET_FULL_RECORDS``) are a committed constant</span>
+<span class="sd">so the tool is self-contained; :func:`gather_dataset_full_records` regenerates them</span>
+<span class="sd">from the built LMDBs (read-only ``stat``, no dataset rebuild).</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="c1"># --- committed calibration constants --------------------------------------</span>
+
+<span class="n">CALIBRATION_JOB</span> <span class="o">=</span> <span class="mi">966</span>
+<span class="sd">"""Slurm job whose per-adapter timings calibrate this model (config ``kg_full``)."""</span>
+
+<span class="c1"># The kg_full ``subset.per_dataset`` block job 966 ran: only the two giant Costanzo</span>
+<span class="c1"># double-mutant sets are capped (to 100k); everything else builds in full. Keyed by</span>
+<span class="c1"># DATASET class name, mirroring the hydra config.</span>
+<span class="n">CALIBRATION_PER_DATASET_CAPS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"DmfCostanzo2016Dataset"</span><span class="p">:</span> <span class="mi">100000</span><span class="p">,</span>
+    <span class="s2">"DmiCostanzo2016Dataset"</span><span class="p">:</span> <span class="mi">100000</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1"># adapter class name -&gt; dataset class name (inverse of</span>
+<span class="c1"># ``torchcell.knowledge_graphs.dataset_adapter_map.dataset_adapter_map``). Timings</span>
+<span class="c1"># are keyed by adapter; subset configs (and DATASET_FULL_RECORDS) by dataset class.</span>
+<span class="n">ADAPTER_TO_DATASET</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"SmfCostanzo2016Adapter"</span><span class="p">:</span> <span class="s2">"SmfCostanzo2016Dataset"</span><span class="p">,</span>
+    <span class="s2">"DmfCostanzo2016Adapter"</span><span class="p">:</span> <span class="s2">"DmfCostanzo2016Dataset"</span><span class="p">,</span>
+    <span class="s2">"DmiCostanzo2016Adapter"</span><span class="p">:</span> <span class="s2">"DmiCostanzo2016Dataset"</span><span class="p">,</span>
+    <span class="s2">"SmfKuzmin2018Adapter"</span><span class="p">:</span> <span class="s2">"SmfKuzmin2018Dataset"</span><span class="p">,</span>
+    <span class="s2">"DmfKuzmin2018Adapter"</span><span class="p">:</span> <span class="s2">"DmfKuzmin2018Dataset"</span><span class="p">,</span>
+    <span class="s2">"TmfKuzmin2018Adapter"</span><span class="p">:</span> <span class="s2">"TmfKuzmin2018Dataset"</span><span class="p">,</span>
+    <span class="s2">"DmiKuzmin2018Adapter"</span><span class="p">:</span> <span class="s2">"DmiKuzmin2018Dataset"</span><span class="p">,</span>
+    <span class="s2">"TmiKuzmin2018Adapter"</span><span class="p">:</span> <span class="s2">"TmiKuzmin2018Dataset"</span><span class="p">,</span>
+    <span class="s2">"SmfKuzmin2020Adapter"</span><span class="p">:</span> <span class="s2">"SmfKuzmin2020Dataset"</span><span class="p">,</span>
+    <span class="s2">"DmfKuzmin2020Adapter"</span><span class="p">:</span> <span class="s2">"DmfKuzmin2020Dataset"</span><span class="p">,</span>
+    <span class="s2">"TmfKuzmin2020Adapter"</span><span class="p">:</span> <span class="s2">"TmfKuzmin2020Dataset"</span><span class="p">,</span>
+    <span class="s2">"DmiKuzmin2020Adapter"</span><span class="p">:</span> <span class="s2">"DmiKuzmin2020Dataset"</span><span class="p">,</span>
+    <span class="s2">"TmiKuzmin2020Adapter"</span><span class="p">:</span> <span class="s2">"TmiKuzmin2020Dataset"</span><span class="p">,</span>
+    <span class="s2">"GeneEssentialitySgdAdapter"</span><span class="p">:</span> <span class="s2">"GeneEssentialitySgdDataset"</span><span class="p">,</span>
+    <span class="s2">"SynthLethalityYeastSynthLethDbAdapter"</span><span class="p">:</span> <span class="s2">"SynthLethalityYeastSynthLethDbDataset"</span><span class="p">,</span>
+    <span class="s2">"SynthRescueYeastSynthLethDbAdapter"</span><span class="p">:</span> <span class="s2">"SynthRescueYeastSynthLethDbDataset"</span><span class="p">,</span>
+    <span class="s2">"ScmdOhya2005Adapter"</span><span class="p">:</span> <span class="s2">"ScmdOhya2005Dataset"</span><span class="p">,</span>
+    <span class="s2">"MicroarrayKemmeren2014Adapter"</span><span class="p">:</span> <span class="s2">"MicroarrayKemmeren2014Dataset"</span><span class="p">,</span>
+    <span class="s2">"SmMicroarraySameith2015Adapter"</span><span class="p">:</span> <span class="s2">"SmMicroarraySameith2015Dataset"</span><span class="p">,</span>
+    <span class="s2">"DmMicroarraySameith2015Adapter"</span><span class="p">:</span> <span class="s2">"DmMicroarraySameith2015Dataset"</span><span class="p">,</span>
+    <span class="s2">"CaudalPanTranscriptome2024Adapter"</span><span class="p">:</span> <span class="s2">"CaudalPanTranscriptome2024Dataset"</span><span class="p">,</span>
+    <span class="s2">"ScmdOhnuki2018Adapter"</span><span class="p">:</span> <span class="s2">"ScmdOhnuki2018Dataset"</span><span class="p">,</span>
+    <span class="s2">"ScmdOhnuki2022Adapter"</span><span class="p">:</span> <span class="s2">"ScmdOhnuki2022Dataset"</span><span class="p">,</span>
+    <span class="s2">"CarotenoidOzaydin2013Adapter"</span><span class="p">:</span> <span class="s2">"CarotenoidOzaydin2013Dataset"</span><span class="p">,</span>
+    <span class="s2">"BetaxanthinCachera2023Adapter"</span><span class="p">:</span> <span class="s2">"BetaxanthinCachera2023Dataset"</span><span class="p">,</span>
+    <span class="s2">"MetaboliteDaSilveira2014Adapter"</span><span class="p">:</span> <span class="s2">"MetaboliteDaSilveira2014Dataset"</span><span class="p">,</span>
+    <span class="s2">"MetaboliteZelezniak2018Adapter"</span><span class="p">:</span> <span class="s2">"MetaboliteZelezniak2018Dataset"</span><span class="p">,</span>
+    <span class="s2">"ProteomeZelezniak2018Adapter"</span><span class="p">:</span> <span class="s2">"ProteomeZelezniak2018Dataset"</span><span class="p">,</span>
+    <span class="s2">"AminoAcidMulleder2016Adapter"</span><span class="p">:</span> <span class="s2">"AminoAcidMulleder2016Dataset"</span><span class="p">,</span>
+    <span class="s2">"OrganicAcidYoshida2012Adapter"</span><span class="p">:</span> <span class="s2">"OrganicAcidYoshida2012Dataset"</span><span class="p">,</span>
+    <span class="s2">"IsobutanolScreenLopez2024Adapter"</span><span class="p">:</span> <span class="s2">"IsobutanolScreenLopez2024Dataset"</span><span class="p">,</span>
+    <span class="s2">"IsobutanolValidatedLopez2024Adapter"</span><span class="p">:</span> <span class="s2">"IsobutanolValidatedLopez2024Dataset"</span><span class="p">,</span>
+    <span class="s2">"FattyAcidXue2025Adapter"</span><span class="p">:</span> <span class="s2">"FattyAcidXue2025Dataset"</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1"># dataset class name -&gt; FULL record count = LMDB ``stat()['entries']`` of the full</span>
+<span class="c1"># (uncapped) dataset. Gathered read-only from the dev tree</span>
+<span class="c1"># ($DATA_ROOT/data/torchcell/&lt;name&gt;/processed/lmdb) on 2026-07-19; dmi cross-checks</span>
+<span class="c1"># against the job-966 ``subsets`` entry (20,705,612). Regenerate with</span>
+<span class="c1"># :func:`gather_dataset_full_records`. NOTE: the dmf/dmi values are the TRUE full</span>
+<span class="c1"># double-mutant counts (dmf's buggy default root is bypassed here on purpose).</span>
+<span class="n">DATASET_FULL_RECORDS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"SmfCostanzo2016Dataset"</span><span class="p">:</span> <span class="mi">20484</span><span class="p">,</span>
+    <span class="s2">"DmfCostanzo2016Dataset"</span><span class="p">:</span> <span class="mi">20705612</span><span class="p">,</span>
+    <span class="s2">"DmiCostanzo2016Dataset"</span><span class="p">:</span> <span class="mi">20705612</span><span class="p">,</span>
+    <span class="s2">"SmfKuzmin2018Dataset"</span><span class="p">:</span> <span class="mi">1539</span><span class="p">,</span>
+    <span class="s2">"DmfKuzmin2018Dataset"</span><span class="p">:</span> <span class="mi">410399</span><span class="p">,</span>
+    <span class="s2">"TmfKuzmin2018Dataset"</span><span class="p">:</span> <span class="mi">91111</span><span class="p">,</span>
+    <span class="s2">"DmiKuzmin2018Dataset"</span><span class="p">:</span> <span class="mi">410399</span><span class="p">,</span>
+    <span class="s2">"TmiKuzmin2018Dataset"</span><span class="p">:</span> <span class="mi">91111</span><span class="p">,</span>
+    <span class="s2">"SmfKuzmin2020Dataset"</span><span class="p">:</span> <span class="mi">472</span><span class="p">,</span>
+    <span class="s2">"DmfKuzmin2020Dataset"</span><span class="p">:</span> <span class="mi">632797</span><span class="p">,</span>
+    <span class="s2">"TmfKuzmin2020Dataset"</span><span class="p">:</span> <span class="mi">301798</span><span class="p">,</span>
+    <span class="s2">"DmiKuzmin2020Dataset"</span><span class="p">:</span> <span class="mi">632797</span><span class="p">,</span>
+    <span class="s2">"TmiKuzmin2020Dataset"</span><span class="p">:</span> <span class="mi">301798</span><span class="p">,</span>
+    <span class="s2">"GeneEssentialitySgdDataset"</span><span class="p">:</span> <span class="mi">1329</span><span class="p">,</span>
+    <span class="s2">"SynthLethalityYeastSynthLethDbDataset"</span><span class="p">:</span> <span class="mi">14000</span><span class="p">,</span>
+    <span class="s2">"SynthRescueYeastSynthLethDbDataset"</span><span class="p">:</span> <span class="mi">6948</span><span class="p">,</span>
+    <span class="s2">"ScmdOhya2005Dataset"</span><span class="p">:</span> <span class="mi">4718</span><span class="p">,</span>
+    <span class="s2">"MicroarrayKemmeren2014Dataset"</span><span class="p">:</span> <span class="mi">1484</span><span class="p">,</span>
+    <span class="s2">"SmMicroarraySameith2015Dataset"</span><span class="p">:</span> <span class="mi">82</span><span class="p">,</span>
+    <span class="s2">"DmMicroarraySameith2015Dataset"</span><span class="p">:</span> <span class="mi">72</span><span class="p">,</span>
+    <span class="s2">"CaudalPanTranscriptome2024Dataset"</span><span class="p">:</span> <span class="mi">943</span><span class="p">,</span>
+    <span class="s2">"ScmdOhnuki2018Dataset"</span><span class="p">:</span> <span class="mi">1112</span><span class="p">,</span>
+    <span class="s2">"ScmdOhnuki2022Dataset"</span><span class="p">:</span> <span class="mi">1979</span><span class="p">,</span>
+    <span class="s2">"CarotenoidOzaydin2013Dataset"</span><span class="p">:</span> <span class="mi">4474</span><span class="p">,</span>
+    <span class="s2">"BetaxanthinCachera2023Dataset"</span><span class="p">:</span> <span class="mi">4735</span><span class="p">,</span>
+    <span class="s2">"MetaboliteDaSilveira2014Dataset"</span><span class="p">:</span> <span class="mi">127</span><span class="p">,</span>
+    <span class="s2">"MetaboliteZelezniak2018Dataset"</span><span class="p">:</span> <span class="mi">95</span><span class="p">,</span>
+    <span class="s2">"ProteomeZelezniak2018Dataset"</span><span class="p">:</span> <span class="mi">97</span><span class="p">,</span>
+    <span class="s2">"AminoAcidMulleder2016Dataset"</span><span class="p">:</span> <span class="mi">4678</span><span class="p">,</span>
+    <span class="s2">"OrganicAcidYoshida2012Dataset"</span><span class="p">:</span> <span class="mi">17</span><span class="p">,</span>
+    <span class="s2">"IsobutanolScreenLopez2024Dataset"</span><span class="p">:</span> <span class="mi">4554</span><span class="p">,</span>
+    <span class="s2">"IsobutanolValidatedLopez2024Dataset"</span><span class="p">:</span> <span class="mi">224</span><span class="p">,</span>
+    <span class="s2">"FattyAcidXue2025Dataset"</span><span class="p">:</span> <span class="mi">176</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1"># dataset class name -&gt; processed-LMDB subpath under DATA_ROOT, for re-gathering the</span>
+<span class="c1"># full record counts. Matches each loader's default ``root`` EXCEPT DmfCostanzo,</span>
+<span class="c1"># whose source default root is the (buggy) smf path -- here it is the true dmf tree.</span>
+<span class="n">DATASET_LMDB_SUBPATH</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"SmfCostanzo2016Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/smf_costanzo2016"</span><span class="p">,</span>
+    <span class="s2">"DmfCostanzo2016Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/dmf_costanzo2016"</span><span class="p">,</span>
+    <span class="s2">"DmiCostanzo2016Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/dmi_costanzo2016"</span><span class="p">,</span>
+    <span class="s2">"SmfKuzmin2018Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/smf_kuzmin2018"</span><span class="p">,</span>
+    <span class="s2">"DmfKuzmin2018Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/dmf_kuzmin2018"</span><span class="p">,</span>
+    <span class="s2">"TmfKuzmin2018Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/tmf_kuzmin2018"</span><span class="p">,</span>
+    <span class="s2">"DmiKuzmin2018Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/dmi_kuzmin2018"</span><span class="p">,</span>
+    <span class="s2">"TmiKuzmin2018Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/tmi_kuzmin2018"</span><span class="p">,</span>
+    <span class="s2">"SmfKuzmin2020Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/smf_kuzmin2020"</span><span class="p">,</span>
+    <span class="s2">"DmfKuzmin2020Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/dmf_kuzmin2020"</span><span class="p">,</span>
+    <span class="s2">"TmfKuzmin2020Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/tmf_kuzmin2020"</span><span class="p">,</span>
+    <span class="s2">"DmiKuzmin2020Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/dmi_kuzmin2020"</span><span class="p">,</span>
+    <span class="s2">"TmiKuzmin2020Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/tmi_kuzmin2020"</span><span class="p">,</span>
+    <span class="s2">"GeneEssentialitySgdDataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/gene_essentiality_sgd"</span><span class="p">,</span>
+    <span class="s2">"SynthLethalityYeastSynthLethDbDataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/synth_lethality_yeast_synth_leth_db"</span><span class="p">,</span>
+    <span class="s2">"SynthRescueYeastSynthLethDbDataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/synth_rescue_yeast_synth_leth_db"</span><span class="p">,</span>
+    <span class="s2">"ScmdOhya2005Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/scmd_ohya2005"</span><span class="p">,</span>
+    <span class="s2">"MicroarrayKemmeren2014Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/microarray_kemmeren2014"</span><span class="p">,</span>
+    <span class="s2">"SmMicroarraySameith2015Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/sm_microarray_sameith2015"</span><span class="p">,</span>
+    <span class="s2">"DmMicroarraySameith2015Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/dm_microarray_sameith2015"</span><span class="p">,</span>
+    <span class="s2">"CaudalPanTranscriptome2024Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/caudal_pantranscriptome2024"</span><span class="p">,</span>
+    <span class="s2">"ScmdOhnuki2018Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/scmd_ohnuki2018"</span><span class="p">,</span>
+    <span class="s2">"ScmdOhnuki2022Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/scmd_ohnuki2022"</span><span class="p">,</span>
+    <span class="s2">"CarotenoidOzaydin2013Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/carotenoid_ozaydin2013"</span><span class="p">,</span>
+    <span class="s2">"BetaxanthinCachera2023Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/betaxanthin_cachera2023"</span><span class="p">,</span>
+    <span class="s2">"MetaboliteDaSilveira2014Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/metabolite_dasilveira2014"</span><span class="p">,</span>
+    <span class="s2">"MetaboliteZelezniak2018Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/metabolite_zelezniak2018"</span><span class="p">,</span>
+    <span class="s2">"ProteomeZelezniak2018Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/proteome_zelezniak2018"</span><span class="p">,</span>
+    <span class="s2">"AminoAcidMulleder2016Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/amino_acid_mulleder2016"</span><span class="p">,</span>
+    <span class="s2">"OrganicAcidYoshida2012Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/organic_acid_yoshida2012"</span><span class="p">,</span>
+    <span class="s2">"IsobutanolScreenLopez2024Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/isobutanol_screen_lopez2024"</span><span class="p">,</span>
+    <span class="s2">"IsobutanolValidatedLopez2024Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/isobutanol_validated_lopez2024"</span><span class="p">,</span>
+    <span class="s2">"FattyAcidXue2025Dataset"</span><span class="p">:</span> <span class="s2">"data/torchcell/ffa_xue2025"</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="c1"># --- pydantic models ------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="AdapterTiming">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.build_time_projection.AdapterTiming.html#torchcell.knowledge_graphs.build_time_projection.AdapterTiming">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AdapterTiming</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One adapter's measured CSV-generation timing from a calibration build."""</span>
+
+    <span class="n">adapter</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">node_sec</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">edge_sec</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">total_sec</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">n_nodes</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<div class="viewcode-block" id="CalibrationTimings">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.build_time_projection.CalibrationTimings.html#torchcell.knowledge_graphs.build_time_projection.CalibrationTimings">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CalibrationTimings</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Parsed calibration file (per-adapter timings + the measured total)."""</span>
+
+    <span class="n">generation_total_sec</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">adapters</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AdapterTiming</span><span class="p">]</span>
+    <span class="n">subsets</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="SubsetConfig">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.build_time_projection.SubsetConfig.html#torchcell.knowledge_graphs.build_time_projection.SubsetConfig">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SubsetConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A KG-build subset config, mirroring the hydra ``kg_*.yaml`` ``subset`` block.</span>
+
+<span class="sd">    ``subset_size`` caps every dataset (``None`` =&gt; full); ``per_dataset`` overrides</span>
+<span class="sd">    that per DATASET class name (value ``None`` =&gt; uncapped for that dataset).</span>
+<span class="sd">    """</span>
+
+    <span class="n">subset_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">per_dataset</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SubsetConfig.cap_for">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.build_time_projection.SubsetConfig.html#torchcell.knowledge_graphs.build_time_projection.SubsetConfig.cap_for">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cap_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the record cap for ``dataset`` (``None`` =&gt; uncapped/full)."""</span>
+        <span class="k">if</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">per_dataset</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">per_dataset</span><span class="p">[</span><span class="n">dataset</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset_size</span></div>
+
+
+<div class="viewcode-block" id="SubsetConfig.effective_records">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.build_time_projection.SubsetConfig.html#torchcell.knowledge_graphs.build_time_projection.SubsetConfig.effective_records">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">effective_records</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">full_records</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Records actually processed = ``min(cap, full)``; ``full`` when uncapped."""</span>
+        <span class="n">cap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cap_for</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cap</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">full_records</span>
+        <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">cap</span><span class="p">,</span> <span class="n">full_records</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DatasetSize">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.build_time_projection.DatasetSize.html#torchcell.knowledge_graphs.build_time_projection.DatasetSize">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DatasetSize</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Full (uncapped) record count for one dataset, with its provenance source."""</span>
+
+    <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">full_records</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">lmdb_subpath</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">source</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"lmdb"</span><span class="p">,</span> <span class="s2">"estimated"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"lmdb"</span></div>
+
+
+
+<div class="viewcode-block" id="AdapterRate">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.build_time_projection.AdapterRate.html#torchcell.knowledge_graphs.build_time_projection.AdapterRate">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AdapterRate</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Per-adapter calibrated generation rate (seconds per record processed)."""</span>
+
+    <span class="n">adapter</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">total_sec_966</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">records_966</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">rate_s_per_rec</span><span class="p">:</span> <span class="nb">float</span></div>
+
+
+
+<div class="viewcode-block" id="AdapterContribution">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.build_time_projection.AdapterContribution.html#torchcell.knowledge_graphs.build_time_projection.AdapterContribution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AdapterContribution</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One adapter's projected contribution to a build under some subset config."""</span>
+
+    <span class="n">adapter</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">records</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">rate_s_per_rec</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">projected_sec</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">projected_hours</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">pct_of_total</span><span class="p">:</span> <span class="nb">float</span></div>
+
+
+
+<div class="viewcode-block" id="BuildTimeProjection">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.build_time_projection.BuildTimeProjection.html#torchcell.knowledge_graphs.build_time_projection.BuildTimeProjection">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BuildTimeProjection</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Projected build (CSV-generation) time for a subset config, with a breakdown."""</span>
+
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">subset_config</span><span class="p">:</span> <span class="n">SubsetConfig</span>
+    <span class="n">total_sec</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">total_hours</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">contributions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AdapterContribution</span><span class="p">]</span>
+    <span class="n">measured_sec</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">error_pct</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<span class="c1"># The calibration config = the exact subset config job 966 (``kg_full``) ran.</span>
+<span class="n">KG_FULL_CONFIG</span> <span class="o">=</span> <span class="n">SubsetConfig</span><span class="p">(</span>
+    <span class="n">subset_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">per_dataset</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">CALIBRATION_PER_DATASET_CAPS</span><span class="p">)</span>
+<span class="p">)</span>
+
+
+<span class="c1"># --- API ------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="load_timings">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.build_time_projection.load_timings.html#torchcell.knowledge_graphs.build_time_projection.load_timings">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_timings</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CalibrationTimings</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Load and validate a calibration-timings JSON file (e.g. job 966)."""</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">CalibrationTimings</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="dataset_sizes">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.build_time_projection.dataset_sizes.html#torchcell.knowledge_graphs.build_time_projection.dataset_sizes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">dataset_sizes</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DatasetSize</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Return the committed full record counts as typed :class:`DatasetSize` rows."""</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">DatasetSize</span><span class="p">(</span>
+            <span class="n">dataset</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">full_records</span><span class="o">=</span><span class="n">DATASET_FULL_RECORDS</span><span class="p">[</span><span class="n">name</span><span class="p">],</span>
+            <span class="n">lmdb_subpath</span><span class="o">=</span><span class="n">DATASET_LMDB_SUBPATH</span><span class="p">[</span><span class="n">name</span><span class="p">],</span>
+            <span class="n">source</span><span class="o">=</span><span class="s2">"lmdb"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">DATASET_FULL_RECORDS</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="calibrate">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.build_time_projection.calibrate.html#torchcell.knowledge_graphs.build_time_projection.calibrate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">calibrate</span><span class="p">(</span>
+    <span class="n">timings</span><span class="p">:</span> <span class="n">CalibrationTimings</span><span class="p">,</span>
+    <span class="n">dataset_full_records</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">calibration_config</span><span class="p">:</span> <span class="n">SubsetConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">AdapterRate</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Fit a per-record rate for each adapter from the calibration build.</span>
+
+<span class="sd">    ``records_966`` for each adapter is what it processed under the calibration</span>
+<span class="sd">    config -- ``min(cap, full)`` -- so dmf/dmi Costanzo use 100000 and every other</span>
+<span class="sd">    adapter its full record count. ``rate = total_sec / records_966``.</span>
+<span class="sd">    """</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">KG_FULL_CONFIG</span> <span class="k">if</span> <span class="n">calibration_config</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">calibration_config</span>
+    <span class="n">rates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AdapterRate</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">timings</span><span class="o">.</span><span class="n">adapters</span><span class="p">:</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="n">ADAPTER_TO_DATASET</span><span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">adapter</span><span class="p">]</span>
+        <span class="n">records_966</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">effective_records</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">dataset_full_records</span><span class="p">[</span><span class="n">dataset</span><span class="p">])</span>
+        <span class="n">rates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">AdapterRate</span><span class="p">(</span>
+                <span class="n">adapter</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">adapter</span><span class="p">,</span>
+                <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
+                <span class="n">total_sec_966</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">total_sec</span><span class="p">,</span>
+                <span class="n">records_966</span><span class="o">=</span><span class="n">records_966</span><span class="p">,</span>
+                <span class="n">rate_s_per_rec</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">total_sec</span> <span class="o">/</span> <span class="n">records_966</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">rates</span></div>
+
+
+
+<div class="viewcode-block" id="project_build_time">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.build_time_projection.project_build_time.html#torchcell.knowledge_graphs.build_time_projection.project_build_time">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">project_build_time</span><span class="p">(</span>
+    <span class="n">rates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AdapterRate</span><span class="p">],</span>
+    <span class="n">dataset_full_records</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">subset_config</span><span class="p">:</span> <span class="n">SubsetConfig</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"projection"</span><span class="p">,</span>
+    <span class="n">measured_sec</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BuildTimeProjection</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Project total build time for ``subset_config`` from calibrated ``rates``.</span>
+
+<span class="sd">    ``projected_sec_i = rate_i * min(cap_i, full_records_i)`` summed over adapters.</span>
+<span class="sd">    The breakdown is sorted by descending contribution. When ``measured_sec`` is</span>
+<span class="sd">    given (e.g. the ``kg_full`` self-check), the percent error is reported.</span>
+<span class="sd">    """</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AdapterContribution</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rates</span><span class="p">:</span>
+        <span class="n">records</span> <span class="o">=</span> <span class="n">subset_config</span><span class="o">.</span><span class="n">effective_records</span><span class="p">(</span>
+            <span class="n">r</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span> <span class="n">dataset_full_records</span><span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">dataset</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">projected</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">rate_s_per_rec</span> <span class="o">*</span> <span class="n">records</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">AdapterContribution</span><span class="p">(</span>
+                <span class="n">adapter</span><span class="o">=</span><span class="n">r</span><span class="o">.</span><span class="n">adapter</span><span class="p">,</span>
+                <span class="n">dataset</span><span class="o">=</span><span class="n">r</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span>
+                <span class="n">records</span><span class="o">=</span><span class="n">records</span><span class="p">,</span>
+                <span class="n">rate_s_per_rec</span><span class="o">=</span><span class="n">r</span><span class="o">.</span><span class="n">rate_s_per_rec</span><span class="p">,</span>
+                <span class="n">projected_sec</span><span class="o">=</span><span class="n">projected</span><span class="p">,</span>
+                <span class="n">projected_hours</span><span class="o">=</span><span class="n">projected</span> <span class="o">/</span> <span class="mf">3600.0</span><span class="p">,</span>
+                <span class="n">pct_of_total</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>  <span class="c1"># filled once the total is known</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="n">total_sec</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">projected_sec</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="n">row</span><span class="o">.</span><span class="n">pct_of_total</span> <span class="o">=</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="n">row</span><span class="o">.</span><span class="n">projected_sec</span> <span class="o">/</span> <span class="n">total_sec</span> <span class="k">if</span> <span class="n">total_sec</span> <span class="k">else</span> <span class="mf">0.0</span>
+    <span class="n">rows</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="n">row</span><span class="o">.</span><span class="n">projected_sec</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">error_pct</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">measured_sec</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="k">else</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">total_sec</span> <span class="o">-</span> <span class="n">measured_sec</span><span class="p">)</span> <span class="o">/</span> <span class="n">measured_sec</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">BuildTimeProjection</span><span class="p">(</span>
+        <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+        <span class="n">subset_config</span><span class="o">=</span><span class="n">subset_config</span><span class="p">,</span>
+        <span class="n">total_sec</span><span class="o">=</span><span class="n">total_sec</span><span class="p">,</span>
+        <span class="n">total_hours</span><span class="o">=</span><span class="n">total_sec</span> <span class="o">/</span> <span class="mf">3600.0</span><span class="p">,</span>
+        <span class="n">contributions</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span>
+        <span class="n">measured_sec</span><span class="o">=</span><span class="n">measured_sec</span><span class="p">,</span>
+        <span class="n">error_pct</span><span class="o">=</span><span class="n">error_pct</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="gather_dataset_full_records">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.build_time_projection.gather_dataset_full_records.html#torchcell.knowledge_graphs.build_time_projection.gather_dataset_full_records">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">gather_dataset_full_records</span><span class="p">(</span>
+    <span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">build_tree</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DatasetSize</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Regenerate full record counts by reading each dataset's LMDB ``stat`` entries.</span>
+
+<span class="sd">    Read-only (``lock=False``); never rebuilds a dataset. Prefers the dev tree</span>
+<span class="sd">    (``data_root``); falls back to ``build_tree`` when a dataset's dev-tree LMDB is</span>
+<span class="sd">    absent. Use this to refresh :data:`DATASET_FULL_RECORDS` after a rebuild.</span>
+<span class="sd">    """</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>  <span class="c1"># local import: the projection path itself touches no LMDB</span>
+
+    <span class="n">sizes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DatasetSize</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">subpath</span> <span class="ow">in</span> <span class="n">DATASET_LMDB_SUBPATH</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">dev</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="n">subpath</span><span class="p">,</span> <span class="s2">"processed"</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">)</span>
+        <span class="n">lmdb_dir</span> <span class="o">=</span> <span class="n">dev</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">dev</span><span class="p">)</span> <span class="ow">and</span> <span class="n">build_tree</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">leaf</span> <span class="o">=</span> <span class="n">subpath</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">lmdb_dir</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">build_tree</span><span class="p">,</span> <span class="n">leaf</span><span class="p">,</span> <span class="s2">"processed"</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">)</span>
+        <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">lmdb_dir</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">lock</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">subdir</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_dbs</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="n">entries</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">txn</span><span class="o">.</span><span class="n">stat</span><span class="p">()[</span><span class="s2">"entries"</span><span class="p">])</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">sizes</span><span class="p">[</span><span class="n">dataset</span><span class="p">]</span> <span class="o">=</span> <span class="n">DatasetSize</span><span class="p">(</span>
+            <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span> <span class="n">full_records</span><span class="o">=</span><span class="n">entries</span><span class="p">,</span> <span class="n">lmdb_subpath</span><span class="o">=</span><span class="n">subpath</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="s2">"lmdb"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">sizes</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

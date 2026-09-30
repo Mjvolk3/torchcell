@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.ontology\_checks.experiment\_closure
+=========================================================
+
+.. currentmodule:: torchcell.datamodels.ontology_checks
+
+.. autofunction:: experiment_closure

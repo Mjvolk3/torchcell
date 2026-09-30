@@ -1,0 +1,8 @@
+﻿torchcell.datasets.FungalUpDownTransformerDataset
+=================================================
+
+.. currentmodule:: torchcell.datasets
+
+.. autoclass:: FungalUpDownTransformerDataset
+   :show-inheritance:
+   :members:

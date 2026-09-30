@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.loader\_relpath
+========================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autofunction:: loader_relpath

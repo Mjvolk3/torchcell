@@ -1,0 +1,8 @@
+﻿torchcell.metabolism.constraints.ThermoTable
+============================================
+
+.. currentmodule:: torchcell.metabolism.constraints
+
+.. autoclass:: ThermoTable
+   :show-inheritance:
+   :members:

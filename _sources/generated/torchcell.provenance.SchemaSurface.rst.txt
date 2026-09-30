@@ -1,0 +1,8 @@
+﻿torchcell.provenance.SchemaSurface
+==================================
+
+.. currentmodule:: torchcell.provenance
+
+.. autoclass:: SchemaSurface
+   :show-inheritance:
+   :members:

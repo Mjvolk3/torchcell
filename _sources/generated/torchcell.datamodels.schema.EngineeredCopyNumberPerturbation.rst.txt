@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.EngineeredCopyNumberPerturbation
+============================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: EngineeredCopyNumberPerturbation
+   :show-inheritance:
+   :members:

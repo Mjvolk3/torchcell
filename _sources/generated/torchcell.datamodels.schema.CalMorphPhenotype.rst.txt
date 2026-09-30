@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.CalMorphPhenotype
+=============================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: CalMorphPhenotype
+   :show-inheritance:
+   :members:

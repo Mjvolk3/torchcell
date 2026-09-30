@@ -1,0 +1,8 @@
+﻿torchcell.models.llm.pretrained\_LLM
+====================================
+
+.. currentmodule:: torchcell.models.llm
+
+.. autoclass:: pretrained_LLM
+   :show-inheritance:
+   :members:

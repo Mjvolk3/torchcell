@@ -1,0 +1,6 @@
+﻿torchcell.provenance.load\_surface\_from\_sources
+=================================================
+
+.. currentmodule:: torchcell.provenance
+
+.. autofunction:: load_surface_from_sources

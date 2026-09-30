@@ -1,0 +1,8 @@
+﻿torchcell.models.dcell\_opt.DCellOpt
+====================================
+
+.. currentmodule:: torchcell.models.dcell_opt
+
+.. autoclass:: DCellOpt
+   :show-inheritance:
+   :members:

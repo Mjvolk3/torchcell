@@ -1,0 +1,8 @@
+﻿torchcell.adapters.TmfKuzmin2020Adapter
+=======================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: TmfKuzmin2020Adapter
+   :show-inheritance:
+   :members:

@@ -1,0 +1,8 @@
+﻿torchcell.adapters.Smith2016Adapter
+===================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: Smith2016Adapter
+   :show-inheritance:
+   :members:

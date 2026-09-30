@@ -1,0 +1,6 @@
+﻿torchcell.provenance.check\_manifest
+====================================
+
+.. currentmodule:: torchcell.provenance
+
+.. autofunction:: check_manifest

@@ -1,0 +1,6 @@
+﻿torchcell.models.nsa\_hetero\_cell.group
+========================================
+
+.. currentmodule:: torchcell.models.nsa_hetero_cell
+
+.. autofunction:: group

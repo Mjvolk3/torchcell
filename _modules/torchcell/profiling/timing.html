@@ -1,0 +1,388 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.profiling.timing &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/profiling/timing.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.profiling.timing</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.profiling.timing</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Generic method timing decorator for profiling any function/method.</span>
+
+<span class="sd">Toggle with TORCHCELL_DEBUG_TIMING=1 environment variable.</span>
+<span class="sd">Set via shell: TORCHCELL_DEBUG_TIMING=1 python script.py</span>
+<span class="sd">Or in SLURM: --env TORCHCELL_DEBUG_TIMING=1</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="c1"># Global state</span>
+<span class="n">_TIMINGS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+<span class="n">_PROFILE_ENABLED</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"TORCHCELL_DEBUG_TIMING"</span><span class="p">,</span> <span class="s2">"0"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"1"</span>
+
+
+<div class="viewcode-block" id="time_method">
+<a class="viewcode-back" href="../../../generated/torchcell.profiling.time_method.html#torchcell.profiling.time_method">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">time_method</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Time a function/method execution when profiling is enabled.</span>
+
+<span class="sd">    Works with functions, instance methods, class methods, and static methods.</span>
+<span class="sd">    Zero overhead when disabled (single boolean check).</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        @time_method</span>
+<span class="sd">        def my_function():</span>
+<span class="sd">            pass</span>
+
+<span class="sd">        class MyClass:</span>
+<span class="sd">            @time_method</span>
+<span class="sd">            def my_method(self):</span>
+<span class="sd">                pass</span>
+<span class="sd">    """</span>
+
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_PROFILE_ENABLED</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># Build qualified name: Class.method or just function_name</span>
+        <span class="n">qualname</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="vm">__qualname__</span>  <span class="c1"># e.g., "SubgraphRepresentation.process"</span>
+
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+
+        <span class="n">_TIMINGS</span><span class="p">[</span><span class="n">qualname</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">elapsed</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">return</span> <span class="n">wrapper</span></div>
+
+
+
+<div class="viewcode-block" id="print_timing_summary">
+<a class="viewcode-back" href="../../../generated/torchcell.profiling.print_timing_summary.html#torchcell.profiling.print_timing_summary">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">print_timing_summary</span><span class="p">(</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Method Timing Profile"</span><span class="p">,</span> <span class="n">filter_class</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Print formatted timing summary with standard deviations.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        title: Custom title for the report</span>
+<span class="sd">        filter_class: Optional class name to filter methods (e.g., "SubgraphRepresentation")</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_TIMINGS</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">_PROFILE_ENABLED</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">[TIMING] Profiling enabled but no timing data collected"</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+    <span class="c1"># Filter timings if class filter provided</span>
+    <span class="k">if</span> <span class="n">filter_class</span><span class="p">:</span>
+        <span class="c1"># Exact match: class name must be followed by a dot (e.g., "SubgraphRepresentation.")</span>
+        <span class="c1"># This prevents "SubgraphRepresentation" from matching "LazySubgraphRepresentation"</span>
+        <span class="n">filtered_timings</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">_TIMINGS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">filter_class</span> <span class="o">+</span> <span class="s2">"."</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">filtered_timings</span> <span class="o">=</span> <span class="n">_TIMINGS</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">filtered_timings</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">[TIMING] No timing data for class '</span><span class="si">{</span><span class="n">filter_class</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'Method'</span><span class="si">:</span><span class="s2">&lt;50</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">'Calls'</span><span class="si">:</span><span class="s2">&gt;8</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">'Mean (ms)'</span><span class="si">:</span><span class="s2">&gt;12</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">'Std (ms)'</span><span class="si">:</span><span class="s2">&gt;11</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+    <span class="c1"># Sort by total time descending</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">times</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="n">filtered_timings</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">):</span>
+        <span class="n">times_ms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">times</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
+        <span class="n">mean_ms</span> <span class="o">=</span> <span class="n">times_ms</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">std_ms</span> <span class="o">=</span> <span class="n">times_ms</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">&lt;50</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">)</span><span class="si">:</span><span class="s2">&gt;8</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">mean_ms</span><span class="si">:</span><span class="s2">&gt;12.4f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">std_ms</span><span class="si">:</span><span class="s2">&gt;11.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="reset_timings">
+<a class="viewcode-back" href="../../../generated/torchcell.profiling.reset_timings.html#torchcell.profiling.reset_timings">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">reset_timings</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Clear all timing data."""</span>
+    <span class="n">_TIMINGS</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="get_timings">
+<a class="viewcode-back" href="../../../generated/torchcell.profiling.get_timings.html#torchcell.profiling.get_timings">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_timings</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Get raw timing data as a dictionary."""</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">_TIMINGS</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_timing_summary">
+<a class="viewcode-back" href="../../../generated/torchcell.profiling.get_timing_summary.html#torchcell.profiling.get_timing_summary">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_timing_summary</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Get timing summary statistics as a dictionary.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Dict mapping method names to stats (total_ms, mean_ms, count, etc.)</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_PROFILE_ENABLED</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{}</span>
+
+    <span class="n">summary</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">times</span> <span class="ow">in</span> <span class="n">_TIMINGS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">total_ms</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">times</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">)</span>
+        <span class="n">summary</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"total_ms"</span><span class="p">:</span> <span class="n">total_ms</span><span class="p">,</span>
+            <span class="s2">"mean_ms"</span><span class="p">:</span> <span class="n">total_ms</span> <span class="o">/</span> <span class="n">count</span><span class="p">,</span>
+            <span class="s2">"count"</span><span class="p">:</span> <span class="n">count</span><span class="p">,</span>
+            <span class="s2">"min_ms"</span><span class="p">:</span> <span class="nb">min</span><span class="p">(</span><span class="n">times</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">,</span>
+            <span class="s2">"max_ms"</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">times</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="k">return</span> <span class="n">summary</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">print_comparison_table</span><span class="p">(</span>
+    <span class="n">baseline_class</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">optimized_class</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Graph Processor Comparison"</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Print side-by-side comparison of two processor classes.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        baseline_class: Name of baseline class (e.g., "SubgraphRepresentation")</span>
+<span class="sd">        optimized_class: Name of optimized class (e.g., "LazySubgraphRepresentation")</span>
+<span class="sd">        title: Custom title for the report</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_TIMINGS</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">_PROFILE_ENABLED</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">[TIMING] Profiling enabled but no timing data collected"</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+    <span class="c1"># Group timing data by method name</span>
+    <span class="n">baseline_methods</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">optimized_methods</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">qualname</span><span class="p">,</span> <span class="n">times</span> <span class="ow">in</span> <span class="n">_TIMINGS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">baseline_class</span> <span class="ow">in</span> <span class="n">qualname</span><span class="p">:</span>
+            <span class="n">method_name</span> <span class="o">=</span> <span class="n">qualname</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># Extract method name</span>
+            <span class="n">times_ms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">times</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
+            <span class="n">baseline_methods</span><span class="p">[</span><span class="n">method_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"mean"</span><span class="p">:</span> <span class="n">times_ms</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span>
+                <span class="s2">"std"</span><span class="p">:</span> <span class="n">times_ms</span><span class="o">.</span><span class="n">std</span><span class="p">(),</span>
+                <span class="s2">"count"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">),</span>
+            <span class="p">}</span>
+        <span class="k">elif</span> <span class="n">optimized_class</span> <span class="ow">in</span> <span class="n">qualname</span><span class="p">:</span>
+            <span class="n">method_name</span> <span class="o">=</span> <span class="n">qualname</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">times_ms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">times</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
+            <span class="n">optimized_methods</span><span class="p">[</span><span class="n">method_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"mean"</span><span class="p">:</span> <span class="n">times_ms</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span>
+                <span class="s2">"std"</span><span class="p">:</span> <span class="n">times_ms</span><span class="o">.</span><span class="n">std</span><span class="p">(),</span>
+                <span class="s2">"count"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">),</span>
+            <span class="p">}</span>
+
+    <span class="c1"># Get all method names</span>
+    <span class="n">all_methods</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">baseline_methods</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">optimized_methods</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"="</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'Method'</span><span class="si">:</span><span class="s2">&lt;35</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">baseline_class</span><span class="p">[:</span><span class="mi">12</span><span class="p">]</span><span class="si">:</span><span class="s2">&gt;12</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">optimized_class</span><span class="p">[:</span><span class="mi">12</span><span class="p">]</span><span class="si">:</span><span class="s2">&gt;12</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">'Change'</span><span class="si">:</span><span class="s2">&gt;12</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">'Speedup'</span><span class="si">:</span><span class="s2">&gt;10</span><span class="si">}</span><span class="s2">"</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span>
+
+    <span class="n">baseline_total</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">optimized_total</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">all_methods</span><span class="p">:</span>
+        <span class="n">baseline_time</span> <span class="o">=</span> <span class="n">baseline_methods</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mean"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">optimized_time</span> <span class="o">=</span> <span class="n">optimized_methods</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mean"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">baseline_total</span> <span class="o">+=</span> <span class="n">baseline_time</span>
+        <span class="n">optimized_total</span> <span class="o">+=</span> <span class="n">optimized_time</span>
+
+        <span class="k">if</span> <span class="n">baseline_time</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">optimized_time</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">change</span> <span class="o">=</span> <span class="n">optimized_time</span> <span class="o">-</span> <span class="n">baseline_time</span>
+            <span class="n">speedup</span> <span class="o">=</span> <span class="n">baseline_time</span> <span class="o">/</span> <span class="n">optimized_time</span> <span class="k">if</span> <span class="n">optimized_time</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+
+            <span class="c1"># Add visual indicator</span>
+            <span class="k">if</span> <span class="n">speedup</span> <span class="o">&gt;=</span> <span class="mf">2.0</span><span class="p">:</span>
+                <span class="n">indicator</span> <span class="o">=</span> <span class="s2">"⭐"</span>
+            <span class="k">elif</span> <span class="n">speedup</span> <span class="o">&gt;=</span> <span class="mf">1.2</span><span class="p">:</span>
+                <span class="n">indicator</span> <span class="o">=</span> <span class="s2">"✓"</span>
+            <span class="k">elif</span> <span class="n">speedup</span> <span class="o">&lt;</span> <span class="mf">0.9</span><span class="p">:</span>
+                <span class="n">indicator</span> <span class="o">=</span> <span class="s2">"⚠"</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">indicator</span> <span class="o">=</span> <span class="s2">""</span>
+
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">method</span><span class="si">:</span><span class="s2">&lt;35</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">baseline_time</span><span class="si">:</span><span class="s2">&gt;11.2f</span><span class="si">}</span><span class="s2">ms </span><span class="si">{</span><span class="n">optimized_time</span><span class="si">:</span><span class="s2">&gt;11.2f</span><span class="si">}</span><span class="s2">ms </span><span class="si">{</span><span class="n">change</span><span class="si">:</span><span class="s2">&gt;11.2f</span><span class="si">}</span><span class="s2">ms </span><span class="si">{</span><span class="n">speedup</span><span class="si">:</span><span class="s2">&gt;9.2f</span><span class="si">}</span><span class="s2">x </span><span class="si">{</span><span class="n">indicator</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">baseline_time</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">method</span><span class="si">:</span><span class="s2">&lt;35</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">baseline_time</span><span class="si">:</span><span class="s2">&gt;11.2f</span><span class="si">}</span><span class="s2">ms </span><span class="si">{</span><span class="s1">'N/A'</span><span class="si">:</span><span class="s2">&gt;12</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">'N/A'</span><span class="si">:</span><span class="s2">&gt;12</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">'N/A'</span><span class="si">:</span><span class="s2">&gt;10</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">optimized_time</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">method</span><span class="si">:</span><span class="s2">&lt;35</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">'N/A'</span><span class="si">:</span><span class="s2">&gt;12</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">optimized_time</span><span class="si">:</span><span class="s2">&gt;11.2f</span><span class="si">}</span><span class="s2">ms </span><span class="si">{</span><span class="s1">'N/A'</span><span class="si">:</span><span class="s2">&gt;12</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">'N/A'</span><span class="si">:</span><span class="s2">&gt;10</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="n">change_total</span> <span class="o">=</span> <span class="n">optimized_total</span> <span class="o">-</span> <span class="n">baseline_total</span>
+    <span class="n">speedup_total</span> <span class="o">=</span> <span class="n">baseline_total</span> <span class="o">/</span> <span class="n">optimized_total</span> <span class="k">if</span> <span class="n">optimized_total</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'TOTAL'</span><span class="si">:</span><span class="s2">&lt;35</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">baseline_total</span><span class="si">:</span><span class="s2">&gt;11.2f</span><span class="si">}</span><span class="s2">ms </span><span class="si">{</span><span class="n">optimized_total</span><span class="si">:</span><span class="s2">&gt;11.2f</span><span class="si">}</span><span class="s2">ms </span><span class="si">{</span><span class="n">change_total</span><span class="si">:</span><span class="s2">&gt;11.2f</span><span class="si">}</span><span class="s2">ms </span><span class="si">{</span><span class="n">speedup_total</span><span class="si">:</span><span class="s2">&gt;9.2f</span><span class="si">}</span><span class="s2">x"</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">100</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Legend: ⭐ = 2x+ speedup, ✓ = 1.2x+ speedup, ⚠ = slowdown"</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

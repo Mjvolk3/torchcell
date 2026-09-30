@@ -1,0 +1,8 @@
+﻿torchcell.metabolism.media.MediaBounds
+======================================
+
+.. currentmodule:: torchcell.metabolism.media
+
+.. autoclass:: MediaBounds
+   :show-inheritance:
+   :members:

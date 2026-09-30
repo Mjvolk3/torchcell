@@ -1,0 +1,6 @@
+﻿torchcell.verification.audit\_sourced\_value
+============================================
+
+.. currentmodule:: torchcell.verification
+
+.. autofunction:: audit_sourced_value

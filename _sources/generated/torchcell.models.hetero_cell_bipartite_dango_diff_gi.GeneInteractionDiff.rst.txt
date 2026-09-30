@@ -1,0 +1,8 @@
+﻿torchcell.models.hetero\_cell\_bipartite\_dango\_diff\_gi.GeneInteractionDiff
+=============================================================================
+
+.. currentmodule:: torchcell.models.hetero_cell_bipartite_dango_diff_gi
+
+.. autoclass:: GeneInteractionDiff
+   :show-inheritance:
+   :members:

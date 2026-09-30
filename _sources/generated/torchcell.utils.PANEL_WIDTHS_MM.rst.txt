@@ -1,0 +1,6 @@
+﻿torchcell.utils.PANEL\_WIDTHS\_MM
+=================================
+
+.. currentmodule:: torchcell.utils
+
+.. autodata:: PANEL_WIDTHS_MM

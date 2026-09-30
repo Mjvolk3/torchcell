@@ -1,0 +1,478 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quickstart &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/guide/quickstart.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Data model" href="data-model.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User Guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Quickstart</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-model.html">Data model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.html">Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knowledge-graph.html">Knowledge graph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html">Contributing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">User Guide</a></li>
+      <li class="breadcrumb-item active">Quickstart</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/guide/quickstart.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="quickstart">
+<h1>Quickstart<a class="headerlink" href="#quickstart" title="Link to this heading"></a></h1>
+<p>Three entry points cover most work: the reference genome, a single-source experiment
+dataset built from a publication, and a multi-source dataset queried out of the served
+knowledge graph. Every block below states what it needs. Blocks marked
+<strong>requires <code class="docutils literal notranslate"><span class="pre">DATA_ROOT</span></code></strong> read files from the data root described in
+<a class="reference internal" href="installation.html"><span class="std std-doc">Installation</span></a>; blocks marked <strong>requires the served database</strong> open a
+Neo4j connection.</p>
+<section id="load-the-reference-genome">
+<h2>Load the reference genome<a class="headerlink" href="#load-the-reference-genome" title="Link to this heading"></a></h2>
+<p><strong>Requires <code class="docutils literal notranslate"><span class="pre">DATA_ROOT</span></code>.</strong> <code class="docutils literal notranslate"><span class="pre">SCerevisiaeGenome</span></code>
+(<code class="docutils literal notranslate"><span class="pre">torchcell.sequence.genome.scerevisiae.s288c</span></code>) resolves the SGD R64-4-1 S288C release
+from the genomes tier at <code class="docutils literal notranslate"><span class="pre">$DATA_ROOT/torchcell-genomes/</span></code>, verifying each file’s sha256
+against the tier’s <code class="docutils literal notranslate"><span class="pre">manifest.json</span></code> on every load. There is no fallback location: a
+machine without the tier raises <code class="docutils literal notranslate"><span class="pre">FileNotFoundError</span></code> with the command that seeds it.
+<code class="docutils literal notranslate"><span class="pre">genome_root</span></code> is only a cache directory for the gffutils database (<code class="docutils literal notranslate"><span class="pre">data.db</span></code>), which
+<code class="docutils literal notranslate"><span class="pre">overwrite=True</span></code> (the default) rebuilds and <code class="docutils literal notranslate"><span class="pre">overwrite=False</span></code> reuses. <code class="docutils literal notranslate"><span class="pre">go_root</span></code> holds
+<code class="docutils literal notranslate"><span class="pre">go.obo</span></code>, which is downloaded from geneontology.org only when it is missing.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae.s288c</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
+
+<span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
+    <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">],</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
+    <span class="n">go_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">],</span> <span class="s2">"data/go"</span><span class="p">),</span>
+    <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">))</span>
+<span class="n">gene</span> <span class="o">=</span> <span class="n">genome</span><span class="p">[</span><span class="s2">"YAL001C"</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">gene</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">gene</span><span class="o">.</span><span class="n">chromosome</span><span class="p">,</span> <span class="n">gene</span><span class="o">.</span><span class="n">strand</span><span class="p">,</span> <span class="n">gene</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">gene</span><span class="o">.</span><span class="n">end</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">gene</span><span class="o">.</span><span class="n">seq</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Output (run with <code class="docutils literal notranslate"><span class="pre">genome_root</span></code> pointed at a scratch cache directory, which does not
+change the result):</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>6607
+YAL001C 1 - 147594 151166 3573
+</pre></div>
+</div>
+</section>
+<section id="load-an-experiment-dataset">
+<h2>Load an experiment dataset<a class="headerlink" href="#load-an-experiment-dataset" title="Link to this heading"></a></h2>
+<p><strong>Requires <code class="docutils literal notranslate"><span class="pre">DATA_ROOT</span></code>; the first build also needs the network.</strong> Each publication-backed
+loader is an <code class="docutils literal notranslate"><span class="pre">ExperimentDataset</span></code> subclass (see <a class="reference internal" href="datasets.html"><span class="std std-doc">Datasets</span></a>) whose default
+<code class="docutils literal notranslate"><span class="pre">root</span></code> is relative, for example <code class="docutils literal notranslate"><span class="pre">data/torchcell/smf_costanzo2016</span></code>. Pass an absolute root
+under <code class="docutils literal notranslate"><span class="pre">$DATA_ROOT</span></code>. If <code class="docutils literal notranslate"><span class="pre">processed/lmdb</span></code> is absent, the loader downloads its raw files
+(for <code class="docutils literal notranslate"><span class="pre">SmfCostanzo2016Dataset</span></code>, from thecellmap.org) and builds the LMDB; if it is
+present, the loader reads it and never touches the network.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.costanzo2016</span><span class="w"> </span><span class="kn">import</span> <span class="n">SmfCostanzo2016Dataset</span>
+
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">SmfCostanzo2016Dataset</span><span class="p">(</span>
+    <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">],</span> <span class="s2">"data/torchcell/smf_costanzo2016"</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+<span class="n">item</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
+<span class="n">typed</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">transform_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">typed</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">])</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">typed</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype</span><span class="o">.</span><span class="n">fitness</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">gene_set</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">experiment_reference_index</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Output (run against a read-only copy of a built <code class="docutils literal notranslate"><span class="pre">processed/</span></code> and <code class="docutils literal notranslate"><span class="pre">preprocess/</span></code>):</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>SmfCostanzo2016Dataset(20484)
+['experiment', 'publication', 'reference']
+FitnessExperiment 0.9395
+5493 2
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">dataset[i]</span></code> returns plain dictionaries; <code class="docutils literal notranslate"><span class="pre">transform_item</span></code> validates them into the typed
+<code class="docutils literal notranslate"><span class="pre">Experiment</span></code>, <code class="docutils literal notranslate"><span class="pre">ExperimentReference</span></code> and <code class="docutils literal notranslate"><span class="pre">Publication</span></code> models. <code class="docutils literal notranslate"><span class="pre">experiment_reference_index</span></code>
+groups records by the reference they share; this dataset has two (its 26 C and 30 C
+screens carry different references).</p>
+</section>
+<section id="query-the-served-knowledge-graph">
+<h2>Query the served knowledge graph<a class="headerlink" href="#query-the-served-knowledge-graph" title="Link to this heading"></a></h2>
+<p><strong>Requires the served database</strong> (connection from <code class="docutils literal notranslate"><span class="pre">NEO4J_URI</span></code>, <code class="docutils literal notranslate"><span class="pre">NEO4J_USER</span></code>,
+<code class="docutils literal notranslate"><span class="pre">NEO4J_PASSWORD</span></code>) and <code class="docutils literal notranslate"><span class="pre">DATA_ROOT</span></code> for the output directory. None of the code in this
+section was run for this page.</p>
+<section id="neo4jqueryraw">
+<h3><code class="docutils literal notranslate"><span class="pre">Neo4jQueryRaw</span></code><a class="headerlink" href="#neo4jqueryraw" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">torchcell.data.neo4j_query_raw.Neo4jQueryRaw</span></code> runs one Cypher query and caches every
+returned record in an LMDB at <code class="docutils literal notranslate"><span class="pre">&lt;root_dir&gt;/raw/lmdb</span></code>. It is an <code class="docutils literal notranslate"><span class="pre">attrs</span></code> class; its
+constructor arguments are:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Neo4jQueryRaw</span><span class="p">(</span>
+    <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">username</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">root_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">cypher_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{},</span>  <span class="c1"># attrs factory=dict</span>
+    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The query runs once, on construction, when <code class="docutils literal notranslate"><span class="pre">&lt;root_dir&gt;/raw/lmdb/data.mdb</span></code> does not yet
+exist; later constructions open the cached LMDB read-only. <code class="docutils literal notranslate"><span class="pre">cypher_kwargs</span></code> are passed to
+<code class="docutils literal notranslate"><span class="pre">session.run</span></code> as query parameters, so a query that filters on <code class="docutils literal notranslate"><span class="pre">$gene_set</span></code> gets
+<code class="docutils literal notranslate"><span class="pre">cypher_kwargs={&quot;gene_set&quot;:</span> <span class="pre">[...]}</span></code>. <code class="docutils literal notranslate"><span class="pre">version</span></code> names the knowledge-graph release to open
+and defaults to <code class="docutils literal notranslate"><span class="pre">TORCHCELL_KG_VERSION</span></code> (see <a class="reference internal" href="knowledge-graph.html#kg-choosing-a-release"><span class="std std-ref">Choosing a release</span></a>).</p>
+<p>Each result row must have one of two shapes:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>Shape</p></th>
+<th class="head text-left"><p><code class="docutils literal notranslate"><span class="pre">RETURN</span></code> clause</p></th>
+<th class="head text-left"><p>When to use</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p>Property</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">RETURN</span> <span class="pre">e.serialized_data</span> <span class="pre">AS</span> <span class="pre">e_serialized,</span> <span class="pre">ref.serialized_data</span> <span class="pre">AS</span> <span class="pre">ref_serialized</span></code></p></td>
+<td class="text-left"><p>Required for large queries: the driver does not cache hydrated nodes, so memory stays flat.</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>Node</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">RETURN</span> <span class="pre">e,</span> <span class="pre">ref</span></code></p></td>
+<td class="text-left"><p>Supported for the historical queries under <code class="docutils literal notranslate"><span class="pre">experiments/</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">e</span></code> is the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> node and <code class="docutils literal notranslate"><span class="pre">ref</span></code> its <code class="docutils literal notranslate"><span class="pre">ExperimentReference</span></code>. Each stored record is
+revalidated through <code class="docutils literal notranslate"><span class="pre">EXPERIMENT_TYPE_MAP</span></code> and <code class="docutils literal notranslate"><span class="pre">EXPERIMENT_REFERENCE_TYPE_MAP</span></code> from
+<code class="docutils literal notranslate"><span class="pre">torchcell.datamodels.schema</span></code>, keyed by the record’s <code class="docutils literal notranslate"><span class="pre">experiment_type</span></code>.</p>
+</section>
+<section id="neo4jcelldataset">
+<h3><code class="docutils literal notranslate"><span class="pre">Neo4jCellDataset</span></code><a class="headerlink" href="#neo4jcelldataset" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">torchcell.data.neo4j_cell.Neo4jCellDataset</span></code> wraps the raw query in a processing
+pipeline and returns graph-ready items. Its constructor arguments:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Neo4jCellDataset</span><span class="p">(</span>
+    <span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">query</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">gene_set</span><span class="p">:</span> <span class="n">GeneSet</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">graphs</span><span class="p">:</span> <span class="n">GeneMultiGraph</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">incidence_graphs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span> <span class="o">|</span> <span class="n">hnx</span><span class="o">.</span><span class="n">Hypergraph</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">node_embeddings</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseEmbeddingDataset</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">graph_processor</span><span class="p">:</span> <span class="n">GraphProcessor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">add_remaining_gene_self_loops</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">converter</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Converter</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">deduplicator</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Deduplicator</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">aggregator</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Aggregator</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">overwrite_intermediates</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">username</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">pre_filter</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">phenotype_labels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">converter</span></code>, <code class="docutils literal notranslate"><span class="pre">deduplicator</span></code> and <code class="docutils literal notranslate"><span class="pre">aggregator</span></code> are passed as classes; <code class="docutils literal notranslate"><span class="pre">process()</span></code>
+instantiates them. <code class="docutils literal notranslate"><span class="pre">uri</span></code>, <code class="docutils literal notranslate"><span class="pre">username</span></code> and <code class="docutils literal notranslate"><span class="pre">password</span></code> default to the environment. The
+<code class="docutils literal notranslate"><span class="pre">gene_set</span></code> is sent to the query as <code class="docutils literal notranslate"><span class="pre">$gene_set</span></code>. On first construction <code class="docutils literal notranslate"><span class="pre">process()</span></code> runs
+the stages in order, each writing its own LMDB under <code class="docutils literal notranslate"><span class="pre">root</span></code>:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>Stage</p></th>
+<th class="head text-left"><p>LMDB</p></th>
+<th class="head text-left"><p>Runs when</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p>raw</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">raw/lmdb</span></code></p></td>
+<td class="text-left"><p>always (the <code class="docutils literal notranslate"><span class="pre">Neo4jQueryRaw</span></code> cache)</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>conversion</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">conversion/lmdb</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">converter</span></code> is given</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>deduplication</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">deduplication/lmdb</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">deduplicator</span></code> is given</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>aggregation</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">aggregation/lmdb</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">aggregator</span></code> is given</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>processed</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">processed/lmdb</span></code></p></td>
+<td class="text-left"><p>always</p></td>
+</tr>
+</tbody>
+</table>
+<p>A finished stage writes a <code class="docutils literal notranslate"><span class="pre">STAGE_COMPLETE</span></code> file beside its LMDB, and a restarted build
+skips stages that carry one. <code class="docutils literal notranslate"><span class="pre">phenotype_labels</span></code> selects and orders the phenotypes each
+item carries by <code class="docutils literal notranslate"><span class="pre">label_name</span></code> (for example <code class="docutils literal notranslate"><span class="pre">[&quot;fitness&quot;,</span> <span class="pre">&quot;gene_interaction&quot;]</span></code>); leave it
+<code class="docutils literal notranslate"><span class="pre">None</span></code> only when the build holds a single phenotype.</p>
+<p>The block below is the construction used by
+<code class="docutils literal notranslate"><span class="pre">experiments/025-solid-growth/scripts/query.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Requires the served database and DATA_ROOT.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenotypeAggregator</span><span class="p">,</span> <span class="n">MeanExperimentDeduplicator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.graph_processor</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubgraphRepresentation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.neo4j_cell</span><span class="w"> </span><span class="kn">import</span> <span class="n">Neo4jCellDataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.fitness_composite_conversion</span><span class="w"> </span><span class="kn">import</span> <span class="n">CompositeFitnessConverter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae.s288c</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
+
+<span class="n">load_dotenv</span><span class="p">()</span>
+<span class="n">data_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">"experiments/025-solid-growth/queries/001_all_solid_growth.cql"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">query</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+<span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
+    <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
+    <span class="n">go_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/go"</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Neo4jCellDataset</span><span class="p">(</span>
+    <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/torchcell/experiments/025-solid-growth/001-full-build"</span><span class="p">),</span>
+    <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
+    <span class="n">gene_set</span><span class="o">=</span><span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">,</span>
+    <span class="n">converter</span><span class="o">=</span><span class="n">CompositeFitnessConverter</span><span class="p">,</span>
+    <span class="n">deduplicator</span><span class="o">=</span><span class="n">MeanExperimentDeduplicator</span><span class="p">,</span>
+    <span class="n">aggregator</span><span class="o">=</span><span class="n">GenotypeAggregator</span><span class="p">,</span>
+    <span class="n">graph_processor</span><span class="o">=</span><span class="n">SubgraphRepresentation</span><span class="p">(),</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">({</span><span class="n">k</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">phenotype_label_index</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">CompositeFitnessConverter</span></code> turns gene-essentiality and synthetic-lethality records into
+fitness records (see <a class="reference internal" href="knowledge-graph.html#kg-converters"><span class="std std-ref">Converters</span></a>), which is what lets that query pool them with
+measured fitness. <code class="docutils literal notranslate"><span class="pre">dataset.phenotype_label_index</span></code>, <code class="docutils literal notranslate"><span class="pre">dataset.dataset_name_index</span></code> and
+<code class="docutils literal notranslate"><span class="pre">dataset.perturbation_count_index</span></code> map a label, a source dataset, or a perturbation count
+to the item indices that carry it.</p>
+</section>
+</section>
+<section id="inspect-a-stored-record">
+<h2>Inspect a stored record<a class="headerlink" href="#inspect-a-stored-record" title="Link to this heading"></a></h2>
+<p>A built experiment LMDB stores one pickled dictionary per record under the keys
+<code class="docutils literal notranslate"><span class="pre">&quot;0&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;1&quot;</span></code>, and so on. Constant sub-objects that repeat across a dataset (the
+environment, the reference, the publication) are stored once in a sibling <code class="docutils literal notranslate"><span class="pre">interned</span></code>
+LMDB when their canonical JSON is at least <code class="docutils literal notranslate"><span class="pre">INTERN_MIN_BYTES</span></code> (512) long, and the record holds a <code class="docutils literal notranslate"><span class="pre">{&quot;$ref&quot;:</span> <span class="pre">&lt;sha256&gt;,</span> <span class="pre">&quot;name&quot;:</span> <span class="pre">&lt;hint&gt;}</span></code> pointer in their place.
+<code class="docutils literal notranslate"><span class="pre">torchcell.data.experiment_dataset.resolve_interned</span></code> splices them back; a reader that
+bypasses the dataset class must call it.</p>
+<p>The script below opens the development build of <code class="docutils literal notranslate"><span class="pre">SmfCostanzo2016Dataset</span></code> read-only and
+prints record <code class="docutils literal notranslate"><span class="pre">0</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pprint</span><span class="w"> </span><span class="kn">import</span> <span class="n">pprint</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.experiment_dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_interned</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">FitnessExperiment</span>
+
+<span class="n">root</span> <span class="o">=</span> <span class="s2">"/scratch/projects/torchcell-scratch/data/torchcell/smf_costanzo2016/processed"</span>
+
+<span class="c1"># Records and interned constants live in two sibling LMDB environments.</span>
+<span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">lock</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">ienv</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"interned"</span><span class="p">),</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">lock</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">with</span> <span class="n">ienv</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+    <span class="n">interned</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="o">.</span><span class="n">decode</span><span class="p">():</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">txn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()}</span>
+<span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"records:"</span><span class="p">,</span> <span class="n">txn</span><span class="o">.</span><span class="n">stat</span><span class="p">()[</span><span class="s2">"entries"</span><span class="p">])</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">txn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">b</span><span class="s2">"0"</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"keys:"</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">raw</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"stored environment:"</span><span class="p">,</span> <span class="n">raw</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"environment"</span><span class="p">])</span>
+<span class="n">record</span> <span class="o">=</span> <span class="n">resolve_interned</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">interned</span><span class="p">)</span>
+<span class="n">experiment</span> <span class="o">=</span> <span class="n">FitnessExperiment</span><span class="p">(</span><span class="o">**</span><span class="n">record</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"experiment_type:"</span><span class="p">,</span> <span class="n">experiment</span><span class="o">.</span><span class="n">experiment_type</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"dataset_name:"</span><span class="p">,</span> <span class="n">experiment</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">)</span>
+<span class="n">pprint</span><span class="p">(</span><span class="n">experiment</span><span class="o">.</span><span class="n">genotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span> <span class="n">width</span><span class="o">=</span><span class="mi">88</span><span class="p">)</span>
+<span class="n">env_dump</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"media.name:"</span><span class="p">,</span> <span class="n">env_dump</span><span class="p">[</span><span class="s2">"media"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">],</span> <span class="s2">"| state:"</span><span class="p">,</span> <span class="n">env_dump</span><span class="p">[</span><span class="s2">"media"</span><span class="p">][</span><span class="s2">"state"</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"temperature:"</span><span class="p">,</span> <span class="n">env_dump</span><span class="p">[</span><span class="s2">"temperature"</span><span class="p">])</span>
+<span class="n">pprint</span><span class="p">(</span><span class="n">experiment</span><span class="o">.</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span> <span class="n">width</span><span class="o">=</span><span class="mi">88</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"publication:"</span><span class="p">,</span> <span class="n">record</span><span class="p">[</span><span class="s2">"publication"</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Output, verbatim (build of 2026-09-14):</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>records: 20484
+keys: ['experiment', 'publication', 'reference']
+stored environment: {'$ref': '424e6d43e0fcd66aa5490fdd3c0a9f92485038ab7157c1a4456769e91461d9aa', 'name': 'SGA double-mutant selection (SD-MSG, -His/Arg/Lys, +canavanine/thialysine/G418/clonNAT)'}
+experiment_type: fitness
+dataset_name: SmfCostanzo2016Dataset
+{'perturbations': [{'damp_description': 'Damp Perturbation information specific to SGA '
+                                        'experiments.',
+                    'damp_perturbation_type': 'SGA',
+                    'description': '4-10 decreased expression via KANmx insertion at '
+                                   'the ',
+                    'expression_range': {'max': 0.25, 'min': 0.1},
+                    'mechanism_so_id': 'SO:0001060',
+                    'mechanism_so_name': 'sequence_variant',
+                    'perturbation_type': 'damp',
+                    'perturbed_gene_name': 'tfc3_damp',
+                    'provenance': 'engineered',
+                    'strain_id': 'YAL001C_damp174',
+                    'systematic_gene_name': 'YAL001C'}]}
+media.name: SGA double-mutant selection (SD-MSG, -His/Arg/Lys, +canavanine/thialysine/G418/clonNAT) | state: solid
+temperature: {'value': 26.0, 'unit': &lt;TemperatureUnit.celsius: 'Celsius'&gt;}
+{'fitness': 0.9395,
+ 'fitness_se': 0.0988,
+ 'fitness_std': 0.0988,
+ 'fitness_uncertainty': 0.0988,
+ 'fitness_uncertainty_type': &lt;UncertaintyType.bootstrap_se: 'bootstrap_se'&gt;,
+ 'graph_level': 'global',
+ 'label_name': 'fitness',
+ 'label_statistic_name': 'fitness_se',
+ 'n_samples': 17,
+ 'provenance_gaps': [],
+ 'sample_unit': &lt;SampleUnit.screen: 'screen'&gt;}
+publication: {'pubmed_id': '27708008', 'pubmed_url': 'https://pubmed.ncbi.nlm.nih.gov/27708008/', 'doi': '10.1126/science.aaf1420', 'doi_url': 'https://www.science.org/doi/10.1126/science.aaf1420'}
+</pre></div>
+</div>
+<p>The record reads as one experiment: a genotype of one perturbation (a DAmP allele of
+<em>TFC3</em>, systematic name <code class="docutils literal notranslate"><span class="pre">YAL001C</span></code>), an environment (the SGA selection medium, solid, at
+26 C), and a fitness phenotype of 0.9395 with its uncertainty named as a bootstrap
+standard error over 17 screens. <a class="reference internal" href="data-model.html"><span class="std std-doc">Data model</span></a> describes each part.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="data-model.html" class="btn btn-neutral float-right" title="Data model" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

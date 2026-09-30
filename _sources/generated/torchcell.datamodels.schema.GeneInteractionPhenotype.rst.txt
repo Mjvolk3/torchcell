@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.GeneInteractionPhenotype
+====================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: GeneInteractionPhenotype
+   :show-inheritance:
+   :members:

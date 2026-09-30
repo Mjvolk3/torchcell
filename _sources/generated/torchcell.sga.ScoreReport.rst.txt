@@ -1,0 +1,8 @@
+﻿torchcell.sga.ScoreReport
+=========================
+
+.. currentmodule:: torchcell.sga
+
+.. autoclass:: ScoreReport
+   :show-inheritance:
+   :members:

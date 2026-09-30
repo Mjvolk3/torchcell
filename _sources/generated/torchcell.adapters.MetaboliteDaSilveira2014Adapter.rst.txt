@@ -1,0 +1,8 @@
+﻿torchcell.adapters.MetaboliteDaSilveira2014Adapter
+==================================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: MetaboliteDaSilveira2014Adapter
+   :show-inheritance:
+   :members:

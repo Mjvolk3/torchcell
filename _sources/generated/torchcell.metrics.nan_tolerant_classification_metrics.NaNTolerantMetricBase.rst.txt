@@ -1,0 +1,8 @@
+﻿torchcell.metrics.nan\_tolerant\_classification\_metrics.NaNTolerantMetricBase
+==============================================================================
+
+.. currentmodule:: torchcell.metrics.nan_tolerant_classification_metrics
+
+.. autoclass:: NaNTolerantMetricBase
+   :show-inheritance:
+   :members:

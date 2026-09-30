@@ -1,0 +1,6 @@
+﻿torchcell.metabolism.enzyme\_kinetics.index\_by\_uniprot
+========================================================
+
+.. currentmodule:: torchcell.metabolism.enzyme_kinetics
+
+.. autofunction:: index_by_uniprot

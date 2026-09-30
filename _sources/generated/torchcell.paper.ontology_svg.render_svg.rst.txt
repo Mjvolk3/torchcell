@@ -1,0 +1,6 @@
+﻿torchcell.paper.ontology\_svg.render\_svg
+=========================================
+
+.. currentmodule:: torchcell.paper.ontology_svg
+
+.. autofunction:: render_svg

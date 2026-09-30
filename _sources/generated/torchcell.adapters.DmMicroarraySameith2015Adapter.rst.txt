@@ -1,0 +1,8 @@
+﻿torchcell.adapters.DmMicroarraySameith2015Adapter
+=================================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: DmMicroarraySameith2015Adapter
+   :show-inheritance:
+   :members:

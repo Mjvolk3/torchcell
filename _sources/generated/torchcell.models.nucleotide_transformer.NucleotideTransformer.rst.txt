@@ -1,0 +1,8 @@
+﻿torchcell.models.nucleotide\_transformer.NucleotideTransformer
+==============================================================
+
+.. currentmodule:: torchcell.models.nucleotide_transformer
+
+.. autoclass:: NucleotideTransformer
+   :show-inheritance:
+   :members:

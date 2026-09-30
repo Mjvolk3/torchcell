@@ -1,0 +1,6 @@
+﻿torchcell.graph.build\_gene\_multigraph
+=======================================
+
+.. currentmodule:: torchcell.graph
+
+.. autofunction:: build_gene_multigraph

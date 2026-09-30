@@ -1,0 +1,6 @@
+﻿torchcell.viz.datamodules.plot\_dataset\_index\_split
+=====================================================
+
+.. currentmodule:: torchcell.viz.datamodules
+
+.. autofunction:: plot_dataset_index_split

@@ -1,0 +1,8 @@
+﻿torchcell.models.hetero\_cell\_bipartite.AttentionalGraphAggregation
+====================================================================
+
+.. currentmodule:: torchcell.models.hetero_cell_bipartite
+
+.. autoclass:: AttentionalGraphAggregation
+   :show-inheritance:
+   :members:

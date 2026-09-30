@@ -1,0 +1,6 @@
+﻿torchcell.models.isomorphic\_cell.initialize\_model
+===================================================
+
+.. currentmodule:: torchcell.models.isomorphic_cell
+
+.. autofunction:: initialize_model

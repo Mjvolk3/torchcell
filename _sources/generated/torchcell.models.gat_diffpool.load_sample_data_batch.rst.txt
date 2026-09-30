@@ -1,0 +1,6 @@
+﻿torchcell.models.gat\_diffpool.load\_sample\_data\_batch
+========================================================
+
+.. currentmodule:: torchcell.models.gat_diffpool
+
+.. autofunction:: load_sample_data_batch

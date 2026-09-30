@@ -1,0 +1,6 @@
+﻿torchcell.sga.zfactor
+=====================
+
+.. currentmodule:: torchcell.sga
+
+.. autofunction:: zfactor

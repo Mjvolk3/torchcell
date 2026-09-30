@@ -1,0 +1,8 @@
+﻿torchcell.paper.ontology\_graph.OntologyField
+=============================================
+
+.. currentmodule:: torchcell.paper.ontology_graph
+
+.. autoclass:: OntologyField
+   :show-inheritance:
+   :members:

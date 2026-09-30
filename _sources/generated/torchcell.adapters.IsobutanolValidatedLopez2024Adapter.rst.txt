@@ -1,0 +1,8 @@
+﻿torchcell.adapters.IsobutanolValidatedLopez2024Adapter
+======================================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: IsobutanolValidatedLopez2024Adapter
+   :show-inheritance:
+   :members:

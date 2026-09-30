@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.SyntheticLethalityPhenotype
+=======================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: SyntheticLethalityPhenotype
+   :show-inheritance:
+   :members:

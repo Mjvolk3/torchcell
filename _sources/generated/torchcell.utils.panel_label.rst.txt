@@ -1,0 +1,6 @@
+﻿torchcell.utils.panel\_label
+============================
+
+.. currentmodule:: torchcell.utils
+
+.. autofunction:: panel_label

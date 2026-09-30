@@ -1,0 +1,354 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.sga.assay &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/sga/assay.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.sga.assay</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.sga.assay</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/sga/assay.py</span>
+<span class="c1"># [[torchcell.sga.assay]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/sga/assay</span>
+<span class="sd">"""Assay-development metrics: given one plate with a designed condition variable</span>
+<span class="sd">(here dispense VOLUME, 2.5 vs 5 nL), quantify which condition gives the best</span>
+<span class="sd">assay so you can pick a plating setting.</span>
+
+<span class="sd">"Best" for a fitness screen means: (1) colonies reliably grow and are measurable</span>
+<span class="sd">(low missing rate, growth in a good size range), (2) replicates are reproducible</span>
+<span class="sd">(low within-strain CV, tight wild-type), and (3) the assay separates phenotypes</span>
+<span class="sd">(a wide window between wild-type and a sick strain -- the Z'-factor). These are</span>
+<span class="sd">computed per condition from the normalized colony sizes.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sga.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalizationConfig</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_valid</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">df</span><span class="p">[</span>
+        <span class="o">~</span><span class="n">df</span><span class="p">[</span><span class="s2">"is_missing"</span><span class="p">]</span>
+        <span class="o">&amp;</span> <span class="o">~</span><span class="n">df</span><span class="p">[</span><span class="s2">"is_flagged"</span><span class="p">]</span>
+        <span class="o">&amp;</span> <span class="o">~</span><span class="n">df</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"is_jackknife"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="o">~</span><span class="n">df</span><span class="p">[</span><span class="s2">"is_blank"</span><span class="p">]</span>
+    <span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">shape_by_volume</span><span class="p">(</span>
+    <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">NormalizationConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Colony-SHAPE metrics per condition (volume) -- for asking whether a larger</span>
+<span class="sd">    dispense volume produces abnormal (spread / merged / irregular) colonies.</span>
+
+<span class="sd">    Uses circularity (4*pi*area/perimeter^2, 1 = perfect disc). Gash-flagged</span>
+<span class="sd">    colonies are excluded (mechanical tear, not a volume effect). NOTE: circularity</span>
+<span class="sd">    is mildly SIZE-biased for small colonies (coarser perimeter), and larger volume</span>
+<span class="sd">    grows larger colonies, so compare the distributions AND median size together</span>
+<span class="sd">    (see colony_shape_by_volume scatter).</span>
+<span class="sd">    """</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">cfg</span> <span class="ow">or</span> <span class="n">NormalizationConfig</span><span class="p">()</span>
+    <span class="n">plated</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="o">~</span><span class="n">df</span><span class="p">[</span><span class="s2">"is_blank"</span><span class="p">]</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">df</span><span class="p">[</span><span class="s2">"is_missing"</span><span class="p">]]</span>
+    <span class="n">nogash</span> <span class="o">=</span> <span class="n">plated</span><span class="p">[</span><span class="o">~</span><span class="n">plated</span><span class="p">[</span><span class="s2">"flags"</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="s2">"S"</span><span class="p">)]</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">vol</span><span class="p">,</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">nogash</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"volume_nl"</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[</span><span class="s2">"circularity"</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">"volume_nl"</span><span class="p">:</span> <span class="n">vol</span><span class="p">,</span>
+                <span class="s2">"n"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">)),</span>
+                <span class="s2">"median_circularity"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">median</span><span class="p">()),</span>
+                <span class="s2">"mean_circularity"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
+                <span class="s2">"pct_circ_below_0.90"</span><span class="p">:</span> <span class="nb">float</span><span class="p">((</span><span class="n">c</span> <span class="o">&lt;</span> <span class="mf">0.90</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
+                <span class="s2">"pct_circ_below_0.85"</span><span class="p">:</span> <span class="nb">float</span><span class="p">((</span><span class="n">c</span> <span class="o">&lt;</span> <span class="mf">0.85</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
+                <span class="s2">"median_size_px"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">sub</span><span class="p">[</span><span class="s2">"size"</span><span class="p">]</span><span class="o">.</span><span class="n">median</span><span class="p">()),</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"volume_nl"</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="volume_position_confound">
+<a class="viewcode-back" href="../../../generated/torchcell.sga.volume_position_confound.html#torchcell.sga.volume_position_confound">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">volume_position_confound</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Detect whether the condition variable (volume) is confounded with plate</span>
+<span class="sd">    position (row/col). If the volume groups do not overlap in column (or row)</span>
+<span class="sd">    span, the volume effect cannot be separated from a spatial effect and any</span>
+<span class="sd">    volume recommendation is unsafe. Returns a dict with the diagnosis.</span>
+<span class="sd">    """</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"confounded"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">"axis"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"detail"</span><span class="p">:</span> <span class="s2">""</span><span class="p">}</span>
+    <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"col"</span><span class="p">,</span> <span class="s2">"row"</span><span class="p">):</span>
+        <span class="n">vols</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">"volume_nl"</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+        <span class="n">spans</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">v</span><span class="p">:</span> <span class="p">(</span>
+                <span class="nb">int</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"volume_nl"</span><span class="p">]</span> <span class="o">==</span> <span class="n">v</span><span class="p">,</span> <span class="n">axis</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span>
+                <span class="nb">int</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"volume_nl"</span><span class="p">]</span> <span class="o">==</span> <span class="n">v</span><span class="p">,</span> <span class="n">axis</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vols</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">vols</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="p">(</span><span class="n">a0</span><span class="p">,</span> <span class="n">a1</span><span class="p">),</span> <span class="p">(</span><span class="n">b0</span><span class="p">,</span> <span class="n">b1</span><span class="p">)</span> <span class="o">=</span> <span class="n">spans</span><span class="p">[</span><span class="n">vols</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">spans</span><span class="p">[</span><span class="n">vols</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="n">overlap</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">a1</span><span class="p">,</span> <span class="n">b1</span><span class="p">)</span> <span class="o">-</span> <span class="nb">max</span><span class="p">(</span><span class="n">a0</span><span class="p">,</span> <span class="n">b0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">overlap</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="n">confounded</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">,</span>
+                <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">vols</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> nL occupies </span><span class="si">{</span><span class="n">axis</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">a0</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">a1</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">vols</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> nL occupies "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">axis</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">b0</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">b1</span><span class="si">}</span><span class="s2"> (no overlap): volume is fully confounded with "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">axis</span><span class="si">}</span><span class="s2"> position. Randomize volume across position to compare it."</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">out</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="zfactor">
+<a class="viewcode-back" href="../../../generated/torchcell.sga.zfactor.html#torchcell.sga.zfactor">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">zfactor</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span> <span class="n">b</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Z'-factor between two colony populations (assay separation window).</span>
+
+<span class="sd">    ``Z' = 1 - 3*(sd_a + sd_b) / |mean_a - mean_b|``. &gt;0.5 excellent, 0-0.5 usable,</span>
+<span class="sd">    &lt;0 no separation. Uses the two most-separated groups to measure the window</span>
+<span class="sd">    the assay actually offers.</span>
+<span class="sd">    """</span>
+    <span class="n">sep</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">b</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">sep</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"-inf"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">3</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="n">sep</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="volume_assay_metrics">
+<a class="viewcode-back" href="../../../generated/torchcell.sga.volume_assay_metrics.html#torchcell.sga.volume_assay_metrics">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">volume_assay_metrics</span><span class="p">(</span>
+    <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">NormalizationConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One row per condition (volume) with the assay-quality metrics."""</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">cfg</span> <span class="ow">or</span> <span class="n">NormalizationConfig</span><span class="p">()</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">vol</span><span class="p">,</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"volume_nl"</span><span class="p">):</span>
+        <span class="n">plated</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[</span><span class="o">~</span><span class="n">sub</span><span class="p">[</span><span class="s2">"is_blank"</span><span class="p">]]</span>
+        <span class="n">used</span> <span class="o">=</span> <span class="n">_valid</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span>
+        <span class="n">wt</span> <span class="o">=</span> <span class="n">used</span><span class="p">[</span><span class="n">used</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">]</span> <span class="o">==</span> <span class="n">cfg</span><span class="o">.</span><span class="n">wt_name</span><span class="p">][</span><span class="s2">"norm"</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+
+        <span class="c1"># per-strain median normalized sizes (used to find the separation window)</span>
+        <span class="n">strain_med</span> <span class="o">=</span> <span class="n">used</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"strain"</span><span class="p">)[</span><span class="s2">"norm"</span><span class="p">]</span><span class="o">.</span><span class="n">median</span><span class="p">()</span>
+        <span class="n">weakest</span> <span class="o">=</span> <span class="n">strain_med</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">wt_name</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">)</span><span class="o">.</span><span class="n">idxmin</span><span class="p">()</span>
+        <span class="n">weak_vals</span> <span class="o">=</span> <span class="n">used</span><span class="p">[</span><span class="n">used</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">]</span> <span class="o">==</span> <span class="n">weakest</span><span class="p">][</span><span class="s2">"norm"</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+
+        <span class="c1"># within-strain reproducibility (median CV across strains)</span>
+        <span class="n">cvs</span> <span class="o">=</span> <span class="n">used</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"strain"</span><span class="p">)[</span><span class="s2">"norm"</span><span class="p">]</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="p">)</span>
+
+        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">"volume_nl"</span><span class="p">:</span> <span class="n">vol</span><span class="p">,</span>
+                <span class="s2">"n_plated"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">plated</span><span class="p">)),</span>
+                <span class="s2">"n_missing"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">plated</span><span class="p">[</span><span class="s2">"is_missing"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+                <span class="s2">"missing_rate"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">plated</span><span class="p">[</span><span class="s2">"is_missing"</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
+                <span class="s2">"n_flagged"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">plated</span><span class="p">[</span><span class="s2">"is_flagged"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+                <span class="s2">"wt_median_raw"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span>
+                    <span class="n">plated</span><span class="p">[</span><span class="n">plated</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">]</span> <span class="o">==</span> <span class="n">cfg</span><span class="o">.</span><span class="n">wt_name</span><span class="p">][</span><span class="s2">"size"</span><span class="p">]</span><span class="o">.</span><span class="n">median</span><span class="p">()</span>
+                <span class="p">),</span>
+                <span class="s2">"wt_cv"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">wt</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">wt</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">wt</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+                <span class="s2">"median_within_strain_cv"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">cvs</span><span class="o">.</span><span class="n">median</span><span class="p">()),</span>
+                <span class="s2">"weakest_strain"</span><span class="p">:</span> <span class="n">weakest</span><span class="p">,</span>
+                <span class="s2">"dynamic_range"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">strain_med</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">/</span> <span class="n">strain_med</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span>
+                <span class="s2">"zfactor_wt_vs_weakest"</span><span class="p">:</span> <span class="n">zfactor</span><span class="p">(</span>
+                    <span class="n">wt</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">weak_vals</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">wt</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">weak_vals</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span>
+                <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"volume_nl"</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="recommend_volume">
+<a class="viewcode-back" href="../../../generated/torchcell.sga.recommend_volume.html#torchcell.sga.recommend_volume">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">recommend_volume</span><span class="p">(</span><span class="n">metrics</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Pick the best volume for a fitness screen.</span>
+
+<span class="sd">    RELIABILITY dominates: a plating volume is only useful if colonies grow and</span>
+<span class="sd">    are reproducibly measured. So missing rate and wild-type CV carry the most</span>
+<span class="sd">    weight (0.35 each), within-strain CV less (0.15), and the Z'-factor only</span>
+<span class="sd">    counts when POSITIVE (0.15) -- when the assay separates no strains at either</span>
+<span class="sd">    volume (both Z'&lt;0, e.g. near-neutral knockouts), it must not decide the call.</span>
+
+<span class="sd">    Returns (volume, human-readable rationale).</span>
+<span class="sd">    """</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_lo</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>  <span class="c1"># lower is better -&gt; desirability in [0,1]</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">x</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">x</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">!=</span> <span class="n">x</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="k">else</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">0</span> <span class="o">+</span> <span class="mf">0.5</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_hi</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>  <span class="c1"># higher is better</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">x</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">/</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">x</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">!=</span> <span class="n">x</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="k">else</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">0</span> <span class="o">+</span> <span class="mf">0.5</span>
+        <span class="p">)</span>
+
+    <span class="n">z</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="s2">"zfactor_wt_vs_weakest"</span><span class="p">]</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">lower</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># negative Z' is not separation</span>
+    <span class="n">m</span><span class="p">[</span><span class="s2">"score"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="mf">0.35</span> <span class="o">*</span> <span class="n">_lo</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="s2">"missing_rate"</span><span class="p">])</span>
+        <span class="o">+</span> <span class="mf">0.35</span> <span class="o">*</span> <span class="n">_lo</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="s2">"wt_cv"</span><span class="p">])</span>
+        <span class="o">+</span> <span class="mf">0.15</span> <span class="o">*</span> <span class="n">_lo</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="s2">"median_within_strain_cv"</span><span class="p">])</span>
+        <span class="o">+</span> <span class="mf">0.15</span> <span class="o">*</span> <span class="p">(</span><span class="n">_hi</span><span class="p">(</span><span class="n">z</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">z</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="k">else</span> <span class="n">z</span> <span class="o">*</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">best_row</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="s2">"score"</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()))]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="n">best_row</span>
+    <span class="n">zbest</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">best</span><span class="p">[</span><span class="s2">"zfactor_wt_vs_weakest"</span><span class="p">])</span>
+    <span class="n">sep</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"no strain separation at either volume (Z'&lt;0)"</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="s2">"zfactor_wt_vs_weakest"</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="k">else</span> <span class="sa">f</span><span class="s2">"Z'(WT vs </span><span class="si">{</span><span class="n">best</span><span class="p">[</span><span class="s1">'weakest_strain'</span><span class="p">]</span><span class="si">}</span><span class="s2">) </span><span class="si">{</span><span class="n">zbest</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span>
+    <span class="p">)</span>
+    <span class="n">rationale</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">best</span><span class="p">[</span><span class="s1">'volume_nl'</span><span class="p">]</span><span class="si">}</span><span class="s2"> nL: missing </span><span class="si">{</span><span class="n">best</span><span class="p">[</span><span class="s1">'missing_rate'</span><span class="p">]</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2">, "</span>
+        <span class="sa">f</span><span class="s2">"WT CV </span><span class="si">{</span><span class="n">best</span><span class="p">[</span><span class="s1">'wt_cv'</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, within-strain CV </span><span class="si">{</span><span class="n">best</span><span class="p">[</span><span class="s1">'median_within_strain_cv'</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">; </span><span class="si">{</span><span class="n">sep</span><span class="si">}</span><span class="s2">"</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">best</span><span class="p">[</span><span class="s2">"volume_nl"</span><span class="p">]),</span> <span class="n">rationale</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,6 @@
+﻿torchcell.loader.dense\_padding\_data\_loader.dense\_padded\_collate
+====================================================================
+
+.. currentmodule:: torchcell.loader.dense_padding_data_loader
+
+.. autofunction:: dense_padded_collate

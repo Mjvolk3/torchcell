@@ -1,0 +1,413 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.literature.backfill &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/literature/backfill.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.literature.backfill</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.literature.backfill</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/literature/backfill.py</span>
+<span class="c1"># [[torchcell.literature.backfill]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/literature/backfill.py</span>
+<span class="c1"># Test file: tests/torchcell/literature/test_backfill.py</span>
+
+<span class="sd">"""Backfill ``manifest.json`` for OCR'd artifact directories captured before the</span>
+<span class="sd">provenance layer existed.</span>
+
+<span class="sd">Every artifact file is sha256-pinned and role-tagged (offline, deterministic). When</span>
+<span class="sd">a Zotero library is supplied, each directory is matched to its item by citation key</span>
+<span class="sd">(the directory name) and enriched with doi/title/library_id/zotero_item_key/</span>
+<span class="sd">collections plus per-attachment md5 + source pointers -- the same metadata a fresh</span>
+<span class="sd">``capture_by_doi`` records. Directories with no Zotero match get an offline manifest</span>
+<span class="sd">with ``provenance_complete=False``: the bytes are still hashed, only the upstream</span>
+<span class="sd">retrieval chain is marked unknown (never fabricated).</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.literature.capture</span><span class="w"> </span><span class="kn">import</span> <span class="n">_collection_names</span><span class="p">,</span> <span class="n">_pdf_sources_and_md5</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.literature.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MANIFEST_FILENAME</span><span class="p">,</span>
+    <span class="n">Manifest</span><span class="p">,</span>
+    <span class="n">build_manifest</span><span class="p">,</span>
+    <span class="n">write_manifest</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.literature.zotero</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ZoteroLibrary</span><span class="p">,</span>
+    <span class="n">_resolve_citation_key</span><span class="p">,</span>
+    <span class="n">with_zotero_retry</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">LIBRARY_SUBDIR</span> <span class="o">=</span> <span class="s2">"torchcell-library"</span>
+
+<span class="c1"># Top-level Manifest metadata fields whose absence marks incomplete provenance.</span>
+<span class="n">_METADATA_FIELDS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"doi"</span><span class="p">,</span> <span class="s2">"title"</span><span class="p">,</span> <span class="s2">"zotero_item_key"</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">KeyBackfillResult</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Outcome of backfilling one citation-key directory."""</span>
+
+    <span class="n">citation_key</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"enriched | offline | skipped"</span><span class="p">)</span>
+    <span class="n">n_files</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">provenance_complete</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">null_metadata</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Top-level metadata fields left null (doi/title/zotero_item_key)."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">doi</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="BackfillReport">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.BackfillReport.html#torchcell.literature.BackfillReport">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BackfillReport</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Summary of a mirror-wide backfill run."""</span>
+
+    <span class="n">root</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">used_zotero</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">KeyBackfillResult</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">enriched</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Count of directories enriched from Zotero."""</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">results</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"enriched"</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">offline</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Count of directories written offline (provenance incomplete)."""</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">results</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"offline"</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">skipped</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Count of directories skipped (manifest already present, no --force)."""</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">results</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"skipped"</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">library_root</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Resolve the ``&lt;data_root&gt;/torchcell-library`` mirror directory."""</span>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span> <span class="o">/</span> <span class="n">LIBRARY_SUBDIR</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">build_citation_index</span><span class="p">(</span><span class="n">lib</span><span class="p">:</span> <span class="n">ZoteroLibrary</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Map every library item's citation key to the item (one paginated scan)."""</span>
+    <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">with_zotero_retry</span><span class="p">(</span>
+        <span class="k">lambda</span><span class="p">:</span> <span class="n">lib</span><span class="o">.</span><span class="n">zot</span><span class="o">.</span><span class="n">everything</span><span class="p">(</span><span class="n">lib</span><span class="o">.</span><span class="n">zot</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">_resolve_citation_key</span><span class="p">(</span><span class="n">item</span><span class="p">):</span> <span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_enriched_manifest</span><span class="p">(</span>
+    <span class="n">artifact_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">citation_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">lib</span><span class="p">:</span> <span class="n">ZoteroLibrary</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Manifest</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build a manifest enriched with the item's Zotero metadata."""</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s2">"data"</span><span class="p">]</span>
+    <span class="n">sources</span><span class="p">,</span> <span class="n">zotero_md5</span> <span class="o">=</span> <span class="n">_pdf_sources_and_md5</span><span class="p">(</span><span class="n">lib</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">build_manifest</span><span class="p">(</span>
+        <span class="n">artifact_dir</span><span class="p">,</span>
+        <span class="n">citation_key</span><span class="o">=</span><span class="n">citation_key</span><span class="p">,</span>
+        <span class="n">doi</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"DOI"</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">library_id</span><span class="o">=</span><span class="n">lib</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">library_id</span><span class="p">,</span>
+        <span class="n">zotero_item_key</span><span class="o">=</span><span class="n">item</span><span class="p">[</span><span class="s2">"key"</span><span class="p">],</span>
+        <span class="n">collections</span><span class="o">=</span><span class="n">_collection_names</span><span class="p">(</span><span class="n">lib</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"collections"</span><span class="p">,</span> <span class="p">[])),</span>
+        <span class="n">sources</span><span class="o">=</span><span class="n">sources</span><span class="p">,</span>
+        <span class="n">zotero_md5</span><span class="o">=</span><span class="n">zotero_md5</span><span class="p">,</span>
+        <span class="n">provenance_complete</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="backfill_key">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.backfill_key.html#torchcell.literature.backfill_key">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">backfill_key</span><span class="p">(</span>
+    <span class="n">artifact_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">citation_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">lib</span><span class="p">:</span> <span class="n">ZoteroLibrary</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">dry_run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KeyBackfillResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Regularize one citation-key directory to a ``manifest.json``.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        artifact_dir: The ``&lt;...&gt;/torchcell-library/&lt;citation_key&gt;/`` directory.</span>
+<span class="sd">        citation_index: Optional citation_key -&gt; Zotero item map for enrichment.</span>
+<span class="sd">        lib: Connected Zotero library (required to enrich when a match is found).</span>
+<span class="sd">        force: Rewrite an existing manifest instead of skipping it.</span>
+<span class="sd">        dry_run: Build the manifest but do not write it.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The per-key outcome (mode, file count, provenance completeness).</span>
+<span class="sd">    """</span>
+    <span class="n">citation_key</span> <span class="o">=</span> <span class="n">artifact_dir</span><span class="o">.</span><span class="n">name</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">artifact_dir</span> <span class="o">/</span> <span class="n">MANIFEST_FILENAME</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">force</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">KeyBackfillResult</span><span class="p">(</span><span class="n">citation_key</span><span class="o">=</span><span class="n">citation_key</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"skipped"</span><span class="p">)</span>
+
+    <span class="n">item</span> <span class="o">=</span> <span class="p">(</span><span class="n">citation_index</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">citation_key</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">item</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">lib</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">manifest</span> <span class="o">=</span> <span class="n">_enriched_manifest</span><span class="p">(</span><span class="n">artifact_dir</span><span class="p">,</span> <span class="n">citation_key</span><span class="p">,</span> <span class="n">lib</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="s2">"enriched"</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">manifest</span> <span class="o">=</span> <span class="n">build_manifest</span><span class="p">(</span>
+            <span class="n">artifact_dir</span><span class="p">,</span> <span class="n">citation_key</span><span class="o">=</span><span class="n">citation_key</span><span class="p">,</span> <span class="n">provenance_complete</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="s2">"offline"</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">dry_run</span><span class="p">:</span>
+        <span class="n">write_manifest</span><span class="p">(</span><span class="n">artifact_dir</span><span class="p">,</span> <span class="n">manifest</span><span class="p">)</span>
+
+    <span class="n">null_metadata</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_METADATA_FIELDS</span> <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span>
+    <span class="p">]</span>
+    <span class="k">return</span> <span class="n">KeyBackfillResult</span><span class="p">(</span>
+        <span class="n">citation_key</span><span class="o">=</span><span class="n">citation_key</span><span class="p">,</span>
+        <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span>
+        <span class="n">n_files</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">files</span><span class="p">),</span>
+        <span class="n">provenance_complete</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">provenance_complete</span><span class="p">,</span>
+        <span class="n">null_metadata</span><span class="o">=</span><span class="n">null_metadata</span><span class="p">,</span>
+        <span class="n">doi</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">doi</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="backfill_mirror">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.backfill_mirror.html#torchcell.literature.backfill_mirror">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">backfill_mirror</span><span class="p">(</span>
+    <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">use_zotero</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">dry_run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BackfillReport</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Backfill manifests for every citation-key directory under ``root``.</span>
+
+<span class="sd">    Dynamically scans for directories lacking (or, with ``force``, already having) a</span>
+<span class="sd">    manifest -- the set of keys is never hardcoded, so the mirror can keep growing.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        root: The ``torchcell-library`` directory (or a fixture mirror root).</span>
+<span class="sd">        use_zotero: Enrich from the TorchCell Zotero group (needs ``ZOTERO_*`` env);</span>
+<span class="sd">            when False, every directory is written offline.</span>
+<span class="sd">        force: Rewrite manifests that already exist.</span>
+<span class="sd">        dry_run: Build + report but write nothing.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A :class:`BackfillReport` with one :class:`KeyBackfillResult` per directory.</span>
+<span class="sd">    """</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+    <span class="n">lib</span><span class="p">:</span> <span class="n">ZoteroLibrary</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">citation_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">use_zotero</span><span class="p">:</span>
+        <span class="n">lib</span> <span class="o">=</span> <span class="n">ZoteroLibrary</span><span class="o">.</span><span class="n">from_env</span><span class="p">()</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Backfill: scanning Zotero library </span><span class="si">%s</span><span class="s2"> ..."</span><span class="p">,</span> <span class="n">lib</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">library_id</span><span class="p">)</span>
+        <span class="n">citation_index</span> <span class="o">=</span> <span class="n">build_citation_index</span><span class="p">(</span><span class="n">lib</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Backfill: indexed </span><span class="si">%d</span><span class="s2"> Zotero items"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">citation_index</span><span class="p">))</span>
+
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">KeyBackfillResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">artifact_dir</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">backfill_key</span><span class="p">(</span>
+            <span class="n">artifact_dir</span><span class="p">,</span>
+            <span class="n">citation_index</span><span class="o">=</span><span class="n">citation_index</span><span class="p">,</span>
+            <span class="n">lib</span><span class="o">=</span><span class="n">lib</span><span class="p">,</span>
+            <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">,</span>
+            <span class="n">dry_run</span><span class="o">=</span><span class="n">dry_run</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Backfill: </span><span class="si">%-48s</span><span class="s2"> </span><span class="si">%-9s</span><span class="s2"> files=</span><span class="si">%d</span><span class="s2"> complete=</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">citation_key</span><span class="p">,</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">n_files</span><span class="p">,</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">provenance_complete</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">BackfillReport</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">root</span><span class="p">),</span> <span class="n">used_zotero</span><span class="o">=</span><span class="n">use_zotero</span><span class="p">,</span> <span class="n">results</span><span class="o">=</span><span class="n">results</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""CLI entry point: backfill manifests over the literature mirror."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="vm">__doc__</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--root"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"torchcell-library dir (default: $DATA_ROOT/torchcell-library)."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--force"</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Rewrite existing manifests."</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--no-zotero"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Skip Zotero enrichment; write every manifest offline."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--dry-run"</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Build + report but write nothing."</span>
+    <span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="n">root</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">root</span> <span class="ow">or</span> <span class="n">library_root</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">])</span>
+    <span class="n">report</span> <span class="o">=</span> <span class="n">backfill_mirror</span><span class="p">(</span>
+        <span class="n">root</span><span class="p">,</span> <span class="n">use_zotero</span><span class="o">=</span><span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">no_zotero</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">force</span><span class="p">,</span> <span class="n">dry_run</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">dry_run</span>
+    <span class="p">)</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
+    <span class="n">with_manifest</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">total</span> <span class="o">-</span> <span class="n">report</span><span class="o">.</span><span class="n">skipped</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">force</span> <span class="k">else</span> <span class="n">report</span><span class="o">.</span><span class="n">enriched</span> <span class="o">+</span> <span class="n">report</span><span class="o">.</span><span class="n">offline</span>
+    <span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">"Backfill done: </span><span class="si">%d</span><span class="s2"> dirs (enriched=</span><span class="si">%d</span><span class="s2"> offline=</span><span class="si">%d</span><span class="s2"> skipped=</span><span class="si">%d</span><span class="s2">); "</span>
+        <span class="s2">"</span><span class="si">%d</span><span class="s2"> manifests written this run"</span><span class="p">,</span>
+        <span class="n">total</span><span class="p">,</span>
+        <span class="n">report</span><span class="o">.</span><span class="n">enriched</span><span class="p">,</span>
+        <span class="n">report</span><span class="o">.</span><span class="n">offline</span><span class="p">,</span>
+        <span class="n">report</span><span class="o">.</span><span class="n">skipped</span><span class="p">,</span>
+        <span class="mi">0</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">dry_run</span> <span class="k">else</span> <span class="n">with_manifest</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

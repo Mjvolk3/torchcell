@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.identity.temperature\_identity
+===================================================
+
+.. currentmodule:: torchcell.datamodels.identity
+
+.. autofunction:: temperature_identity

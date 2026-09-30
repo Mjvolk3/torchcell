@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.ontology\_checks.composition\_targets
+==========================================================
+
+.. currentmodule:: torchcell.datamodels.ontology_checks
+
+.. autofunction:: composition_targets

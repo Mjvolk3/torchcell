@@ -1,0 +1,8 @@
+﻿torchcell.datamodules.CellDataModule
+====================================
+
+.. currentmodule:: torchcell.datamodules
+
+.. autoclass:: CellDataModule
+   :show-inheritance:
+   :members:

@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.compound\_identity.resolved\_compound
+==========================================================
+
+.. currentmodule:: torchcell.datamodels.compound_identity
+
+.. autofunction:: resolved_compound

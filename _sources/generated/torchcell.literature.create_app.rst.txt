@@ -1,0 +1,6 @@
+﻿torchcell.literature.create\_app
+================================
+
+.. currentmodule:: torchcell.literature
+
+.. autofunction:: create_app

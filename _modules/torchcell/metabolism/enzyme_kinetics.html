@@ -1,0 +1,524 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.metabolism.enzyme_kinetics &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/metabolism/enzyme_kinetics.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.metabolism.enzyme_kinetics</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.metabolism.enzyme_kinetics</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/metabolism/enzyme_kinetics</span>
+<span class="c1"># [[torchcell.metabolism.enzyme_kinetics]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/metabolism/enzyme_kinetics</span>
+<span class="c1"># Test file: tests/torchcell/metabolism/test_enzyme_kinetics.py</span>
+
+<span class="sd">"""Enzyme kinetic parameters (k_cat, K_M) with provenance, from the Open Enzyme Database.</span>
+
+<span class="sd">WHY THIS EXISTS, AND WHY NOT ecYeastGEM</span>
+<span class="sd">---------------------------------------</span>
+<span class="sd">The flux layer needs two parameters and they are NOT interchangeable:</span>
+
+<span class="sd">* ``k_cat`` bounds capacity, ``|v_j| &lt;= k_cat_gj * E_g``. It is the ONLY source of</span>
+<span class="sd">  magnitude in the model -- 4,129 of Yeast9's 4,131 reaction bounds carry none -- and it</span>
+<span class="sd">  is what actually shrinks the feasible polytope.</span>
+<span class="sd">* ``K_M`` enters only through the saturation factor</span>
+<span class="sd">  ``eta_sat = prod_i c_i / (K_M_ij + c_i)``. On its own it adds a parameter *and* a free</span>
+<span class="sd">  variable (the concentration), so it is extra SLACK, not extra constraint. What makes it</span>
+<span class="sd">  necessary is promiscuity: Wu 2026 measured underground reactions as having ~2x higher</span>
+<span class="sd">  ``K_M`` with INDISTINGUISHABLE ``k_cat``, so a k_cat-only model cannot tell a promiscuous</span>
+<span class="sd">  edge from a native one and routes flux through it at full native capacity for free.</span>
+
+<span class="sd">**GECKO / ecYeastGEM carries k_cat only -- it has no K_M at all.** So the two parameters</span>
+<span class="sd">have genuinely different sources and this module keeps them separate rather than pretending</span>
+<span class="sd">one mirror supplies both.</span>
+
+<span class="sd">THE 30 C RULE</span>
+<span class="sd">-------------</span>
+<span class="sd">Kinetic constants are assay-condition dependent, and the OED ships 105,520 entries with a</span>
+<span class="sd">linked temperature precisely so that dependence can be respected. Our phenotype data is</span>
+<span class="sd">generated at 30 C (SGA is 26-30 C; the pigment screens and Mulleder are 30 C), so a</span>
+<span class="sd">``k_cat`` measured at 60 C in a thermostability study is the wrong number even though it is</span>
+<span class="sd">the same enzyme. :func:`resolve_parameter` therefore selects the candidate whose assay</span>
+<span class="sd">temperature is CLOSEST TO 30 C, and records how far it had to reach.</span>
+
+<span class="sd">Selection is a strict, documented cascade rather than a heuristic blend, because a silently</span>
+<span class="sd">averaged parameter cannot be traced back to a measurement:</span>
+
+<span class="sd">1. keep candidates that actually carry a value for the requested parameter;</span>
+<span class="sd">2. prefer ``wildtype`` over mutant -- a mutant's k_cat describes a protein we do not have;</span>
+<span class="sd">3. minimize ``|T - 30 C|``; entries with no recorded temperature sort last, never first;</span>
+<span class="sd">4. break remaining ties on the MEDIAN value, which is deterministic and avoids letting an</span>
+<span class="sd">   arbitrary row order decide.</span>
+
+<span class="sd">Every resolved value keeps ``n_candidates`` and ``selection_rule`` so a reviewer can see</span>
+<span class="sd">how much choice was involved, and the PubMed id of the row it came from.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">statistics</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrEnum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">urllib.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">quote</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="c1">#: Live OED service. The stored slice + its sha256 is canonical, NOT this URL -- the URL</span>
+<span class="c1">#: is retrieval metadata. On rebuild we replay ``retrieval_command`` and verify the hash.</span>
+<span class="n">OED_API_BASE</span> <span class="o">=</span> <span class="s2">"https://openenzymedb-api.platform.moleculemaker.org/api/v1"</span>
+
+<span class="c1">#: Assay temperature our phenotype data was generated at. See module docstring.</span>
+<span class="n">TARGET_TEMPERATURE_C</span> <span class="o">=</span> <span class="mf">30.0</span>
+
+<span class="c1">#: OED spells the organism out; there is no taxid filter on the endpoint.</span>
+<span class="n">SCEREVISIAE</span> <span class="o">=</span> <span class="s2">"Saccharomyces cerevisiae"</span>
+
+
+<div class="viewcode-block" id="KineticKind">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.enzyme_kinetics.KineticKind.html#torchcell.metabolism.enzyme_kinetics.KineticKind">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">KineticKind</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Which constant is being resolved. They are sourced and used differently."""</span>
+
+    <span class="n">KCAT</span> <span class="o">=</span> <span class="s2">"kcat"</span>
+    <span class="n">KM</span> <span class="o">=</span> <span class="s2">"km"</span></div>
+
+
+
+<div class="viewcode-block" id="KineticSource">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.enzyme_kinetics.KineticSource.html#torchcell.metabolism.enzyme_kinetics.KineticSource">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">KineticSource</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Where a value came from. Published before predicted, always, and tagged so that</span>
+<span class="sd">    a ``published-only`` ablation is possible without re-running retrieval.</span>
+<span class="sd">    """</span>
+
+    <span class="n">OPEN_ENZYME_DATABASE</span> <span class="o">=</span> <span class="s2">"open_enzyme_database"</span>
+    <span class="n">PREDICTED</span> <span class="o">=</span> <span class="s2">"predicted"</span></div>
+
+
+
+<div class="viewcode-block" id="KineticRetrieval">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.enzyme_kinetics.KineticRetrieval.html#torchcell.metabolism.enzyme_kinetics.KineticRetrieval">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">KineticRetrieval</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Provenance for one retrieved OED slice.</span>
+
+<span class="sd">    The stored artifact plus its ``sha256`` is canonical. ``source_url`` and</span>
+<span class="sd">    ``retrieval_command`` are historical retrieval metadata: on rebuild we run the command</span>
+<span class="sd">    and verify the hash, so upstream drift is DETECTED rather than silently followed.</span>
+<span class="sd">    """</span>
+
+    <span class="n">source_url</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">retrieval_method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"oed_api"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"oed_api"</span>
+    <span class="n">retrieval_command</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">sha256</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">retrieved_at</span><span class="p">:</span> <span class="n">datetime</span>
+    <span class="n">n_records</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">organism</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="OedKineticRecord">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.enzyme_kinetics.OedKineticRecord.html#torchcell.metabolism.enzyme_kinetics.OedKineticRecord">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OedKineticRecord</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One OED row, kept verbatim.</span>
+
+<span class="sd">    Stored unmodified so the selection cascade is auditable against the source rather than</span>
+<span class="sd">    against an already-filtered view. ``model_config`` allows unknown columns because the</span>
+<span class="sd">    OED is a live community resource and gaining a column must not break ingestion.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"extra"</span><span class="p">:</span> <span class="s2">"allow"</span><span class="p">}</span>
+
+    <span class="n">ec</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">substrate</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">organism</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">uniprot</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">enzymetype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">ph</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">smiles</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">kcat_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">kcat_unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">kcat_pubmedid</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">km_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">km_unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">km_pubmedid</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="OedKineticRecord.value_for">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.enzyme_kinetics.OedKineticRecord.html#torchcell.metabolism.enzyme_kinetics.OedKineticRecord.value_for">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">value_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="n">KineticKind</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The value of the requested constant, or None if this row does not carry it."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kcat_value</span> <span class="k">if</span> <span class="n">kind</span> <span class="ow">is</span> <span class="n">KineticKind</span><span class="o">.</span><span class="n">KCAT</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">km_value</span></div>
+
+
+<div class="viewcode-block" id="OedKineticRecord.unit_for">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.enzyme_kinetics.OedKineticRecord.html#torchcell.metabolism.enzyme_kinetics.OedKineticRecord.unit_for">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">unit_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="n">KineticKind</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The unit string OED recorded alongside the value."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kcat_unit</span> <span class="k">if</span> <span class="n">kind</span> <span class="ow">is</span> <span class="n">KineticKind</span><span class="o">.</span><span class="n">KCAT</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">km_unit</span></div>
+
+
+<div class="viewcode-block" id="OedKineticRecord.pubmed_for">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.enzyme_kinetics.OedKineticRecord.html#torchcell.metabolism.enzyme_kinetics.OedKineticRecord.pubmed_for">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pubmed_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="n">KineticKind</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""PubMed id of the measurement, normalized to a string without the float tail."""</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kcat_pubmedid</span> <span class="k">if</span> <span class="n">kind</span> <span class="ow">is</span> <span class="n">KineticKind</span><span class="o">.</span><span class="n">KCAT</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">km_pubmedid</span>
+        <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">raw</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">raw</span><span class="p">))</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ResolvedKineticParameter">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.enzyme_kinetics.ResolvedKineticParameter.html#torchcell.metabolism.enzyme_kinetics.ResolvedKineticParameter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ResolvedKineticParameter</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A single parameter chosen for a (protein, substrate) pair, with its audit trail.</span>
+
+<span class="sd">    ``selection_rule`` and ``n_candidates`` are not decoration: a value picked from 40</span>
+<span class="sd">    candidates spanning 20-70 C deserves different trust than one with a single 30 C</span>
+<span class="sd">    measurement, and the flux layer's uncertainty handling (quantile-in-the-box) needs to</span>
+<span class="sd">    know which it is.</span>
+<span class="sd">    """</span>
+
+    <span class="n">kind</span><span class="p">:</span> <span class="n">KineticKind</span>
+    <span class="n">uniprot</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">substrate</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">value</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">source</span><span class="p">:</span> <span class="n">KineticSource</span>
+    <span class="n">temperature_c</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">temperature_delta_c</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"|assay T - 30 C|; None when the entry has no recorded T"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">ph</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">enzyme_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">pubmed_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">n_candidates</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">selection_rule</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">predictor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sha256</span><span class="p">(</span><span class="n">payload</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Hash of the exact bytes we stored, which is what makes the mirror canonical."""</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_data_url</span><span class="p">(</span><span class="n">organism</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build one page URL. Kept separate so it can be recorded as retrieval provenance."""</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">OED_API_BASE</span><span class="si">}</span><span class="s2">/data?organism=</span><span class="si">{</span><span class="n">quote</span><span class="p">(</span><span class="n">organism</span><span class="p">)</span><span class="si">}</span><span class="s2">&amp;limit=</span><span class="si">{</span><span class="n">limit</span><span class="si">}</span><span class="s2">&amp;offset=</span><span class="si">{</span><span class="n">offset</span><span class="si">}</span><span class="s2">"</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="fetch_oed_records">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.enzyme_kinetics.fetch_oed_records.html#torchcell.metabolism.enzyme_kinetics.fetch_oed_records">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_oed_records</span><span class="p">(</span>
+    <span class="n">organism</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">SCEREVISIAE</span><span class="p">,</span> <span class="n">page_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">max_pages</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Page the OED ``/data`` endpoint for one organism.</span>
+
+<span class="sd">    Returns the rows and the exact shell command that reproduces the retrieval. Paging</span>
+<span class="sd">    stops on a short page, so ``max_pages`` is only a runaway guard -- it is not expected</span>
+<span class="sd">    to bind, and if it does the caller sees a suspiciously round record count.</span>
+<span class="sd">    """</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">total</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">page</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_pages</span><span class="p">):</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">_data_url</span><span class="p">(</span><span class="n">organism</span><span class="p">,</span> <span class="n">page_size</span><span class="p">,</span> <span class="n">page</span> <span class="o">*</span> <span class="n">page_size</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="p">[</span><span class="s2">"curl"</span><span class="p">,</span> <span class="s2">"-sS"</span><span class="p">,</span> <span class="s2">"--max-time"</span><span class="p">,</span> <span class="s2">"180"</span><span class="p">,</span> <span class="n">url</span><span class="p">],</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+        <span class="c1"># OED wraps pages as {"total": N, "offset": .., "limit": .., "data": [...]}.</span>
+        <span class="c1"># `total` is authoritative for paging -- trusting a short page alone would stop</span>
+        <span class="c1"># early if the service ever caps a page below the requested size.</span>
+        <span class="n">envelope</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">envelope</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"data"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">envelope</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"OED returned an unexpected payload shape: </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">batch</span> <span class="o">=</span> <span class="n">envelope</span><span class="p">[</span><span class="s2">"data"</span><span class="p">]</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">envelope</span><span class="p">[</span><span class="s2">"total"</span><span class="p">])</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">total</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">batch</span><span class="p">:</span>
+            <span class="k">break</span>
+    <span class="k">if</span> <span class="n">total</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span> <span class="o">!=</span> <span class="n">total</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"OED paging incomplete for </span><span class="si">{</span><span class="n">organism</span><span class="si">}</span><span class="s2">: got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> records"</span>
+        <span class="p">)</span>
+    <span class="n">command</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"for off in $(seq 0 </span><span class="si">{</span><span class="n">page_size</span><span class="si">}</span><span class="s2"> N); do curl -sS "</span>
+        <span class="sa">f</span><span class="s1">'"</span><span class="si">{</span><span class="n">OED_API_BASE</span><span class="si">}</span><span class="s1">/data?organism=</span><span class="si">{</span><span class="n">quote</span><span class="p">(</span><span class="n">organism</span><span class="p">)</span><span class="si">}</span><span class="s1">&amp;limit=</span><span class="si">{</span><span class="n">page_size</span><span class="si">}</span><span class="s1">&amp;offset=$off"; done'</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">rows</span><span class="p">,</span> <span class="n">command</span></div>
+
+
+
+<div class="viewcode-block" id="mirror_oed_slice">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.enzyme_kinetics.mirror_oed_slice.html#torchcell.metabolism.enzyme_kinetics.mirror_oed_slice">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">mirror_oed_slice</span><span class="p">(</span>
+    <span class="n">mirror_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">organism</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">SCEREVISIAE</span><span class="p">,</span> <span class="n">page_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KineticRetrieval</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Fetch an organism slice, write it with a sha256-pinned provenance record.</span>
+
+<span class="sd">    The mirror -- not the endpoint -- is what the flux layer reads, so a run is</span>
+<span class="sd">    reproducible after the service changes or goes away.</span>
+<span class="sd">    """</span>
+    <span class="n">rows</span><span class="p">,</span> <span class="n">command</span> <span class="o">=</span> <span class="n">fetch_oed_records</span><span class="p">(</span><span class="n">organism</span><span class="o">=</span><span class="n">organism</span><span class="p">,</span> <span class="n">page_size</span><span class="o">=</span><span class="n">page_size</span><span class="p">)</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">":"</span><span class="p">))</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">mirror_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mirror_dir</span><span class="p">,</span> <span class="s2">"oed_records.json"</span><span class="p">),</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+    <span class="n">record</span> <span class="o">=</span> <span class="n">KineticRetrieval</span><span class="p">(</span>
+        <span class="n">source_url</span><span class="o">=</span><span class="n">_data_url</span><span class="p">(</span><span class="n">organism</span><span class="p">,</span> <span class="n">page_size</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+        <span class="n">retrieval_command</span><span class="o">=</span><span class="n">command</span><span class="p">,</span>
+        <span class="n">sha256</span><span class="o">=</span><span class="n">_sha256</span><span class="p">(</span><span class="n">payload</span><span class="p">),</span>
+        <span class="n">retrieved_at</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">),</span>
+        <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
+        <span class="n">organism</span><span class="o">=</span><span class="n">organism</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mirror_dir</span><span class="p">,</span> <span class="s2">"manifest.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">record</span></div>
+
+
+
+<div class="viewcode-block" id="load_mirrored_records">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.enzyme_kinetics.load_mirrored_records.html#torchcell.metabolism.enzyme_kinetics.load_mirrored_records">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_mirrored_records</span><span class="p">(</span><span class="n">mirror_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">OedKineticRecord</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Read the mirror and VERIFY its sha256 before returning anything.</span>
+
+<span class="sd">    A mismatch means the stored slice is not the one the manifest describes, which</span>
+<span class="sd">    invalidates every parameter downstream -- so it raises rather than warning.</span>
+<span class="sd">    """</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mirror_dir</span><span class="p">,</span> <span class="s2">"oed_records.json"</span><span class="p">),</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mirror_dir</span><span class="p">,</span> <span class="s2">"manifest.json"</span><span class="p">))</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">manifest</span> <span class="o">=</span> <span class="n">KineticRetrieval</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+    <span class="n">digest</span> <span class="o">=</span> <span class="n">_sha256</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">digest</span> <span class="o">!=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">sha256</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"OED mirror sha256 mismatch in </span><span class="si">{</span><span class="n">mirror_dir</span><span class="si">}</span><span class="s2">: "</span>
+            <span class="sa">f</span><span class="s2">"manifest </span><span class="si">{</span><span class="n">manifest</span><span class="o">.</span><span class="n">sha256</span><span class="si">}</span><span class="s2">, file </span><span class="si">{</span><span class="n">digest</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">OedKineticRecord</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">payload</span><span class="p">)]</span></div>
+
+
+
+<div class="viewcode-block" id="resolve_parameter">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.enzyme_kinetics.resolve_parameter.html#torchcell.metabolism.enzyme_kinetics.resolve_parameter">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_parameter</span><span class="p">(</span>
+    <span class="n">candidates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">OedKineticRecord</span><span class="p">],</span>
+    <span class="n">kind</span><span class="p">:</span> <span class="n">KineticKind</span><span class="p">,</span>
+    <span class="n">uniprot</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">substrate</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">target_temperature_c</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">TARGET_TEMPERATURE_C</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResolvedKineticParameter</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Choose one value from many measurements, by the documented cascade.</span>
+
+<span class="sd">    Returns None when no candidate carries a value for ``kind`` -- an explicit gap that the</span>
+<span class="sd">    caller fills from a predictor and TAGS as predicted, rather than a silent zero.</span>
+<span class="sd">    """</span>
+    <span class="n">with_value</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">value_for</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">with_value</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">n_candidates</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">with_value</span><span class="p">)</span>
+    <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">wildtype</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">with_value</span> <span class="k">if</span> <span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">enzymetype</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"wildtype"</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">wildtype</span><span class="p">:</span>
+        <span class="n">with_value</span> <span class="o">=</span> <span class="n">wildtype</span>
+        <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"wildtype_only"</span><span class="p">)</span>
+
+    <span class="c1"># Entries without a temperature sort last: an unknown assay condition is weaker</span>
+    <span class="c1"># evidence than a known-and-nearby one, but still better than nothing.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">temp_key</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">OedKineticRecord</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">temperature</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">abs</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">temperature</span> <span class="o">-</span> <span class="n">target_temperature_c</span><span class="p">))</span>
+
+    <span class="n">best</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">temp_key</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">with_value</span><span class="p">)</span>
+    <span class="n">with_value</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">with_value</span> <span class="k">if</span> <span class="n">temp_key</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">==</span> <span class="n">best</span><span class="p">]</span>
+    <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="s2">"no_temperature"</span> <span class="k">if</span> <span class="n">best</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"nearest_</span><span class="si">{</span><span class="n">target_temperature_c</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">C"</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">with_value</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">value_for</span><span class="p">(</span><span class="n">kind</span><span class="p">))</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">with_value</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
+        <span class="n">median</span> <span class="o">=</span> <span class="n">statistics</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">chosen</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+            <span class="n">with_value</span><span class="p">,</span>
+            <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">value_for</span><span class="p">(</span><span class="n">kind</span><span class="p">))</span> <span class="o">-</span> <span class="n">median</span><span class="p">),</span>  <span class="c1"># type: ignore[arg-type]</span>
+        <span class="p">)</span>
+        <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"median_of_ties"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">chosen</span> <span class="o">=</span> <span class="n">with_value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">temperature</span> <span class="o">=</span> <span class="n">chosen</span><span class="o">.</span><span class="n">temperature</span>
+    <span class="k">return</span> <span class="n">ResolvedKineticParameter</span><span class="p">(</span>
+        <span class="n">kind</span><span class="o">=</span><span class="n">kind</span><span class="p">,</span>
+        <span class="n">uniprot</span><span class="o">=</span><span class="n">uniprot</span><span class="p">,</span>
+        <span class="n">substrate</span><span class="o">=</span><span class="n">substrate</span> <span class="k">if</span> <span class="n">substrate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">chosen</span><span class="o">.</span><span class="n">substrate</span><span class="p">,</span>
+        <span class="n">value</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">chosen</span><span class="o">.</span><span class="n">value_for</span><span class="p">(</span><span class="n">kind</span><span class="p">)),</span>  <span class="c1"># type: ignore[arg-type]</span>
+        <span class="n">unit</span><span class="o">=</span><span class="n">chosen</span><span class="o">.</span><span class="n">unit_for</span><span class="p">(</span><span class="n">kind</span><span class="p">),</span>
+        <span class="n">source</span><span class="o">=</span><span class="n">KineticSource</span><span class="o">.</span><span class="n">OPEN_ENZYME_DATABASE</span><span class="p">,</span>
+        <span class="n">temperature_c</span><span class="o">=</span><span class="n">temperature</span><span class="p">,</span>
+        <span class="n">temperature_delta_c</span><span class="o">=</span><span class="p">(</span>
+            <span class="kc">None</span> <span class="k">if</span> <span class="n">temperature</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">abs</span><span class="p">(</span><span class="n">temperature</span> <span class="o">-</span> <span class="n">target_temperature_c</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">ph</span><span class="o">=</span><span class="n">chosen</span><span class="o">.</span><span class="n">ph</span><span class="p">,</span>
+        <span class="n">enzyme_type</span><span class="o">=</span><span class="n">chosen</span><span class="o">.</span><span class="n">enzymetype</span><span class="p">,</span>
+        <span class="n">pubmed_id</span><span class="o">=</span><span class="n">chosen</span><span class="o">.</span><span class="n">pubmed_for</span><span class="p">(</span><span class="n">kind</span><span class="p">),</span>
+        <span class="n">n_candidates</span><span class="o">=</span><span class="n">n_candidates</span><span class="p">,</span>
+        <span class="n">selection_rule</span><span class="o">=</span><span class="s2">" -&gt; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rules</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="index_by_uniprot">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.enzyme_kinetics.index_by_uniprot.html#torchcell.metabolism.enzyme_kinetics.index_by_uniprot">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">index_by_uniprot</span><span class="p">(</span>
+    <span class="n">records</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">OedKineticRecord</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">OedKineticRecord</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Group rows by UniProt accession, the key the GPR maps yeast genes onto."""</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">OedKineticRecord</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">uniprot</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">uniprot</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

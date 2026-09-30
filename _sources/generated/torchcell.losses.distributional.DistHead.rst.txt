@@ -1,0 +1,8 @@
+﻿torchcell.losses.distributional.DistHead
+========================================
+
+.. currentmodule:: torchcell.losses.distributional
+
+.. autoclass:: DistHead
+   :show-inheritance:
+   :members:

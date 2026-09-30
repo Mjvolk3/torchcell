@@ -1,0 +1,232 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.data &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/modules/data.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="torchcell.data.ExperimentReferenceIndex" href="../generated/torchcell.data.ExperimentReferenceIndex.html" />
+    <link rel="prev" title="torchcell.adapters.SmfBaryshnikova2010Adapter" href="../generated/torchcell.adapters.SmfBaryshnikova2010Adapter.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">torchcell.data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#classes">Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#functions">Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">torchcell.data</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/modules/data.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-torchcell.data">
+<span id="torchcell-data"></span><h1>torchcell.data<a class="headerlink" href="#module-torchcell.data" title="Link to this heading"></a></h1>
+<p>The data layer between the knowledge graph and model training. <a class="reference internal" href="../generated/torchcell.data.ExperimentDataset.html#torchcell.data.ExperimentDataset" title="torchcell.data.ExperimentDataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentDataset</span></code></a> is the abstract LMDB-backed base for experiment datasets, <a class="reference internal" href="../generated/torchcell.data.Neo4jCellDataset.html#torchcell.data.Neo4jCellDataset" title="torchcell.data.Neo4jCellDataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">Neo4jCellDataset</span></code></a> queries Neo4j, caches the raw records in LMDB and turns each experiment into a perturbed cell graph, and the graph processors (for example <a class="reference internal" href="../generated/torchcell.data.SubgraphRepresentation.html#torchcell.data.SubgraphRepresentation" title="torchcell.data.SubgraphRepresentation"><code class="xref py py-class docutils literal notranslate"><span class="pre">SubgraphRepresentation</span></code></a> and <a class="reference internal" href="../generated/torchcell.data.LazySubgraphRepresentation.html#torchcell.data.LazySubgraphRepresentation" title="torchcell.data.LazySubgraphRepresentation"><code class="xref py py-class docutils literal notranslate"><span class="pre">LazySubgraphRepresentation</span></code></a>) define how a genotype perturbation is applied to that graph. Deduplicators and aggregators merge repeated measurements of the same genotype, and the reference-index helpers group experiments by their shared reference state.</p>
+<nav class="contents local" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#classes" id="id1">Classes</a></p></li>
+<li><p><a class="reference internal" href="#functions" id="id2">Functions</a></p></li>
+</ul>
+</nav>
+<section id="classes">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Classes</a><a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.data.ExperimentReferenceIndex.html#torchcell.data.ExperimentReferenceIndex" title="torchcell.data.ExperimentReferenceIndex"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExperimentReferenceIndex</span></code></a></p></td>
+<td><p>A reference paired with the sorted record indices of the experiments using it.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.data.ReferenceIndex.html#torchcell.data.ReferenceIndex" title="torchcell.data.ReferenceIndex"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ReferenceIndex</span></code></a></p></td>
+<td><p>A collection of reference-indices partitioning a dataset's experiments.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.data.Deduplicator.html#torchcell.data.Deduplicator" title="torchcell.data.Deduplicator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Deduplicator</span></code></a></p></td>
+<td><p>Base class that deduplicates experiment records into an output LMDB store.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.data.MeanExperimentDeduplicator.html#torchcell.data.MeanExperimentDeduplicator" title="torchcell.data.MeanExperimentDeduplicator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MeanExperimentDeduplicator</span></code></a></p></td>
+<td><p>Deduplicate experiments by averaging duplicates of the same genotype.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.data.Aggregator.html#torchcell.data.Aggregator" title="torchcell.data.Aggregator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Aggregator</span></code></a></p></td>
+<td><p>Abstract base that groups experiment pairs into an aggregated LMDB store.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.data.DeletionKeyedGenotypeAggregator.html#torchcell.data.DeletionKeyedGenotypeAggregator" title="torchcell.data.DeletionKeyedGenotypeAggregator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DeletionKeyedGenotypeAggregator</span></code></a></p></td>
+<td><p>Aggregator keyed on the DELETION gene set only; other axes are background.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.data.GenotypeAggregator.html#torchcell.data.GenotypeAggregator" title="torchcell.data.GenotypeAggregator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GenotypeAggregator</span></code></a></p></td>
+<td><p>Aggregator keyed by a hash of the experiment's full perturbation set.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.data.ExperimentDataset.html#torchcell.data.ExperimentDataset" title="torchcell.data.ExperimentDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExperimentDataset</span></code></a></p></td>
+<td><p>Abstract PyG dataset storing experiment items in an LMDB store.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.data.Neo4jCellDataset.html#torchcell.data.Neo4jCellDataset" title="torchcell.data.Neo4jCellDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Neo4jCellDataset</span></code></a></p></td>
+<td><p>Dataset for loading cell data from Neo4j with file locking for DDP support.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.data.SubgraphRepresentation.html#torchcell.data.SubgraphRepresentation" title="torchcell.data.SubgraphRepresentation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SubgraphRepresentation</span></code></a></p></td>
+<td><p>Processor that removes perturbed genes and returns the induced subgraph.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.data.LazySubgraphRepresentation.html#torchcell.data.LazySubgraphRepresentation" title="torchcell.data.LazySubgraphRepresentation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LazySubgraphRepresentation</span></code></a></p></td>
+<td><p>Graph processor that returns full graph with masks instead of filtered subgraphs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.data.IncidenceSubgraphRepresentation.html#torchcell.data.IncidenceSubgraphRepresentation" title="torchcell.data.IncidenceSubgraphRepresentation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IncidenceSubgraphRepresentation</span></code></a></p></td>
+<td><p>Graph processor using precomputed node-to-edge incidence structures.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.data.Perturbation.html#torchcell.data.Perturbation" title="torchcell.data.Perturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Perturbation</span></code></a></p></td>
+<td><p>Store only perturbation-specific information without duplicating the graph.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.data.DCellGraphProcessor.html#torchcell.data.DCellGraphProcessor" title="torchcell.data.DCellGraphProcessor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DCellGraphProcessor</span></code></a></p></td>
+<td><p>Graph processor for DCell model that applies perturbations directly to the gene ontology graph.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.data.Unperturbed.html#torchcell.data.Unperturbed" title="torchcell.data.Unperturbed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Unperturbed</span></code></a></p></td>
+<td><p>Preserve the original graph, storing perturbation and phenotype data alongside.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.data.compute_sha256_hash.html#torchcell.data.compute_sha256_hash" title="torchcell.data.compute_sha256_hash"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_sha256_hash</span></code></a></p></td>
+<td><p>Compute the sha256 hash of a string.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.data.compute_experiment_reference_index_sequential.html#torchcell.data.compute_experiment_reference_index_sequential" title="torchcell.data.compute_experiment_reference_index_sequential"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_experiment_reference_index_sequential</span></code></a></p></td>
+<td><p>Build the reference index in ONE streaming grouping pass (memory-bounded).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.data.compute_experiment_reference_index_parallel.html#torchcell.data.compute_experiment_reference_index_parallel" title="torchcell.data.compute_experiment_reference_index_parallel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_experiment_reference_index_parallel</span></code></a></p></td>
+<td><p>Build the reference index (streaming member-index grouping).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.data.post_process.html#torchcell.data.post_process" title="torchcell.data.post_process"><code class="xref py py-obj docutils literal notranslate"><span class="pre">post_process</span></code></a></p></td>
+<td><p>Decorate <code class="docutils literal notranslate"><span class="pre">process</span></code> to rebuild the gene set/reference index and validate.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../generated/torchcell.adapters.SmfBaryshnikova2010Adapter.html" class="btn btn-neutral float-left" title="torchcell.adapters.SmfBaryshnikova2010Adapter" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../generated/torchcell.data.ExperimentReferenceIndex.html" class="btn btn-neutral float-right" title="torchcell.data.ExperimentReferenceIndex" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

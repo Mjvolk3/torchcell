@@ -1,0 +1,8 @@
+﻿torchcell.losses.mle\_wasserstein.BufferedWeightedWassersteinLoss
+=================================================================
+
+.. currentmodule:: torchcell.losses.mle_wasserstein
+
+.. autoclass:: BufferedWeightedWassersteinLoss
+   :show-inheritance:
+   :members:

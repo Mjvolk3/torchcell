@@ -1,0 +1,8 @@
+﻿torchcell.models.diffusion\_decoder.SinusoidalTimeEmbedding
+===========================================================
+
+.. currentmodule:: torchcell.models.diffusion_decoder
+
+.. autoclass:: SinusoidalTimeEmbedding
+   :show-inheritance:
+   :members:

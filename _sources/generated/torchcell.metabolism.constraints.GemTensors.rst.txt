@@ -1,0 +1,8 @@
+﻿torchcell.metabolism.constraints.GemTensors
+===========================================
+
+.. currentmodule:: torchcell.metabolism.constraints
+
+.. autoclass:: GemTensors
+   :show-inheritance:
+   :members:

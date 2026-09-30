@@ -1,0 +1,6 @@
+﻿torchcell.literature.ocr\_artifact
+==================================
+
+.. currentmodule:: torchcell.literature
+
+.. autofunction:: ocr_artifact

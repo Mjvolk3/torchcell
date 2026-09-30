@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.MicroarrayExpressionPhenotype
+=========================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: MicroarrayExpressionPhenotype
+   :show-inheritance:
+   :members:

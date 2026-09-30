@@ -1,0 +1,736 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.knowledge_graphs.incremental_import &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/knowledge_graphs/incremental_import.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.knowledge_graphs.incremental_import</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.knowledge_graphs.incremental_import</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/knowledge_graphs/incremental_import.py</span>
+<span class="c1"># [[torchcell.knowledge_graphs.incremental_import]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/incremental_import</span>
+<span class="c1"># Test file: tests/torchcell/knowledge_graphs/test_incremental_import.py</span>
+<span class="sd">"""Turn one BioCypher output directory into a Neo4j *incremental* import.</span>
+
+<span class="sd">BioCypher only knows how to emit ``neo4j-admin database import full`` (which wipes the</span>
+<span class="sd">store). Adding one dataset to the SERVED graph instead uses Neo4j Enterprise's</span>
+<span class="sd">``neo4j-admin database import incremental``, which matches incoming nodes to existing</span>
+<span class="sd">ones through a node-property uniqueness constraint and attaches new relationships to</span>
+<span class="sd">either. Three things have to be prepared for that, all derived from the CSV files</span>
+<span class="sd">BioCypher already wrote:</span>
+
+<span class="sd">1. **Headers.** Incremental import matches an incoming node to an existing one through</span>
+<span class="sd">   ONE uniqueness constraint per id space. BioCypher writes every node into the single</span>
+<span class="sd">   global id space (``:ID`` with no group; edges use bare ``:START_ID``/``:END_ID``), so</span>
+<span class="sd">   the constraint must key a label EVERY node carries: ``Entity``, the root of the</span>
+<span class="sd">   BioLink hierarchy that BioCypher stacks onto each node's ``:LABEL`` column. The</span>
+<span class="sd">   incremental header becomes ``id:ID{label:Entity}`` with the redundant ``id`` column</span>
+<span class="sd">   ignored, so the imported ``id`` property is exactly the one the served graph already</span>
+<span class="sd">   carries on every node (the content-addressed sha256). One constraint per label would</span>
+<span class="sd">   NOT work: the importer aborts with "Multiple different indexes for group global id</span>
+<span class="sd">   space" (measured on 5.26.28), and per-label id groups are impossible because a</span>
+<span class="sd">   BioCypher edge file mixes endpoint labels row by row.</span>
+<span class="sd">2. **Constraints.** ``CREATE CONSTRAINT ... FOR (n:Entity) REQUIRE n.id IS UNIQUE``. The</span>
+<span class="sd">   served store was built by a full import and has none; it must exist BEFORE the</span>
+<span class="sd">   incremental import runs, created through Cypher on the online database</span>
+<span class="sd">   (``neo4j-admin database import incremental --schema`` refuses: "Applying schema</span>
+<span class="sd">   commands during incremental import is not currently supported", measured on 5.26.28).</span>
+<span class="sd">   The runner applies the emitted file with ``cypher-shell -f``. Global uniqueness of</span>
+<span class="sd">   ``id`` holds in the served store by construction: the full import ran one global id</span>
+<span class="sd">   space with ``--skip-duplicate-nodes``.</span>
+<span class="sd">3. **Reference analysis.** Every relationship endpoint that is NOT a node of this</span>
+<span class="sd">   increment must already exist in the served graph; a relationship whose BOTH endpoints</span>
+<span class="sd">   are external would be re-created on top of an existing one (incremental import cannot</span>
+<span class="sd">   dedup relationships), so it is reported as a blocker rather than silently duplicated.</span>
+<span class="sd">4. **Existing-edge filter (against the live store).** The increment re-emits the shared</span>
+<span class="sd">   context nodes its records use (genome, medium, temperature, an environment another</span>
+<span class="sd">   dataset already produced) together with THEIR relationships, e.g. medium -&gt; environment.</span>
+<span class="sd">   Those nodes are matched to the existing ones, but the relationships would be created</span>
+<span class="sd">   again (measured: ``MediaMemberOf`` and ``TemperatureMemberOf`` into a shared control</span>
+<span class="sd">   environment doubled in a dress rehearsal). ``filter_existing_edges`` looks every</span>
+<span class="sd">   relationship row up in the online store (through the ``Entity.id`` index) and rewrites</span>
+<span class="sd">   the edge part files without the rows that already exist, keeping the originals under</span>
+<span class="sd">   ``unfiltered/``. Run it after the constraint exists and before the database is</span>
+<span class="sd">   stopped.</span>
+
+<span class="sd">The import call mirrors the flags of the full build (tab delimiter, ``|`` array</span>
+<span class="sd">delimiter, single-quote quoting) with the two safety flags flipped: bad relationships</span>
+<span class="sd">ABORT the import (``--skip-bad-relationships=false --strict=true``) instead of being</span>
+<span class="sd">dropped, because a dangling endpoint means the analysis above was wrong. Duplicate node</span>
+<span class="sd">ids stay skipped (``--skip-duplicate-nodes=true``): a shared genome / media / temperature</span>
+<span class="sd">node that already exists is expected and must be left as is.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"CsvGroup"</span><span class="p">,</span>
+    <span class="s2">"ReferenceAnalysis"</span><span class="p">,</span>
+    <span class="s2">"IncrementalImportPlan"</span><span class="p">,</span>
+    <span class="s2">"discover_csv_groups"</span><span class="p">,</span>
+    <span class="s2">"incremental_node_header"</span><span class="p">,</span>
+    <span class="s2">"write_incremental_headers"</span><span class="p">,</span>
+    <span class="s2">"constraints_cypher"</span><span class="p">,</span>
+    <span class="s2">"analyze_references"</span><span class="p">,</span>
+    <span class="s2">"incremental_import_call"</span><span class="p">,</span>
+    <span class="s2">"prepare_incremental_import"</span><span class="p">,</span>
+    <span class="s2">"INCREMENTAL_CALL_FILENAME"</span><span class="p">,</span>
+    <span class="s2">"CONSTRAINTS_FILENAME"</span><span class="p">,</span>
+    <span class="s2">"REFERENCE_ANALYSIS_FILENAME"</span><span class="p">,</span>
+    <span class="s2">"EXISTING_EDGES_FILENAME"</span><span class="p">,</span>
+    <span class="s2">"ExistingEdgeFilter"</span><span class="p">,</span>
+    <span class="s2">"query_existing_edges"</span><span class="p">,</span>
+    <span class="s2">"filter_existing_edges"</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">INCREMENTAL_CALL_FILENAME</span> <span class="o">=</span> <span class="s2">"neo4j-admin-incremental-import-call.sh"</span>
+<span class="n">CONSTRAINTS_FILENAME</span> <span class="o">=</span> <span class="s2">"incremental-constraints.cypher"</span>
+<span class="n">REFERENCE_ANALYSIS_FILENAME</span> <span class="o">=</span> <span class="s2">"incremental-reference-analysis.json"</span>
+<span class="n">INCREMENTAL_HEADER_SUFFIX</span> <span class="o">=</span> <span class="s2">"-header.incremental.csv"</span>
+<span class="n">ID_LABEL</span> <span class="o">=</span> <span class="s2">"Entity"</span>
+<span class="sd">"""The label whose ``id`` uniqueness constraint keys the global id space."""</span>
+
+<span class="n">_DELIMITER</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\t</span><span class="s2">"</span>
+<span class="n">_QUOTE</span> <span class="o">=</span> <span class="s2">"'"</span>
+<span class="n">_HEADER_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^(?P&lt;label&gt;.+)-header\.csv$"</span><span class="p">)</span>
+<span class="n">_PART_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^(?P&lt;label&gt;.+)-part\d+\.csv$"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="CsvGroup">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.incremental_import.CsvGroup.html#torchcell.knowledge_graphs.incremental_import.CsvGroup">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CsvGroup</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One BioCypher label's files: a header plus its ``-partNNN.csv`` data files."""</span>
+
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># PascalCase as BioCypher names files, e.g. "Experiment"</span>
+    <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># "node" | "edge"</span>
+    <span class="n">header_path</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">part_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="ReferenceAnalysis">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.incremental_import.ReferenceAnalysis.html#torchcell.knowledge_graphs.incremental_import.ReferenceAnalysis">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReferenceAnalysis</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""What this increment's relationships point at, split by where the nodes live."""</span>
+
+    <span class="n">node_counts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>  <span class="c1"># label -&gt; rows in this increment</span>
+    <span class="n">edge_counts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>  <span class="c1"># type -&gt; rows in this increment</span>
+    <span class="n">n_node_ids</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># distinct node ids in this increment</span>
+    <span class="n">n_external_ids</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># endpoint ids that are NOT nodes of this increment</span>
+    <span class="n">external_ids_sample</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">n_edges_between_external</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># both endpoints external -&gt; would duplicate</span>
+    <span class="n">edges_between_external_sample</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_duplicate_edge_risk</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""True when a relationship joins two nodes that both already exist."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_edges_between_external</span> <span class="o">&gt;</span> <span class="mi">0</span></div>
+
+
+
+<div class="viewcode-block" id="IncrementalImportPlan">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.incremental_import.IncrementalImportPlan.html#torchcell.knowledge_graphs.incremental_import.IncrementalImportPlan">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">IncrementalImportPlan</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Everything written into a BioCypher output directory to make it incremental."""</span>
+
+    <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">database</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">call_script</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">constraints_file</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">reference_analysis_file</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">node_labels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">edge_types</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">analysis</span><span class="p">:</span> <span class="n">ReferenceAnalysis</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_header</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">_DELIMITER</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="discover_csv_groups">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.incremental_import.discover_csv_groups.html#torchcell.knowledge_graphs.incremental_import.discover_csv_groups">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">discover_csv_groups</span><span class="p">(</span><span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">CsvGroup</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Group a BioCypher output directory's files by label, sorted by label.</span>
+
+<span class="sd">    A header with a ``:ID`` column is a node file; one with ``:START_ID`` is an edge</span>
+<span class="sd">    file. A header with no part files is an error (BioCypher never writes one without</span>
+<span class="sd">    the other), as is a part file with no header.</span>
+<span class="sd">    """</span>
+    <span class="n">headers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">parts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">out_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()):</span>
+        <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">INCREMENTAL_HEADER_SUFFIX</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">m</span> <span class="o">:=</span> <span class="n">_HEADER_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">headers</span><span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"label"</span><span class="p">)]</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">m</span> <span class="o">:=</span> <span class="n">_PART_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"label"</span><span class="p">),</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">orphan_parts</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">headers</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">orphan_parts</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"part files without a header: </span><span class="si">{</span><span class="n">orphan_parts</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">groups</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CsvGroup</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">header_path</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">headers</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="k">if</span> <span class="n">label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"header without part files: </span><span class="si">{</span><span class="n">header_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="n">_read_header</span><span class="p">(</span><span class="n">header_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">":ID"</span> <span class="ow">in</span> <span class="n">columns</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">":ID"</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">):</span>
+            <span class="n">kind</span> <span class="o">=</span> <span class="s2">"node"</span>
+        <span class="k">elif</span> <span class="s2">":START_ID"</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
+            <span class="n">kind</span> <span class="o">=</span> <span class="s2">"edge"</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"header is neither node nor edge: </span><span class="si">{</span><span class="n">header_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">groups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">CsvGroup</span><span class="p">(</span>
+                <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+                <span class="n">kind</span><span class="o">=</span><span class="n">kind</span><span class="p">,</span>
+                <span class="n">header_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">header_path</span><span class="p">),</span>
+                <span class="n">part_paths</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">[</span><span class="n">label</span><span class="p">]],</span>
+                <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">groups</span></div>
+
+
+
+<div class="viewcode-block" id="incremental_node_header">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.incremental_import.incremental_node_header.html#torchcell.knowledge_graphs.incremental_import.incremental_node_header">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">incremental_node_header</span><span class="p">(</span><span class="n">columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Rewrite a BioCypher node header for incremental import.</span>
+
+<span class="sd">    ``:ID`` becomes ``id:ID{label:Entity}`` (the id is stored as property ``id`` and</span>
+<span class="sd">    matched through the global ``Entity.id`` uniqueness constraint; ``label`` names the</span>
+<span class="sd">    file only for error messages), and the separate ``id`` column becomes ``id:IGNORE``</span>
+<span class="sd">    so the property is not declared twice.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">columns</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">":ID"</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: expected exactly one ':ID' column, got </span><span class="si">{</span><span class="n">columns</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">columns</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">"id"</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: expected exactly one 'id' column, got </span><span class="si">{</span><span class="n">columns</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">column</span> <span class="o">==</span> <span class="s2">":ID"</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"id:ID</span><span class="se">{{</span><span class="s2">label:</span><span class="si">{</span><span class="n">ID_LABEL</span><span class="si">}</span><span class="se">}}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">column</span> <span class="o">==</span> <span class="s2">"id"</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"id:IGNORE"</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="write_incremental_headers">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.incremental_import.write_incremental_headers.html#torchcell.knowledge_graphs.incremental_import.write_incremental_headers">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_incremental_headers</span><span class="p">(</span><span class="n">groups</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CsvGroup</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Write ``&lt;Label&gt;-header.incremental.csv`` beside every node header; return them."""</span>
+    <span class="n">written</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">group</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="s2">"node"</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">header_path</span><span class="p">)</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">group</span><span class="o">.</span><span class="n">label</span><span class="si">}{</span><span class="n">INCREMENTAL_HEADER_SUFFIX</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">target</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
+            <span class="n">_DELIMITER</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">incremental_node_header</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">group</span><span class="o">.</span><span class="n">label</span><span class="p">))</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">written</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">target</span>
+    <span class="k">return</span> <span class="n">written</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_constraint_name</span><span class="p">(</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">snake</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(?&lt;!^)(?=[A-Z])"</span><span class="p">,</span> <span class="s2">"_"</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">snake</span><span class="si">}</span><span class="s2">_id_unique"</span>
+
+
+<div class="viewcode-block" id="constraints_cypher">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.incremental_import.constraints_cypher.html#torchcell.knowledge_graphs.incremental_import.constraints_cypher">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">constraints_cypher</span><span class="p">(</span><span class="n">id_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">ID_LABEL</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Cypher creating THE uniqueness constraint keying the global id space."""</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"CREATE CONSTRAINT </span><span class="si">{</span><span class="n">_constraint_name</span><span class="p">(</span><span class="n">id_label</span><span class="p">)</span><span class="si">}</span><span class="s2"> IF NOT EXISTS "</span>
+        <span class="sa">f</span><span class="s2">"FOR (n:</span><span class="si">{</span><span class="n">id_label</span><span class="si">}</span><span class="s2">) REQUIRE n.id IS UNIQUE;</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_assert_every_node_carries</span><span class="p">(</span><span class="n">groups</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CsvGroup</span><span class="p">],</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Every node row's ``:LABEL`` list must include ``label`` (the constraint's label)."""</span>
+    <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">group</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="s2">"node"</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">label_index</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">":LABEL"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">_iter_rows</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">part_paths</span><span class="p">):</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="n">_unquote</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">label_index</span><span class="p">])</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"|"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">group</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2"> row </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">!r}</span><span class="s2"> lacks the </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> label (</span><span class="si">{</span><span class="n">labels</span><span class="si">}</span><span class="s2">); "</span>
+                    <span class="s2">"it could not be matched through the global id constraint"</span>
+                <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_unquote</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">_QUOTE</span> <span class="ow">and</span> <span class="n">value</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">_QUOTE</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_iter_rows</span><span class="p">(</span><span class="n">part_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Stream the rows of a label's part files (a field can be a multi-MB JSON blob)."""</span>
+    <span class="c1"># An Experiment's serialized_data is the whole record (a pseudobulk expression</span>
+    <span class="c1"># record is ~1 MB), far above csv's 128 KiB default field limit.</span>
+    <span class="n">csv</span><span class="o">.</span><span class="n">field_size_limit</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">maxsize</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">part_paths</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">part</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span>
+                <span class="n">handle</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="n">_DELIMITER</span><span class="p">,</span> <span class="n">quotechar</span><span class="o">=</span><span class="n">_QUOTE</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+            <span class="k">yield from</span> <span class="n">reader</span>
+
+
+<div class="viewcode-block" id="analyze_references">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.incremental_import.analyze_references.html#torchcell.knowledge_graphs.incremental_import.analyze_references">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">analyze_references</span><span class="p">(</span><span class="n">groups</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CsvGroup</span><span class="p">],</span> <span class="n">sample</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReferenceAnalysis</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Count nodes/edges and find endpoints that lie outside this increment."""</span>
+    <span class="n">node_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">node_counts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">group</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="s2">"node"</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">id_index</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">":ID"</span><span class="p">)</span>
+        <span class="n">n_rows</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">_iter_rows</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">part_paths</span><span class="p">):</span>
+            <span class="n">n_rows</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">node_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_unquote</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">id_index</span><span class="p">]))</span>
+        <span class="n">node_counts</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">n_rows</span>
+
+    <span class="n">edge_counts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">external</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">between_external</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">n_between_external</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">group</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="s2">"edge"</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">start_index</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">":START_ID"</span><span class="p">)</span>
+        <span class="n">end_index</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">":END_ID"</span><span class="p">)</span>
+        <span class="n">n_rows</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">_iter_rows</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">part_paths</span><span class="p">):</span>
+            <span class="n">n_rows</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">_unquote</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">start_index</span><span class="p">]),</span> <span class="n">_unquote</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">end_index</span><span class="p">])</span>
+            <span class="n">start_ext</span><span class="p">,</span> <span class="n">end_ext</span> <span class="o">=</span> <span class="n">start</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node_ids</span><span class="p">,</span> <span class="n">end</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node_ids</span>
+            <span class="k">if</span> <span class="n">start_ext</span><span class="p">:</span>
+                <span class="n">external</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">end_ext</span><span class="p">:</span>
+                <span class="n">external</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">end</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">start_ext</span> <span class="ow">and</span> <span class="n">end_ext</span><span class="p">:</span>
+                <span class="n">n_between_external</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">between_external</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">sample</span><span class="p">:</span>
+                    <span class="n">between_external</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">group</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">])</span>
+        <span class="n">edge_counts</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">n_rows</span>
+    <span class="k">return</span> <span class="n">ReferenceAnalysis</span><span class="p">(</span>
+        <span class="n">node_counts</span><span class="o">=</span><span class="n">node_counts</span><span class="p">,</span>
+        <span class="n">edge_counts</span><span class="o">=</span><span class="n">edge_counts</span><span class="p">,</span>
+        <span class="n">n_node_ids</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">node_ids</span><span class="p">),</span>
+        <span class="n">n_external_ids</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">external</span><span class="p">),</span>
+        <span class="n">external_ids_sample</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">external</span><span class="p">)[:</span><span class="n">sample</span><span class="p">],</span>
+        <span class="n">n_edges_between_external</span><span class="o">=</span><span class="n">n_between_external</span><span class="p">,</span>
+        <span class="n">edges_between_external_sample</span><span class="o">=</span><span class="n">between_external</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="incremental_import_call">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.incremental_import.incremental_import_call.html#torchcell.knowledge_graphs.incremental_import.incremental_import_call">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">incremental_import_call</span><span class="p">(</span>
+    <span class="n">groups</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CsvGroup</span><span class="p">],</span>
+    <span class="n">headers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
+    <span class="n">database</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">bin_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"/var/lib/neo4j/bin/"</span><span class="p">,</span>
+    <span class="n">report_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">threads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
+    <span class="n">max_off_heap_memory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"16G"</span><span class="p">,</span>
+    <span class="n">bad_tolerance</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1_000_000_000</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The ``neo4j-admin database import incremental`` command for this increment.</span>
+
+<span class="sd">    Paths are used verbatim: the output directory is generated inside the container at</span>
+<span class="sd">    the same path the import runs from (``/var/lib/neo4j/biocypher-out/&lt;ts&gt;``). The</span>
+<span class="sd">    uniqueness constraints are NOT passed here (``--schema`` is unsupported for</span>
+<span class="sd">    incremental import); they are created on the online database beforehand. Threads</span>
+<span class="sd">    and off-heap memory are bounded because the import runs INSIDE the serving</span>
+<span class="sd">    container next to the (stopped-database, still running) Neo4j server.</span>
+<span class="sd">    """</span>
+    <span class="c1"># The database is the positional argument and goes FIRST: --nodes/--relationships</span>
+    <span class="c1"># take one-or-more files, so a trailing positional is swallowed as a file</span>
+    <span class="c1"># ("File 'torchcell' doesn't exist", measured).</span>
+    <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">bin_prefix</span><span class="si">}</span><span class="s2">neo4j-admin database import incremental </span><span class="si">{</span><span class="n">database</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="s2">"--force"</span><span class="p">,</span>
+        <span class="s2">"--verbose"</span><span class="p">,</span>
+        <span class="s1">'--delimiter="</span><span class="se">\\</span><span class="s1">t"'</span><span class="p">,</span>
+        <span class="s1">'--array-delimiter="|"'</span><span class="p">,</span>
+        <span class="s1">'--quote="</span><span class="se">\'</span><span class="s1">"'</span><span class="p">,</span>
+        <span class="s2">"--skip-duplicate-nodes=true"</span><span class="p">,</span>
+        <span class="s2">"--skip-bad-relationships=false"</span><span class="p">,</span>
+        <span class="s2">"--strict=true"</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"--threads=</span><span class="si">{</span><span class="n">threads</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"--max-off-heap-memory=</span><span class="si">{</span><span class="n">max_off_heap_memory</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="c1"># every node id that already exists in the store counts as a "bad entry" under</span>
+        <span class="c1"># --skip-duplicate-nodes; the default tolerance of 1000 aborts an increment that</span>
+        <span class="c1"># shares more than that many nodes with the store (measured: re-admitting a</span>
+        <span class="c1"># dataset already served died at 1008 duplicates), so the cap is lifted</span>
+        <span class="sa">f</span><span class="s2">"--bad-tolerance=</span><span class="si">{</span><span class="n">bad_tolerance</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">report_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"--report-file=</span><span class="si">{</span><span class="n">report_file</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">:</span>
+        <span class="n">directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">header_path</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span>
+        <span class="k">if</span> <span class="n">group</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"node"</span><span class="p">:</span>
+            <span class="n">header</span> <span class="o">=</span> <span class="n">headers</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">label</span><span class="p">]</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">'--nodes="</span><span class="si">{</span><span class="n">header</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">directory</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">group</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s1">-part.*"'</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'--relationships="</span><span class="si">{</span><span class="n">group</span><span class="o">.</span><span class="n">header_path</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">directory</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">group</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s1">-part.*"'</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="s2">" </span><span class="se">\\\n</span><span class="s2">    "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span></div>
+
+
+
+<div class="viewcode-block" id="prepare_incremental_import">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.incremental_import.prepare_incremental_import.html#torchcell.knowledge_graphs.incremental_import.prepare_incremental_import">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">prepare_incremental_import</span><span class="p">(</span>
+    <span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">database</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">bin_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"/var/lib/neo4j/bin/"</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IncrementalImportPlan</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Write headers, constraints, the call script and the analysis into ``out_dir``."""</span>
+    <span class="n">groups</span> <span class="o">=</span> <span class="n">discover_csv_groups</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
+    <span class="n">_assert_every_node_carries</span><span class="p">(</span><span class="n">groups</span><span class="p">,</span> <span class="n">ID_LABEL</span><span class="p">)</span>
+    <span class="n">headers</span> <span class="o">=</span> <span class="n">write_incremental_headers</span><span class="p">(</span><span class="n">groups</span><span class="p">)</span>
+    <span class="n">node_labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">g</span><span class="o">.</span><span class="n">label</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">groups</span> <span class="k">if</span> <span class="n">g</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"node"</span><span class="p">]</span>
+    <span class="n">edge_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">g</span><span class="o">.</span><span class="n">label</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">groups</span> <span class="k">if</span> <span class="n">g</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"edge"</span><span class="p">]</span>
+    <span class="n">constraints_file</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="n">CONSTRAINTS_FILENAME</span>
+    <span class="n">constraints_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">constraints_cypher</span><span class="p">(),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+    <span class="n">analysis</span> <span class="o">=</span> <span class="n">analyze_references</span><span class="p">(</span><span class="n">groups</span><span class="p">)</span>
+    <span class="n">analysis_file</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="n">REFERENCE_ANALYSIS_FILENAME</span>
+    <span class="n">analysis_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+    <span class="n">call</span> <span class="o">=</span> <span class="n">incremental_import_call</span><span class="p">(</span>
+        <span class="n">groups</span><span class="p">,</span>
+        <span class="n">headers</span><span class="p">,</span>
+        <span class="n">database</span><span class="p">,</span>
+        <span class="n">bin_prefix</span><span class="o">=</span><span class="n">bin_prefix</span><span class="p">,</span>
+        <span class="n">report_file</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">"incremental-import.report"</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">call_script</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="n">INCREMENTAL_CALL_FILENAME</span>
+    <span class="n">call_script</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">"#!/bin/bash</span><span class="se">\n</span><span class="s2">set -euo pipefail</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="n">call</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+    <span class="n">call_script</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="mo">0o755</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">IncrementalImportPlan</span><span class="p">(</span>
+        <span class="n">out_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">out_dir</span><span class="p">),</span>
+        <span class="n">database</span><span class="o">=</span><span class="n">database</span><span class="p">,</span>
+        <span class="n">call_script</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">call_script</span><span class="p">),</span>
+        <span class="n">constraints_file</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">constraints_file</span><span class="p">),</span>
+        <span class="n">reference_analysis_file</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">analysis_file</span><span class="p">),</span>
+        <span class="n">node_labels</span><span class="o">=</span><span class="n">node_labels</span><span class="p">,</span>
+        <span class="n">edge_types</span><span class="o">=</span><span class="n">edge_types</span><span class="p">,</span>
+        <span class="n">analysis</span><span class="o">=</span><span class="n">analysis</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------- existing-edge filter</span>
+
+<span class="n">EXISTING_EDGES_FILENAME</span> <span class="o">=</span> <span class="s2">"incremental-existing-edges.json"</span>
+<span class="n">UNFILTERED_DIRNAME</span> <span class="o">=</span> <span class="s2">"unfiltered"</span>
+
+
+<div class="viewcode-block" id="ExistingEdgeFilter">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.incremental_import.ExistingEdgeFilter.html#torchcell.knowledge_graphs.incremental_import.ExistingEdgeFilter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExistingEdgeFilter</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Outcome of dropping relationship rows that the served store already holds."""</span>
+
+    <span class="n">checked</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>  <span class="c1"># type -&gt; rows looked up</span>
+    <span class="n">existing</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>  <span class="c1"># type -&gt; rows dropped because they already exist</span>
+    <span class="n">sample</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>  <span class="c1"># [type, start, end]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">n_existing</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Total relationship rows dropped."""</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">existing</span><span class="o">.</span><span class="n">values</span><span class="p">())</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_edge_rows</span><span class="p">(</span><span class="n">group</span><span class="p">:</span> <span class="n">CsvGroup</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""``(start, end, raw row)`` for every row of an edge group's part files."""</span>
+    <span class="n">start_index</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">":START_ID"</span><span class="p">)</span>
+    <span class="n">end_index</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">":END_ID"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">group</span><span class="o">.</span><span class="n">part_paths</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">part</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">handle</span><span class="p">:</span>
+                <span class="n">fields</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">_DELIMITER</span><span class="p">)</span>
+                <span class="k">yield</span> <span class="n">_unquote</span><span class="p">(</span><span class="n">fields</span><span class="p">[</span><span class="n">start_index</span><span class="p">]),</span> <span class="n">_unquote</span><span class="p">(</span><span class="n">fields</span><span class="p">[</span><span class="n">end_index</span><span class="p">]),</span> <span class="n">line</span>
+
+
+<div class="viewcode-block" id="query_existing_edges">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.incremental_import.query_existing_edges.html#torchcell.knowledge_graphs.incremental_import.query_existing_edges">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">query_existing_edges</span><span class="p">(</span>
+    <span class="n">group</span><span class="p">:</span> <span class="n">CsvGroup</span><span class="p">,</span> <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span> <span class="n">session</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5000</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Which ``(start, end)`` pairs already carry a relationship of this group's type.</span>
+
+<span class="sd">    Uses the ``Entity.id`` uniqueness index on both endpoints, so a batch of a few</span>
+<span class="sd">    thousand lookups takes well under a second on the served store.</span>
+<span class="sd">    """</span>
+    <span class="n">existing</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">cypher</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"UNWIND $rows AS r "</span>
+        <span class="s2">"MATCH (a:Entity {id: r.s})-[x]-&gt;(b:Entity {id: r.e}) "</span>
+        <span class="s2">"WHERE type(x) = $t "</span>
+        <span class="s2">"RETURN DISTINCT r.s AS s, r.e AS e"</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">offset</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">):</span>
+        <span class="n">batch</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">"s"</span><span class="p">:</span> <span class="n">s</span><span class="p">,</span> <span class="s2">"e"</span><span class="p">:</span> <span class="n">e</span><span class="p">}</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">[</span><span class="n">offset</span> <span class="p">:</span> <span class="n">offset</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">]]</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cypher</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">batch</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="n">group</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+        <span class="n">existing</span><span class="o">.</span><span class="n">update</span><span class="p">((</span><span class="n">record</span><span class="p">[</span><span class="s2">"s"</span><span class="p">],</span> <span class="n">record</span><span class="p">[</span><span class="s2">"e"</span><span class="p">])</span> <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">result</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">existing</span></div>
+
+
+
+<div class="viewcode-block" id="filter_existing_edges">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.incremental_import.filter_existing_edges.html#torchcell.knowledge_graphs.incremental_import.filter_existing_edges">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">filter_existing_edges</span><span class="p">(</span>
+    <span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">lookup</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">CsvGroup</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]],</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExistingEdgeFilter</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Rewrite every edge part file without the rows ``lookup`` reports as existing.</span>
+
+<span class="sd">    ``lookup`` receives an edge group and its distinct ``(start, end)`` pairs and returns</span>
+<span class="sd">    the subset that already exists in the store (``query_existing_edges`` bound to a</span>
+<span class="sd">    session in production; any callable in tests). Originals are kept under an</span>
+<span class="sd">    ``unfiltered/`` subdirectory, and a JSON summary is written.</span>
+<span class="sd">    """</span>
+    <span class="n">groups</span> <span class="o">=</span> <span class="n">discover_csv_groups</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
+    <span class="n">checked</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">dropped</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">sample</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">group</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="s2">"edge"</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">pairs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">_edge_rows</span><span class="p">(</span><span class="n">group</span><span class="p">)})</span>
+        <span class="n">checked</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pairs</span><span class="p">)</span>
+        <span class="n">existing</span> <span class="o">=</span> <span class="n">lookup</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="n">pairs</span><span class="p">)</span> <span class="k">if</span> <span class="n">pairs</span> <span class="k">else</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">dropped</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">existing</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">group</span><span class="o">.</span><span class="n">part_paths</span><span class="p">:</span>
+            <span class="n">original</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">part</span><span class="p">)</span>
+            <span class="c1"># originals go to a SUBDIRECTORY: neo4j-admin globs `&lt;Type&gt;-part.*` as a</span>
+            <span class="c1"># regex, so a sibling `...csv.unfiltered` would be imported as well</span>
+            <span class="n">backup</span> <span class="o">=</span> <span class="n">original</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="n">UNFILTERED_DIRNAME</span> <span class="o">/</span> <span class="n">original</span><span class="o">.</span><span class="n">name</span>
+            <span class="n">backup</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">backup</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="n">original</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">backup</span><span class="p">)</span>
+            <span class="n">kept</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">start_index</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">":START_ID"</span><span class="p">)</span>
+            <span class="n">end_index</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">":END_ID"</span><span class="p">)</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">backup</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">handle</span><span class="p">:</span>
+                    <span class="n">fields</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">_DELIMITER</span><span class="p">)</span>
+                    <span class="n">pair</span> <span class="o">=</span> <span class="p">(</span><span class="n">_unquote</span><span class="p">(</span><span class="n">fields</span><span class="p">[</span><span class="n">start_index</span><span class="p">]),</span> <span class="n">_unquote</span><span class="p">(</span><span class="n">fields</span><span class="p">[</span><span class="n">end_index</span><span class="p">]))</span>
+                    <span class="k">if</span> <span class="n">pair</span> <span class="ow">in</span> <span class="n">existing</span><span class="p">:</span>
+                        <span class="n">dropped</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">label</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">20</span><span class="p">:</span>
+                            <span class="n">sample</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">group</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">pair</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pair</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+                        <span class="k">continue</span>
+                    <span class="n">kept</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="n">original</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">kept</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+    <span class="n">summary</span> <span class="o">=</span> <span class="n">ExistingEdgeFilter</span><span class="p">(</span><span class="n">checked</span><span class="o">=</span><span class="n">checked</span><span class="p">,</span> <span class="n">existing</span><span class="o">=</span><span class="n">dropped</span><span class="p">,</span> <span class="n">sample</span><span class="o">=</span><span class="n">sample</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="n">EXISTING_EDGES_FILENAME</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
+        <span class="n">summary</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">summary</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""CLI: ``filter-existing-edges`` against a live store (run before STOP DATABASE)."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">neo4j</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphDatabase</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.database.connection</span><span class="w"> </span><span class="kn">import</span> <span class="n">neo4j_connection_settings</span>
+
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="n">prog</span><span class="o">=</span><span class="s2">"python -m torchcell.knowledge_graphs.incremental_import"</span>
+    <span class="p">)</span>
+    <span class="n">sub</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">dest</span><span class="o">=</span><span class="s2">"command"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">p_filter</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"filter-existing-edges"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"drop relationship rows the served store already holds"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_filter</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--out-dir"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">p_filter</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--database"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">"torchcell"</span><span class="p">)</span>
+    <span class="n">p_filter</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--uri"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"bolt URI (default: NEO4J_URI)"</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
+
+    <span class="n">settings</span> <span class="o">=</span> <span class="n">neo4j_connection_settings</span><span class="p">()</span>
+    <span class="n">driver</span> <span class="o">=</span> <span class="n">GraphDatabase</span><span class="o">.</span><span class="n">driver</span><span class="p">(</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">uri</span> <span class="ow">or</span> <span class="n">settings</span><span class="o">.</span><span class="n">uri</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="n">settings</span><span class="o">.</span><span class="n">password</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">with</span> <span class="n">driver</span><span class="o">.</span><span class="n">session</span><span class="p">(</span><span class="n">database</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">database</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+        <span class="n">summary</span> <span class="o">=</span> <span class="n">filter_existing_edges</span><span class="p">(</span>
+            <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">out_dir</span><span class="p">),</span>
+            <span class="k">lambda</span> <span class="n">group</span><span class="p">,</span> <span class="n">pairs</span><span class="p">:</span> <span class="n">query_existing_edges</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="n">pairs</span><span class="p">,</span> <span class="n">session</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="n">driver</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"existing-edge filter: checked </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">summary</span><span class="o">.</span><span class="n">checked</span><span class="o">.</span><span class="n">values</span><span class="p">())</span><span class="si">}</span><span class="s2"> distinct "</span>
+        <span class="sa">f</span><span class="s2">"relationships, dropped </span><span class="si">{</span><span class="n">summary</span><span class="o">.</span><span class="n">n_existing</span><span class="si">}</span><span class="s2"> already in the store "</span>
+        <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s1">=</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s1">'</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">k</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">summary</span><span class="o">.</span><span class="n">existing</span><span class="o">.</span><span class="n">items</span><span class="p">()</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">v</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'none'</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="mi">0</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

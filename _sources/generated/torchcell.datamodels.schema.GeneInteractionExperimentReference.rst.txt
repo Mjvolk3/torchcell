@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.GeneInteractionExperimentReference
+==============================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: GeneInteractionExperimentReference
+   :show-inheritance:
+   :members:

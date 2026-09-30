@@ -1,0 +1,8 @@
+﻿torchcell.graph.SCerevisiaeGraph
+================================
+
+.. currentmodule:: torchcell.graph
+
+.. autoclass:: SCerevisiaeGraph
+   :show-inheritance:
+   :members:

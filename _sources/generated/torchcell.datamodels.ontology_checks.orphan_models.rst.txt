@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.ontology\_checks.orphan\_models
+====================================================
+
+.. currentmodule:: torchcell.datamodels.ontology_checks
+
+.. autofunction:: orphan_models

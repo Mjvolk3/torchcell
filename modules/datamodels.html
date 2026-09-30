@@ -1,0 +1,929 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datamodels &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/modules/datamodels.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="torchcell.datamodels.compound_identity.CompoundResolutionStatus" href="../generated/torchcell.datamodels.compound_identity.CompoundResolutionStatus.html" />
+    <link rel="prev" title="torchcell.database.tcdb.TCDB" href="../generated/torchcell.database.tcdb.TCDB.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">torchcell.database</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">torchcell.datamodels</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#compound-identity"><code class="docutils literal notranslate"><span class="pre">compound_identity</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#compound-identity-curate"><code class="docutils literal notranslate"><span class="pre">compound_identity_curate</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#conversion"><code class="docutils literal notranslate"><span class="pre">conversion</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fitness-composite-conversion"><code class="docutils literal notranslate"><span class="pre">fitness_composite_conversion</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gene-essentiality-to-fitness-conversion"><code class="docutils literal notranslate"><span class="pre">gene_essentiality_to_fitness_conversion</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#identity"><code class="docutils literal notranslate"><span class="pre">identity</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#media"><code class="docutils literal notranslate"><span class="pre">media</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ontology-checks"><code class="docutils literal notranslate"><span class="pre">ontology_checks</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pydant"><code class="docutils literal notranslate"><span class="pre">pydant</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#schema"><code class="docutils literal notranslate"><span class="pre">schema</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#synthetic-lethality-to-fitness-conversion"><code class="docutils literal notranslate"><span class="pre">synthetic_lethality_to_fitness_conversion</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">torchcell.datamodels</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/modules/datamodels.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-torchcell.datamodels">
+<span id="torchcell-datamodels"></span><h1>torchcell.datamodels<a class="headerlink" href="#module-torchcell.datamodels" title="Link to this heading"></a></h1>
+<p>The pydantic schema of a torchcell experiment. A record is a typed <code class="docutils literal notranslate"><span class="pre">genotype</span> <span class="pre">x</span> <span class="pre">environment</span> <span class="pre">-&gt;</span> <span class="pre">phenotype</span></code> experiment: <code class="docutils literal notranslate"><span class="pre">Genotype</span></code> holds a list of gene perturbations (for example <code class="docutils literal notranslate"><span class="pre">SgaKanMxDeletionPerturbation</span></code>), <code class="docutils literal notranslate"><span class="pre">Environment</span></code> holds the medium, an optional temperature and any environment perturbations, and each phenotype family (fitness, gene interaction, CalMorph morphology, microarray, RNA-seq and pseudobulk expression, metabolite, protein abundance, visual score, environment response and others) has its own phenotype, experiment and experiment-reference classes in <code class="docutils literal notranslate"><span class="pre">schema</span></code>. The classes derive from the strict bases in <code class="docutils literal notranslate"><span class="pre">pydant</span></code> (<code class="docutils literal notranslate"><span class="pre">ModelStrict</span></code> and <code class="docutils literal notranslate"><span class="pre">ModelStrictArbitrary</span></code>). Dataset loaders emit these objects, and the converter modules map one experiment type onto another (for example gene essentiality onto fitness). The package namespace re-exports a subset (<code class="docutils literal notranslate"><span class="pre">torchcell.datamodels.__all__</span></code>); every class below is listed under the module that defines it.</p>
+<nav class="contents local" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#compound-identity" id="id16"><code class="docutils literal notranslate"><span class="pre">compound_identity</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#classes" id="id17">Classes</a></p></li>
+<li><p><a class="reference internal" href="#functions" id="id18">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#compound-identity-curate" id="id19"><code class="docutils literal notranslate"><span class="pre">compound_identity_curate</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id1" id="id20">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id2" id="id21">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#conversion" id="id22"><code class="docutils literal notranslate"><span class="pre">conversion</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id3" id="id23">Classes</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#fitness-composite-conversion" id="id24"><code class="docutils literal notranslate"><span class="pre">fitness_composite_conversion</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id4" id="id25">Classes</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#gene-essentiality-to-fitness-conversion" id="id26"><code class="docutils literal notranslate"><span class="pre">gene_essentiality_to_fitness_conversion</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id5" id="id27">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id6" id="id28">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#identity" id="id29"><code class="docutils literal notranslate"><span class="pre">identity</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id7" id="id30">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#media" id="id31"><code class="docutils literal notranslate"><span class="pre">media</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id8" id="id32">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#ontology-checks" id="id33"><code class="docutils literal notranslate"><span class="pre">ontology_checks</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id9" id="id34">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id10" id="id35">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#pydant" id="id36"><code class="docutils literal notranslate"><span class="pre">pydant</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id11" id="id37">Classes</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#schema" id="id38"><code class="docutils literal notranslate"><span class="pre">schema</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id12" id="id39">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id13" id="id40">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#synthetic-lethality-to-fitness-conversion" id="id41"><code class="docutils literal notranslate"><span class="pre">synthetic_lethality_to_fitness_conversion</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id14" id="id42">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id15" id="id43">Functions</a></p></li>
+</ul>
+</li>
+</ul>
+</nav>
+<section id="compound-identity">
+<h2><a class="toc-backref" href="#id16" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">compound_identity</span></code></a><a class="headerlink" href="#compound-identity" title="Link to this heading"></a></h2>
+<p>Shared, pure, offline compound-identity resolver (UI-2).</p>
+<section id="classes">
+<h3><a class="toc-backref" href="#id17" role="doc-backlink">Classes</a><a class="headerlink" href="#classes" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.compound_identity.CompoundResolutionStatus.html#torchcell.datamodels.compound_identity.CompoundResolutionStatus" title="torchcell.datamodels.compound_identity.CompoundResolutionStatus"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compound_identity.CompoundResolutionStatus</span></code></a></p></td>
+<td><p>Typed outcome of a resolution attempt, ordered from usable to terminal.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.compound_identity.CompoundIdentityRecord.html#torchcell.datamodels.compound_identity.CompoundIdentityRecord" title="torchcell.datamodels.compound_identity.CompoundIdentityRecord"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compound_identity.CompoundIdentityRecord</span></code></a></p></td>
+<td><p>One row of the pinned name-&gt;structure table (JSON round-trips this natively).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.compound_identity.CompoundIdentityResolution.html#torchcell.datamodels.compound_identity.CompoundIdentityResolution" title="torchcell.datamodels.compound_identity.CompoundIdentityResolution"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compound_identity.CompoundIdentityResolution</span></code></a></p></td>
+<td><p>What a caller splats into <code class="docutils literal notranslate"><span class="pre">Compound</span></code> (only the identity-carrying fields).</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3><a class="toc-backref" href="#id18" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.compound_identity.normalize_compound_name.html#torchcell.datamodels.compound_identity.normalize_compound_name" title="torchcell.datamodels.compound_identity.normalize_compound_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compound_identity.normalize_compound_name</span></code></a></p></td>
+<td><p>Lowercase + strip + conservative synonym canonicalization (documented).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.compound_identity.resolve_compound_identity.html#torchcell.datamodels.compound_identity.resolve_compound_identity" title="torchcell.datamodels.compound_identity.resolve_compound_identity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compound_identity.resolve_compound_identity</span></code></a></p></td>
+<td><p>Resolve a compound identity from the pinned table -- pure, offline.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.compound_identity.inchikey_from_smiles.html#torchcell.datamodels.compound_identity.inchikey_from_smiles" title="torchcell.datamodels.compound_identity.inchikey_from_smiles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compound_identity.inchikey_from_smiles</span></code></a></p></td>
+<td><p>Derive a standard InChIKey from a SMILES with RDKit, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if it will not parse.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.compound_identity.resolve_compound_identity_from_smiles.html#torchcell.datamodels.compound_identity.resolve_compound_identity_from_smiles" title="torchcell.datamodels.compound_identity.resolve_compound_identity_from_smiles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compound_identity.resolve_compound_identity_from_smiles</span></code></a></p></td>
+<td><p>Resolve by name, falling back to the caller's SMILES ONLY when no row exists.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.compound_identity.resolved_compound.html#torchcell.datamodels.compound_identity.resolved_compound" title="torchcell.datamodels.compound_identity.resolved_compound"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compound_identity.resolved_compound</span></code></a></p></td>
+<td><p>Build a <code class="docutils literal notranslate"><span class="pre">Compound</span></code> fill-or-gap through the resolver (the loader entrypoint).</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="compound-identity-curate">
+<h2><a class="toc-backref" href="#id19" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">compound_identity_curate</span></code></a><a class="headerlink" href="#compound-identity-curate" title="Link to this heading"></a></h2>
+<p>Reproducible curator for the pinned compound-identity table (UI-2, serve-50).</p>
+<section id="id1">
+<h3><a class="toc-backref" href="#id20" role="doc-backlink">Classes</a><a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.compound_identity_curate.CurationDirective.html#torchcell.datamodels.compound_identity_curate.CurationDirective" title="torchcell.datamodels.compound_identity_curate.CurationDirective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compound_identity_curate.CurationDirective</span></code></a></p></td>
+<td><p>One parsed input line: a loader label plus how to resolve it.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.compound_identity_curate.PubChemProperty.html#torchcell.datamodels.compound_identity_curate.PubChemProperty" title="torchcell.datamodels.compound_identity_curate.PubChemProperty"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compound_identity_curate.PubChemProperty</span></code></a></p></td>
+<td><p>One row of a PUG REST <code class="docutils literal notranslate"><span class="pre">PropertyTable</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.compound_identity_curate.PubChemClient.html#torchcell.datamodels.compound_identity_curate.PubChemClient" title="torchcell.datamodels.compound_identity_curate.PubChemClient"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compound_identity_curate.PubChemClient</span></code></a></p></td>
+<td><p>Rate-limited PUG REST client with an on-disk response cache.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.compound_identity_curate.CuratedRow.html#torchcell.datamodels.compound_identity_curate.CuratedRow" title="torchcell.datamodels.compound_identity_curate.CuratedRow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compound_identity_curate.CuratedRow</span></code></a></p></td>
+<td><p>One assembled table row, before it is serialized to JSON.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id2">
+<h3><a class="toc-backref" href="#id21" role="doc-backlink">Functions</a><a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.compound_identity_curate.parse_line.html#torchcell.datamodels.compound_identity_curate.parse_line" title="torchcell.datamodels.compound_identity_curate.parse_line"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compound_identity_curate.parse_line</span></code></a></p></td>
+<td><p>Parse <code class="docutils literal notranslate"><span class="pre">LABEL</span> <span class="pre">[|</span> <span class="pre">key=value]...</span></code> into a typed directive.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.compound_identity_curate.read_name_list.html#torchcell.datamodels.compound_identity_curate.read_name_list" title="torchcell.datamodels.compound_identity_curate.read_name_list"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compound_identity_curate.read_name_list</span></code></a></p></td>
+<td><p>Parse an input list of labels (comments and blank lines skipped).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.compound_identity_curate.read_cid_list.html#torchcell.datamodels.compound_identity_curate.read_cid_list" title="torchcell.datamodels.compound_identity_curate.read_cid_list"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compound_identity_curate.read_cid_list</span></code></a></p></td>
+<td><p>Parse an input list of bare PubChem CIDs (one per line).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.compound_identity_curate.name_property_url.html#torchcell.datamodels.compound_identity_curate.name_property_url" title="torchcell.datamodels.compound_identity_curate.name_property_url"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compound_identity_curate.name_property_url</span></code></a></p></td>
+<td><p>The canonical single-name GET endpoint (also the row's recorded <code class="docutils literal notranslate"><span class="pre">source_url</span></code>).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.compound_identity_curate.cid_property_url.html#torchcell.datamodels.compound_identity_curate.cid_property_url" title="torchcell.datamodels.compound_identity_curate.cid_property_url"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compound_identity_curate.cid_property_url</span></code></a></p></td>
+<td><p>The canonical single-CID GET endpoint that reproduces one batched row.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.compound_identity_curate.synonyms_url.html#torchcell.datamodels.compound_identity_curate.synonyms_url" title="torchcell.datamodels.compound_identity_curate.synonyms_url"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compound_identity_curate.synonyms_url</span></code></a></p></td>
+<td><p>The canonical single-CID synonyms endpoint (the ChEBI source).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.compound_identity_curate.assemble.html#torchcell.datamodels.compound_identity_curate.assemble" title="torchcell.datamodels.compound_identity_curate.assemble"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compound_identity_curate.assemble</span></code></a></p></td>
+<td><p>Collapse directives + PubChem answers into deduplicated, canonical rows.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.compound_identity_curate.serialize.html#torchcell.datamodels.compound_identity_curate.serialize" title="torchcell.datamodels.compound_identity_curate.serialize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compound_identity_curate.serialize</span></code></a></p></td>
+<td><p>Deterministic table bytes (sorted keys, stable indent, trailing newline).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.compound_identity_curate.curate.html#torchcell.datamodels.compound_identity_curate.curate" title="torchcell.datamodels.compound_identity_curate.curate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compound_identity_curate.curate</span></code></a></p></td>
+<td><p>Read the input lists, query PubChem, and assemble the rows.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="conversion">
+<h2><a class="toc-backref" href="#id22" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">conversion</span></code></a><a class="headerlink" href="#conversion" title="Link to this heading"></a></h2>
+<p>Convert raw Neo4j experiment records into typed experiments stored in LMDB.</p>
+<section id="id3">
+<h3><a class="toc-backref" href="#id23" role="doc-backlink">Classes</a><a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.conversion.ConversionEntry.html#torchcell.datamodels.conversion.ConversionEntry" title="torchcell.datamodels.conversion.ConversionEntry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">conversion.ConversionEntry</span></code></a></p></td>
+<td><p>One input/output type pair plus its conversion functions.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.conversion.ConversionMap.html#torchcell.datamodels.conversion.ConversionMap" title="torchcell.datamodels.conversion.ConversionMap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">conversion.ConversionMap</span></code></a></p></td>
+<td><p>Collection of conversion entries defining how to map experiment types.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.conversion.Converter.html#torchcell.datamodels.conversion.Converter" title="torchcell.datamodels.conversion.Converter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">conversion.Converter</span></code></a></p></td>
+<td><p>Abstract base that converts queried records and caches them in LMDB.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="fitness-composite-conversion">
+<h2><a class="toc-backref" href="#id24" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">fitness_composite_conversion</span></code></a><a class="headerlink" href="#fitness-composite-conversion" title="Link to this heading"></a></h2>
+<p>Converter that maps gene essentiality and synthetic lethality data into fitness.</p>
+<section id="id4">
+<h3><a class="toc-backref" href="#id25" role="doc-backlink">Classes</a><a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.fitness_composite_conversion.CompositeFitnessConverter.html#torchcell.datamodels.fitness_composite_conversion.CompositeFitnessConverter" title="torchcell.datamodels.fitness_composite_conversion.CompositeFitnessConverter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fitness_composite_conversion.CompositeFitnessConverter</span></code></a></p></td>
+<td><p>Converter combining gene essentiality and synthetic lethality to fitness.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="gene-essentiality-to-fitness-conversion">
+<h2><a class="toc-backref" href="#id26" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">gene_essentiality_to_fitness_conversion</span></code></a><a class="headerlink" href="#gene-essentiality-to-fitness-conversion" title="Link to this heading"></a></h2>
+<p>Convert gene-essentiality experiments into equivalent fitness experiments.</p>
+<section id="id5">
+<h3><a class="toc-backref" href="#id27" role="doc-backlink">Classes</a><a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.gene_essentiality_to_fitness_conversion.GeneEssentialityToFitnessConverter.html#torchcell.datamodels.gene_essentiality_to_fitness_conversion.GeneEssentialityToFitnessConverter" title="torchcell.datamodels.gene_essentiality_to_fitness_conversion.GeneEssentialityToFitnessConverter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gene_essentiality_to_fitness_conversion.GeneEssentialityToFitnessConverter</span></code></a></p></td>
+<td><p>Converter turning gene-essentiality records into fitness records.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id6">
+<h3><a class="toc-backref" href="#id28" role="doc-backlink">Functions</a><a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.gene_essentiality_to_fitness_conversion.gene_essentiality_to_fitness_experiment.html#torchcell.datamodels.gene_essentiality_to_fitness_conversion.gene_essentiality_to_fitness_experiment" title="torchcell.datamodels.gene_essentiality_to_fitness_conversion.gene_essentiality_to_fitness_experiment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gene_essentiality_to_fitness_conversion.gene_essentiality_to_fitness_experiment</span></code></a></p></td>
+<td><p>Map an essential gene to a zero-fitness experiment, else drop it.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.gene_essentiality_to_fitness_conversion.gene_essentiality_to_fitness_reference.html#torchcell.datamodels.gene_essentiality_to_fitness_conversion.gene_essentiality_to_fitness_reference" title="torchcell.datamodels.gene_essentiality_to_fitness_conversion.gene_essentiality_to_fitness_reference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gene_essentiality_to_fitness_conversion.gene_essentiality_to_fitness_reference</span></code></a></p></td>
+<td><p>Build the wild-type (fitness 1.0) reference for the fitness dataset.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="identity">
+<h2><a class="toc-backref" href="#id29" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">identity</span></code></a><a class="headerlink" href="#identity" title="Link to this heading"></a></h2>
+<p>Composition-based identity for the environment-side entities of the graph.</p>
+<section id="id7">
+<h3><a class="toc-backref" href="#id30" role="doc-backlink">Functions</a><a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.identity.compound_identity_key.html#torchcell.datamodels.identity.compound_identity_key" title="torchcell.datamodels.identity.compound_identity_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">identity.compound_identity_key</span></code></a></p></td>
+<td><p>The join key for a compound, as <code class="docutils literal notranslate"><span class="pre">&quot;&lt;field&gt;:&lt;value&gt;&quot;</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.identity.media_identity.html#torchcell.datamodels.identity.media_identity" title="torchcell.datamodels.identity.media_identity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">identity.media_identity</span></code></a></p></td>
+<td><p>Project a medium onto its composition: state, synthetic flag, base, contents.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.identity.temperature_identity.html#torchcell.datamodels.identity.temperature_identity" title="torchcell.datamodels.identity.temperature_identity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">identity.temperature_identity</span></code></a></p></td>
+<td><p>Project a temperature onto its value and typed unit (no unit conversion).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.identity.environment_perturbation_identity.html#torchcell.datamodels.identity.environment_perturbation_identity" title="torchcell.datamodels.identity.environment_perturbation_identity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">identity.environment_perturbation_identity</span></code></a></p></td>
+<td><p>Project an environment perturbation onto its typed slots.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.identity.environment_identity.html#torchcell.datamodels.identity.environment_identity" title="torchcell.datamodels.identity.environment_identity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">identity.environment_identity</span></code></a></p></td>
+<td><p>Project an environment onto medium, temperature, edits, oxygen and duration.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.identity.identity_sha256.html#torchcell.datamodels.identity.identity_sha256" title="torchcell.datamodels.identity.identity_sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">identity.identity_sha256</span></code></a></p></td>
+<td><p>Hash an identity projection: sha256 over its canonical JSON encoding.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="media">
+<h2><a class="toc-backref" href="#id31" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">media</span></code></a><a class="headerlink" href="#media" title="Link to this heading"></a></h2>
+<p>Reusable, provenance-first definitions of the common growth media.</p>
+<section id="id8">
+<h3><a class="toc-backref" href="#id32" role="doc-backlink">Functions</a><a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.media.dropout.html#torchcell.datamodels.media.dropout" title="torchcell.datamodels.media.dropout"><code class="xref py py-obj docutils literal notranslate"><span class="pre">media.dropout</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">base</span></code> with the named compounds moved from <code class="docutils literal notranslate"><span class="pre">components</span></code> into <code class="docutils literal notranslate"><span class="pre">dropouts</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="ontology-checks">
+<h2><a class="toc-backref" href="#id33" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">ontology_checks</span></code></a><a class="headerlink" href="#ontology-checks" title="Link to this heading"></a></h2>
+<p>Programmatic coherence checks over the torchcell ontology.</p>
+<section id="id9">
+<h3><a class="toc-backref" href="#id34" role="doc-backlink">Classes</a><a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.AdapterNodeSite.html#torchcell.datamodels.ontology_checks.AdapterNodeSite" title="torchcell.datamodels.ontology_checks.AdapterNodeSite"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.AdapterNodeSite</span></code></a></p></td>
+<td><p>One <code class="docutils literal notranslate"><span class="pre">BioCypherNode(...)</span></code> construction in <code class="docutils literal notranslate"><span class="pre">cell_adapter.py</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.PropertyMismatch.html#torchcell.datamodels.ontology_checks.PropertyMismatch" title="torchcell.datamodels.ontology_checks.PropertyMismatch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.PropertyMismatch</span></code></a></p></td>
+<td><p>A node class whose emitted properties differ from its declared properties.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.OptionalTraversal.html#torchcell.datamodels.ontology_checks.OptionalTraversal" title="torchcell.datamodels.ontology_checks.OptionalTraversal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.OptionalTraversal</span></code></a></p></td>
+<td><p>An adapter attribute chain that walks THROUGH a field the schema may null.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.PhenotypeLabelMap.html#torchcell.datamodels.ontology_checks.PhenotypeLabelMap" title="torchcell.datamodels.ontology_checks.PhenotypeLabelMap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.PhenotypeLabelMap</span></code></a></p></td>
+<td><p>Bijection between concrete phenotype classes and phenotype node classes.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.CompoundIdentityIssue.html#torchcell.datamodels.ontology_checks.CompoundIdentityIssue" title="torchcell.datamodels.ontology_checks.CompoundIdentityIssue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.CompoundIdentityIssue</span></code></a></p></td>
+<td><p>A <code class="docutils literal notranslate"><span class="pre">Compound</span></code> that is neither identified nor honestly gapped.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.MediaBaseIssue.html#torchcell.datamodels.ontology_checks.MediaBaseIssue" title="torchcell.datamodels.ontology_checks.MediaBaseIssue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.MediaBaseIssue</span></code></a></p></td>
+<td><p>A <code class="docutils literal notranslate"><span class="pre">Media.base_medium</span></code> that names nothing in <code class="docutils literal notranslate"><span class="pre">MEDIA_LIBRARY</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.MediaDerivationIssue.html#torchcell.datamodels.ontology_checks.MediaDerivationIssue" title="torchcell.datamodels.ontology_checks.MediaDerivationIssue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.MediaDerivationIssue</span></code></a></p></td>
+<td><p>A derived medium that dropped a base component without declaring a dropout.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.EnvironmentCompoundCollision.html#torchcell.datamodels.ontology_checks.EnvironmentCompoundCollision" title="torchcell.datamodels.ontology_checks.EnvironmentCompoundCollision"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.EnvironmentCompoundCollision</span></code></a></p></td>
+<td><p>One compound encoded twice in an environment: as a component AND as an edit.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.JoinKeyCensus.html#torchcell.datamodels.ontology_checks.JoinKeyCensus" title="torchcell.datamodels.ontology_checks.JoinKeyCensus"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.JoinKeyCensus</span></code></a></p></td>
+<td><p>How many records of a built dataset are joinable on each identity key.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id10">
+<h3><a class="toc-backref" href="#id35" role="doc-backlink">Functions</a><a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.schema_models.html#torchcell.datamodels.ontology_checks.schema_models" title="torchcell.datamodels.ontology_checks.schema_models"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.schema_models</span></code></a></p></td>
+<td><p>Every pydantic model DEFINED in <code class="docutils literal notranslate"><span class="pre">schema.py</span></code> (not merely imported).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.schema_enums.html#torchcell.datamodels.ontology_checks.schema_enums" title="torchcell.datamodels.ontology_checks.schema_enums"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.schema_enums</span></code></a></p></td>
+<td><p>Every enum DEFINED in <code class="docutils literal notranslate"><span class="pre">schema.py</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.composition_targets.html#torchcell.datamodels.ontology_checks.composition_targets" title="torchcell.datamodels.ontology_checks.composition_targets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.composition_targets</span></code></a></p></td>
+<td><p>Schema models this model COMPOSES (holds in one of its fields).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.experiment_closure.html#torchcell.datamodels.ontology_checks.experiment_closure" title="torchcell.datamodels.ontology_checks.experiment_closure"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.experiment_closure</span></code></a></p></td>
+<td><p>Models reachable from <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> / <code class="docutils literal notranslate"><span class="pre">ExperimentReference</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.orphan_models.html#torchcell.datamodels.ontology_checks.orphan_models" title="torchcell.datamodels.ontology_checks.orphan_models"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.orphan_models</span></code></a></p></td>
+<td><p>Schema models no experiment record can ever reach, sorted by name.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.lane_membership.html#torchcell.datamodels.ontology_checks.lane_membership" title="torchcell.datamodels.ontology_checks.lane_membership"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.lane_membership</span></code></a></p></td>
+<td><p>The three record lanes, each closed under inheritance AND composition.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.lane_back_edges.html#torchcell.datamodels.ontology_checks.lane_back_edges" title="torchcell.datamodels.ontology_checks.lane_back_edges"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.lane_back_edges</span></code></a></p></td>
+<td><p>Composition edges pointing UP from a lane into the experiment lane.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.sourced_value_fields.html#torchcell.datamodels.ontology_checks.sourced_value_fields" title="torchcell.datamodels.ontology_checks.sourced_value_fields"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.sourced_value_fields</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Model.field</span> <span class="pre">-&gt;</span> <span class="pre">rendered</span> <span class="pre">annotation</span></code> for every field carrying SourcedValue.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.enum_value_collisions.html#torchcell.datamodels.ontology_checks.enum_value_collisions" title="torchcell.datamodels.ontology_checks.enum_value_collisions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.enum_value_collisions</span></code></a></p></td>
+<td><p>Schema enums whose members share a value (a silent Python alias).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.graph_schema.html#torchcell.datamodels.ontology_checks.graph_schema" title="torchcell.datamodels.ontology_checks.graph_schema"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.graph_schema</span></code></a></p></td>
+<td><p>The committed BioCypher graph schema, parsed into per-class entries.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.cell_adapter_source.html#torchcell.datamodels.ontology_checks.cell_adapter_source" title="torchcell.datamodels.ontology_checks.cell_adapter_source"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.cell_adapter_source</span></code></a></p></td>
+<td><p>The <code class="docutils literal notranslate"><span class="pre">CellAdapter</span></code> module source (read as text; never imported for this).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.isolated_graph_node_classes.html#torchcell.datamodels.ontology_checks.isolated_graph_node_classes" title="torchcell.datamodels.ontology_checks.isolated_graph_node_classes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.isolated_graph_node_classes</span></code></a></p></td>
+<td><p>Node classes no edge class connects (invisible to any traversal query).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.phenotype_label_map.html#torchcell.datamodels.ontology_checks.phenotype_label_map" title="torchcell.datamodels.ontology_checks.phenotype_label_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.phenotype_label_map</span></code></a></p></td>
+<td><p>Match each phenotype node class to its concrete pydantic phenotype class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.adapter_node_sites.html#torchcell.datamodels.ontology_checks.adapter_node_sites" title="torchcell.datamodels.ontology_checks.adapter_node_sites"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.adapter_node_sites</span></code></a></p></td>
+<td><p>Every <code class="docutils literal notranslate"><span class="pre">BioCypherNode(...)</span></code> the adapter constructs, with what it emits.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.adapter_property_mismatches.html#torchcell.datamodels.ontology_checks.adapter_property_mismatches" title="torchcell.datamodels.ontology_checks.adapter_property_mismatches"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.adapter_property_mismatches</span></code></a></p></td>
+<td><p>Node classes where emitted properties != declared properties, either way.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.adapter_optional_traversals.html#torchcell.datamodels.ontology_checks.adapter_optional_traversals" title="torchcell.datamodels.ontology_checks.adapter_optional_traversals"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.adapter_optional_traversals</span></code></a></p></td>
+<td><p>Adapter chains that dereference THROUGH a schema field that may be None.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.compound_has_identity.html#torchcell.datamodels.ontology_checks.compound_has_identity" title="torchcell.datamodels.ontology_checks.compound_has_identity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.compound_has_identity</span></code></a></p></td>
+<td><p>True when the compound carries at least one structure identifier.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.compound_has_identity_gap.html#torchcell.datamodels.ontology_checks.compound_has_identity_gap" title="torchcell.datamodels.ontology_checks.compound_has_identity_gap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.compound_has_identity_gap</span></code></a></p></td>
+<td><p>True when an identifier's absence is declared as a typed <code class="docutils literal notranslate"><span class="pre">ProvenanceGap</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.media_library_compound_issues.html#torchcell.datamodels.ontology_checks.media_library_compound_issues" title="torchcell.datamodels.ontology_checks.media_library_compound_issues"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.media_library_compound_issues</span></code></a></p></td>
+<td><p>Shared-library compounds that are neither identified nor honestly gapped.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.media_base_issues.html#torchcell.datamodels.ontology_checks.media_base_issues" title="torchcell.datamodels.ontology_checks.media_base_issues"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.media_base_issues</span></code></a></p></td>
+<td><p>Library media whose <code class="docutils literal notranslate"><span class="pre">base_medium</span></code> names no member of <code class="docutils literal notranslate"><span class="pre">MEDIA_LIBRARY</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.media_derivation_issues.html#torchcell.datamodels.ontology_checks.media_derivation_issues" title="torchcell.datamodels.ontology_checks.media_derivation_issues"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.media_derivation_issues</span></code></a></p></td>
+<td><p>Derived media that silently lost a base component.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.environment_compound_collisions.html#torchcell.datamodels.ontology_checks.environment_compound_collisions" title="torchcell.datamodels.ontology_checks.environment_compound_collisions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.environment_compound_collisions</span></code></a></p></td>
+<td><p>Compounds encoded twice in one environment: as a component AND as an edit.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.ontology_checks.join_key_audit.html#torchcell.datamodels.ontology_checks.join_key_audit" title="torchcell.datamodels.ontology_checks.join_key_audit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ontology_checks.join_key_audit</span></code></a></p></td>
+<td><p>Census of the identity keys a built dataset actually carries.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="pydant">
+<h2><a class="toc-backref" href="#id36" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">pydant</span></code></a><a class="headerlink" href="#pydant" title="Link to this heading"></a></h2>
+<p>Strict Pydantic base models used across torchcell data schemas.</p>
+<section id="id11">
+<h3><a class="toc-backref" href="#id37" role="doc-backlink">Classes</a><a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.pydant.ModelStrict.html#torchcell.datamodels.pydant.ModelStrict" title="torchcell.datamodels.pydant.ModelStrict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pydant.ModelStrict</span></code></a></p></td>
+<td><p>Base model that forbids extra fields and is immutable.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.pydant.ModelStrictArbitrary.html#torchcell.datamodels.pydant.ModelStrictArbitrary" title="torchcell.datamodels.pydant.ModelStrictArbitrary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pydant.ModelStrictArbitrary</span></code></a></p></td>
+<td><p>Strict immutable model that also permits arbitrary field types.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="schema">
+<h2><a class="toc-backref" href="#id38" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">schema</span></code></a><a class="headerlink" href="#schema" title="Link to this heading"></a></h2>
+<p>Pydantic data models for torchcell genotypes, environments, and phenotypes.</p>
+<section id="id12">
+<h3><a class="toc-backref" href="#id39" role="doc-backlink">Classes</a><a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.ReferenceGenome.html#torchcell.datamodels.schema.ReferenceGenome" title="torchcell.datamodels.schema.ReferenceGenome"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.ReferenceGenome</span></code></a></p></td>
+<td><p>Reference genome identified by species and strain.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SOTerm.html#torchcell.datamodels.schema.SOTerm" title="torchcell.datamodels.schema.SOTerm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SOTerm</span></code></a></p></td>
+<td><p>A Sequence Ontology term: a <code class="docutils literal notranslate"><span class="pre">SO:NNNNNNN</span></code> id paired with its name.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.GenePerturbation.html#torchcell.datamodels.schema.GenePerturbation" title="torchcell.datamodels.schema.GenePerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.GenePerturbation</span></code></a></p></td>
+<td><p>Base perturbation of a single gene by systematic and common name.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.PresenceAbsencePerturbation.html#torchcell.datamodels.schema.PresenceAbsencePerturbation" title="torchcell.datamodels.schema.PresenceAbsencePerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.PresenceAbsencePerturbation</span></code></a></p></td>
+<td><p>AXIS 1 -- a gene is PRESENT or ABSENT relative to the reference.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SequencePerturbation.html#torchcell.datamodels.schema.SequencePerturbation" title="torchcell.datamodels.schema.SequencePerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SequencePerturbation</span></code></a></p></td>
+<td><p>AXIS 3 -- a sequence-level allelic change (SNP/indel/substitution allele).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.ExpressionRangeMultiplier.html#torchcell.datamodels.schema.ExpressionRangeMultiplier" title="torchcell.datamodels.schema.ExpressionRangeMultiplier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.ExpressionRangeMultiplier</span></code></a></p></td>
+<td><p>Min/max multiplier bounds on a gene's expression level.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.CrisprConstruct.html#torchcell.datamodels.schema.CrisprConstruct" title="torchcell.datamodels.schema.CrisprConstruct"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.CrisprConstruct</span></code></a></p></td>
+<td><p>The engineered CRISPR machinery introduced to perturb a gene -- a first-class MATERIAL ENTITY (the guide RNA + Cas effector we actually put in the cell).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.DeletionPerturbation.html#torchcell.datamodels.schema.DeletionPerturbation" title="torchcell.datamodels.schema.DeletionPerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.DeletionPerturbation</span></code></a></p></td>
+<td><p>Gene deletion via KanMX or NatMX gene replacement (engineered absence).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.KanMxDeletionPerturbation.html#torchcell.datamodels.schema.KanMxDeletionPerturbation" title="torchcell.datamodels.schema.KanMxDeletionPerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.KanMxDeletionPerturbation</span></code></a></p></td>
+<td><p>Gene deletion via KanMX gene replacement.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.BarcodedKanMxDeletionPerturbation.html#torchcell.datamodels.schema.BarcodedKanMxDeletionPerturbation" title="torchcell.datamodels.schema.BarcodedKanMxDeletionPerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.BarcodedKanMxDeletionPerturbation</span></code></a></p></td>
+<td><p>A KanMX deletion strain that carries the molecular barcode it was screened by.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.NatMxDeletionPerturbation.html#torchcell.datamodels.schema.NatMxDeletionPerturbation" title="torchcell.datamodels.schema.NatMxDeletionPerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.NatMxDeletionPerturbation</span></code></a></p></td>
+<td><p>Gene deletion via NatMX gene replacement.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SgaKanMxDeletionPerturbation.html#torchcell.datamodels.schema.SgaKanMxDeletionPerturbation" title="torchcell.datamodels.schema.SgaKanMxDeletionPerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SgaKanMxDeletionPerturbation</span></code></a></p></td>
+<td><p>KanMX deletion perturbation specific to SGA experiments.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SgaNatMxDeletionPerturbation.html#torchcell.datamodels.schema.SgaNatMxDeletionPerturbation" title="torchcell.datamodels.schema.SgaNatMxDeletionPerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SgaNatMxDeletionPerturbation</span></code></a></p></td>
+<td><p>NatMX deletion perturbation specific to SGA experiments.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.DampPerturbation.html#torchcell.datamodels.schema.DampPerturbation" title="torchcell.datamodels.schema.DampPerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.DampPerturbation</span></code></a></p></td>
+<td><p>Decreased-abundance-by-mRNA-perturbation (DAmP) allele perturbation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SgaDampPerturbation.html#torchcell.datamodels.schema.SgaDampPerturbation" title="torchcell.datamodels.schema.SgaDampPerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SgaDampPerturbation</span></code></a></p></td>
+<td><p>DAmP perturbation specific to SGA experiments.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.TsAllelePerturbation.html#torchcell.datamodels.schema.TsAllelePerturbation" title="torchcell.datamodels.schema.TsAllelePerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.TsAllelePerturbation</span></code></a></p></td>
+<td><p>Temperature-sensitive allele perturbation via amino acid substitution.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.AllelePerturbation.html#torchcell.datamodels.schema.AllelePerturbation" title="torchcell.datamodels.schema.AllelePerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.AllelePerturbation</span></code></a></p></td>
+<td><p>Generic allele perturbation via amino acid substitution.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SuppressorAllelePerturbation.html#torchcell.datamodels.schema.SuppressorAllelePerturbation" title="torchcell.datamodels.schema.SuppressorAllelePerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SuppressorAllelePerturbation</span></code></a></p></td>
+<td><p>Suppressor allele that raises fitness in the presence of a perturbation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SgaSuppressorAllelePerturbation.html#torchcell.datamodels.schema.SgaSuppressorAllelePerturbation" title="torchcell.datamodels.schema.SgaSuppressorAllelePerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SgaSuppressorAllelePerturbation</span></code></a></p></td>
+<td><p>Suppressor allele perturbation specific to SGA experiments.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SgaTsAllelePerturbation.html#torchcell.datamodels.schema.SgaTsAllelePerturbation" title="torchcell.datamodels.schema.SgaTsAllelePerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SgaTsAllelePerturbation</span></code></a></p></td>
+<td><p>Temperature-sensitive allele perturbation specific to SGA experiments.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SgaAllelePerturbation.html#torchcell.datamodels.schema.SgaAllelePerturbation" title="torchcell.datamodels.schema.SgaAllelePerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SgaAllelePerturbation</span></code></a></p></td>
+<td><p>Generic allele perturbation specific to SGA experiments.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.MeanDeletionPerturbation.html#torchcell.datamodels.schema.MeanDeletionPerturbation" title="torchcell.datamodels.schema.MeanDeletionPerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.MeanDeletionPerturbation</span></code></a></p></td>
+<td><p>Deletion perturbation aggregating duplicate experiments by their mean.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.MarkerDeletionPerturbation.html#torchcell.datamodels.schema.MarkerDeletionPerturbation" title="torchcell.datamodels.schema.MarkerDeletionPerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.MarkerDeletionPerturbation</span></code></a></p></td>
+<td><p>Gene deletion via a selectable/auxotrophic marker other than KanMX or NatMX.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.CrisprDeletionPerturbation.html#torchcell.datamodels.schema.CrisprDeletionPerturbation" title="torchcell.datamodels.schema.CrisprDeletionPerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.CrisprDeletionPerturbation</span></code></a></p></td>
+<td><p>Gene deletion via an ACTIVE Cas nuclease cut repaired from a homology donor.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.GeneAdditionPerturbation.html#torchcell.datamodels.schema.GeneAdditionPerturbation" title="torchcell.datamodels.schema.GeneAdditionPerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.GeneAdditionPerturbation</span></code></a></p></td>
+<td><p>Gain-of-function: a gene ADDED to the strain (heterologous expression or an extra native copy), carried on a plasmid or integrated at a chromosomal locus.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.NaturalGeneAbsencePerturbation.html#torchcell.datamodels.schema.NaturalGeneAbsencePerturbation" title="torchcell.datamodels.schema.NaturalGeneAbsencePerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.NaturalGeneAbsencePerturbation</span></code></a></p></td>
+<td><p>A reference (core) gene ABSENT in a natural isolate (Caudal core-loss).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.NaturalGenePresencePerturbation.html#torchcell.datamodels.schema.NaturalGenePresencePerturbation" title="torchcell.datamodels.schema.NaturalGenePresencePerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.NaturalGenePresencePerturbation</span></code></a></p></td>
+<td><p>A non-reference (accessory) gene PRESENT in a natural isolate (Caudal accessory).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SequenceVariantPerturbation.html#torchcell.datamodels.schema.SequenceVariantPerturbation" title="torchcell.datamodels.schema.SequenceVariantPerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SequenceVariantPerturbation</span></code></a></p></td>
+<td><p>SNP/indel-level allelic variation: a native gene whose sequence in this strain differs from the S288C reference, captured via an off-graph pointer.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.CopyNumberVariantPerturbation.html#torchcell.datamodels.schema.CopyNumberVariantPerturbation" title="torchcell.datamodels.schema.CopyNumberVariantPerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.CopyNumberVariantPerturbation</span></code></a></p></td>
+<td><p>Copy-number variation (CNV) of a PRESENT pangenome ORF relative to S288C.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.EngineeredCopyNumberPerturbation.html#torchcell.datamodels.schema.EngineeredCopyNumberPerturbation" title="torchcell.datamodels.schema.EngineeredCopyNumberPerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.EngineeredCopyNumberPerturbation</span></code></a></p></td>
+<td><p>An ENGINEERED copy-number/dosage change of a PRESENT native gene.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.ExpressionModulationPerturbation.html#torchcell.datamodels.schema.ExpressionModulationPerturbation" title="torchcell.datamodels.schema.ExpressionModulationPerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.ExpressionModulationPerturbation</span></code></a></p></td>
+<td><p>AXIS 4 (ABC) -- engineered expression modulation of a present gene.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.CrisprActivationPerturbation.html#torchcell.datamodels.schema.CrisprActivationPerturbation" title="torchcell.datamodels.schema.CrisprActivationPerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.CrisprActivationPerturbation</span></code></a></p></td>
+<td><p>CRISPRa -- guide-directed dead-Cas activator INCREASES a present gene's expression.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.CrisprInterferencePerturbation.html#torchcell.datamodels.schema.CrisprInterferencePerturbation" title="torchcell.datamodels.schema.CrisprInterferencePerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.CrisprInterferencePerturbation</span></code></a></p></td>
+<td><p>CRISPRi -- guide-directed dead-Cas repressor DECREASES a present gene's expression.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.Genotype.html#torchcell.datamodels.schema.Genotype" title="torchcell.datamodels.schema.Genotype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.Genotype</span></code></a></p></td>
+<td><p>Collection of gene perturbations defining a strain's genotype.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.TemperatureUnit.html#torchcell.datamodels.schema.TemperatureUnit" title="torchcell.datamodels.schema.TemperatureUnit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.TemperatureUnit</span></code></a></p></td>
+<td><p>UO-aligned temperature units (typed, not a free string) -- G2 unit typing.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.Temperature.html#torchcell.datamodels.schema.Temperature" title="torchcell.datamodels.schema.Temperature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.Temperature</span></code></a></p></td>
+<td><p>Temperature value with a typed unit (defaults to Celsius).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.ConcentrationUnit.html#torchcell.datamodels.schema.ConcentrationUnit" title="torchcell.datamodels.schema.ConcentrationUnit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.ConcentrationUnit</span></code></a></p></td>
+<td><p>UO-aligned units for a dose / physical-factor magnitude (G2 unit typing).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.DoseBasis.html#torchcell.datamodels.schema.DoseBasis" title="torchcell.datamodels.schema.DoseBasis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.DoseBasis</span></code></a></p></td>
+<td><p>How a dose was SET when the molar value is not released (dose PROVENANCE, not a phenotypic consequence): a target-inhibition endpoint or an explicit fixed dose.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.PhysicalFactor.html#torchcell.datamodels.schema.PhysicalFactor" title="torchcell.datamodels.schema.PhysicalFactor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.PhysicalFactor</span></code></a></p></td>
+<td><p>A neutral, scalar physical/physiological environment variable.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.ProvenanceGapMixin.html#torchcell.datamodels.schema.ProvenanceGapMixin" title="torchcell.datamodels.schema.ProvenanceGapMixin"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.ProvenanceGapMixin</span></code></a></p></td>
+<td><p>Mixin giving a model a <code class="docutils literal notranslate"><span class="pre">provenance_gaps</span></code> list of typed field-absences.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.Compound.html#torchcell.datamodels.schema.Compound" title="torchcell.datamodels.schema.Compound"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.Compound</span></code></a></p></td>
+<td><p>Chemical identity of a small molecule, keyed by a canonical InChIKey.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.Concentration.html#torchcell.datamodels.schema.Concentration" title="torchcell.datamodels.schema.Concentration"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.Concentration</span></code></a></p></td>
+<td><p>A dose of an environmental agent: a numeric value+unit and/or a target-basis.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.Solvent.html#torchcell.datamodels.schema.Solvent" title="torchcell.datamodels.schema.Solvent"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.Solvent</span></code></a></p></td>
+<td><p>The vehicle a compound was dissolved in and its final fraction in the medium.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.MediaComponentRole.html#torchcell.datamodels.schema.MediaComponentRole" title="torchcell.datamodels.schema.MediaComponentRole"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.MediaComponentRole</span></code></a></p></td>
+<td><p>Functional role of a medium component (never a phenotypic consequence).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.ComponentDefinition.html#torchcell.datamodels.schema.ComponentDefinition" title="torchcell.datamodels.schema.ComponentDefinition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.ComponentDefinition</span></code></a></p></td>
+<td><p>Identity/composition completeness of a component (the 'what is it' axis).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.MediaComponent.html#torchcell.datamodels.schema.MediaComponent" title="torchcell.datamodels.schema.MediaComponent"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.MediaComponent</span></code></a></p></td>
+<td><p>One ingredient of a medium: a (possibly undefined) compound at a dose.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.Media.html#torchcell.datamodels.schema.Media" title="torchcell.datamodels.schema.Media"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.Media</span></code></a></p></td>
+<td><p>Growth medium resolved to typed COMPONENTS (provenance-first).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.EnvironmentPerturbation.html#torchcell.datamodels.schema.EnvironmentPerturbation" title="torchcell.datamodels.schema.EnvironmentPerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.EnvironmentPerturbation</span></code></a></p></td>
+<td><p>Base: a defined change to the growth environment vs the base medium.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SmallMoleculePerturbation.html#torchcell.datamodels.schema.SmallMoleculePerturbation" title="torchcell.datamodels.schema.SmallMoleculePerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SmallMoleculePerturbation</span></code></a></p></td>
+<td><p>An added chemical SPECIES (drug, acid, alcohol, salt, oxidant, ...).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.EnvironmentPhysicalPerturbation.html#torchcell.datamodels.schema.EnvironmentPhysicalPerturbation" title="torchcell.datamodels.schema.EnvironmentPhysicalPerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.EnvironmentPhysicalPerturbation</span></code></a></p></td>
+<td><p>A neutral, scalar physical/physiological environment FACTOR (pH, osmolarity, ...).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.BiologicAgentClass.html#torchcell.datamodels.schema.BiologicAgentClass" title="torchcell.datamodels.schema.BiologicAgentClass"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.BiologicAgentClass</span></code></a></p></td>
+<td><p>Material class of a proteinaceous / biologic agent added to the medium.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.BiologicPerturbation.html#torchcell.datamodels.schema.BiologicPerturbation" title="torchcell.datamodels.schema.BiologicPerturbation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.BiologicPerturbation</span></code></a></p></td>
+<td><p>An added BIOLOGIC agent (peptide / protein / antibody / toxin).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.Environment.html#torchcell.datamodels.schema.Environment" title="torchcell.datamodels.schema.Environment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.Environment</span></code></a></p></td>
+<td><p>Experimental environment: base medium + temperature + optional perturbations.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.Phenotype.html#torchcell.datamodels.schema.Phenotype" title="torchcell.datamodels.schema.Phenotype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.Phenotype</span></code></a></p></td>
+<td><p>Base phenotype describing an observed label and its graph level.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.UncertaintyType.html#torchcell.datamodels.schema.UncertaintyType" title="torchcell.datamodels.schema.UncertaintyType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.UncertaintyType</span></code></a></p></td>
+<td><p>What a reported uncertainty number IS, so it converts to an SE correctly.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SampleUnit.html#torchcell.datamodels.schema.SampleUnit" title="torchcell.datamodels.schema.SampleUnit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SampleUnit</span></code></a></p></td>
+<td><p>What one sample in <code class="docutils literal notranslate"><span class="pre">n_samples</span></code> physically is.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.FitnessPhenotype.html#torchcell.datamodels.schema.FitnessPhenotype" title="torchcell.datamodels.schema.FitnessPhenotype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.FitnessPhenotype</span></code></a></p></td>
+<td><p>Fitness phenotype with fitness value and uncertainty statistics.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.GeneEssentialityPhenotype.html#torchcell.datamodels.schema.GeneEssentialityPhenotype" title="torchcell.datamodels.schema.GeneEssentialityPhenotype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.GeneEssentialityPhenotype</span></code></a></p></td>
+<td><p>Phenotype indicating whether a gene knockout is lethal.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SyntheticLethalityPhenotype.html#torchcell.datamodels.schema.SyntheticLethalityPhenotype" title="torchcell.datamodels.schema.SyntheticLethalityPhenotype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SyntheticLethalityPhenotype</span></code></a></p></td>
+<td><p>Phenotype indicating synthetic lethality between perturbed genes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SyntheticRescuePhenotype.html#torchcell.datamodels.schema.SyntheticRescuePhenotype" title="torchcell.datamodels.schema.SyntheticRescuePhenotype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SyntheticRescuePhenotype</span></code></a></p></td>
+<td><p>Phenotype indicating one perturbation rescues another's deleterious effect.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.GeneInteractionPhenotype.html#torchcell.datamodels.schema.GeneInteractionPhenotype" title="torchcell.datamodels.schema.GeneInteractionPhenotype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.GeneInteractionPhenotype</span></code></a></p></td>
+<td><p>Phenotype holding a gene interaction score and its p-value.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.CalMorphPhenotype.html#torchcell.datamodels.schema.CalMorphPhenotype" title="torchcell.datamodels.schema.CalMorphPhenotype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.CalMorphPhenotype</span></code></a></p></td>
+<td><p>Phenotype holding CalMorph morphological measurements and CV statistics.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.Publication.html#torchcell.datamodels.schema.Publication" title="torchcell.datamodels.schema.Publication"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.Publication</span></code></a></p></td>
+<td><p>Publication reference identified by PubMed ID and/or DOI.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.ExperimentReference.html#torchcell.datamodels.schema.ExperimentReference" title="torchcell.datamodels.schema.ExperimentReference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.ExperimentReference</span></code></a></p></td>
+<td><p>Reference (wildtype/control) context for an experiment.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.Experiment.html#torchcell.datamodels.schema.Experiment" title="torchcell.datamodels.schema.Experiment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.Experiment</span></code></a></p></td>
+<td><p>Base experiment pairing a genotype and environment with a phenotype.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.FitnessExperimentReference.html#torchcell.datamodels.schema.FitnessExperimentReference" title="torchcell.datamodels.schema.FitnessExperimentReference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.FitnessExperimentReference</span></code></a></p></td>
+<td><p>Reference context for a fitness experiment.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.FitnessExperiment.html#torchcell.datamodels.schema.FitnessExperiment" title="torchcell.datamodels.schema.FitnessExperiment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.FitnessExperiment</span></code></a></p></td>
+<td><p>Experiment measuring a fitness phenotype.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.GeneInteractionExperimentReference.html#torchcell.datamodels.schema.GeneInteractionExperimentReference" title="torchcell.datamodels.schema.GeneInteractionExperimentReference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.GeneInteractionExperimentReference</span></code></a></p></td>
+<td><p>Reference context for a gene interaction experiment.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.GeneInteractionExperiment.html#torchcell.datamodels.schema.GeneInteractionExperiment" title="torchcell.datamodels.schema.GeneInteractionExperiment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.GeneInteractionExperiment</span></code></a></p></td>
+<td><p>Experiment measuring a gene interaction phenotype.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.GeneEssentialityExperimentReference.html#torchcell.datamodels.schema.GeneEssentialityExperimentReference" title="torchcell.datamodels.schema.GeneEssentialityExperimentReference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.GeneEssentialityExperimentReference</span></code></a></p></td>
+<td><p>Reference context for a gene essentiality experiment.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.GeneEssentialityExperiment.html#torchcell.datamodels.schema.GeneEssentialityExperiment" title="torchcell.datamodels.schema.GeneEssentialityExperiment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.GeneEssentialityExperiment</span></code></a></p></td>
+<td><p>Experiment measuring a gene essentiality phenotype.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SyntheticLethalityExperimentReference.html#torchcell.datamodels.schema.SyntheticLethalityExperimentReference" title="torchcell.datamodels.schema.SyntheticLethalityExperimentReference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SyntheticLethalityExperimentReference</span></code></a></p></td>
+<td><p>Reference context for a synthetic lethality experiment.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SyntheticLethalityExperiment.html#torchcell.datamodels.schema.SyntheticLethalityExperiment" title="torchcell.datamodels.schema.SyntheticLethalityExperiment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SyntheticLethalityExperiment</span></code></a></p></td>
+<td><p>Experiment measuring a synthetic lethality phenotype.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SyntheticRescueExperimentReference.html#torchcell.datamodels.schema.SyntheticRescueExperimentReference" title="torchcell.datamodels.schema.SyntheticRescueExperimentReference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SyntheticRescueExperimentReference</span></code></a></p></td>
+<td><p>Reference context for a synthetic rescue experiment.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SyntheticRescueExperiment.html#torchcell.datamodels.schema.SyntheticRescueExperiment" title="torchcell.datamodels.schema.SyntheticRescueExperiment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SyntheticRescueExperiment</span></code></a></p></td>
+<td><p>Experiment measuring a synthetic rescue phenotype.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.CalMorphExperimentReference.html#torchcell.datamodels.schema.CalMorphExperimentReference" title="torchcell.datamodels.schema.CalMorphExperimentReference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.CalMorphExperimentReference</span></code></a></p></td>
+<td><p>Reference context for a CalMorph experiment.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.CalMorphExperiment.html#torchcell.datamodels.schema.CalMorphExperiment" title="torchcell.datamodels.schema.CalMorphExperiment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.CalMorphExperiment</span></code></a></p></td>
+<td><p>Experiment measuring a CalMorph phenotype.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.MicroarrayExpressionPhenotype.html#torchcell.datamodels.schema.MicroarrayExpressionPhenotype" title="torchcell.datamodels.schema.MicroarrayExpressionPhenotype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.MicroarrayExpressionPhenotype</span></code></a></p></td>
+<td><p>Microarray expression phenotype with canonical log2 ratio convention.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.MicroarrayExpressionExperimentReference.html#torchcell.datamodels.schema.MicroarrayExpressionExperimentReference" title="torchcell.datamodels.schema.MicroarrayExpressionExperimentReference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.MicroarrayExpressionExperimentReference</span></code></a></p></td>
+<td><p>Reference context for a microarray expression experiment.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.MicroarrayExpressionExperiment.html#torchcell.datamodels.schema.MicroarrayExpressionExperiment" title="torchcell.datamodels.schema.MicroarrayExpressionExperiment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.MicroarrayExpressionExperiment</span></code></a></p></td>
+<td><p>Experiment measuring a microarray expression phenotype.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.RNASeqExpressionPhenotype.html#torchcell.datamodels.schema.RNASeqExpressionPhenotype" title="torchcell.datamodels.schema.RNASeqExpressionPhenotype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.RNASeqExpressionPhenotype</span></code></a></p></td>
+<td><p>NGS (RNA-seq) expression phenotype: ABSOLUTE per-gene expression, not a ratio.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.RNASeqExpressionExperimentReference.html#torchcell.datamodels.schema.RNASeqExpressionExperimentReference" title="torchcell.datamodels.schema.RNASeqExpressionExperimentReference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.RNASeqExpressionExperimentReference</span></code></a></p></td>
+<td><p>Reference context for an RNA-seq expression experiment.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.RNASeqExpressionExperiment.html#torchcell.datamodels.schema.RNASeqExpressionExperiment" title="torchcell.datamodels.schema.RNASeqExpressionExperiment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.RNASeqExpressionExperiment</span></code></a></p></td>
+<td><p>Experiment measuring an RNA-seq (absolute TPM) expression phenotype.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.PseudobulkExpressionPhenotype.html#torchcell.datamodels.schema.PseudobulkExpressionPhenotype" title="torchcell.datamodels.schema.PseudobulkExpressionPhenotype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.PseudobulkExpressionPhenotype</span></code></a></p></td>
+<td><p>Pseudobulk single-cell RNA-seq expression: per-gene log2 fold-change vs WT, plus the per-genotype single-cell summary scalars that a bulk assay cannot provide.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.PseudobulkExpressionExperimentReference.html#torchcell.datamodels.schema.PseudobulkExpressionExperimentReference" title="torchcell.datamodels.schema.PseudobulkExpressionExperimentReference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.PseudobulkExpressionExperimentReference</span></code></a></p></td>
+<td><p>Reference context for a pseudobulk single-cell expression experiment.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.PseudobulkExpressionExperiment.html#torchcell.datamodels.schema.PseudobulkExpressionExperiment" title="torchcell.datamodels.schema.PseudobulkExpressionExperiment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.PseudobulkExpressionExperiment</span></code></a></p></td>
+<td><p>Experiment measuring a pseudobulk single-cell (Perturb-seq) expression phenotype.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.VisualScorePhenotype.html#torchcell.datamodels.schema.VisualScorePhenotype" title="torchcell.datamodels.schema.VisualScorePhenotype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.VisualScorePhenotype</span></code></a></p></td>
+<td><p>Ordinal visual-inspection score as a proxy for a metabolite/product level.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.VisualScoreExperimentReference.html#torchcell.datamodels.schema.VisualScoreExperimentReference" title="torchcell.datamodels.schema.VisualScoreExperimentReference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.VisualScoreExperimentReference</span></code></a></p></td>
+<td><p>Reference (control colony) context for a visual-score experiment.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.VisualScoreExperiment.html#torchcell.datamodels.schema.VisualScoreExperiment" title="torchcell.datamodels.schema.VisualScoreExperiment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.VisualScoreExperiment</span></code></a></p></td>
+<td><p>Experiment measuring a visual-score phenotype.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.MetabolitePhenotype.html#torchcell.datamodels.schema.MetabolitePhenotype" title="torchcell.datamodels.schema.MetabolitePhenotype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.MetabolitePhenotype</span></code></a></p></td>
+<td><p>Quantitative metabolite/product level(s), keyed by metabolite id.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.MetaboliteExperimentReference.html#torchcell.datamodels.schema.MetaboliteExperimentReference" title="torchcell.datamodels.schema.MetaboliteExperimentReference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.MetaboliteExperimentReference</span></code></a></p></td>
+<td><p>Reference (control) context for a metabolite experiment.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.MetaboliteExperiment.html#torchcell.datamodels.schema.MetaboliteExperiment" title="torchcell.datamodels.schema.MetaboliteExperiment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.MetaboliteExperiment</span></code></a></p></td>
+<td><p>Experiment measuring a metabolite phenotype.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.ProteinAbundancePhenotype.html#torchcell.datamodels.schema.ProteinAbundancePhenotype" title="torchcell.datamodels.schema.ProteinAbundancePhenotype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.ProteinAbundancePhenotype</span></code></a></p></td>
+<td><p>Quantitative protein-abundance profile keyed by protein (systematic ORF).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.ProteinAbundanceExperimentReference.html#torchcell.datamodels.schema.ProteinAbundanceExperimentReference" title="torchcell.datamodels.schema.ProteinAbundanceExperimentReference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.ProteinAbundanceExperimentReference</span></code></a></p></td>
+<td><p>Reference (control) context for a protein-abundance experiment.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.ProteinAbundanceExperiment.html#torchcell.datamodels.schema.ProteinAbundanceExperiment" title="torchcell.datamodels.schema.ProteinAbundanceExperiment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.ProteinAbundanceExperiment</span></code></a></p></td>
+<td><p>Experiment measuring a protein-abundance phenotype.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.AssayType.html#torchcell.datamodels.schema.AssayType" title="torchcell.datamodels.schema.AssayType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.AssayType</span></code></a></p></td>
+<td><p>HOW an environment-response readout was physically measured (experimental design).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.MeasurementType.html#torchcell.datamodels.schema.MeasurementType" title="torchcell.datamodels.schema.MeasurementType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.MeasurementType</span></code></a></p></td>
+<td><p>What an environment-response readout number IS, so heterogeneous chemogenomic scores are never silently compared.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.ResponseCategory.html#torchcell.datamodels.schema.ResponseCategory" title="torchcell.datamodels.schema.ResponseCategory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.ResponseCategory</span></code></a></p></td>
+<td><p>The controlled vocabulary a qualitative environment-response call resolves to.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.EnvironmentResponsePhenotype.html#torchcell.datamodels.schema.EnvironmentResponsePhenotype" title="torchcell.datamodels.schema.EnvironmentResponsePhenotype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.EnvironmentResponsePhenotype</span></code></a></p></td>
+<td><p>A strain's fitness/growth RESPONSE to an environmental perturbation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.EnvironmentResponseExperimentReference.html#torchcell.datamodels.schema.EnvironmentResponseExperimentReference" title="torchcell.datamodels.schema.EnvironmentResponseExperimentReference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.EnvironmentResponseExperimentReference</span></code></a></p></td>
+<td><p>Reference (control) context for an environment-response experiment.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.EnvironmentResponseExperiment.html#torchcell.datamodels.schema.EnvironmentResponseExperiment" title="torchcell.datamodels.schema.EnvironmentResponseExperiment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.EnvironmentResponseExperiment</span></code></a></p></td>
+<td><p>Experiment measuring a strain's response to an environmental perturbation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.HaplotypeBlock.html#torchcell.datamodels.schema.HaplotypeBlock" title="torchcell.datamodels.schema.HaplotypeBlock"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.HaplotypeBlock</span></code></a></p></td>
+<td><p>One run of consecutive markers called to the same parent on one chromosome.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SegregantParent.html#torchcell.datamodels.schema.SegregantParent" title="torchcell.datamodels.schema.SegregantParent"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SegregantParent</span></code></a></p></td>
+<td><p>One parent of a biparental cross, pinned to a sha256-anchored assembly.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SegregantGenotype.html#torchcell.datamodels.schema.SegregantGenotype" title="torchcell.datamodels.schema.SegregantGenotype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SegregantGenotype</span></code></a></p></td>
+<td><p>Strain-level haplotype mosaic of one haploid segregant from a two-parent cross.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SegregantGrowthExperimentReference.html#torchcell.datamodels.schema.SegregantGrowthExperimentReference" title="torchcell.datamodels.schema.SegregantGrowthExperimentReference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SegregantGrowthExperimentReference</span></code></a></p></td>
+<td><p>Reference (control) context for a segregant growth experiment.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SegregantGrowthExperiment.html#torchcell.datamodels.schema.SegregantGrowthExperiment" title="torchcell.datamodels.schema.SegregantGrowthExperiment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SegregantGrowthExperiment</span></code></a></p></td>
+<td><p>Growth of a haploid segregant (haplotype-mosaic genotype) in one environment.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id13">
+<h3><a class="toc-backref" href="#id40" role="doc-backlink">Functions</a><a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.derive_se.html#torchcell.datamodels.schema.derive_se" title="torchcell.datamodels.schema.derive_se"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.derive_se</span></code></a></p></td>
+<td><p>Derive the standard error of the mean from a reported uncertainty + its kind.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="synthetic-lethality-to-fitness-conversion">
+<h2><a class="toc-backref" href="#id41" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">synthetic_lethality_to_fitness_conversion</span></code></a><a class="headerlink" href="#synthetic-lethality-to-fitness-conversion" title="Link to this heading"></a></h2>
+<p>Convert synthetic-lethality experiments into equivalent fitness experiments.</p>
+<section id="id14">
+<h3><a class="toc-backref" href="#id42" role="doc-backlink">Classes</a><a class="headerlink" href="#id14" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.synthetic_lethality_to_fitness_conversion.SyntheticLethalityToFitnessConverter.html#torchcell.datamodels.synthetic_lethality_to_fitness_conversion.SyntheticLethalityToFitnessConverter" title="torchcell.datamodels.synthetic_lethality_to_fitness_conversion.SyntheticLethalityToFitnessConverter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">synthetic_lethality_to_fitness_conversion.SyntheticLethalityToFitnessConverter</span></code></a></p></td>
+<td><p>Converter turning synthetic-lethality records into fitness records.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id15">
+<h3><a class="toc-backref" href="#id43" role="doc-backlink">Functions</a><a class="headerlink" href="#id15" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.synthetic_lethality_to_fitness_conversion.synthetic_lethality_to_fitness_experiment.html#torchcell.datamodels.synthetic_lethality_to_fitness_conversion.synthetic_lethality_to_fitness_experiment" title="torchcell.datamodels.synthetic_lethality_to_fitness_conversion.synthetic_lethality_to_fitness_experiment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">synthetic_lethality_to_fitness_conversion.synthetic_lethality_to_fitness_experiment</span></code></a></p></td>
+<td><p>Map a synthetic-lethal experiment to a fitness-0 experiment, else drop it.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.synthetic_lethality_to_fitness_conversion.synthetic_lethality_to_fitness_reference.html#torchcell.datamodels.synthetic_lethality_to_fitness_conversion.synthetic_lethality_to_fitness_reference" title="torchcell.datamodels.synthetic_lethality_to_fitness_conversion.synthetic_lethality_to_fitness_reference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">synthetic_lethality_to_fitness_conversion.synthetic_lethality_to_fitness_reference</span></code></a></p></td>
+<td><p>Map a synthetic-lethality reference to a fitness-1 reference experiment.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../generated/torchcell.database.tcdb.TCDB.html" class="btn btn-neutral float-left" title="torchcell.database.tcdb.TCDB" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../generated/torchcell.datamodels.compound_identity.CompoundResolutionStatus.html" class="btn btn-neutral float-right" title="torchcell.datamodels.compound_identity.CompoundResolutionStatus" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

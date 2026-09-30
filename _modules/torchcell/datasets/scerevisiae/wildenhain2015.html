@@ -1,0 +1,1056 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datasets.scerevisiae.wildenhain2015 &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/datasets/scerevisiae/wildenhain2015.html" />
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html">
+            
+              <img src="../../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.datasets.scerevisiae.wildenhain2015</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.datasets.scerevisiae.wildenhain2015</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/datasets/scerevisiae/wildenhain2015</span>
+<span class="c1"># [[torchcell.datasets.scerevisiae.wildenhain2015]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/wildenhain2015</span>
+<span class="c1"># Test file: tests/torchcell/datasets/scerevisiae/test_wildenhain2015.py</span>
+<span class="sd">"""Wildenhain 2015 chemical-genetic matrix (CGM): env x geno -&gt; z-score response.</span>
+
+<span class="sd">Wildenhain et al. 2015 (Cell Systems, doi:10.1016/j.cels.2015.12.003) screened a panel of</span>
+<span class="sd">haploid non-essential S. cerevisiae deletion strains (Euroscarf collection, isogenic to</span>
+<span class="sd">BY4741) against thousands of compounds from four chemical libraries at a single 20 uM</span>
+<span class="sd">screening concentration, reading out growth inhibition as a normalized-OD600 Z-score. This</span>
+<span class="sd">loader builds ONLY the chemical-genetic matrix (strain x compound -&gt; z-score); the separate</span>
+<span class="sd">128x128 cryptagen chemical-chemical synergy layer is out of scope.</span>
+
+<span class="sd">Every screened strain is one haploid gene replacement in BY4741 (NOT a HIP/HOP engineered</span>
+<span class="sd">heterozygote), so there is no engineered-dosage complication. The paper's "195 sentinel</span>
+<span class="sd">strains" is a dataset-level selection note whose roster is in the unmirrored Table S3; the</span>
+<span class="sd">RELEASED data covers 242 distinct systematic ORFs, all current R64 genes, and all 242 are</span>
+<span class="sd">served.</span>
+
+<span class="sd">DATA SOURCE. PubChem BioAssay AID 1159580 (the paper's ACCESSION NUMBERS section; the</span>
+<span class="sd">chemgrid.org/cgm portal is an interactive PHP site with no bulk export). Two artifacts are</span>
+<span class="sd">mirrored and sha256-pinned: the per-AID datapoint export ``1159580.csv.gz``, read out of the</span>
+<span class="sd">byte-stable NCBI FTP range archive with the container's OWN sha256 asserted first</span>
+<span class="sd">(``zip_member``), and the AID's PUG-REST description JSON, which is the only source for the</span>
+<span class="sd">screening protocol's medium, temperature, incubation, replicate structure and column</span>
+<span class="sd">definitions. Both are read from the raw mirror at build time; the URLs are retrieval</span>
+<span class="sd">metadata, not live dependencies.</span>
+
+<span class="sd">WHAT THE NUMBER IS. The stored response is the released per-screen ``z_score``, averaged</span>
+<span class="sd">over the screens of a (strain, compound) cell exactly as the paper constructs the matrix</span>
+<span class="sd">("Z scores were calculated and averaged for the replicate screens"). The z-score is</span>
+<span class="sd">standardized WITHIN a screen ("Z-Score calculated based on kernel density distribution from</span>
+<span class="sd">normalized average reads per screen"), so the reference baseline of 0 is that screen's own</span>
+<span class="sd">normalized-growth center rather than a measured wild-type value, and the reference</span>
+<span class="sd">environment is the compound's own environment. The released ``sym == 'wild type'`` rows are</span>
+<span class="sd">strain measurements, not that baseline, and are not ingested (see the dendron note).</span>
+
+<span class="sd">SCREEN COUNTING (measured, and it corrects the previous build). A (strain, compound) cell</span>
+<span class="sd">recurs across the four libraries, and the export ALSO re-emits the same datapoint under two</span>
+<span class="sd">gene-symbol spellings (``MDH1`` / ``mdh1``): of the 46,195 cells with more than one released</span>
+<span class="sd">row, 33,483 contain byte-identical duplicates. Within a cell, two rows sharing a z_score</span>
+<span class="sd">share every other data column too, and no two genuinely distinct datapoints of a cell share</span>
+<span class="sd">a z_score, so the z string IS the datapoint key. After deduplication the screens-per-cell</span>
+<span class="sd">histogram is {1: 412,368, 2: 14,579, 3: 1,617, 4: 7, 5: 2}. ``n_samples`` is therefore the</span>
+<span class="sd">number of contributing SCREENS with ``sample_unit=screen`` (the independent unit; the two</span>
+<span class="sd">OD reads inside a screen are the technical duplicate the z already averages), and the</span>
+<span class="sd">uncertainty is the sample SD across those screens, or a typed ``ProvenanceGap`` for the</span>
+<span class="sd">single-screen cells. The previous build's ``n_samples = 2 x rows`` counted OD reads of</span>
+<span class="sd">re-exported duplicates.</span>
+
+<span class="sd">RECORDS DROPPED (rule + count in ``preprocess/dropped_records.json``): cells whose compound</span>
+<span class="sd">carries no structure identifier (the 5 SID-only compounds, which have no CID and no SMILES).</span>
+<span class="sd">Everything else is served: all 5,173 CIDs resolve to an InChIKey and a canonical PubChem</span>
+<span class="sd">name through the pinned compound-identity table.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gzip</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">statistics</span><span class="w"> </span><span class="kn">import</span> <span class="n">fmean</span><span class="p">,</span> <span class="n">stdev</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolved_compound</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">SC</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AssayType</span><span class="p">,</span>
+    <span class="n">BarcodedKanMxDeletionPerturbation</span><span class="p">,</span>
+    <span class="n">Compound</span><span class="p">,</span>
+    <span class="n">Concentration</span><span class="p">,</span>
+    <span class="n">ConcentrationUnit</span><span class="p">,</span>
+    <span class="n">Environment</span><span class="p">,</span>
+    <span class="n">EnvironmentResponseExperiment</span><span class="p">,</span>
+    <span class="n">EnvironmentResponseExperimentReference</span><span class="p">,</span>
+    <span class="n">EnvironmentResponsePhenotype</span><span class="p">,</span>
+    <span class="n">Experiment</span><span class="p">,</span>
+    <span class="n">ExperimentReference</span><span class="p">,</span>
+    <span class="n">Genotype</span><span class="p">,</span>
+    <span class="n">MeasurementType</span><span class="p">,</span>
+    <span class="n">Publication</span><span class="p">,</span>
+    <span class="n">ReferenceGenome</span><span class="p">,</span>
+    <span class="n">ResponseCategory</span><span class="p">,</span>
+    <span class="n">SampleUnit</span><span class="p">,</span>
+    <span class="n">SmallMoleculePerturbation</span><span class="p">,</span>
+    <span class="n">Solvent</span><span class="p">,</span>
+    <span class="n">Temperature</span><span class="p">,</span>
+    <span class="n">UncertaintyType</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.gene_name_reconcile</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_genome</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.literature.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ROLE_RAW_DATA</span><span class="p">,</span>
+    <span class="n">ArtifactRecord</span><span class="p">,</span>
+    <span class="n">Manifest</span><span class="p">,</span>
+    <span class="n">RetrievalMethod</span><span class="p">,</span>
+    <span class="n">RetrievalRecord</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ProvenanceGap</span><span class="p">,</span>
+    <span class="n">ProvenanceGapReason</span><span class="p">,</span>
+    <span class="n">SourcedValue</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Provenance anchors</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">CITATION_KEY</span> <span class="o">=</span> <span class="s2">"wildenhainPredictionSynergismChemicalGenetic2015"</span>
+<span class="n">PAPER_DOI</span> <span class="o">=</span> <span class="s2">"10.1016/j.cels.2015.12.003"</span>
+<span class="n">RAW_DIR_REL</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"torchcell-raw/</span><span class="si">{</span><span class="n">CITATION_KEY</span><span class="si">}</span><span class="s2">"</span>
+
+<span class="n">FTP_ZIP_URL</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"https://ftp.ncbi.nlm.nih.gov/pubchem/Bioassay/CSV/Data/1159001_1160000.zip"</span>
+<span class="p">)</span>
+<span class="n">ZIP_MEMBER</span> <span class="o">=</span> <span class="s2">"1159001_1160000/1159580.csv.gz"</span>
+<span class="c1">#: sha256 of the FTP range archive itself, asserted BEFORE the member is read, so a</span>
+<span class="c1">#: re-packed upstream archive fails loudly instead of yielding different member bytes.</span>
+<span class="n">CONTAINER_SHA256</span> <span class="o">=</span> <span class="s2">"d1fd5dc2bf7c526ad9845e0a14ae9981256fb820aaf4228b48a3ba0724ee59b0"</span>
+<span class="n">DATA_FILENAME</span> <span class="o">=</span> <span class="s2">"1159580.csv.gz"</span>
+<span class="n">DATA_SHA256</span> <span class="o">=</span> <span class="s2">"c461c679b63ac56045cef0f03ed9bcbb8e7f9c12146f1fc7cc8ac0c113188d64"</span>
+<span class="n">DATA_REL</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"data/</span><span class="si">{</span><span class="n">DATA_FILENAME</span><span class="si">}</span><span class="s2">"</span>
+
+<span class="n">AID_URL</span> <span class="o">=</span> <span class="s2">"https://pubchem.ncbi.nlm.nih.gov/rest/pug/assay/aid/1159580/description/JSON"</span>
+<span class="n">AID_FILENAME</span> <span class="o">=</span> <span class="s2">"aid_1159580_description.json"</span>
+<span class="n">AID_SHA256</span> <span class="o">=</span> <span class="s2">"23c5f8c56af94786cfe8e22c93fdde0b719ca2165975305944557ab39087b0e4"</span>
+<span class="n">AID_REL</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"data/</span><span class="si">{</span><span class="n">AID_FILENAME</span><span class="si">}</span><span class="s2">"</span>
+<span class="n">RETRIEVED_AT</span> <span class="o">=</span> <span class="s2">"2026-09-13"</span>
+
+<span class="n">PAPER_MD</span> <span class="o">=</span> <span class="s2">"paper.md"</span>
+<span class="n">PAPER_MD_SHA256</span> <span class="o">=</span> <span class="s2">"f46409eb8f23412c9c1015d0f8f5bb581bfddfe2796d319d407585e23c757ac2"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_aid</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Bind a value to a verbatim quote in the sha256-pinned AID 1159580 description."""</span>
+    <span class="k">return</span> <span class="n">SourcedValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">quote</span><span class="o">=</span><span class="n">quote</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+            <span class="n">source_uri</span><span class="o">=</span><span class="n">AID_REL</span><span class="p">,</span>
+            <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">AID_SHA256</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">"PubChem PUG-REST assay description JSON (torchcell-raw mirror)"</span><span class="p">,</span>
+            <span class="n">page</span><span class="o">=</span><span class="s2">"PC_AssayContainer[0].assay.descr.protocol"</span><span class="p">,</span>
+            <span class="n">retrieved</span><span class="o">=</span><span class="n">RETRIEVED_AT</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_paper</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Bind a value to a verbatim quote in the sha256-pinned paper OCR mirror."""</span>
+    <span class="k">return</span> <span class="n">SourcedValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">quote</span><span class="o">=</span><span class="n">quote</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+            <span class="n">source_uri</span><span class="o">=</span><span class="n">PAPER_MD</span><span class="p">,</span>
+            <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">PAPER_MD_SHA256</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">"MinerU OCR of the publisher PDF (torchcell-library mirror)"</span><span class="p">,</span>
+            <span class="n">page</span><span class="o">=</span><span class="s2">"RESULTS 'Generation of a Chemical-Genetic Matrix' / EXPERIMENTAL PROCEDURES"</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Sourced environment + phenotype constants</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">MEDIUM</span> <span class="o">=</span> <span class="n">_aid</span><span class="p">(</span>
+    <span class="s2">"SC"</span><span class="p">,</span>
+    <span class="s2">"All strains were grown and screened in synthetic complete (SC) medium with 2% "</span>
+    <span class="s2">"glucose."</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the paper's own medium sentence has 'All fungal species' as its subject, "</span>
+    <span class="s2">"which in context follows the list of fungal PATHOGEN isolates; the AID protocol "</span>
+    <span class="s2">"says 'All strains', which is unambiguous for the S. cerevisiae screens. The shared "</span>
+    <span class="s2">"SC library object carries D-glucose at 20 g/L, i.e. the same 2% w/v"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">TEMPERATURE_C</span> <span class="o">=</span> <span class="n">_aid</span><span class="p">(</span>
+    <span class="mf">30.0</span><span class="p">,</span>
+    <span class="s2">"Plates were incubated at 30 C without shaking for approximately 18 h or until "</span>
+    <span class="s2">"culture saturation was achieved for the solvent controls."</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the PAPER states no incubation temperature anywhere (its only temperature is "</span>
+    <span class="s2">"37 C, for HeLa/HEK cells), so this value exists only because the AID description "</span>
+    <span class="s2">"is now mirrored and hashed; it is sourced, not a default"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">DURATION_HOURS</span> <span class="o">=</span> <span class="n">_aid</span><span class="p">(</span>
+    <span class="mf">18.0</span><span class="p">,</span>
+    <span class="s2">"Plates were incubated at 30 C without shaking for approximately 18 h or until "</span>
+    <span class="s2">"culture saturation was achieved for the solvent controls."</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">SCREEN_CONCENTRATION_UM</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
+    <span class="mf">20.0</span><span class="p">,</span>
+    <span class="s2">"We carried out over 600 growth-based screens in duplicate at a compound "</span>
+    <span class="s2">"concentration of $2 0 </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathsf { M }$ ."</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the AID protocol states the same dose as a preparation: 'Strains were seeded "</span>
+    <span class="s2">"at 50,000 cells per well in a volume of 100 L in 96 well plates followed by "</span>
+    <span class="s2">"addition of 2 L of 1 mM compound stock for final concentration of 20 M.'"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">SOLVENT</span> <span class="o">=</span> <span class="n">_aid</span><span class="p">(</span>
+    <span class="s2">"DMSO"</span><span class="p">,</span>
+    <span class="s2">"DMSO solvent only controls and 10 uM cycloheximide positive controls were seeded "</span>
+    <span class="s2">"in columns 1 and 12 of each assay plate."</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the vehicle is sourced; its FINAL fraction in the well is not released (the "</span>
+    <span class="s2">"stock's own solvent fraction is unstated), so Solvent.percent stays unset rather "</span>
+    <span class="s2">"than being back-computed from the 2 uL into 100 uL dilution"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">ASSAY</span> <span class="o">=</span> <span class="n">_aid</span><span class="p">(</span>
+    <span class="n">AssayType</span><span class="o">.</span><span class="n">liquid_od_growth</span><span class="p">,</span>
+    <span class="s2">"Cultures were resuspended by shaking on the robotic platform prior to reading OD600 "</span>
+    <span class="s2">"values on either Tecan M1000 or Tecan Sunrise plate readers."</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">SCREEN_REPLICATION</span> <span class="o">=</span> <span class="n">_aid</span><span class="p">(</span>
+    <span class="s2">"technical duplicate"</span><span class="p">,</span>
+    <span class="s2">"Screens were conducted in technical duplicate"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the duplicate is the pair of OD READS inside one screen, which the z-score "</span>
+    <span class="s2">"already averages ('normalized average reads per screen'); the independent unit of "</span>
+    <span class="s2">"replication is therefore the SCREEN, which is what n_samples counts"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">Z_SCORE_DEFINITION</span> <span class="o">=</span> <span class="n">_aid</span><span class="p">(</span>
+    <span class="n">MeasurementType</span><span class="o">.</span><span class="n">z_score</span><span class="p">,</span>
+    <span class="s2">"Z-Score calculated based on kernel density distribution from normalized average "</span>
+    <span class="s2">"reads per screen"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"standardized WITHIN a screen, so 0 is that screen's normalized-growth center; "</span>
+    <span class="s2">"the companion statement is 'Z-factors for growth inhibition were calculated using "</span>
+    <span class="s2">"the median and the interquartile range (IQR) by fitting a normal distribution with "</span>
+    <span class="s2">"N(1,IQR) to the experimental data.'"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">Z_AVERAGED</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
+    <span class="s2">"mean over the replicate screens"</span><span class="p">,</span>
+    <span class="s2">"Z scores were calculated and averaged for the replicate screens."</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">COLLECTION</span> <span class="o">=</span> <span class="n">_aid</span><span class="p">(</span>
+    <span class="s2">"Euroscarf deletion collection"</span><span class="p">,</span>
+    <span class="s2">"All S. cerevisiae deletion strains were obtained from the Euroscarf deletion "</span>
+    <span class="s2">"collection."</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the paper says the same: 'S. cerevisiae deletion strains were obtained from "</span>
+    <span class="s2">"the Euroscarf deletion set and are isogenic to BY4741 (Table S3).' Neither source "</span>
+    <span class="s2">"names the deletion cassette's marker; kanMX is a property of the Euroscarf MATa "</span>
+    <span class="s2">"collection sourced to Winzeler 1999 / Giaever 2002, which are not mirrored"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">PARENT_STRAIN</span> <span class="o">=</span> <span class="n">_aid</span><span class="p">(</span>
+    <span class="s2">"BY4741"</span><span class="p">,</span> <span class="s2">"The wild type parental strain for this collection is BY 4741"</span>
+<span class="p">)</span>
+<span class="n">NON_REPLICATE_COLUMN</span> <span class="o">=</span> <span class="n">_aid</span><span class="p">(</span>
+    <span class="s2">"non replicate"</span><span class="p">,</span>
+    <span class="s2">"test for non-replicates between first and second replicate"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"a screen whose two OD reads disagreed; counting SCREENS rather than reads is "</span>
+    <span class="s2">"what keeps this flag from corrupting n_samples. The release also states 'Data "</span>
+    <span class="s2">"points with high variation between replicates (&gt; 3 MAD) were removed as "</span>
+    <span class="s2">"inconsistent outliers.', so a retained flagged screen passed that filter"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">BIOACTIVITY_COLUMN</span> <span class="o">=</span> <span class="n">_aid</span><span class="p">(</span>
+    <span class="s2">"bioactivity"</span><span class="p">,</span>
+    <span class="s2">"sensitive if compound decreases fitness or resistant if compound increases fitness "</span>
+    <span class="s2">"compared to negative control"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"together with the released PUBCHEM_ACTIVITY_OUTCOME this is the source of the "</span>
+    <span class="s2">"ResponseCategory mapping below"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">MEASUREMENT_UNITS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"released PubChem AID 1159580 z_score of growth inhibition, standardized within a "</span>
+    <span class="s2">"screen from the normalized OD600 average of a technical-duplicate read pair "</span>
+    <span class="s2">"(20 uM compound in DMSO, SC + 2</span><span class="si">% g</span><span class="s2">lucose, 30 C, ~18 h); negative = growth "</span>
+    <span class="s2">"inhibition, averaged over the contributing screens of the cell"</span>
+<span class="p">)</span>
+
+<span class="c1">#: Released activity outcome + bioactivity -&gt; the shared ResponseCategory axis. The two</span>
+<span class="c1">#: columns' own definitions are the source (``BIOACTIVITY_COLUMN``): an Inactive datapoint</span>
+<span class="c1">#: is one the screen could not distinguish from the negative control, an Active one is a</span>
+<span class="c1">#: called hit whose DIRECTION the bioactivity column gives, and Inconclusive is PubChem's</span>
+<span class="c1">#: own "no call" verdict -- which is ``not_determined``, never silently an Inactive.</span>
+<span class="n">OUTCOME_CATEGORY</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">ResponseCategory</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">(</span><span class="s2">"Inactive"</span><span class="p">,</span> <span class="s2">""</span><span class="p">):</span> <span class="n">ResponseCategory</span><span class="o">.</span><span class="n">no_change</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"Active"</span><span class="p">,</span> <span class="s2">"sensitive"</span><span class="p">):</span> <span class="n">ResponseCategory</span><span class="o">.</span><span class="n">sensitive</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"Active"</span><span class="p">,</span> <span class="s2">"resistant"</span><span class="p">):</span> <span class="n">ResponseCategory</span><span class="o">.</span><span class="n">resistant</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"Inconclusive"</span><span class="p">,</span> <span class="s2">"sensitive"</span><span class="p">):</span> <span class="n">ResponseCategory</span><span class="o">.</span><span class="n">not_determined</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"Inconclusive"</span><span class="p">,</span> <span class="s2">"resistant"</span><span class="p">):</span> <span class="n">ResponseCategory</span><span class="o">.</span><span class="n">not_determined</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"Inconclusive"</span><span class="p">,</span> <span class="s2">""</span><span class="p">):</span> <span class="n">ResponseCategory</span><span class="o">.</span><span class="n">not_determined</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1">#: Systematic ORF pattern; non-strain tokens (NA / NULL control rows) are dropped.</span>
+<span class="n">_SYSTEMATIC_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?$"</span><span class="p">)</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Raw mirror</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_data_root</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``DATA_ROOT`` from the environment (the mirror + build tree live under it)."""</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``$DATA_ROOT/torchcell-raw/wildenhainPredictionSynergismChemicalGenetic2015``."""</span>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">data_root</span> <span class="ow">or</span> <span class="n">_data_root</span><span class="p">())</span> <span class="o">/</span> <span class="n">RAW_DIR_REL</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sha256</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Streaming sha256 of a file."""</span>
+    <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">handle</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">20</span><span class="p">),</span> <span class="sa">b</span><span class="s2">""</span><span class="p">):</span>
+            <span class="n">digest</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">digest</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">raw_relpaths</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Short name -&gt; mirror-relative path for every file the loader reads."""</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">DATA_FILENAME</span><span class="p">:</span> <span class="n">DATA_REL</span><span class="p">,</span> <span class="n">AID_FILENAME</span><span class="p">:</span> <span class="n">AID_REL</span><span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">deposit_raw_mirror</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">csv_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">aid_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">retrieved_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">RETRIEVED_AT</span><span class="p">,</span>
+    <span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Write the raw mirror from already-retrieved files and its ``manifest.json``.</span>
+
+<span class="sd">    Idempotent by sha256 (an existing file with the recorded hash is left alone, a</span>
+<span class="sd">    differing one raises). The datapoint export's retrieval pins the FTP container FIRST</span>
+<span class="sd">    and then reads one member out of it, so a re-packed upstream archive is detected</span>
+<span class="sd">    rather than silently followed.</span>
+<span class="sd">    """</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
+    <span class="n">sources</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">RetrievalRecord</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">DATA_REL</span><span class="p">:</span> <span class="p">(</span>
+            <span class="n">Path</span><span class="p">(</span><span class="n">csv_path</span><span class="p">),</span>
+            <span class="n">DATA_SHA256</span><span class="p">,</span>
+            <span class="n">RetrievalRecord</span><span class="p">(</span>
+                <span class="n">method</span><span class="o">=</span><span class="n">RetrievalMethod</span><span class="o">.</span><span class="n">direct_url</span><span class="p">,</span>
+                <span class="n">source_url</span><span class="o">=</span><span class="n">FTP_ZIP_URL</span><span class="p">,</span>
+                <span class="n">retriever</span><span class="o">=</span><span class="s2">"torchcell.literature.retrieve.zip_member"</span><span class="p">,</span>
+                <span class="n">params</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">"url"</span><span class="p">:</span> <span class="n">FTP_ZIP_URL</span><span class="p">,</span>
+                    <span class="s2">"member"</span><span class="p">:</span> <span class="n">ZIP_MEMBER</span><span class="p">,</span>
+                    <span class="s2">"container_sha256"</span><span class="p">:</span> <span class="n">CONTAINER_SHA256</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="n">sha256</span><span class="o">=</span><span class="n">DATA_SHA256</span><span class="p">,</span>
+                <span class="n">retrieved_at</span><span class="o">=</span><span class="n">retrieved_at</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">AID_REL</span><span class="p">:</span> <span class="p">(</span>
+            <span class="n">Path</span><span class="p">(</span><span class="n">aid_path</span><span class="p">),</span>
+            <span class="n">AID_SHA256</span><span class="p">,</span>
+            <span class="n">RetrievalRecord</span><span class="p">(</span>
+                <span class="n">method</span><span class="o">=</span><span class="n">RetrievalMethod</span><span class="o">.</span><span class="n">pubchem_api</span><span class="p">,</span>
+                <span class="n">source_url</span><span class="o">=</span><span class="n">AID_URL</span><span class="p">,</span>
+                <span class="n">retriever</span><span class="o">=</span><span class="s2">"torchcell.literature.retrieve.direct_url"</span><span class="p">,</span>
+                <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">"url"</span><span class="p">:</span> <span class="n">AID_URL</span><span class="p">},</span>
+                <span class="n">sha256</span><span class="o">=</span><span class="n">AID_SHA256</span><span class="p">,</span>
+                <span class="n">retrieved_at</span><span class="o">=</span><span class="n">retrieved_at</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">}</span>
+    <span class="n">files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArtifactRecord</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">relpath</span><span class="p">,</span> <span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">expected</span><span class="p">,</span> <span class="n">retrieval</span><span class="p">)</span> <span class="ow">in</span> <span class="n">sources</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">got</span> <span class="o">=</span> <span class="n">_sha256</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">got</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2"> sha256 mismatch: got </span><span class="si">{</span><span class="n">got</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">dest</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="n">relpath</span>
+        <span class="n">dest</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dest</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">_sha256</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dest</span><span class="si">}</span><span class="s2"> exists with a different sha256; refusing"</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copy2</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ArtifactRecord</span><span class="p">(</span>
+                <span class="n">path</span><span class="o">=</span><span class="n">relpath</span><span class="p">,</span>
+                <span class="n">role</span><span class="o">=</span><span class="n">ROLE_RAW_DATA</span><span class="p">,</span>
+                <span class="nb">bytes</span><span class="o">=</span><span class="n">dest</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span><span class="p">,</span>
+                <span class="n">sha256</span><span class="o">=</span><span class="n">expected</span><span class="p">,</span>
+                <span class="n">source</span><span class="o">=</span><span class="n">retrieval</span><span class="o">.</span><span class="n">source_url</span><span class="p">,</span>
+                <span class="n">retrieval</span><span class="o">=</span><span class="n">retrieval</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="n">manifest</span> <span class="o">=</span> <span class="n">Manifest</span><span class="p">(</span>
+        <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+        <span class="n">doi</span><span class="o">=</span><span class="n">PAPER_DOI</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">"Prediction of Synergism from Chemical-Genetic Interactions by Machine Learning"</span><span class="p">,</span>
+        <span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span>
+        <span class="n">si_data_sources</span><span class="o">=</span><span class="p">[</span>
+            <span class="s2">"https://pubchem.ncbi.nlm.nih.gov/bioassay/1159580"</span><span class="p">,</span>
+            <span class="n">FTP_ZIP_URL</span><span class="p">,</span>
+            <span class="n">AID_URL</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="n">si_expected</span><span class="o">=</span><span class="p">[</span>
+            <span class="s2">"Tables S1/S2 (the four compound libraries) and Table S3 (the 195 sentinel "</span>
+            <span class="s2">"strains) -- cell.com supplementary files are not scriptable, so they are "</span>
+            <span class="s2">"NOT mirrored and the 195-vs-242 strain split cannot be reconstructed"</span>
+        <span class="p">],</span>
+        <span class="n">provenance_complete</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">created_at</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+    <span class="p">)</span>
+    <span class="p">(</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"manifest.json"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">root</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">load_manifest</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Manifest</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Read the raw mirror's ``manifest.json``."""</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"manifest.json"</span>
+    <span class="k">return</span> <span class="n">Manifest</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">manifest_sha256</span><span class="p">(</span><span class="n">manifest</span><span class="p">:</span> <span class="n">Manifest</span><span class="p">,</span> <span class="n">relpath</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The recorded sha256 of one mirror file."""</span>
+    <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">files</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">path</span> <span class="o">==</span> <span class="n">relpath</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">record</span><span class="o">.</span><span class="n">sha256</span>
+    <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">relpath</span><span class="si">}</span><span class="s2"> is not in the raw-mirror manifest"</span><span class="p">)</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Retention bookkeeping + the collapsed matrix cell</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DropRule</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One retention rule, the records it removed, and the items it removed them for."""</span>
+
+    <span class="n">rule</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">scope</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"compound"</span><span class="p">,</span> <span class="s2">"library_row"</span><span class="p">,</span> <span class="s2">"cell"</span><span class="p">]</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">n_records</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DropLog</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Every retention rule applied to a build, in the order they were applied."""</span>
+
+    <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">source_records</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">kept_records</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">dropped_records</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DropRule</span><span class="p">]</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MatrixCell</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One (strain, compound) cell of the CGM, collapsed over its released screens."""</span>
+
+    <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">identity</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">pubchem_cid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">smiles</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="c1">#: z_score string -&gt; (non-replicate flag, activity outcome, bioactivity), one entry</span>
+    <span class="c1">#: per DISTINCT released datapoint (the z string is the datapoint key; see the</span>
+    <span class="c1">#: module docstring for the measurement behind that).</span>
+    <span class="n">screens</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">z_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The distinct per-screen z-scores contributing to this cell."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">z</span><span class="p">)</span> <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">screens</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">n_screens</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Number of contributing screens (the independent unit of replication)."""</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">screens</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">all_screens_non_replicating</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Whether EVERY contributing screen's two OD reads failed to replicate."""</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">flag</span> <span class="o">==</span> <span class="s2">"1"</span> <span class="k">for</span> <span class="n">flag</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">screens</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">category</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ResponseCategory</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The released curation verdict on the shared axis + its verbatim source words.</span>
+
+<span class="sd">        A cell whose screens DISAGREE has no single released call, so it resolves to</span>
+<span class="sd">        ``not_determined`` and the label keeps every word the release used.</span>
+<span class="sd">        """</span>
+        <span class="n">outcomes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">outcome</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">outcome</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">screens</span><span class="o">.</span><span class="n">values</span><span class="p">()})</span>
+        <span class="n">activities</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">bio</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">bio</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">screens</span><span class="o">.</span><span class="n">values</span><span class="p">()})</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">outcomes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">activities</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">outcomes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">activities</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">outcomes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">activities</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">OUTCOME_CATEGORY</span><span class="p">[(</span><span class="n">outcomes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">activities</span><span class="p">[</span><span class="mi">0</span><span class="p">])],</span> <span class="n">label</span>
+        <span class="n">words</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">outcomes</span><span class="p">,</span> <span class="o">*</span><span class="p">[</span><span class="n">bio</span> <span class="k">for</span> <span class="n">bio</span> <span class="ow">in</span> <span class="n">activities</span> <span class="k">if</span> <span class="n">bio</span><span class="p">]]</span>
+        <span class="k">return</span> <span class="n">ResponseCategory</span><span class="o">.</span><span class="n">not_determined</span><span class="p">,</span> <span class="s2">" / "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_canonical_common_names</span><span class="p">(</span><span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""``systematic name -&gt; the genome's own standard (common) name``.</span>
+
+<span class="sd">    The release spells 16 ORFs two ways (``TOR1`` and ``Tor1``), which splits one</span>
+<span class="sd">    perturbation into two graph nodes. Taking the spelling from the genome instead of</span>
+<span class="sd">    from the source is what makes it one node, and identical across datasets. Only a</span>
+<span class="sd">    standard name that resolves BACK to the gene is used.</span>
+<span class="sd">    """</span>
+    <span class="n">canonical</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">standard</span> <span class="ow">in</span> <span class="n">genome</span><span class="o">.</span><span class="n">feature_index</span><span class="p">[</span><span class="s2">"standard_to_ids"</span><span class="p">]:</span>
+        <span class="n">resolution</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">resolve_gene_name</span><span class="p">(</span><span class="n">standard</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resolution</span><span class="o">.</span><span class="n">is_current_gene</span> <span class="ow">and</span> <span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">canonical</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span><span class="p">,</span> <span class="n">standard</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">canonical</span>
+
+
+<div class="viewcode-block" id="EnvChemgenWildenhain2015Dataset">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.wildenhain2015.EnvChemgenWildenhain2015Dataset.html#torchcell.datasets.scerevisiae.wildenhain2015.EnvChemgenWildenhain2015Dataset">[docs]</a>
+<span class="nd">@register_dataset</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EnvChemgenWildenhain2015Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Wildenhain 2015 chemical-genetic matrix: env x geno -&gt; growth-inhibition z-score."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/env_chemgen_wildenhain2015"</span><span class="p">,</span>
+        <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset (the genome is loaded lazily inside ``process``)."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Experiment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Experiment schema class produced by this dataset."""</span>
+        <span class="k">return</span> <span class="n">EnvironmentResponseExperiment</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reference_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">ExperimentReference</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Experiment-reference schema class produced by this dataset."""</span>
+        <span class="k">return</span> <span class="n">EnvironmentResponseExperimentReference</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The datapoint export and the AID description the protocol is sourced from."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">DATA_FILENAME</span><span class="p">,</span> <span class="n">AID_FILENAME</span><span class="p">]</span>
+
+<div class="viewcode-block" id="EnvChemgenWildenhain2015Dataset.download">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.wildenhain2015.EnvChemgenWildenhain2015Dataset.html#torchcell.datasets.scerevisiae.wildenhain2015.EnvChemgenWildenhain2015Dataset.download">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Link the manifest-listed mirror files into ``raw/`` and verify each sha256.</span>
+
+<span class="sd">        The mirror is canonical. The FTP container is 151 MB and its sha256 is recorded</span>
+<span class="sd">        with the member's, so ``deposit_raw_mirror``'s retrieval re-runs the download and</span>
+<span class="sd">        detects a re-packed archive; a build never depends on that URL being alive.</span>
+<span class="sd">        """</span>
+        <span class="n">data_root</span> <span class="o">=</span> <span class="n">_data_root</span><span class="p">()</span>
+        <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">relpath</span> <span class="ow">in</span> <span class="n">raw_relpaths</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">src</span> <span class="o">=</span> <span class="n">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span> <span class="o">/</span> <span class="n">relpath</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">src</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"required raw artifact missing from mirror: </span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">expected</span> <span class="o">=</span> <span class="n">manifest_sha256</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">relpath</span><span class="p">)</span>
+            <span class="n">got</span> <span class="o">=</span> <span class="n">_sha256</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">got</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> sha256 mismatch: got </span><span class="si">{</span><span class="n">got</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+            <span class="n">dest</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Wildenhain 2015 raw files linked into </span><span class="si">%s</span><span class="s2"> (sha256 verified)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span>
+        <span class="p">)</span></div>
+
+
+    <span class="c1"># ---- source reading -------------------------------------------------------- #</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_collapse_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">MatrixCell</span><span class="p">],</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Read the datapoint CSV; collapse to one cell per (ORF, compound identity).</span>
+
+<span class="sd">        Identity is the PubChem CID when present, else the SID. Repeated releases of the</span>
+<span class="sd">        SAME datapoint (identical z) collapse; distinct screens accumulate. Returns the</span>
+<span class="sd">        cells plus the strain-row and non-strain-row counts.</span>
+<span class="sd">        """</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">DATA_FILENAME</span><span class="p">)</span>
+        <span class="n">cells</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">MatrixCell</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">n_rows</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">n_non_strain</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">with</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"rt"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+            <span class="n">header</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">reader</span><span class="p">)</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">header</span><span class="p">)}</span>
+            <span class="nb">next</span><span class="p">(</span><span class="n">reader</span><span class="p">)</span>  <span class="c1"># RESULT_TYPE definition row</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">reader</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">orf</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">orf</span><span class="p">):</span>
+                    <span class="n">n_non_strain</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">continue</span>
+                <span class="n">z_raw</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"z_score"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">z_raw</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">n_rows</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">cid</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"PUBCHEM_CID"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="n">sid</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"PUBCHEM_SID"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="n">identity</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"CID </span><span class="si">{</span><span class="n">cid</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">cid</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"SID </span><span class="si">{</span><span class="n">sid</span><span class="si">}</span><span class="s2">"</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">identity</span><span class="p">)</span>
+                <span class="n">cell</span> <span class="o">=</span> <span class="n">cells</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cell</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">cell</span> <span class="o">=</span> <span class="n">MatrixCell</span><span class="p">(</span>
+                        <span class="n">orf</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                        <span class="n">identity</span><span class="o">=</span><span class="n">identity</span><span class="p">,</span>
+                        <span class="n">pubchem_cid</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">cid</span><span class="p">)</span> <span class="k">if</span> <span class="n">cid</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                        <span class="n">smiles</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"PUBCHEM_EXT_DATASOURCE_SMILES"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                        <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="n">cells</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">cell</span>
+                <span class="n">cell</span><span class="o">.</span><span class="n">screens</span><span class="p">[</span><span class="n">z_raw</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"non replicate"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                    <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"PUBCHEM_ACTIVITY_OUTCOME"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                    <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"bioactivity"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                <span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Wildenhain2015: </span><span class="si">%d</span><span class="s2"> strain datapoints (</span><span class="si">%d</span><span class="s2"> non-strain control rows) -&gt; "</span>
+            <span class="s2">"</span><span class="si">%d</span><span class="s2"> (ORF, compound) cells"</span><span class="p">,</span>
+            <span class="n">n_rows</span><span class="p">,</span>
+            <span class="n">n_non_strain</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">cells</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">cells</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">n_non_strain</span>
+
+    <span class="c1"># ---- environment / phenotype builders -------------------------------------- #</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compound</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell</span><span class="p">:</span> <span class="n">MatrixCell</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Compound</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The compound's canonical identity: the table's PubChem name + InChIKey."""</span>
+        <span class="k">return</span> <span class="n">resolved_compound</span><span class="p">(</span>
+            <span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span> <span class="n">pubchem_cid</span><span class="o">=</span><span class="n">cell</span><span class="o">.</span><span class="n">pubchem_cid</span><span class="p">,</span> <span class="n">smiles</span><span class="o">=</span><span class="n">cell</span><span class="o">.</span><span class="n">smiles</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compound</span><span class="p">:</span> <span class="n">Compound</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Environment</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Aerobic SC (2% glucose) liquid culture carrying the compound at 20 uM in DMSO."""</span>
+        <span class="k">return</span> <span class="n">Environment</span><span class="p">(</span>
+            <span class="n">media</span><span class="o">=</span><span class="n">SC</span><span class="p">,</span>
+            <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">TEMPERATURE_C</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">SmallMoleculePerturbation</span><span class="p">(</span>
+                    <span class="n">compound</span><span class="o">=</span><span class="n">compound</span><span class="p">,</span>
+                    <span class="n">concentration</span><span class="o">=</span><span class="n">Concentration</span><span class="p">(</span>
+                        <span class="n">value</span><span class="o">=</span><span class="n">SCREEN_CONCENTRATION_UM</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                        <span class="n">unit</span><span class="o">=</span><span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">micromolar</span><span class="p">,</span>
+                    <span class="p">),</span>
+                    <span class="n">solvent</span><span class="o">=</span><span class="n">Solvent</span><span class="p">(</span>
+                        <span class="n">name</span><span class="o">=</span><span class="n">SOLVENT</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                        <span class="n">compound</span><span class="o">=</span><span class="n">resolved_compound</span><span class="p">(</span><span class="s2">"dimethyl sulfoxide"</span><span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">],</span>
+            <span class="n">aerobicity</span><span class="o">=</span><span class="s2">"aerobic"</span><span class="p">,</span>
+            <span class="n">duration_hours</span><span class="o">=</span><span class="n">DURATION_HOURS</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">ProvenanceGap</span><span class="p">(</span>
+                    <span class="n">field</span><span class="o">=</span><span class="s2">"duration_generations"</span><span class="p">,</span>
+                    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+                    <span class="n">note</span><span class="o">=</span><span class="s2">"an 18 h liquid OD growth to saturation doses exposure in "</span>
+                    <span class="s2">"hours, not doublings, and neither the paper nor the AID protocol "</span>
+                    <span class="s2">"reports a doubling count"</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_reference</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">environment</span><span class="p">:</span> <span class="n">Environment</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EnvironmentResponseExperimentReference</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The screen's own normalized-growth center: z = 0, in the same compound well.</span>
+
+<span class="sd">        The z-score is standardized WITHIN a screen, so its 0 is that screen's center,</span>
+<span class="sd">        and the environment the baseline was measured in IS the compound environment.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">EnvironmentResponseExperimentReference</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="n">ReferenceGenome</span><span class="p">(</span>
+                <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="n">PARENT_STRAIN</span><span class="o">.</span><span class="n">value</span>
+            <span class="p">),</span>
+            <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
+                <span class="n">measurement_type</span><span class="o">=</span><span class="n">Z_SCORE_DEFINITION</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">assay_type</span><span class="o">=</span><span class="n">ASSAY</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">environment_response</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                <span class="n">units</span><span class="o">=</span><span class="p">(</span>
+                    <span class="n">MEASUREMENT_UNITS</span>
+                    <span class="o">+</span> <span class="s2">"; the reference 0 is the screen's own normalized-growth center "</span>
+                    <span class="s2">"by construction of the z-score, NOT a measured wild-type value"</span>
+                <span class="p">),</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_phenotype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell</span><span class="p">:</span> <span class="n">MatrixCell</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EnvironmentResponsePhenotype</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The screen-averaged z-score with its across-screen dispersion, or a typed gap."""</span>
+        <span class="n">z_values</span> <span class="o">=</span> <span class="n">cell</span><span class="o">.</span><span class="n">z_values</span>
+        <span class="n">category</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="n">cell</span><span class="o">.</span><span class="n">category</span><span class="p">()</span>
+        <span class="n">common</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"measurement_type"</span><span class="p">:</span> <span class="n">Z_SCORE_DEFINITION</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="s2">"assay_type"</span><span class="p">:</span> <span class="n">ASSAY</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="s2">"environment_response"</span><span class="p">:</span> <span class="n">fmean</span><span class="p">(</span><span class="n">z_values</span><span class="p">),</span>
+            <span class="s2">"category"</span><span class="p">:</span> <span class="n">category</span><span class="p">,</span>
+            <span class="s2">"category_label"</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span>
+            <span class="s2">"n_samples"</span><span class="p">:</span> <span class="n">cell</span><span class="o">.</span><span class="n">n_screens</span><span class="p">,</span>
+            <span class="s2">"sample_unit"</span><span class="p">:</span> <span class="n">SampleUnit</span><span class="o">.</span><span class="n">screen</span><span class="p">,</span>
+            <span class="s2">"units"</span><span class="p">:</span> <span class="n">MEASUREMENT_UNITS</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">n_screens</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
+                <span class="o">**</span><span class="n">common</span><span class="p">,</span>
+                <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">ProvenanceGap</span><span class="p">(</span>
+                        <span class="n">field</span><span class="o">=</span><span class="n">field</span><span class="p">,</span>
+                        <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+                        <span class="n">note</span><span class="o">=</span><span class="s2">"one released screen for this (strain, compound) cell; a "</span>
+                        <span class="s2">"dispersion across screens is undefined at n=1 and the release "</span>
+                        <span class="s2">"carries no per-screen error"</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span>
+                        <span class="s2">"environment_response_uncertainty"</span><span class="p">,</span>
+                        <span class="s2">"environment_response_se"</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">],</span>
+            <span class="p">)</span>
+        <span class="n">dispersion</span> <span class="o">=</span> <span class="n">stdev</span><span class="p">(</span><span class="n">z_values</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dispersion</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">cell</span><span class="o">.</span><span class="n">orf</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">cell</span><span class="o">.</span><span class="n">n_screens</span><span class="si">}</span><span class="s2"> distinct screens with a "</span>
+                <span class="s2">"sample SD of exactly 0, which the datapoint-key measurement says "</span>
+                <span class="s2">"cannot happen"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
+            <span class="o">**</span><span class="n">common</span><span class="p">,</span>
+            <span class="n">environment_response_uncertainty</span><span class="o">=</span><span class="n">dispersion</span><span class="p">,</span>
+            <span class="n">environment_response_uncertainty_type</span><span class="o">=</span><span class="n">UncertaintyType</span><span class="o">.</span><span class="n">sample_sd</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_genotype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">systematic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">common</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Genotype</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""One Euroscarf haploid deletion, carrying the collection it came from."""</span>
+        <span class="k">return</span> <span class="n">Genotype</span><span class="p">(</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">BarcodedKanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">systematic</span><span class="p">,</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">common</span><span class="p">,</span>
+                    <span class="n">collection</span><span class="o">=</span><span class="n">COLLECTION</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+
+    <span class="c1"># ---- build ------------------------------------------------------------------ #</span>
+<div class="viewcode-block" id="EnvChemgenWildenhain2015Dataset.process">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.wildenhain2015.EnvChemgenWildenhain2015Dataset.html#torchcell.datasets.scerevisiae.wildenhain2015.EnvChemgenWildenhain2015Dataset.process">[docs]</a>
+    <span class="nd">@post_process</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Collapse the datapoint export into the CGM matrix; write LMDB."""</span>
+        <span class="n">cells</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">n_non_strain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_matrix</span><span class="p">()</span>
+        <span class="n">source_records</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cells</span><span class="p">)</span>
+
+        <span class="n">genome</span> <span class="o">=</span> <span class="n">default_genome</span><span class="p">()</span>
+        <span class="n">gene_set</span> <span class="o">=</span> <span class="p">{</span><span class="n">gene</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">}</span>
+        <span class="n">canonical</span> <span class="o">=</span> <span class="n">_canonical_common_names</span><span class="p">(</span><span class="n">genome</span><span class="p">)</span>
+        <span class="n">orfs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">cell</span><span class="o">.</span><span class="n">orf</span> <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">cells</span><span class="o">.</span><span class="n">values</span><span class="p">()})</span>
+        <span class="n">off_genome</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">orf</span>
+            <span class="k">for</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">orfs</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+                <span class="p">(</span><span class="n">resolution</span> <span class="o">:=</span> <span class="n">genome</span><span class="o">.</span><span class="n">resolve_gene_name</span><span class="p">(</span><span class="n">orf</span><span class="p">))</span><span class="o">.</span><span class="n">is_current_gene</span>
+                <span class="ow">and</span> <span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span> <span class="ow">in</span> <span class="n">gene_set</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">off_genome</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">off_genome</span><span class="p">)</span><span class="si">}</span><span class="s2"> released ORFs are not current R64 genes: "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">off_genome</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span><span class="si">}</span><span class="s2">; the release measured 242 current genes when this "</span>
+                <span class="s2">"loader was written, so a new drop rule is needed, not a silent skip"</span>
+            <span class="p">)</span>
+        <span class="n">common_names</span> <span class="o">=</span> <span class="p">{</span><span class="n">orf</span><span class="p">:</span> <span class="n">canonical</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">orf</span><span class="p">)</span> <span class="k">for</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">orfs</span><span class="p">}</span>
+
+        <span class="c1"># Resolve each DISTINCT compound identity once; a compound carrying no InChIKey,</span>
+        <span class="c1"># CID or ChEBI id cannot be encoded, so its cells are dropped.</span>
+        <span class="n">compounds</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Compound</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">cells</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">identity</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">compounds</span><span class="p">:</span>
+                <span class="n">compounds</span><span class="p">[</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compound</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
+        <span class="n">unidentified</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">identity</span>
+            <span class="k">for</span> <span class="n">identity</span><span class="p">,</span> <span class="n">compound</span> <span class="ow">in</span> <span class="n">compounds</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">compound</span><span class="o">.</span><span class="n">inchikey</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">compound</span><span class="o">.</span><span class="n">pubchem_cid</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">compound</span><span class="o">.</span><span class="n">chebi_id</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="n">unidentified_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">unidentified</span><span class="p">)</span>
+        <span class="n">n_dropped</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="mi">1</span> <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">cells</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">identity</span> <span class="ow">in</span> <span class="n">unidentified_set</span>
+        <span class="p">)</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">compound</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">for</span> <span class="n">identity</span><span class="p">,</span> <span class="n">compound</span> <span class="ow">in</span> <span class="n">compounds</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">identity</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">unidentified_set</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">names</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">"two distinct compound identities resolve to the same canonical name, "</span>
+                <span class="s2">"which would merge two conditions into one record key"</span>
+            <span class="p">)</span>
+
+        <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span><span class="n">doi</span><span class="o">=</span><span class="n">PAPER_DOI</span><span class="p">,</span> <span class="n">doi_url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"https://doi.org/</span><span class="si">{</span><span class="n">PAPER_DOI</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">environments</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Environment</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">references</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EnvironmentResponseExperimentReference</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">env</span><span class="p">,</span> <span class="n">interned_env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_write_lmdb</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">))</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">n_all_non_replicating</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">,</span> <span class="n">interned_env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">cells</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"Wildenhain2015 CGM"</span><span class="p">):</span>
+                <span class="n">cell</span> <span class="o">=</span> <span class="n">cells</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">identity</span> <span class="ow">in</span> <span class="n">unidentified_set</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">identity</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">environments</span><span class="p">:</span>
+                    <span class="n">environments</span><span class="p">[</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment</span><span class="p">(</span>
+                        <span class="n">compounds</span><span class="p">[</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="n">references</span><span class="p">[</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">(</span>
+                        <span class="n">environments</span><span class="p">[</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">]</span>
+                    <span class="p">)</span>
+                <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">all_screens_non_replicating</span><span class="p">:</span>
+                    <span class="n">n_all_non_replicating</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">experiment</span> <span class="o">=</span> <span class="n">EnvironmentResponseExperiment</span><span class="p">(</span>
+                    <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">genotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_genotype</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">orf</span><span class="p">,</span> <span class="n">common_names</span><span class="p">[</span><span class="n">cell</span><span class="o">.</span><span class="n">orf</span><span class="p">]),</span>
+                    <span class="n">environment</span><span class="o">=</span><span class="n">environments</span><span class="p">[</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">],</span>
+                    <span class="n">phenotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_phenotype</span><span class="p">(</span><span class="n">cell</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_intern_record</span><span class="p">(</span>
+                        <span class="n">experiment</span><span class="p">,</span> <span class="n">references</span><span class="p">[</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">],</span> <span class="n">publication</span><span class="p">,</span> <span class="n">itxn</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">interned_env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="n">drop_log</span> <span class="o">=</span> <span class="n">DropLog</span><span class="p">(</span>
+            <span class="n">dataset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">source_records</span><span class="o">=</span><span class="n">source_records</span><span class="p">,</span>
+            <span class="n">kept_records</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span>
+            <span class="n">dropped_records</span><span class="o">=</span><span class="n">source_records</span> <span class="o">-</span> <span class="n">idx</span><span class="p">,</span>
+            <span class="n">rules</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">DropRule</span><span class="p">(</span>
+                    <span class="n">rule</span><span class="o">=</span><span class="s2">"compound_without_a_structure_identifier"</span><span class="p">,</span>
+                    <span class="n">scope</span><span class="o">=</span><span class="s2">"compound"</span><span class="p">,</span>
+                    <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">"the released row carries no PUBCHEM_CID and no SMILES, so the "</span>
+                        <span class="s2">"compound has no InChIKey, CID or ChEBI id to be keyed or "</span>
+                        <span class="s2">"joined by; only its submitter SID is known"</span>
+                    <span class="p">),</span>
+                    <span class="n">n_records</span><span class="o">=</span><span class="n">n_dropped</span><span class="p">,</span>
+                    <span class="n">items</span><span class="o">=</span><span class="n">unidentified</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_records.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">drop_log</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">drop_log</span><span class="o">.</span><span class="n">dropped_records</span> <span class="o">!=</span> <span class="n">n_dropped</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"drop accounting mismatch: rule total </span><span class="si">{</span><span class="n">n_dropped</span><span class="si">}</span><span class="s2">, "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">drop_log</span><span class="o">.</span><span class="n">dropped_records</span><span class="si">}</span><span class="s2"> records missing from the build"</span>
+            <span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Wildenhain2015 records (</span><span class="si">%d</span><span class="s2"> dropped for an unidentifiable "</span>
+            <span class="s2">"compound; </span><span class="si">%d</span><span class="s2"> non-strain rows ignored; </span><span class="si">%d</span><span class="s2"> cells whose every screen is "</span>
+            <span class="s2">"non-replicate flagged)"</span><span class="p">,</span>
+            <span class="n">idx</span><span class="p">,</span>
+            <span class="n">n_dropped</span><span class="p">,</span>
+            <span class="n">n_non_strain</span><span class="p">,</span>
+            <span class="n">n_all_non_replicating</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EnvChemgenWildenhain2015Dataset.preprocess_raw">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.wildenhain2015.EnvChemgenWildenhain2015Dataset.html#torchcell.datasets.scerevisiae.wildenhain2015.EnvChemgenWildenhain2015Dataset.preprocess_raw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Preprocessing is handled inside process() for this dataset."""</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="EnvChemgenWildenhain2015Dataset.create_experiment">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.wildenhain2015.EnvChemgenWildenhain2015Dataset.html#torchcell.datasets.scerevisiae.wildenhain2015.EnvChemgenWildenhain2015Dataset.create_experiment">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Experiment construction is handled inline in process() for this dataset."""</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build/load the dataset for interactive debugging."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">data_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/torchcell/env_chemgen_wildenhain2015"</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">EnvChemgenWildenhain2015Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"len = </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

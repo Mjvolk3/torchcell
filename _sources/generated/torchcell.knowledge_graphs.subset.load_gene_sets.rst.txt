@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.subset.load\_gene\_sets
+===================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.subset
+
+.. autofunction:: load_gene_sets

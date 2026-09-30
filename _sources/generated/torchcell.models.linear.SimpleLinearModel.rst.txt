@@ -1,0 +1,8 @@
+﻿torchcell.models.linear.SimpleLinearModel
+=========================================
+
+.. currentmodule:: torchcell.models.linear
+
+.. autoclass:: SimpleLinearModel
+   :show-inheritance:
+   :members:

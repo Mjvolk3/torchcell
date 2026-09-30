@@ -1,0 +1,8 @@
+﻿torchcell.verification.LevelResult
+==================================
+
+.. currentmodule:: torchcell.verification
+
+.. autoclass:: LevelResult
+   :show-inheritance:
+   :members:

@@ -1,0 +1,442 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.literature.manifest &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/literature/manifest.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.literature.manifest</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.literature.manifest</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/literature/manifest.py</span>
+<span class="c1"># [[torchcell.literature.manifest]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/literature/manifest.py</span>
+<span class="c1"># Test file: tests/torchcell/literature/test_manifest.py</span>
+
+<span class="sd">"""Provenance and integrity manifest for captured paper artifacts."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrEnum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">MANIFEST_VERSION</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">MANIFEST_FILENAME</span> <span class="o">=</span> <span class="s2">"manifest.json"</span>
+
+<span class="c1"># Roles a file in an artifact directory can play.</span>
+<span class="n">ROLE_PAPER_PDF</span> <span class="o">=</span> <span class="s2">"paper_pdf"</span>
+<span class="n">ROLE_PAPER_OCR</span> <span class="o">=</span> <span class="s2">"paper_ocr"</span>
+<span class="n">ROLE_SI_PDF</span> <span class="o">=</span> <span class="s2">"si_pdf"</span>
+<span class="n">ROLE_SI_OCR</span> <span class="o">=</span> <span class="s2">"si_ocr"</span>
+<span class="n">ROLE_SI_DATA</span> <span class="o">=</span> <span class="s2">"si_data"</span>
+<span class="n">ROLE_RAW_DATA</span> <span class="o">=</span> <span class="s2">"raw_data"</span>
+<span class="n">ROLE_OCR_IMAGE</span> <span class="o">=</span> <span class="s2">"ocr_image"</span>
+<span class="n">ROLE_OCR_LAYOUT</span> <span class="o">=</span> <span class="s2">"ocr_layout"</span>
+<span class="c1"># Our own reading notes pulled from Zotero -- the only role not derived from the</span>
+<span class="c1"># paper's own bytes, so it is sourced to Zotero rather than to a retrieval URL.</span>
+<span class="n">ROLE_ANNOTATIONS</span> <span class="o">=</span> <span class="s2">"annotations"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">sha256_file</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">20</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Streaming SHA-256 of a file (1 MiB chunks)."""</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">fh</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">chunk_size</span><span class="p">),</span> <span class="sa">b</span><span class="s2">""</span><span class="p">):</span>
+            <span class="n">h</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">h</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">FileRecord</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One captured file in an artifact directory."""</span>
+
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"Path relative to the artifact directory."</span><span class="p">)</span>
+    <span class="n">role</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"paper_pdf | paper_ocr | si_pdf | si_ocr | si_data"</span><span class="p">)</span>
+    <span class="nb">bytes</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">sha256</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Where the bytes came from (zotero attachment key, URL, OCR)."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">zotero_md5</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"MD5 reported by Zotero for the synced attachment."</span>
+    <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">RetrievalMethod</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""How an artifact is fetched. ``radiant_endpoint`` is a future slot (issue</span>
+<span class="sd">    #20) for un-scriptable sources served from the Radiant VM. ``manual_browser``</span>
+<span class="sd">    is a manual-once retrieval (a publisher behind a browser challenge): the record</span>
+<span class="sd">    carries the human recipe as its command and the deposited bytes are what every</span>
+<span class="sd">    rebuild reads; re-checking the source is not scriptable for it.</span>
+<span class="sd">    """</span>
+
+    <span class="n">springer_esm</span> <span class="o">=</span> <span class="s2">"springer_esm"</span>
+    <span class="n">zotero_attachment</span> <span class="o">=</span> <span class="s2">"zotero_attachment"</span>
+    <span class="n">pmc_oa_api</span> <span class="o">=</span> <span class="s2">"pmc_oa_api"</span>
+    <span class="n">direct_url</span> <span class="o">=</span> <span class="s2">"direct_url"</span>
+    <span class="n">zenodo</span> <span class="o">=</span> <span class="s2">"zenodo"</span>
+    <span class="n">radiant_endpoint</span> <span class="o">=</span> <span class="s2">"radiant_endpoint"</span>
+    <span class="n">pubchem_api</span> <span class="o">=</span> <span class="s2">"pubchem_api"</span>
+    <span class="n">manual_browser</span> <span class="o">=</span> <span class="s2">"manual_browser"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SourceCheck</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Result of re-running the retriever to test the source still yields our bytes."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">checked_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"ISO timestamp of the check (caller-supplied)."</span><span class="p">)</span>
+    <span class="n">produced_sha256</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"sha256 the retriever produced this run."</span><span class="p">)</span>
+    <span class="n">matches</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"Did produced_sha256 equal the record's sha256?"</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">RetrievalRecord</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""How an artifact was obtained, referencing a versioned retriever function."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">method</span><span class="p">:</span> <span class="n">RetrievalMethod</span>
+    <span class="n">source_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Canonical URL (historical retrieval metadata)."</span>
+    <span class="p">)</span>
+    <span class="n">retriever</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Registry key into torchcell.literature.retrieve (the source code)."</span>
+    <span class="p">)</span>
+    <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"kwargs passed to the retriever function."</span>
+    <span class="p">)</span>
+    <span class="n">sha256</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"sha256 of the retrieved bytes (canonical anchor)."</span><span class="p">)</span>
+    <span class="n">retrieved_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"ISO date the artifact was retrieved."</span><span class="p">)</span>
+    <span class="n">last_check</span><span class="p">:</span> <span class="n">SourceCheck</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Last time the retriever was re-run + verified."</span>
+    <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ProcessingRecord</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""How a derived artifact (OCR markdown, extracted data) was produced."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">processor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"Dotted path to the processing function."</span><span class="p">)</span>
+    <span class="n">tool</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"mineru | pdftotext | llm-extract | ..."</span><span class="p">)</span>
+    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"Tool/library version used."</span><span class="p">)</span>
+    <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">input_sha256</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"sha256 of the inputs this was derived from."</span>
+    <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ArtifactRecord</span><span class="p">(</span><span class="n">FileRecord</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A ``FileRecord`` plus how it was retrieved and/or processed.</span>
+
+<span class="sd">    This is the general per-file record: it serves papers, supplements, software,</span>
+<span class="sd">    and dataset raw files. ``Manifest.files`` is typed as ``list[ArtifactRecord]``</span>
+<span class="sd">    so ``retrieval``/``processing`` survive serialize/reload (a bare ``FileRecord``</span>
+<span class="sd">    field would silently drop them by declared-type serialization).</span>
+<span class="sd">    """</span>
+
+    <span class="n">retrieval</span><span class="p">:</span> <span class="n">RetrievalRecord</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">processing</span><span class="p">:</span> <span class="n">ProcessingRecord</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="Manifest">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.Manifest.html#torchcell.literature.Manifest">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Manifest</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Provenance + integrity record for one paper's captured artifact.</span>
+
+<span class="sd">    Written as ``manifest.json`` at the root of</span>
+<span class="sd">    ``&lt;data_root&gt;/torchcell-library/&lt;citation_key&gt;/``. The DOI is the join key</span>
+<span class="sd">    back to the Zotero item and to the TorchCell dataset object; the per-file</span>
+<span class="sd">    sha256 lets a later run verify the mirror is intact, and ``si_data_sources``</span>
+<span class="sd">    records the external repositories (DRYAD/GEO/GitHub/Zenodo) the SI data was</span>
+<span class="sd">    pulled from so reproduction does not depend on the publisher.</span>
+<span class="sd">    """</span>
+
+    <span class="n">version</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">MANIFEST_VERSION</span><span class="p">)</span>
+    <span class="n">citation_key</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">doi</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">library_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">zotero_item_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">collections</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArtifactRecord</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">si_data_sources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"External URLs the SI data files were fetched from."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">si_expected</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"SI items the paper says should exist (e.g. 'Data S1'..'S7'), "</span>
+        <span class="s2">"for a completeness check against captured si_data files."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">provenance_complete</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"False when the manifest was backfilled without being able to "</span>
+        <span class="s2">"source retrieval/processing provenance (e.g. the paper was OCR'd before "</span>
+        <span class="s2">"provenance was formalized and is not resolvable in Zotero). Files are still "</span>
+        <span class="s2">"sha256-pinned; only the upstream retrieval chain is unknown, not fabricated."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">created_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_role_for</span><span class="p">(</span><span class="n">rel_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Infer a file's role from its relative path within the artifact dir."""</span>
+    <span class="k">if</span> <span class="n">rel_path</span> <span class="o">==</span> <span class="s2">"paper.pdf"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ROLE_PAPER_PDF</span>
+    <span class="k">if</span> <span class="n">rel_path</span> <span class="o">==</span> <span class="s2">"paper.md"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ROLE_PAPER_OCR</span>
+    <span class="k">if</span> <span class="n">rel_path</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"annotations.json"</span><span class="p">,</span> <span class="s2">"annotations.md"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ROLE_ANNOTATIONS</span>
+    <span class="k">if</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"si/si_data/"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ROLE_SI_DATA</span>
+    <span class="k">if</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"si/"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".pdf"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ROLE_SI_PDF</span>
+    <span class="k">if</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"si/"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".md"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ROLE_SI_OCR</span>
+    <span class="c1"># Loose SI files (not a PDF/markdown and not already under si/si_data/) are</span>
+    <span class="c1"># released supplementary data tables, e.g. hoepfner's ``si/Table_S5.xls``.</span>
+    <span class="k">if</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"si/"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ROLE_SI_DATA</span>
+    <span class="c1"># MinerU byproducts: extracted figures and layout JSON, for paper and SI.</span>
+    <span class="k">if</span> <span class="s2">"images/"</span> <span class="ow">in</span> <span class="n">rel_path</span> <span class="ow">and</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s2">".jpg"</span><span class="p">,</span> <span class="s2">".jpeg"</span><span class="p">,</span> <span class="s2">".png"</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="n">ROLE_OCR_IMAGE</span>
+    <span class="k">if</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s2">"_content_list.json"</span><span class="p">,</span> <span class="s2">"_middle.json"</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="n">ROLE_OCR_LAYOUT</span>
+    <span class="c1"># Large released quantitative tables kept beside the paper (data-only keys</span>
+    <span class="c1"># such as xue2025/lopez, and the ``data/`` companion of captured papers).</span>
+    <span class="k">if</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"data/"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ROLE_RAW_DATA</span>
+    <span class="c1"># Data-only sources whose "paper" is a born-digital document (e.g. lopez's</span>
+    <span class="c1"># ``thesis.pdf`` + ``thesis.txt``): a top-level PDF is the source document;</span>
+    <span class="c1"># a top-level ``.txt``/``.md`` is its born-digital text extraction.</span>
+    <span class="k">if</span> <span class="s2">"/"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">rel_path</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".pdf"</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">ROLE_PAPER_PDF</span>
+        <span class="k">if</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s2">".txt"</span><span class="p">,</span> <span class="s2">".md"</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="n">ROLE_PAPER_OCR</span>
+    <span class="k">return</span> <span class="s2">"other"</span>
+
+
+<div class="viewcode-block" id="build_manifest">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.build_manifest.html#torchcell.literature.build_manifest">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_manifest</span><span class="p">(</span>
+    <span class="n">artifact_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">citation_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">doi</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">library_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">zotero_item_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">collections</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sources</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">zotero_md5</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">si_data_sources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">si_expected</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">provenance_complete</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">created_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Manifest</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Scan an artifact directory and build its manifest.</span>
+
+<span class="sd">    Walks every file except ``manifest.json`` itself, computes sha256 and size,</span>
+<span class="sd">    and tags each with a role and (when known) a source URL / Zotero md5.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        artifact_dir: The ``&lt;...&gt;/&lt;citation_key&gt;/`` directory.</span>
+<span class="sd">        citation_key: Zotero/library identity for the paper.</span>
+<span class="sd">        doi: DOI join key, when known.</span>
+<span class="sd">        title: Paper title, when known.</span>
+<span class="sd">        library_id: Zotero library id the item came from.</span>
+<span class="sd">        zotero_item_key: Zotero item key for the paper.</span>
+<span class="sd">        collections: Zotero collection names the item belongs to.</span>
+<span class="sd">        sources: Optional map of relative-path -&gt; source string.</span>
+<span class="sd">        zotero_md5: Optional map of relative-path -&gt; Zotero-reported md5.</span>
+<span class="sd">        si_data_sources: External URLs the SI data came from.</span>
+<span class="sd">        si_expected: SI items the paper says exist (completeness checklist).</span>
+<span class="sd">        provenance_complete: False when retrieval/processing provenance could not</span>
+<span class="sd">            be sourced (backfill of a pre-formalization key); files stay hashed.</span>
+<span class="sd">        created_at: ISO timestamp; defaults to now (UTC).</span>
+<span class="sd">    """</span>
+    <span class="n">sources</span> <span class="o">=</span> <span class="n">sources</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">zotero_md5</span> <span class="o">=</span> <span class="n">zotero_md5</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArtifactRecord</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">artifact_dir</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">"*"</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">or</span> <span class="n">path</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">MANIFEST_FILENAME</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">rel</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">artifact_dir</span><span class="p">))</span>
+        <span class="n">role</span> <span class="o">=</span> <span class="n">_role_for</span><span class="p">(</span><span class="n">rel</span><span class="p">)</span>
+        <span class="c1"># OCR markdown has no external source; tag it as produced by MinerU.</span>
+        <span class="n">default_source</span> <span class="o">=</span> <span class="s2">"mineru-ocr"</span> <span class="k">if</span> <span class="n">role</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ROLE_PAPER_OCR</span><span class="p">,</span> <span class="n">ROLE_SI_OCR</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ArtifactRecord</span><span class="p">(</span>
+                <span class="n">path</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span>
+                <span class="n">role</span><span class="o">=</span><span class="n">role</span><span class="p">,</span>
+                <span class="nb">bytes</span><span class="o">=</span><span class="n">path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span><span class="p">,</span>
+                <span class="n">sha256</span><span class="o">=</span><span class="n">sha256_file</span><span class="p">(</span><span class="n">path</span><span class="p">),</span>
+                <span class="n">source</span><span class="o">=</span><span class="n">sources</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">rel</span><span class="p">,</span> <span class="n">default_source</span><span class="p">),</span>
+                <span class="n">zotero_md5</span><span class="o">=</span><span class="n">zotero_md5</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">rel</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">Manifest</span><span class="p">(</span>
+        <span class="n">citation_key</span><span class="o">=</span><span class="n">citation_key</span><span class="p">,</span>
+        <span class="n">doi</span><span class="o">=</span><span class="n">doi</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+        <span class="n">library_id</span><span class="o">=</span><span class="n">library_id</span><span class="p">,</span>
+        <span class="n">zotero_item_key</span><span class="o">=</span><span class="n">zotero_item_key</span><span class="p">,</span>
+        <span class="n">collections</span><span class="o">=</span><span class="n">collections</span> <span class="ow">or</span> <span class="p">[],</span>
+        <span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span>
+        <span class="n">si_data_sources</span><span class="o">=</span><span class="n">si_data_sources</span> <span class="ow">or</span> <span class="p">[],</span>
+        <span class="n">si_expected</span><span class="o">=</span><span class="n">si_expected</span> <span class="ow">or</span> <span class="p">[],</span>
+        <span class="n">provenance_complete</span><span class="o">=</span><span class="n">provenance_complete</span><span class="p">,</span>
+        <span class="n">created_at</span><span class="o">=</span><span class="n">created_at</span> <span class="ow">or</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="write_manifest">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.write_manifest.html#torchcell.literature.write_manifest">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_manifest</span><span class="p">(</span><span class="n">artifact_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">manifest</span><span class="p">:</span> <span class="n">Manifest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Write ``manifest.json`` into the artifact directory; return its path."""</span>
+    <span class="n">dest</span> <span class="o">=</span> <span class="n">artifact_dir</span> <span class="o">/</span> <span class="n">MANIFEST_FILENAME</span>
+    <span class="n">dest</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Manifest: wrote </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%d</span><span class="s2"> files)"</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">files</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">dest</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

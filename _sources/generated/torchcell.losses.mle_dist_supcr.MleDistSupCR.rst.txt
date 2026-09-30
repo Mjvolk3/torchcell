@@ -1,0 +1,8 @@
+﻿torchcell.losses.mle\_dist\_supcr.MleDistSupCR
+==============================================
+
+.. currentmodule:: torchcell.losses.mle_dist_supcr
+
+.. autoclass:: MleDistSupCR
+   :show-inheritance:
+   :members:

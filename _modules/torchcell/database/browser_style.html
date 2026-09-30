@@ -1,0 +1,592 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.database.browser_style &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/database/browser_style.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.database.browser_style</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.database.browser_style</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/database/browser_style.py</span>
+<span class="c1"># [[torchcell.database.browser_style]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/database/browser_style</span>
+<span class="sd">"""Neo4j Browser graph stylesheet (GRASS) for the served torchcell graph.</span>
+
+<span class="sd">Every node carries its Biolink ancestor labels beside its own class label (an</span>
+<span class="sd">``Experiment`` is also ``InformationContentEntity``, ``Entity``, ``NamedThing``). The Neo4j</span>
+<span class="sd">Browser that Neo4j 5.26 serves keeps a label priority list and colors a multi-label node</span>
+<span class="sd">by its highest-priority label; the list starts in the order the labels were first listed</span>
+<span class="sd">from the schema, so the ancestor label that came first, ``NamedThing``, painted the whole</span>
+<span class="sd">graph one color after the 2026.09.17 swap.</span>
+
+<span class="sd">Importing a GraSS file rewrites that list: the importer prepends each ``node.&lt;Label&gt;``</span>
+<span class="sd">rule as it reads the file, so the LAST rule in the file gets the highest priority (read</span>
+<span class="sd">from the served bundle: the ``stylingPrecedence`` reducer and the ``highestPriorityLabel``</span>
+<span class="sd">reduction over ``node.labels``; the Browser's own export writes the highest-priority label</span>
+<span class="sd">last, the same convention). The classic Browser merges matching rules top to bottom with</span>
+<span class="sd">later properties overriding, so the same order serves both.</span>
+
+<span class="sd">The stylesheet written here therefore puts the ancestor labels first, in a receding gray,</span>
+<span class="sd">and the class labels last, colored by the ontology lane the paper figures use</span>
+<span class="sd">(:data:`torchcell.paper.ontology_graph.LANE_PALETTE_INDEX` over</span>
+<span class="sd">:data:`torchcell.utils.PLOT_PALETTE`), so the browser and the figures read the same way:</span>
+<span class="sd">amber for genotype, brick for environment, wheat for experiment, lilac for phenotype, steel</span>
+<span class="sd">blue for provenance. The served Browser reads ``color``, ``caption``, ``diameter`` and</span>
+<span class="sd">``shaft-width`` from a GraSS file and derives border and text colors from ``color``; the</span>
+<span class="sd">other properties are kept for the classic Browser.</span>
+
+<span class="sd">    python -m torchcell.database.browser_style           # writes the stylesheet and the seed</span>
+<span class="sd">    python -m torchcell.database.browser_style --check   # exit 1 when either file is stale</span>
+
+<span class="sd">Two files come out of one render:</span>
+
+<span class="sd">``database/conf/torchcell.grass``</span>
+<span class="sd">    The GraSS stylesheet. Load it by hand from the graph result's styling panel,</span>
+<span class="sd">    "Upload GraSS styles" (the file input accepts ``.grass``, ``.style``, ``.txt``);</span>
+<span class="sd">    "Reset styles to default" undoes it. The stylesheet lives in that browser's local</span>
+<span class="sd">    storage, so each person loads it once.</span>
+
+<span class="sd">``database/browser/torchcell-seed.js``</span>
+<span class="sd">    The same styling as the Browser stores it after an upload, wrapped in a script that</span>
+<span class="sd">    writes it into local storage before the Browser boots. The Browser keeps its styling</span>
+<span class="sd">    in a redux-persist slice keyed ``graphStyling`` under the ``nx.v1.nx.`` prefix</span>
+<span class="sd">    (``W9(rI, "graphStyling", qF)`` in the served ``src.*.js``; whitelist ``nodeStyles``,</span>
+<span class="sd">    ``relStyles``, ``stylingPriorityOrder``, version 1) and rehydrates it on load, so a</span>
+<span class="sd">    value planted there first is what every visitor sees. The image built by</span>
+<span class="sd">    ``database/docker/Dockerfile.tc-neo4j-browser`` adds this file to the Browser jar and</span>
+<span class="sd">    a ``&lt;script&gt;`` tag for it to ``browser/index.html`` (the page's CSP allows scripts</span>
+<span class="sd">    from the server itself and nothing inline). The seed runs once per browser per</span>
+<span class="sd">    stylesheet: it records the stylesheet's sha256 and steps aside while that matches,</span>
+<span class="sd">    so a person's own restyling survives until the stylesheet changes.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.paper.ontology_graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">LANE_PALETTE_INDEX</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">PLOT_PALETTE</span><span class="p">,</span> <span class="n">PLOT_PALETTE_FILL</span>
+
+<span class="n">REPO_ROOT</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+<span class="n">SCHEMA_CONFIG</span> <span class="o">=</span> <span class="n">REPO_ROOT</span> <span class="o">/</span> <span class="s2">"biocypher"</span> <span class="o">/</span> <span class="s2">"config"</span> <span class="o">/</span> <span class="s2">"torchcell_schema_config.yaml"</span>
+<span class="n">DEFAULT_OUTPUT</span> <span class="o">=</span> <span class="n">REPO_ROOT</span> <span class="o">/</span> <span class="s2">"database"</span> <span class="o">/</span> <span class="s2">"conf"</span> <span class="o">/</span> <span class="s2">"torchcell.grass"</span>
+<span class="n">DEFAULT_SEED_OUTPUT</span> <span class="o">=</span> <span class="n">REPO_ROOT</span> <span class="o">/</span> <span class="s2">"database"</span> <span class="o">/</span> <span class="s2">"browser"</span> <span class="o">/</span> <span class="s2">"torchcell-seed.js"</span>
+
+<span class="c1"># Local-storage keys of the served Browser: redux-persist key "graphStyling" through the</span>
+<span class="c1"># framework-scoped storage (createKey(framework, key) -&gt; "nx.v1.nx.&lt;key&gt;", keyPrefix "").</span>
+<span class="n">STYLING_STORAGE_KEY</span> <span class="o">=</span> <span class="s2">"nx.v1.nx.graphStyling"</span>
+<span class="n">SEED_SHA_STORAGE_KEY</span> <span class="o">=</span> <span class="s2">"nx.v1.nx.torchcellGrassSha256"</span>
+<span class="n">STYLING_PERSIST_VERSION</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="c1"># The Browser's GraSS importer sizes a node as floor(diameter / 2 / 0.93).</span>
+<span class="n">DIAMETER_TO_SIZE</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="mf">0.93</span>
+
+<span class="c1"># Biolink 3.2.1 ancestor labels the served nodes carry beside their class label</span>
+<span class="c1"># (``CALL db.labels()`` on the store served 2026-09-18). Their rules go FIRST so that any</span>
+<span class="c1"># class rule below overrides them.</span>
+<span class="n">ANCESTOR_LABELS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"NamedThing"</span><span class="p">,</span>
+    <span class="s2">"Entity"</span><span class="p">,</span>
+    <span class="s2">"BiologicalEntity"</span><span class="p">,</span>
+    <span class="s2">"InformationContentEntity"</span><span class="p">,</span>
+    <span class="s2">"EnvironmentalExposure"</span><span class="p">,</span>
+    <span class="s2">"Attribute"</span><span class="p">,</span>
+    <span class="s2">"PhenotypicFeature"</span><span class="p">,</span>
+    <span class="s2">"DiseaseOrPhenotypicFeature"</span><span class="p">,</span>
+    <span class="s2">"ChemicalEntity"</span><span class="p">,</span>
+    <span class="s2">"MolecularEntity"</span><span class="p">,</span>
+    <span class="s2">"NucleicAcidEntity"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Graph label -&gt; ontology lane, for the classes that are not phenotypes. Phenotype labels</span>
+<span class="c1"># are read from the schema config (every node class whose ``is_a`` is ``phenotypic</span>
+<span class="c1"># feature``), so a new phenotype class gets its lane without an edit here.</span>
+<span class="n">LANE_OF_LABEL</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"Genotype"</span><span class="p">:</span> <span class="s2">"genotype"</span><span class="p">,</span>
+    <span class="s2">"Perturbation"</span><span class="p">:</span> <span class="s2">"genotype"</span><span class="p">,</span>
+    <span class="s2">"SegregantGenotype"</span><span class="p">:</span> <span class="s2">"genotype"</span><span class="p">,</span>
+    <span class="s2">"CrisprConstruct"</span><span class="p">:</span> <span class="s2">"genotype"</span><span class="p">,</span>
+    <span class="s2">"Environment"</span><span class="p">:</span> <span class="s2">"environment"</span><span class="p">,</span>
+    <span class="s2">"Media"</span><span class="p">:</span> <span class="s2">"environment"</span><span class="p">,</span>
+    <span class="s2">"Temperature"</span><span class="p">:</span> <span class="s2">"environment"</span><span class="p">,</span>
+    <span class="s2">"EnvironmentPerturbation"</span><span class="p">:</span> <span class="s2">"environment"</span><span class="p">,</span>
+    <span class="s2">"Experiment"</span><span class="p">:</span> <span class="s2">"experiment"</span><span class="p">,</span>
+    <span class="s2">"ExperimentReference"</span><span class="p">:</span> <span class="s2">"experiment"</span><span class="p">,</span>
+    <span class="s2">"Dataset"</span><span class="p">:</span> <span class="s2">"provenance"</span><span class="p">,</span>
+    <span class="s2">"Publication"</span><span class="p">:</span> <span class="s2">"provenance"</span><span class="p">,</span>
+    <span class="s2">"Genome"</span><span class="p">:</span> <span class="s2">"provenance"</span><span class="p">,</span>
+    <span class="s2">"Schema_info"</span><span class="p">:</span> <span class="s2">"enum"</span><span class="p">,</span>  <span class="c1"># BioCypher's own bookkeeping node</span>
+<span class="p">}</span>
+
+<span class="c1"># The property shown inside the circle. Everything else falls back to the node id.</span>
+<span class="n">CAPTION_OF_LABEL</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"Genotype"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{perturbed_gene_name}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="s2">"Perturbation"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{perturbed_gene_name}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="s2">"SegregantGenotype"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{segregant_id}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="s2">"CrisprConstruct"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{effector}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="s2">"Environment"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{media}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="s2">"Media"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{name}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="s2">"Temperature"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{value}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="s2">"EnvironmentPerturbation"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{compound_name}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="s2">"Publication"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{pubmed_id}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="s2">"Genome"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{strain}</span><span class="s2">"</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1"># Hubs draw larger so the record structure (experiment at the center, its genotype,</span>
+<span class="c1"># environment and phenotype around it) is readable at a glance.</span>
+<span class="n">DIAMETER_OF_LABEL</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"Experiment"</span><span class="p">:</span> <span class="mi">65</span><span class="p">,</span>
+    <span class="s2">"ExperimentReference"</span><span class="p">:</span> <span class="mi">55</span><span class="p">,</span>
+    <span class="s2">"Dataset"</span><span class="p">:</span> <span class="mi">65</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">CLASS_DIAMETER_PX</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="n">ANCESTOR_DIAMETER_PX</span> <span class="o">=</span> <span class="mi">35</span>
+
+
+<div class="viewcode-block" id="NodeRule">
+<a class="viewcode-back" href="../../../generated/torchcell.database.browser_style.NodeRule.html#torchcell.database.browser_style.NodeRule">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NodeRule</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One ``node.&lt;Label&gt; {...}`` block."""</span>
+
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">fill</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">"^#[0-9A-F]</span><span class="si">{6}</span><span class="s2">$"</span><span class="p">)</span>
+    <span class="n">border</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">"^#[0-9A-F]</span><span class="si">{6}</span><span class="s2">$"</span><span class="p">)</span>
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"#000000"</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">"^#[0-9A-F]</span><span class="si">{6}</span><span class="s2">$"</span><span class="p">)</span>
+    <span class="n">diameter_px</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">CLASS_DIAMETER_PX</span>
+    <span class="n">caption</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"</span><span class="si">{id}</span><span class="s2">"</span>
+
+<div class="viewcode-block" id="NodeRule.render">
+<a class="viewcode-back" href="../../../generated/torchcell.database.browser_style.NodeRule.html#torchcell.database.browser_style.NodeRule.render">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The GRASS block for this label."""</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"node.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2"> </span><span class="se">{{\n</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"  color: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">fill</span><span class="si">}</span><span class="s2">;</span><span class="se">\n</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"  border-color: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">border</span><span class="si">}</span><span class="s2">;</span><span class="se">\n</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"  border-width: 2px;</span><span class="se">\n</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"  text-color-internal: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">;</span><span class="se">\n</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"  diameter: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">diameter_px</span><span class="si">}</span><span class="s2">px;</span><span class="se">\n</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s1">'  caption: "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">caption</span><span class="si">}</span><span class="s1">";</span><span class="se">\n</span><span class="s1">'</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="se">}}\n</span><span class="s2">"</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="RelationshipRule">
+<a class="viewcode-back" href="../../../generated/torchcell.database.browser_style.RelationshipRule.html#torchcell.database.browser_style.RelationshipRule">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RelationshipRule</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The single ``relationship {...}`` block: every edge is a membership edge."""</span>
+
+    <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">PLOT_PALETTE</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">"^#[0-9A-F]</span><span class="si">{6}</span><span class="s2">$"</span><span class="p">)</span>
+    <span class="n">shaft_width_px</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">font_size_px</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span>
+
+<div class="viewcode-block" id="RelationshipRule.render">
+<a class="viewcode-back" href="../../../generated/torchcell.database.browser_style.RelationshipRule.html#torchcell.database.browser_style.RelationshipRule.render">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The GRASS block for every relationship type."""</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="s2">"relationship {</span><span class="se">\n</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"  color: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">color</span><span class="si">}</span><span class="s2">;</span><span class="se">\n</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"  shaft-width: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">shaft_width_px</span><span class="si">}</span><span class="s2">px;</span><span class="se">\n</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"  font-size: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">font_size_px</span><span class="si">}</span><span class="s2">px;</span><span class="se">\n</span><span class="s2">"</span>
+            <span class="s2">"  padding: 3px;</span><span class="se">\n</span><span class="s2">"</span>
+            <span class="s2">"  text-color-external: #000000;</span><span class="se">\n</span><span class="s2">"</span>
+            <span class="s2">"  text-color-internal: #FFFFFF;</span><span class="se">\n</span><span class="s2">"</span>
+            <span class="s1">'  caption: "&lt;type&gt;";</span><span class="se">\n</span><span class="s1">'</span>
+            <span class="s2">"}</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_camel</span><span class="p">(</span><span class="n">schema_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``gene interaction phenotype`` -&gt; ``GeneInteractionPhenotype`` (BioCypher labels)."""</span>
+    <span class="k">return</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">word</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">schema_key</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+
+
+<div class="viewcode-block" id="schema_node_labels">
+<a class="viewcode-back" href="../../../generated/torchcell.database.browser_style.schema_node_labels.html#torchcell.database.browser_style.schema_node_labels">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">schema_node_labels</span><span class="p">(</span><span class="n">schema_config</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">SCHEMA_CONFIG</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Graph label -&gt; ``is_a`` for every node class in the BioCypher schema config."""</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">schema_config</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="n">_camel</span><span class="p">(</span><span class="n">key</span><span class="p">):</span> <span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"is_a"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">body</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"represented_as"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"node"</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="lane_of">
+<a class="viewcode-back" href="../../../generated/torchcell.database.browser_style.lane_of.html#torchcell.database.browser_style.lane_of">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">lane_of</span><span class="p">(</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">is_a</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The ontology lane of a graph label; phenotypes come from their ``is_a``."""</span>
+    <span class="k">if</span> <span class="n">is_a</span> <span class="o">==</span> <span class="s2">"phenotypic feature"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"phenotype"</span>
+    <span class="k">if</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">LANE_OF_LABEL</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">LANE_OF_LABEL</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
+    <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="si">!r}</span><span class="s2"> (is_a </span><span class="si">{</span><span class="n">is_a</span><span class="si">!r}</span><span class="s2">) has no ontology lane: add it to LANE_OF_LABEL in "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> or give it a phenotypic feature parent in the schema config"</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="node_rules">
+<a class="viewcode-back" href="../../../generated/torchcell.database.browser_style.node_rules.html#torchcell.database.browser_style.node_rules">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">node_rules</span><span class="p">(</span><span class="n">schema_config</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">SCHEMA_CONFIG</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">NodeRule</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Ancestor rules first (gray, small), then one colored rule per schema node class."""</span>
+    <span class="n">rules</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">NodeRule</span><span class="p">(</span>
+            <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+            <span class="n">fill</span><span class="o">=</span><span class="n">PLOT_PALETTE_FILL</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span>
+            <span class="n">border</span><span class="o">=</span><span class="n">PLOT_PALETTE_FILL</span><span class="p">[</span><span class="mi">11</span><span class="p">],</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">PLOT_PALETTE</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span>
+            <span class="n">diameter_px</span><span class="o">=</span><span class="n">ANCESTOR_DIAMETER_PX</span><span class="p">,</span>
+            <span class="n">caption</span><span class="o">=</span><span class="s2">"</span><span class="si">{id}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">ANCESTOR_LABELS</span>
+    <span class="p">]</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">schema_node_labels</span><span class="p">(</span><span class="n">schema_config</span><span class="p">)</span>
+    <span class="n">labels</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"Schema_info"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">labels</span><span class="p">):</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">LANE_PALETTE_INDEX</span><span class="p">[</span><span class="n">lane_of</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">labels</span><span class="p">[</span><span class="n">label</span><span class="p">])]</span>
+        <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">NodeRule</span><span class="p">(</span>
+                <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+                <span class="n">fill</span><span class="o">=</span><span class="n">PLOT_PALETTE_FILL</span><span class="p">[</span><span class="n">index</span><span class="p">],</span>
+                <span class="n">border</span><span class="o">=</span><span class="n">PLOT_PALETTE</span><span class="p">[</span><span class="n">index</span><span class="p">],</span>
+                <span class="n">diameter_px</span><span class="o">=</span><span class="n">DIAMETER_OF_LABEL</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">CLASS_DIAMETER_PX</span><span class="p">),</span>
+                <span class="n">caption</span><span class="o">=</span><span class="n">CAPTION_OF_LABEL</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="s2">"</span><span class="si">{id}</span><span class="s2">"</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">rules</span></div>
+
+
+
+<div class="viewcode-block" id="render">
+<a class="viewcode-back" href="../../../generated/torchcell.database.browser_style.render.html#torchcell.database.browser_style.render">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">render</span><span class="p">(</span><span class="n">schema_config</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">SCHEMA_CONFIG</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The complete stylesheet text."""</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"/* torchcell Neo4j Browser stylesheet. Generated by</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">" * python -m torchcell.database.browser_style; do not edit by hand.</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">" * Ancestor labels first so the class rules below win on multi-label nodes;</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">" * class colors are the ontology lanes of the paper figures. */</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="p">)</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"node {</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="sa">f</span><span class="s2">"  color: </span><span class="si">{</span><span class="n">PLOT_PALETTE_FILL</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">;</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="sa">f</span><span class="s2">"  border-color: </span><span class="si">{</span><span class="n">PLOT_PALETTE</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">;</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"  border-width: 2px;</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"  text-color-internal: #000000;</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="sa">f</span><span class="s2">"  diameter: </span><span class="si">{</span><span class="n">CLASS_DIAMETER_PX</span><span class="si">}</span><span class="s2">px;</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"  font-size: 10px;</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"}</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="p">)</span>
+    <span class="n">blocks</span> <span class="o">=</span> <span class="p">[</span><span class="n">header</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">RelationshipRule</span><span class="p">()</span><span class="o">.</span><span class="n">render</span><span class="p">()]</span>
+    <span class="n">blocks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">rule</span><span class="o">.</span><span class="n">render</span><span class="p">()</span> <span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="n">node_rules</span><span class="p">(</span><span class="n">schema_config</span><span class="p">))</span>
+    <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">blocks</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Caption">
+<a class="viewcode-back" href="../../../generated/torchcell.database.browser_style.Caption.html#torchcell.database.browser_style.Caption">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Caption</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One caption entry as the Browser stores it (``Z9`` in the served bundle)."""</span>
+
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"id"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">,</span> <span class="s2">"property"</span><span class="p">]</span>
+    <span class="n">captionKey</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># noqa: N815  # the Browser's own field name</span></div>
+
+
+
+<div class="viewcode-block" id="SeedNodeStyle">
+<a class="viewcode-back" href="../../../generated/torchcell.database.browser_style.SeedNodeStyle.html#torchcell.database.browser_style.SeedNodeStyle">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SeedNodeStyle</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""What the Browser stores for one label after importing a ``node.&lt;Label&gt;`` rule."""</span>
+
+    <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">"^#[0-9A-F]</span><span class="si">{6}</span><span class="s2">$"</span><span class="p">)</span>
+    <span class="n">size</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">captions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Caption</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="SeedState">
+<a class="viewcode-back" href="../../../generated/torchcell.database.browser_style.SeedState.html#torchcell.database.browser_style.SeedState">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SeedState</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The persisted ``graphStyling`` slice: the whitelist of its redux-persist config."""</span>
+
+    <span class="n">nodeStyles</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SeedNodeStyle</span><span class="p">]</span>  <span class="c1"># noqa: N815</span>
+    <span class="n">relStyles</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span>  <span class="c1"># noqa: N815</span>
+    <span class="n">stylingPriorityOrder</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>  <span class="c1"># noqa: N815</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_caption</span><span class="p">(</span><span class="n">caption</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Caption</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The GraSS caption string as the importer reads it."""</span>
+    <span class="k">if</span> <span class="n">caption</span> <span class="o">==</span> <span class="s2">"&lt;id&gt;"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Caption</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">"id"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">caption</span> <span class="o">==</span> <span class="s2">"&lt;type&gt;"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Caption</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">"type"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">caption</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"{"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">caption</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"}"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Caption</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">"property"</span><span class="p">,</span> <span class="n">captionKey</span><span class="o">=</span><span class="n">caption</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"caption </span><span class="si">{</span><span class="n">caption</span><span class="si">!r}</span><span class="s2"> is not one the Browser imports"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="seed_state">
+<a class="viewcode-back" href="../../../generated/torchcell.database.browser_style.seed_state.html#torchcell.database.browser_style.seed_state">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">seed_state</span><span class="p">(</span><span class="n">schema_config</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">SCHEMA_CONFIG</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SeedState</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The styling the Browser would hold after "Upload GraSS styles" of :func:`render`.</span>
+
+<span class="sd">    The importer (``phe``) prepends each ``node.&lt;Label&gt;`` rule to the priority list, so</span>
+<span class="sd">    the last rule in the file is first in the list; the bare ``node`` and ``relationship``</span>
+<span class="sd">    blocks carry no label and are skipped, so ``relStyles`` stays empty.</span>
+<span class="sd">    """</span>
+    <span class="n">rules</span> <span class="o">=</span> <span class="n">node_rules</span><span class="p">(</span><span class="n">schema_config</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">SeedState</span><span class="p">(</span>
+        <span class="n">nodeStyles</span><span class="o">=</span><span class="p">{</span>
+            <span class="n">rule</span><span class="o">.</span><span class="n">label</span><span class="p">:</span> <span class="n">SeedNodeStyle</span><span class="p">(</span>
+                <span class="n">color</span><span class="o">=</span><span class="n">rule</span><span class="o">.</span><span class="n">fill</span><span class="p">,</span>
+                <span class="n">size</span><span class="o">=</span><span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">rule</span><span class="o">.</span><span class="n">diameter_px</span> <span class="o">/</span> <span class="n">DIAMETER_TO_SIZE</span><span class="p">),</span>
+                <span class="n">captions</span><span class="o">=</span><span class="p">[</span><span class="n">_caption</span><span class="p">(</span><span class="n">rule</span><span class="o">.</span><span class="n">caption</span><span class="p">)],</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="n">rules</span>
+        <span class="p">},</span>
+        <span class="n">relStyles</span><span class="o">=</span><span class="p">{},</span>
+        <span class="n">stylingPriorityOrder</span><span class="o">=</span><span class="p">[</span><span class="n">rule</span><span class="o">.</span><span class="n">label</span> <span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">rules</span><span class="p">)],</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="persisted_value">
+<a class="viewcode-back" href="../../../generated/torchcell.database.browser_style.persisted_value.html#torchcell.database.browser_style.persisted_value">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">persisted_value</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">SeedState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The local-storage value redux-persist writes.</span>
+
+<span class="sd">    Every slice field is JSON-encoded on its own, beside a ``_persist`` record at the</span>
+<span class="sd">    slice's version.</span>
+<span class="sd">    """</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">":"</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">exclude_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="p">}</span>
+    <span class="n">fields</span><span class="p">[</span><span class="s2">"_persist"</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+        <span class="p">{</span><span class="s2">"version"</span><span class="p">:</span> <span class="n">STYLING_PERSIST_VERSION</span><span class="p">,</span> <span class="s2">"rehydrated"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span> <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">":"</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">":"</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="stylesheet_sha256">
+<a class="viewcode-back" href="../../../generated/torchcell.database.browser_style.stylesheet_sha256.html#torchcell.database.browser_style.stylesheet_sha256">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">stylesheet_sha256</span><span class="p">(</span><span class="n">schema_config</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">SCHEMA_CONFIG</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""sha256 of the rendered stylesheet; the seed re-runs when it changes."""</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">render</span><span class="p">(</span><span class="n">schema_config</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="render_seed_js">
+<a class="viewcode-back" href="../../../generated/torchcell.database.browser_style.render_seed_js.html#torchcell.database.browser_style.render_seed_js">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">render_seed_js</span><span class="p">(</span><span class="n">schema_config</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">SCHEMA_CONFIG</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The script the patched Browser page loads before its own bundle."""</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">persisted_value</span><span class="p">(</span><span class="n">seed_state</span><span class="p">(</span><span class="n">schema_config</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="s2">"/* torchcell Neo4j Browser styling seed. Generated by</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">" * python -m torchcell.database.browser_style; do not edit by hand.</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">" * Plants the torchcell.grass styling in this browser's local storage before the</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">" * Browser rehydrates its graphStyling slice. Runs once per stylesheet: the</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">" * stylesheet's sha256 is recorded and the seed steps aside while it matches. */</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"(function () {</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="sa">f</span><span class="s2">"  var STYLING_KEY = </span><span class="si">{</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">STYLING_STORAGE_KEY</span><span class="p">)</span><span class="si">}</span><span class="s2">;</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="sa">f</span><span class="s2">"  var SHA_KEY = </span><span class="si">{</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">SEED_SHA_STORAGE_KEY</span><span class="p">)</span><span class="si">}</span><span class="s2">;</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="sa">f</span><span class="s2">"  var SHA = </span><span class="si">{</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">stylesheet_sha256</span><span class="p">(</span><span class="n">schema_config</span><span class="p">))</span><span class="si">}</span><span class="s2">;</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="sa">f</span><span class="s2">"  var VALUE = </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">;</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"  if (window.localStorage.getItem(SHA_KEY) === SHA) {</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"    return;</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"  }</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"  window.localStorage.setItem(STYLING_KEY, VALUE);</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"  window.localStorage.setItem(SHA_KEY, SHA);</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"})();</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Write the stylesheet and the seed, or with ``--check`` report whether both are current."""</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="n">prog</span><span class="o">=</span><span class="s2">"python -m torchcell.database.browser_style"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="vm">__doc__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--output"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_OUTPUT</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--seed-output"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_SEED_OUTPUT</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--check"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"exit 1 if --output or --seed-output differs from the render"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="p">{</span><span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">:</span> <span class="n">render</span><span class="p">(),</span> <span class="n">args</span><span class="o">.</span><span class="n">seed_output</span><span class="p">:</span> <span class="n">render_seed_js</span><span class="p">()}</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">check</span><span class="p">:</span>
+        <span class="n">stale</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">path</span>
+            <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">or</span> <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="o">!=</span> <span class="n">text</span>
+        <span class="p">]</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">stale</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2"> is stale; run python -m torchcell.database.browser_style"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">stale</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">1</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">seed_output</span><span class="si">}</span><span class="s2"> are current"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+    <span class="n">n_rules</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">node_rules</span><span class="p">())</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"wrote </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">n_rules</span><span class="si">}</span><span class="s2"> node rules) and </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">seed_output</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">0</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

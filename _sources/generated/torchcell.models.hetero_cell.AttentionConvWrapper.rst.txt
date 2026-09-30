@@ -1,0 +1,8 @@
+﻿torchcell.models.hetero\_cell.AttentionConvWrapper
+==================================================
+
+.. currentmodule:: torchcell.models.hetero_cell
+
+.. autoclass:: AttentionConvWrapper
+   :show-inheritance:
+   :members:

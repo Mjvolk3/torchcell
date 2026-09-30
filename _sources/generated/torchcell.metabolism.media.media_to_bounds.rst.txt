@@ -1,0 +1,6 @@
+﻿torchcell.metabolism.media.media\_to\_bounds
+============================================
+
+.. currentmodule:: torchcell.metabolism.media
+
+.. autofunction:: media_to_bounds

@@ -1,0 +1,8 @@
+﻿torchcell.data.GenotypeAggregator
+=================================
+
+.. currentmodule:: torchcell.data
+
+.. autoclass:: GenotypeAggregator
+   :show-inheritance:
+   :members:

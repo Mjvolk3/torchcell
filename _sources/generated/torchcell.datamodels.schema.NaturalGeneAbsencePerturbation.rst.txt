@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.NaturalGeneAbsencePerturbation
+==========================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: NaturalGeneAbsencePerturbation
+   :show-inheritance:
+   :members:

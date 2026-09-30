@@ -1,0 +1,6 @@
+﻿torchcell.verification.l3\_convention
+=====================================
+
+.. currentmodule:: torchcell.verification
+
+.. autofunction:: l3_convention

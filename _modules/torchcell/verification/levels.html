@@ -1,0 +1,376 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.verification.levels &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/verification/levels.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.verification.levels</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.verification.levels</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/verification/levels</span>
+<span class="c1"># [[torchcell.verification.levels]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/verification/levels</span>
+<span class="sd">"""Reusable L0-L4 record-level checks (roadmap WS3).</span>
+
+<span class="sd">Each function returns a :class:`LevelResult`. They are deliberately small,</span>
+<span class="sd">composable building blocks: a per-dataset verifier (WS5-WS9) assembles the</span>
+<span class="sd">relevant ones into a :class:`VerificationReport`. All checks operate on</span>
+<span class="sd">pydantic/LMDB records -- no graph required (Phase A).</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Level</span><span class="p">,</span> <span class="n">LevelResult</span>
+
+<span class="c1"># A validator turns one raw record into a model instance (or raises). Callers</span>
+<span class="c1"># pass e.g. ``TypeAdapter(ExperimentType).validate_python`` or ``Model.model_validate``.</span>
+<span class="n">Validator</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">object</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="l0_structural">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.l0_structural.html#torchcell.verification.l0_structural">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">l0_structural</span><span class="p">(</span><span class="n">records</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">validator</span><span class="p">:</span> <span class="n">Validator</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""L0: every raw record validates against its schema model.</span>
+
+<span class="sd">    Catches validation errors per record and reports them as data (this is the</span>
+<span class="sd">    harness's job, not a silent fallback).</span>
+<span class="sd">    """</span>
+    <span class="n">failures</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">record</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">records</span><span class="p">):</span>
+        <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">validator</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>  <span class="c1"># pydantic raises ValueError subclass</span>
+            <span class="n">failures</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"index"</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span> <span class="s2">"error"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)[:</span><span class="mi">500</span><span class="p">]})</span>
+    <span class="n">passed</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">failures</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> records validated"</span>
+        <span class="k">if</span> <span class="n">passed</span>
+        <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">failures</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> records failed schema validation"</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L0</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"structural"</span><span class="p">,</span>
+        <span class="n">passed</span><span class="o">=</span><span class="n">passed</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="n">msg</span><span class="p">,</span>
+        <span class="n">details</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"n_records"</span><span class="p">:</span> <span class="n">n</span><span class="p">,</span>
+            <span class="s2">"n_failures"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">failures</span><span class="p">),</span>
+            <span class="s2">"failures"</span><span class="p">:</span> <span class="n">failures</span><span class="p">[:</span><span class="mi">10</span><span class="p">],</span>
+        <span class="p">},</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="l1_completeness">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.l1_completeness.html#torchcell.verification.l1_completeness">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">l1_completeness</span><span class="p">(</span>
+    <span class="n">observed</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="n">Hashable</span><span class="p">],</span>
+    <span class="n">expected</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="n">Hashable</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">allow_extra</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""L1: observed keys cover the expected oracle set (nothing silently dropped)."""</span>
+    <span class="n">observed_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">observed</span><span class="p">)</span>
+    <span class="n">expected_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">expected</span><span class="p">)</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="n">expected_set</span> <span class="o">-</span> <span class="n">observed_set</span>
+    <span class="n">extra</span> <span class="o">=</span> <span class="n">observed_set</span> <span class="o">-</span> <span class="n">expected_set</span>
+    <span class="n">passed</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">missing</span> <span class="ow">and</span> <span class="p">(</span><span class="n">allow_extra</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">extra</span><span class="p">)</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"complete: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">observed_set</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">expected_set</span><span class="p">)</span><span class="si">}</span><span class="s2"> expected keys present"</span>
+        <span class="k">if</span> <span class="n">passed</span>
+        <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span><span class="si">}</span><span class="s2"> missing"</span>
+        <span class="o">+</span> <span class="p">(</span><span class="s2">""</span> <span class="k">if</span> <span class="n">allow_extra</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">", </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">extra</span><span class="p">)</span><span class="si">}</span><span class="s2"> unexpected"</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L1</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"completeness"</span><span class="p">,</span>
+        <span class="n">passed</span><span class="o">=</span><span class="n">passed</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="n">msg</span><span class="p">,</span>
+        <span class="n">details</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"n_observed"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">observed_set</span><span class="p">),</span>
+            <span class="s2">"n_expected"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">expected_set</span><span class="p">),</span>
+            <span class="s2">"missing"</span><span class="p">:</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">missing</span><span class="p">))[:</span><span class="mi">20</span><span class="p">],</span>
+            <span class="s2">"extra"</span><span class="p">:</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">extra</span><span class="p">))[:</span><span class="mi">20</span><span class="p">],</span>
+        <span class="p">},</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="l1_count">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.l1_count.html#torchcell.verification.l1_count">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">l1_count</span><span class="p">(</span><span class="n">observed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">expected</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""L1 variant: an exact record-count oracle (e.g. 4718 mutants + 122 WT)."""</span>
+    <span class="n">passed</span> <span class="o">=</span> <span class="n">observed</span> <span class="o">==</span> <span class="n">expected</span>
+    <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L1</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"count"</span><span class="p">,</span>
+        <span class="n">passed</span><span class="o">=</span><span class="n">passed</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">"observed </span><span class="si">{</span><span class="n">observed</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s2">"observed"</span><span class="p">:</span> <span class="n">observed</span><span class="p">,</span> <span class="s2">"expected"</span><span class="p">:</span> <span class="n">expected</span><span class="p">},</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="l2_value_fidelity">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.l2_value_fidelity.html#torchcell.verification.l2_value_fidelity">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">l2_value_fidelity</span><span class="p">(</span>
+    <span class="n">values</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">allow_nan</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">minimum</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">maximum</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""L2: numeric values are finite / in range / non-NaN as required."""</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">bad</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">values</span><span class="p">):</span>
+        <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+            <span class="n">bad</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"index"</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="nb">repr</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="s2">"reason"</span><span class="p">:</span> <span class="s2">"non-numeric"</span><span class="p">})</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">allow_nan</span><span class="p">:</span>
+                <span class="n">bad</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"index"</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="s2">"nan"</span><span class="p">,</span> <span class="s2">"reason"</span><span class="p">:</span> <span class="s2">"nan"</span><span class="p">})</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+            <span class="n">bad</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"index"</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="nb">repr</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="s2">"reason"</span><span class="p">:</span> <span class="s2">"inf"</span><span class="p">})</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">minimum</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="n">minimum</span><span class="p">:</span>
+            <span class="n">bad</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"index"</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="n">value</span><span class="p">,</span> <span class="s2">"reason"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"&lt; </span><span class="si">{</span><span class="n">minimum</span><span class="si">}</span><span class="s2">"</span><span class="p">})</span>
+        <span class="k">elif</span> <span class="n">maximum</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="n">maximum</span><span class="p">:</span>
+            <span class="n">bad</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"index"</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="n">value</span><span class="p">,</span> <span class="s2">"reason"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"&gt; </span><span class="si">{</span><span class="n">maximum</span><span class="si">}</span><span class="s2">"</span><span class="p">})</span>
+    <span class="n">passed</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">bad</span>
+    <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L2</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"value_fidelity"</span><span class="p">,</span>
+        <span class="n">passed</span><span class="o">=</span><span class="n">passed</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> values checked"</span> <span class="k">if</span> <span class="n">passed</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bad</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> values invalid"</span><span class="p">,</span>
+        <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s2">"n_values"</span><span class="p">:</span> <span class="n">n</span><span class="p">,</span> <span class="s2">"n_bad"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">bad</span><span class="p">),</span> <span class="s2">"bad"</span><span class="p">:</span> <span class="n">bad</span><span class="p">[:</span><span class="mi">20</span><span class="p">]},</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="l2_cross_method">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.l2_cross_method.html#torchcell.verification.l2_cross_method">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">l2_cross_method</span><span class="p">(</span>
+    <span class="n">a</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">b</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""L2: two independently-derived aligned series agree within ``tol``."""</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+            <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L2</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"cross_method"</span><span class="p">,</span>
+            <span class="n">passed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">"length mismatch: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s2">"len_a"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="s2">"len_b"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="p">)},</span>
+        <span class="p">)</span>
+    <span class="n">disagreements</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">y</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">tol</span><span class="p">:</span>
+            <span class="n">disagreements</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"index"</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span> <span class="s2">"a"</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">:</span> <span class="n">y</span><span class="p">,</span> <span class="s2">"diff"</span><span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">y</span><span class="p">)})</span>
+    <span class="n">passed</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">disagreements</span>
+    <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L2</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"cross_method"</span><span class="p">,</span>
+        <span class="n">passed</span><span class="o">=</span><span class="n">passed</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="si">}</span><span class="s2"> pairs agree within </span><span class="si">{</span><span class="n">tol</span><span class="si">}</span><span class="s2">"</span>
+            <span class="k">if</span> <span class="n">passed</span>
+            <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">disagreements</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="si">}</span><span class="s2"> pairs disagree &gt; </span><span class="si">{</span><span class="n">tol</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">),</span>
+        <span class="n">details</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"tol"</span><span class="p">:</span> <span class="n">tol</span><span class="p">,</span>
+            <span class="s2">"n_disagreements"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">disagreements</span><span class="p">),</span>
+            <span class="s2">"worst"</span><span class="p">:</span> <span class="n">disagreements</span><span class="p">[:</span><span class="mi">20</span><span class="p">],</span>
+        <span class="p">},</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="l3_convention">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.l3_convention.html#torchcell.verification.l3_convention">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">l3_convention</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">holds</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">detail</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""L3: a named units/convention assertion (e.g. expression = log2(sample/ref))."""</span>
+    <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L3</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+        <span class="n">passed</span><span class="o">=</span><span class="n">holds</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="n">detail</span> <span class="ow">or</span> <span class="p">(</span><span class="s2">"convention holds"</span> <span class="k">if</span> <span class="n">holds</span> <span class="k">else</span> <span class="s2">"convention violated"</span><span class="p">),</span>
+        <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s2">"detail"</span><span class="p">:</span> <span class="n">detail</span><span class="p">},</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="l4_cross_source">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.l4_cross_source.html#torchcell.verification.l4_cross_source">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">l4_cross_source</span><span class="p">(</span>
+    <span class="n">shared</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span> <span class="o">*</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""L4: overlapping entities agree across two sources.</span>
+
+<span class="sd">    ``shared`` is an iterable of ``(entity_id, value_source_a, value_source_b)``.</span>
+<span class="sd">    """</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">disagreements</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">va</span><span class="p">,</span> <span class="n">vb</span> <span class="ow">in</span> <span class="n">shared</span><span class="p">:</span>
+        <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">va</span> <span class="o">-</span> <span class="n">vb</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">tol</span><span class="p">:</span>
+            <span class="n">disagreements</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span><span class="s2">"entity"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="s2">"a"</span><span class="p">:</span> <span class="n">va</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">:</span> <span class="n">vb</span><span class="p">,</span> <span class="s2">"diff"</span><span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="n">va</span> <span class="o">-</span> <span class="n">vb</span><span class="p">)}</span>
+            <span class="p">)</span>
+    <span class="n">passed</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">disagreements</span>
+    <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L4</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"cross_source"</span><span class="p">,</span>
+        <span class="n">passed</span><span class="o">=</span><span class="n">passed</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> overlapping entities agree within </span><span class="si">{</span><span class="n">tol</span><span class="si">}</span><span class="s2">"</span>
+            <span class="k">if</span> <span class="n">passed</span>
+            <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">disagreements</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> overlapping entities disagree &gt; </span><span class="si">{</span><span class="n">tol</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">),</span>
+        <span class="n">details</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"tol"</span><span class="p">:</span> <span class="n">tol</span><span class="p">,</span>
+            <span class="s2">"n_overlap"</span><span class="p">:</span> <span class="n">n</span><span class="p">,</span>
+            <span class="s2">"n_disagreements"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">disagreements</span><span class="p">),</span>
+            <span class="s2">"worst"</span><span class="p">:</span> <span class="n">disagreements</span><span class="p">[:</span><span class="mi">20</span><span class="p">],</span>
+        <span class="p">},</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,8 @@
+﻿torchcell.sga.PlateSegResult
+============================
+
+.. currentmodule:: torchcell.sga
+
+.. autoclass:: PlateSegResult
+   :show-inheritance:
+   :members:

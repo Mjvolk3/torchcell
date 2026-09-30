@@ -1,0 +1,8 @@
+﻿torchcell.sga.NormalizationConfig
+=================================
+
+.. currentmodule:: torchcell.sga
+
+.. autoclass:: NormalizationConfig
+   :show-inheritance:
+   :members:

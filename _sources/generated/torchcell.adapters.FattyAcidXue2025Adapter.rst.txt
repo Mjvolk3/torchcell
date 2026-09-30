@@ -1,0 +1,8 @@
+﻿torchcell.adapters.FattyAcidXue2025Adapter
+==========================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: FattyAcidXue2025Adapter
+   :show-inheritance:
+   :members:

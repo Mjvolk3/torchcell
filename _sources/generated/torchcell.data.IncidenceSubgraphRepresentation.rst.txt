@@ -1,0 +1,8 @@
+﻿torchcell.data.IncidenceSubgraphRepresentation
+==============================================
+
+.. currentmodule:: torchcell.data
+
+.. autoclass:: IncidenceSubgraphRepresentation
+   :show-inheritance:
+   :members:

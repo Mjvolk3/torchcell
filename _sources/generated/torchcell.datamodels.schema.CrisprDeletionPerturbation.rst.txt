@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.CrisprDeletionPerturbation
+======================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: CrisprDeletionPerturbation
+   :show-inheritance:
+   :members:

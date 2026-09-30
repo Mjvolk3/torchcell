@@ -1,0 +1,194 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.data.GenotypeAggregator &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/generated/torchcell.data.GenotypeAggregator.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="torchcell.data.ExperimentDataset" href="torchcell.data.ExperimentDataset.html" />
+    <link rel="prev" title="torchcell.data.DeletionKeyedGenotypeAggregator" href="torchcell.data.DeletionKeyedGenotypeAggregator.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../modules/data.html">torchcell.data</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../modules/data.html#classes">Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/data.html#functions">Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../modules/data.html">torchcell.data</a></li>
+      <li class="breadcrumb-item active">torchcell.data.GenotypeAggregator</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/generated/torchcell.data.GenotypeAggregator.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="torchcell-data-genotypeaggregator">
+<h1>torchcell.data.GenotypeAggregator<a class="headerlink" href="#torchcell-data-genotypeaggregator" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchcell.data.GenotypeAggregator">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">GenotypeAggregator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchcell/data/genotype_aggregate.html#GenotypeAggregator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.data.GenotypeAggregator" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="torchcell.data.Aggregator.html#torchcell.data.Aggregator" title="torchcell.data.aggregate.Aggregator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Aggregator</span></code></a></p>
+<p>Aggregator keyed by a hash of the experiment’s full perturbation set.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.data.GenotypeAggregator.aggregate_check">
+<span class="sig-name descname"><span class="pre">aggregate_check</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.Experiment.html#torchcell.datamodels.schema.Experiment" title="torchcell.datamodels.schema.Experiment"><span class="pre">Experiment</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.FitnessExperiment.html#torchcell.datamodels.schema.FitnessExperiment" title="torchcell.datamodels.schema.FitnessExperiment"><span class="pre">FitnessExperiment</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.GeneInteractionExperiment.html#torchcell.datamodels.schema.GeneInteractionExperiment" title="torchcell.datamodels.schema.GeneInteractionExperiment"><span class="pre">GeneInteractionExperiment</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.GeneEssentialityExperiment.html#torchcell.datamodels.schema.GeneEssentialityExperiment" title="torchcell.datamodels.schema.GeneEssentialityExperiment"><span class="pre">GeneEssentialityExperiment</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.SyntheticLethalityExperiment.html#torchcell.datamodels.schema.SyntheticLethalityExperiment" title="torchcell.datamodels.schema.SyntheticLethalityExperiment"><span class="pre">SyntheticLethalityExperiment</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.SyntheticRescueExperiment.html#torchcell.datamodels.schema.SyntheticRescueExperiment" title="torchcell.datamodels.schema.SyntheticRescueExperiment"><span class="pre">SyntheticRescueExperiment</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.CalMorphExperiment.html#torchcell.datamodels.schema.CalMorphExperiment" title="torchcell.datamodels.schema.CalMorphExperiment"><span class="pre">CalMorphExperiment</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.MicroarrayExpressionExperiment.html#torchcell.datamodels.schema.MicroarrayExpressionExperiment" title="torchcell.datamodels.schema.MicroarrayExpressionExperiment"><span class="pre">MicroarrayExpressionExperiment</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.RNASeqExpressionExperiment.html#torchcell.datamodels.schema.RNASeqExpressionExperiment" title="torchcell.datamodels.schema.RNASeqExpressionExperiment"><span class="pre">RNASeqExpressionExperiment</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.PseudobulkExpressionExperiment.html#torchcell.datamodels.schema.PseudobulkExpressionExperiment" title="torchcell.datamodels.schema.PseudobulkExpressionExperiment"><span class="pre">PseudobulkExpressionExperiment</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.VisualScoreExperiment.html#torchcell.datamodels.schema.VisualScoreExperiment" title="torchcell.datamodels.schema.VisualScoreExperiment"><span class="pre">VisualScoreExperiment</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.MetaboliteExperiment.html#torchcell.datamodels.schema.MetaboliteExperiment" title="torchcell.datamodels.schema.MetaboliteExperiment"><span class="pre">MetaboliteExperiment</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.ProteinAbundanceExperiment.html#torchcell.datamodels.schema.ProteinAbundanceExperiment" title="torchcell.datamodels.schema.ProteinAbundanceExperiment"><span class="pre">ProteinAbundanceExperiment</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.EnvironmentResponseExperiment.html#torchcell.datamodels.schema.EnvironmentResponseExperiment" title="torchcell.datamodels.schema.EnvironmentResponseExperiment"><span class="pre">EnvironmentResponseExperiment</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.SegregantGrowthExperiment.html#torchcell.datamodels.schema.SegregantGrowthExperiment" title="torchcell.datamodels.schema.SegregantGrowthExperiment"><span class="pre">SegregantGrowthExperiment</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.ExperimentReference.html#torchcell.datamodels.schema.ExperimentReference" title="torchcell.datamodels.schema.ExperimentReference"><span class="pre">ExperimentReference</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.FitnessExperimentReference.html#torchcell.datamodels.schema.FitnessExperimentReference" title="torchcell.datamodels.schema.FitnessExperimentReference"><span class="pre">FitnessExperimentReference</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.GeneInteractionExperimentReference.html#torchcell.datamodels.schema.GeneInteractionExperimentReference" title="torchcell.datamodels.schema.GeneInteractionExperimentReference"><span class="pre">GeneInteractionExperimentReference</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.GeneEssentialityExperimentReference.html#torchcell.datamodels.schema.GeneEssentialityExperimentReference" title="torchcell.datamodels.schema.GeneEssentialityExperimentReference"><span class="pre">GeneEssentialityExperimentReference</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.SyntheticLethalityExperimentReference.html#torchcell.datamodels.schema.SyntheticLethalityExperimentReference" title="torchcell.datamodels.schema.SyntheticLethalityExperimentReference"><span class="pre">SyntheticLethalityExperimentReference</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.SyntheticRescueExperimentReference.html#torchcell.datamodels.schema.SyntheticRescueExperimentReference" title="torchcell.datamodels.schema.SyntheticRescueExperimentReference"><span class="pre">SyntheticRescueExperimentReference</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.CalMorphExperimentReference.html#torchcell.datamodels.schema.CalMorphExperimentReference" title="torchcell.datamodels.schema.CalMorphExperimentReference"><span class="pre">CalMorphExperimentReference</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.MicroarrayExpressionExperimentReference.html#torchcell.datamodels.schema.MicroarrayExpressionExperimentReference" title="torchcell.datamodels.schema.MicroarrayExpressionExperimentReference"><span class="pre">MicroarrayExpressionExperimentReference</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.RNASeqExpressionExperimentReference.html#torchcell.datamodels.schema.RNASeqExpressionExperimentReference" title="torchcell.datamodels.schema.RNASeqExpressionExperimentReference"><span class="pre">RNASeqExpressionExperimentReference</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.PseudobulkExpressionExperimentReference.html#torchcell.datamodels.schema.PseudobulkExpressionExperimentReference" title="torchcell.datamodels.schema.PseudobulkExpressionExperimentReference"><span class="pre">PseudobulkExpressionExperimentReference</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.VisualScoreExperimentReference.html#torchcell.datamodels.schema.VisualScoreExperimentReference" title="torchcell.datamodels.schema.VisualScoreExperimentReference"><span class="pre">VisualScoreExperimentReference</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.MetaboliteExperimentReference.html#torchcell.datamodels.schema.MetaboliteExperimentReference" title="torchcell.datamodels.schema.MetaboliteExperimentReference"><span class="pre">MetaboliteExperimentReference</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.ProteinAbundanceExperimentReference.html#torchcell.datamodels.schema.ProteinAbundanceExperimentReference" title="torchcell.datamodels.schema.ProteinAbundanceExperimentReference"><span class="pre">ProteinAbundanceExperimentReference</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.EnvironmentResponseExperimentReference.html#torchcell.datamodels.schema.EnvironmentResponseExperimentReference" title="torchcell.datamodels.schema.EnvironmentResponseExperimentReference"><span class="pre">EnvironmentResponseExperimentReference</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.SegregantGrowthExperimentReference.html#torchcell.datamodels.schema.SegregantGrowthExperimentReference" title="torchcell.datamodels.schema.SegregantGrowthExperimentReference"><span class="pre">SegregantGrowthExperimentReference</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></span><a class="reference internal" href="../_modules/torchcell/data/genotype_aggregate.html#GenotypeAggregator.aggregate_check"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.data.GenotypeAggregator.aggregate_check" title="Link to this definition"></a></dt>
+<dd><p>Return a SHA-256 hash of the experiment’s perturbed gene set.</p>
+<p>Keyed on the sorted SET of systematic_gene_names ONLY (perturbation_type
+is intentionally dropped) so this matches how
+<code class="docutils literal notranslate"><span class="pre">MeanExperimentDeduplicator.duplicate_check</span></code> groups genotypes. This lets
+the same genotype expressed across modalities co-locate: a <em>singleton</em>
+expression record (marker-specific type, e.g. <code class="docutils literal notranslate"><span class="pre">kanmx_deletion</span></code>) and a
+<em>replicated</em> fitness record rewritten to <code class="docutils literal notranslate"><span class="pre">mean_deletion</span></code> by the
+deduplicator share one bucket because their perturbed gene set is equal.
+(The deduplicator additionally keys on <code class="docutils literal notranslate"><span class="pre">experiment_type</span></code>; the aggregator
+must NOT, since merging across modalities is the whole point here.)</p>
+<p>Every perturbation counts toward the key, including heterologous
+<code class="docutils literal notranslate"><span class="pre">gene_addition</span></code> cassette genes. That makes a cassette-bearing production
+strain key-disjoint from an otherwise identical single-deletion strain –
+see <code class="docutils literal notranslate"><span class="pre">DeletionKeyedGenotypeAggregator</span></code> for the variant that treats a
+constant cassette as reference-strain background.</p>
+<p># TODO When non-deletion perturbation axes are introduced (overexpression,
+# allele swaps, integrations, etc.), this key MUST become
+# <code class="docutils literal notranslate"><span class="pre">(gene-set,</span> <span class="pre">perturbation-axis)</span></code> so that a deletion and an
+# overexpression of the SAME gene are not merged into one bucket. Today
+# every perturbation is a deletion, so the gene set alone is unambiguous.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.data.GenotypeAggregator.aggregate_key_raw">
+<span class="sig-name descname"><span class="pre">aggregate_key_raw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">record</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></span><a class="reference internal" href="../_modules/torchcell/data/genotype_aggregate.html#GenotypeAggregator.aggregate_key_raw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.data.GenotypeAggregator.aggregate_key_raw" title="Link to this definition"></a></dt>
+<dd><p>Return the gene-set grouping key for one raw record dict.</p>
+<p>Same hash as <a class="reference internal" href="#torchcell.data.GenotypeAggregator.aggregate_check" title="torchcell.data.GenotypeAggregator.aggregate_check"><code class="xref py py-meth docutils literal notranslate"><span class="pre">aggregate_check()</span></code></a>, read off the stored JSON so the
+streaming <code class="docutils literal notranslate"><span class="pre">process</span></code> never builds pydantic objects to group.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="torchcell.data.DeletionKeyedGenotypeAggregator.html" class="btn btn-neutral float-left" title="torchcell.data.DeletionKeyedGenotypeAggregator" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="torchcell.data.ExperimentDataset.html" class="btn btn-neutral float-right" title="torchcell.data.ExperimentDataset" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

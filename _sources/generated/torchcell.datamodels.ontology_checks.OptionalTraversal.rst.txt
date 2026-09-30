@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.ontology\_checks.OptionalTraversal
+=======================================================
+
+.. currentmodule:: torchcell.datamodels.ontology_checks
+
+.. autoclass:: OptionalTraversal
+   :show-inheritance:
+   :members:

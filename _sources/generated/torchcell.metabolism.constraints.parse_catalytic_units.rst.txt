@@ -1,0 +1,6 @@
+﻿torchcell.metabolism.constraints.parse\_catalytic\_units
+========================================================
+
+.. currentmodule:: torchcell.metabolism.constraints
+
+.. autofunction:: parse_catalytic_units

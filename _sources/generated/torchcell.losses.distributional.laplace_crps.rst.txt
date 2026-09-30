@@ -1,0 +1,6 @@
+﻿torchcell.losses.distributional.laplace\_crps
+=============================================
+
+.. currentmodule:: torchcell.losses.distributional
+
+.. autofunction:: laplace_crps

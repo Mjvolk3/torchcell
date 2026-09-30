@@ -1,0 +1,6 @@
+﻿torchcell.profiling.get\_timing\_summary
+========================================
+
+.. currentmodule:: torchcell.profiling
+
+.. autofunction:: get_timing_summary

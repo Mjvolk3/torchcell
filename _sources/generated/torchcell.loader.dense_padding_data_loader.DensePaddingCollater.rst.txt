@@ -1,0 +1,8 @@
+﻿torchcell.loader.dense\_padding\_data\_loader.DensePaddingCollater
+==================================================================
+
+.. currentmodule:: torchcell.loader.dense_padding_data_loader
+
+.. autoclass:: DensePaddingCollater
+   :show-inheritance:
+   :members:

@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.ResponseCategory
+============================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: ResponseCategory
+   :show-inheritance:
+   :members:

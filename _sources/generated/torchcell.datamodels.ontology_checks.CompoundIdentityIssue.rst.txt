@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.ontology\_checks.CompoundIdentityIssue
+===========================================================
+
+.. currentmodule:: torchcell.datamodels.ontology_checks
+
+.. autoclass:: CompoundIdentityIssue
+   :show-inheritance:
+   :members:

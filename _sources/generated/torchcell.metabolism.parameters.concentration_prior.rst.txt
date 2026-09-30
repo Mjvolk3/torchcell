@@ -1,0 +1,6 @@
+﻿torchcell.metabolism.parameters.concentration\_prior
+====================================================
+
+.. currentmodule:: torchcell.metabolism.parameters
+
+.. autofunction:: concentration_prior

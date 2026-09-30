@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.baryshnikova2010.SmfBaryshnikova2010Dataset
+==========================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.baryshnikova2010
+
+.. autoclass:: SmfBaryshnikova2010Dataset
+   :show-inheritance:
+   :members:

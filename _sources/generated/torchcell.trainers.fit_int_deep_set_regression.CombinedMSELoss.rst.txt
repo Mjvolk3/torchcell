@@ -1,0 +1,8 @@
+﻿torchcell.trainers.fit\_int\_deep\_set\_regression.CombinedMSELoss
+==================================================================
+
+.. currentmodule:: torchcell.trainers.fit_int_deep_set_regression
+
+.. autoclass:: CombinedMSELoss
+   :show-inheritance:
+   :members:

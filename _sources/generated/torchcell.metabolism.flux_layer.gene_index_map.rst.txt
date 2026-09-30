@@ -1,0 +1,6 @@
+﻿torchcell.metabolism.flux\_layer.gene\_index\_map
+=================================================
+
+.. currentmodule:: torchcell.metabolism.flux_layer
+
+.. autofunction:: gene_index_map

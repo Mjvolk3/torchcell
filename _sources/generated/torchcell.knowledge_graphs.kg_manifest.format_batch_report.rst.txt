@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.format\_batch\_report
+==============================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autofunction:: format_batch_report

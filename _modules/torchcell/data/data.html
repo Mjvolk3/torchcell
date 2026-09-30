@@ -1,0 +1,287 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.data.data &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/data/data.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.data.data</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.data.data</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/data/data.py</span>
+<span class="c1"># [[torchcell.data.data]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/data/data.py</span>
+<span class="c1"># Test file: tests/torchcell/data/test_data.py</span>
+<span class="sd">"""Core data containers mapping experiments to their shared references."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">field_validator</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentReferenceType</span><span class="p">,</span> <span class="n">ModelStrict</span>
+
+
+<div class="viewcode-block" id="ExperimentReferenceIndex">
+<a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentReferenceIndex.html#torchcell.data.ExperimentReferenceIndex">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExperimentReferenceIndex</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A reference paired with the sorted record indices of the experiments using it.</span>
+
+<span class="sd">    SPARSE by construction (WS15 streaming redesign): every experiment belongs to exactly</span>
+<span class="sd">    ONE reference, so ``member_indices`` across a dataset's references sum to N -- NOT the</span>
+<span class="sd">    former dense ``index: list[bool]`` mask, which stored a length-N boolean per reference</span>
+<span class="sd">    and was therefore O(references x N). That blowup (~60 GB at Hoepfner's ~30M records x</span>
+<span class="sd">    ~1.8k references) made genome-scale datasets infeasible to build or store; the sparse</span>
+<span class="sd">    form is O(N) total for any dataset size, small or large, with ONE representation and</span>
+<span class="sd">    ONE (always-streaming) build path.</span>
+
+<span class="sd">    ``mask(n)`` reconstructs the dense length-``n`` boolean mask ON DEMAND for consumers</span>
+<span class="sd">    that want it (small datasets / vectorized code). Genome-scale consumers iterate</span>
+<span class="sd">    ``member_indices`` directly and never materialize the dense mask.</span>
+<span class="sd">    """</span>
+
+    <span class="n">reference</span><span class="p">:</span> <span class="n">ExperimentReferenceType</span>
+    <span class="n">member_indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"member_indices"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_member_indices</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Member indices are unique, non-negative, and stored sorted (canonical form)."""</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">i</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">v</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"member_indices must be non-negative record positions"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">v</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"member_indices must be unique"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ExperimentReferenceIndex.from_stored">
+<a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentReferenceIndex.html#torchcell.data.ExperimentReferenceIndex.from_stored">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_stored</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">"ExperimentReferenceIndex"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build from a stored JSON entry, accepting BOTH the new and legacy formats.</span>
+
+<span class="sd">        New entries carry ``member_indices``; legacy entries (written before the WS15</span>
+<span class="sd">        sparse redesign) carry a dense ``index: list[bool]`` mask. Converting on read</span>
+<span class="sd">        keeps every already-built dataset's ``experiment_reference_index.json`` loadable</span>
+<span class="sd">        without a forced rebuild; the next rebuild writes the new sparse format.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="s2">"member_indices"</span> <span class="ow">in</span> <span class="n">item</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">"index"</span> <span class="ow">in</span> <span class="n">item</span><span class="p">:</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s2">"index"</span><span class="p">]</span>
+            <span class="n">member_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">present</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span> <span class="k">if</span> <span class="n">present</span><span class="p">]</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">reference</span><span class="o">=</span><span class="n">item</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">],</span> <span class="n">member_indices</span><span class="o">=</span><span class="n">member_indices</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"stored ExperimentReferenceIndex entry has neither 'member_indices' nor 'index'"</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ExperimentReferenceIndex.mask">
+<a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentReferenceIndex.html#torchcell.data.ExperimentReferenceIndex.mask">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bool</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Reconstruct the dense length-``n`` boolean membership mask (opt-in, small sets)."""</span>
+        <span class="n">dense</span> <span class="o">=</span> <span class="p">[</span><span class="kc">False</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">member_indices</span><span class="p">:</span>
+            <span class="n">dense</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="n">dense</span></div>
+
+
+    <span class="c1"># Use for parallel computation of a Dataset ExperimentReferenceIndices</span>
+<div class="viewcode-block" id="ExperimentReferenceIndex.combine">
+<a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentReferenceIndex.html#torchcell.data.ExperimentReferenceIndex.combine">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">combine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">"ExperimentReferenceIndex"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ExperimentReferenceIndex"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a new index UNION-ing two member-index sets that share a reference."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">reference</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"Cannot combine ExperimentReferenceIndex objects with different references"</span>
+            <span class="p">)</span>
+        <span class="n">combined</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">member_indices</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">member_indices</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">ExperimentReferenceIndex</span><span class="p">(</span>
+            <span class="n">reference</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span> <span class="n">member_indices</span><span class="o">=</span><span class="n">combined</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a string showing the reference and a truncated member-index list."""</span>
+        <span class="n">head</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">member_indices</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span>
+        <span class="n">ellipsis</span> <span class="o">=</span> <span class="s2">"..."</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">member_indices</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">5</span> <span class="k">else</span> <span class="s2">""</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"ExperimentReferenceIndex(reference=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"member_indices=</span><span class="si">{</span><span class="n">head</span><span class="si">}{</span><span class="n">ellipsis</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ReferenceIndex">
+<a class="viewcode-back" href="../../../generated/torchcell.data.ReferenceIndex.html#torchcell.data.ReferenceIndex">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReferenceIndex</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A collection of reference-indices partitioning a dataset's experiments."""</span>
+
+    <span class="n">data</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ExperimentReferenceIndex</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExperimentReferenceIndex</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the reference-index entry at ``index``."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the number of reference-index entries."""</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">ExperimentReferenceIndex</span><span class="p">]:</span>  <span class="c1"># type: ignore[override]  # intentionally iterates entries, not pydantic BaseModel's (field, value) tuples</span>
+<span class="w">        </span><span class="sd">"""Iterate over the reference-index entries."""</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ReferenceIndex.validate_data">
+<a class="viewcode-back" href="../../../generated/torchcell.data.ReferenceIndex.html#torchcell.data.ReferenceIndex.validate_data">[docs]</a>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"data"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_data</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ExperimentReferenceIndex</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ExperimentReferenceIndex</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Check the member-index sets partition ``range(N)`` exactly (cover once, no gap)."""</span>
+        <span class="n">all_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">eri</span> <span class="ow">in</span> <span class="n">v</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">eri</span><span class="o">.</span><span class="n">member_indices</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">all_indices</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">all_indices</span><span class="p">))):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"member_indices across references must partition range(N) exactly "</span>
+                <span class="s2">"(every experiment covered by exactly one reference, no gaps/overlaps)"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="compute_sha256_hash">
+<a class="viewcode-back" href="../../../generated/torchcell.data.compute_sha256_hash.html#torchcell.data.compute_sha256_hash">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_sha256_hash</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Compute the sha256 hash of a string."""</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

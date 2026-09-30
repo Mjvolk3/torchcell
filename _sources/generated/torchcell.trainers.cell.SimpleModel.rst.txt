@@ -1,0 +1,8 @@
+﻿torchcell.trainers.cell.SimpleModel
+===================================
+
+.. currentmodule:: torchcell.trainers.cell
+
+.. autoclass:: SimpleModel
+   :show-inheritance:
+   :members:

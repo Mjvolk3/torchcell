@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.compound\_identity.CompoundIdentityResolution
+==================================================================
+
+.. currentmodule:: torchcell.datamodels.compound_identity
+
+.. autoclass:: CompoundIdentityResolution
+   :show-inheritance:
+   :members:

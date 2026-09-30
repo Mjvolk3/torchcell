@@ -1,0 +1,1054 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.metabolism.flux_layer &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/metabolism/flux_layer.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.metabolism.flux_layer</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.metabolism.flux_layer</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/metabolism/flux_layer</span>
+<span class="c1"># [[torchcell.metabolism.flux_layer]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/metabolism/flux_layer</span>
+<span class="c1"># Test file: tests/torchcell/metabolism/test_flux_layer.py</span>
+
+<span class="sa">r</span><span class="sd">"""A differentiable, enzyme-constrained, thermodynamically-feasible flux layer.</span>
+
+<span class="sd">WHAT THIS REPLACES</span>
+<span class="sd">------------------</span>
+<span class="sd">Constraint-based modeling answers "which flux vectors are possible" with a linear (or,</span>
+<span class="sd">once thermodynamics is added, a mixed-integer) program, solved once per genotype. Smith</span>
+<span class="sd">et al. (2026), *Thermo-Flux*, is the current statement of that method: the second law</span>
+<span class="sd">enters as :math:`\Delta_r G_j \nu_j &lt; 0`, which is **bilinear**, and is implemented with</span>
+<span class="sd">one **binary indicator per reaction** under a big-M pair, giving a MILP whose cost the</span>
+<span class="sd">authors describe as scaling with "the number of possible direction combinations ...</span>
+<span class="sd">exponentially with the number of reactions", budgeted at 24 h wall time per model on an</span>
+<span class="sd">HPC cluster.</span>
+
+<span class="sd">Two consequences follow, and together they are the reason this module exists.</span>
+
+<span class="sd">**Per-genotype cost does not amortize.** Merzbacher et al. (2025) sample one flux cone per</span>
+<span class="sd">single deletion by MCMC: 1,159 yeast deletions, 124 samples each, 4.43 GB. The pairwise</span>
+<span class="sd">extension is :math:`\binom{1161}{2}=673{,}380` independent random walks, roughly 2.6 TB.</span>
+<span class="sd">An amortized model pays the cost once at training time and answers a double deletion in</span>
+<span class="sd">the same forward pass as a single.</span>
+
+<span class="sd">**A program cannot learn.** An LP has no use for a phenotype measurement. This layer is</span>
+<span class="sd">supervised by ~10^7 fitness records, 4,735 betaxanthin measurements and 4,678 amino-acid</span>
+<span class="sd">profiles, and its flux is *conditioned* on them.</span>
+
+<span class="sd">THE RELAXATION, TERM BY TERM</span>
+<span class="sd">----------------------------</span>
+<span class="sd">Every hard constraint is either enforced exactly by the parameterization or relaxed to a</span>
+<span class="sd">smooth penalty. Nothing is enforced by a binary variable.</span>
+
+<span class="sd">======================  ==========================================  =====================</span>
+<span class="sd">constraint              Thermo-Flux / GECKO form                     here</span>
+<span class="sd">======================  ==========================================  =====================</span>
+<span class="sd">box + directionality    :math:`lb_j\le\nu_j\le ub_j`                 **exact**, sigmoid</span>
+<span class="sd">capacity (enzyme)       :math:`\nu_j\le k_{cat}E`                    **exact**, in the box</span>
+<span class="sd">mass balance            :math:`S\nu=0`                               soft, scale-relative</span>
+<span class="sd">second law              :math:`\Delta_rG_j\nu_j&lt;0` + binary          soft hinge, no binary</span>
+<span class="sd">Gibbs dissipation       :math:`g_{diss}\le g_{lim}`                  soft hinge</span>
+<span class="sd">protein budget          :math:`\sum MW_g E_g\le P_{avail}`           soft hinge</span>
+<span class="sd">======================  ==========================================  =====================</span>
+
+<span class="sd">The second-law relaxation is the load-bearing one:</span>
+
+<span class="sd">.. math::</span>
+<span class="sd">    C_{\mathrm{th}} = \frac{1}{|\mathcal{J}|}\sum_{j\in\mathcal{J}}</span>
+<span class="sd">        \operatorname{relu}\!\big(\nu_j\,\Delta_r G_j + \epsilon\big),</span>
+
+<span class="sd">with :math:`\mathcal{J}` excluding exchange reactions, the biomass reaction, and water</span>
+<span class="sd">transport -- the exemptions Thermo-Flux's Box 2 specifies, because those processes cross</span>
+<span class="sd">the system boundary or are lumped and so carry no meaningful reaction energy. The</span>
+<span class="sd">:math:`\epsilon` is not decoration: the paper's own big-M pair admits</span>
+<span class="sd">:math:`\nu_j=\Delta_r G_j=0` under either value of the binary, so the strict inequality of</span>
+<span class="sd">its Eq. (10) is not actually realized, and a smooth version has to name its tolerance.</span>
+
+<span class="sd">**Loop-freedom is free, and that is the whole trick.** Because :math:`\Delta_r G` is a</span>
+<span class="sd">difference of potentials it sums to zero around any cycle, so no cycle can run downhill</span>
+<span class="sd">everywhere; requiring :math:`\nu_j\Delta_j\le0` therefore forbids internal loops without a</span>
+<span class="sd">single integer variable. That is exactly the property that makes loopless FBA a MILP.</span>
+
+<span class="sd">THERMODYNAMICS: FREE VS ANCHORED</span>
+<span class="sd">--------------------------------</span>
+<span class="sd">Following Thermo-Flux Eq. (4), the in-cell reaction energy decomposes into three terms,</span>
+
+<span class="sd">.. math::</span>
+<span class="sd">    \Delta_r G_j = \underbrace{\Delta_r G'^{\circ}_j}_{\text{tabulated}}</span>
+<span class="sd">                 + \underbrace{RT\sum_{i\neq H^+} S_{ij}\ln c_i}_{\text{concentration}}</span>
+<span class="sd">                 + \underbrace{\Delta_r G^{t}_j}_{\text{transport}},</span>
+
+<span class="sd">and this module implements all three in ``ThermoMode.ANCHORED``:</span>
+
+<span class="sd">* :math:`\Delta_r G'^{\circ}_j=\sum_i S_{ij}\Delta_f G'^{\circ}_i` from the GEM's shipped</span>
+<span class="sd">  table (85.1 % of metabolites, 77.7 % of reactions on yeast-GEM 9.0.2, once BOTH missing</span>
+<span class="sd">  value conventions are rejected -- see :func:`~torchcell.metabolism.constraints._read_delta_g_csv`);</span>
+<span class="sd">* :math:`\ln c_i` **learned**, squashed into the physiological window</span>
+<span class="sd">  :math:`[0.1\,\mu\mathrm{M},10\,\mathrm{mM}]` that Thermo-Flux uses by default, and</span>
+<span class="sd">  conditioned on the genotype so a deletion can move a pool;</span>
+<span class="sd">* :math:`\Delta_r G^{t}_j = -N_H RT\ln(10)\,\Delta\mathrm{pH} - Fq\,\Delta\Phi` from the</span>
+<span class="sd">  compartment table, computed once and held as a buffer.</span>
+
+<span class="sd">``ThermoMode.FREE`` drops the table and learns an unconstrained potential</span>
+<span class="sd">:math:`\mu_i`. It needs no data and still kills loops, but :math:`\mu` is identified only</span>
+<span class="sd">up to an affine map, so it is not an energy and cannot be checked against anything.</span>
+<span class="sd">**Anchoring is what turns the thermodynamic term from a regularizer into a measurement**,</span>
+<span class="sd">and the ablation between the two modes is the experiment that says whether the tabulated</span>
+<span class="sd">energies carry information.</span>
+
+<span class="sd">UNCERTAINTY, AND WHY IT IS A LATENT</span>
+<span class="sd">-----------------------------------</span>
+<span class="sd">Thermo-Flux carries correlated uncertainty as :math:`\Delta_rG^{\circ,\mathrm{error}}=Qm`</span>
+<span class="sd">with :math:`m\sim\mathcal N(0,1)` and :math:`Q` the square-root covariance from</span>
+<span class="sd">eQuilibrator, and its Box 3 *infers* :math:`m` by regression against measured</span>
+<span class="sd">concentrations and fluxes. That inference is exactly what a latent variable does. Here</span>
+<span class="sd">:math:`m` is a learned per-reaction offset with a Gaussian prior, so the same quantity is</span>
+<span class="sd">fit by gradient descent instead of by an MILP regression.</span>
+
+<span class="sd">:math:`Q` itself is **not available**: eQuilibrator is not installed and the GEM ships</span>
+<span class="sd">point values with no covariance, so the offset is currently isotropic rather than</span>
+<span class="sd">correlated. That is a real gap and it is recorded as one rather than approximated. The</span>
+<span class="sd">covariance would enter as a single matrix multiply and nothing else would change.</span>
+
+<span class="sd">Metabolites with no tabulated formation energy follow Thermo-Flux's own convention:</span>
+<span class="sd">:math:`\Delta_f G^\circ = 0` with an uncertainty of :math:`\pm 3000` kJ/mol, which is</span>
+<span class="sd">wide enough that any reaction touching one can take either sign. Implemented here as a</span>
+<span class="sd">mask rather than as a number, which has the same effect and cannot be mistaken for data.</span>
+
+<span class="sd">ORGANISM PORTABILITY</span>
+<span class="sd">--------------------</span>
+<span class="sd">Everything below is a function of ``GemTensors`` plus a small</span>
+<span class="sd">:class:`CompartmentParameters` table and two scalars (:math:`P_{\mathrm{avail}}`,</span>
+<span class="sd">:math:`g_{\mathrm{lim}}`). There is no yeast constant anywhere in this file. Porting to</span>
+<span class="sd">another yeast or to a bacterium means supplying a different GEM, a compartment table, and</span>
+<span class="sd">kinetic parameters -- which is the point, because the kinetic parameters for a new</span>
+<span class="sd">organism come from a sequence-based predictor rather than from a literature curation</span>
+<span class="sd">effort.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.metabolism.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CONC_LOWER_M</span><span class="p">,</span>
+    <span class="n">CONC_UPPER_M</span><span class="p">,</span>
+    <span class="n">GemTensors</span><span class="p">,</span>
+    <span class="n">ThermoMode</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: Faraday constant, kJ/(mol V). Enters the transport term as F q dPhi.</span>
+<span class="n">FARADAY_KJ_PER_MOL_V</span> <span class="o">=</span> <span class="mf">96.485</span>
+
+<span class="c1">#: Working flux magnitude, mmol/gDW/h. Genome-scale models use +/-1000 as "unbounded"</span>
+<span class="c1">#: rather than as a physical claim; a sigmoid stretched over 2,000 units puts every real</span>
+<span class="c1">#: flux inside a vanishing fraction of its range and saturates the gradient. Clamping the</span>
+<span class="c1">#: box to a physiological magnitude is a modeling choice and is reported as one.</span>
+<span class="n">DEFAULT_FLUX_SCALE</span> <span class="o">=</span> <span class="mf">100.0</span>
+
+
+<div class="viewcode-block" id="CompartmentParameters">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.flux_layer.CompartmentParameters.html#torchcell.metabolism.flux_layer.CompartmentParameters">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CompartmentParameters</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""pH, ionic strength and membrane potential per compartment.</span>
+
+<span class="sd">    Values for *S. cerevisiae* iMM904 as tabulated by Thermo-Flux (Smith et al. 2026,</span>
+<span class="sd">    Table 1): cytosol pH 7.0, mitochondrion pH 7.4, extracellular pH 5.0; ionic strength</span>
+<span class="sd">    0.25 M in all compartments; T = 298 K; membrane potential 60 mV across the plasma</span>
+<span class="sd">    membrane and 160 mV across the mitochondrial membrane. They are defaults, not</span>
+<span class="sd">    constants: another organism supplies its own, which is the entire organism-specific</span>
+<span class="sd">    surface of the thermodynamic layer.</span>
+<span class="sd">    """</span>
+
+    <span class="n">ph</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{</span><span class="s2">"c"</span><span class="p">:</span> <span class="mf">7.0</span><span class="p">,</span> <span class="s2">"m"</span><span class="p">:</span> <span class="mf">7.4</span><span class="p">,</span> <span class="s2">"e"</span><span class="p">:</span> <span class="mf">5.0</span><span class="p">})</span>
+    <span class="n">ionic_strength_m</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">membrane_potential_mv</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{</span><span class="s2">"e"</span><span class="p">:</span> <span class="mf">60.0</span><span class="p">,</span> <span class="s2">"m"</span><span class="p">:</span> <span class="mf">160.0</span><span class="p">}</span>
+    <span class="p">)</span>
+    <span class="n">reference_compartment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"c"</span>
+    <span class="n">temperature_k</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">303.15</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"Smith et al. 2026, Thermo-Flux, Table 1 (iMM904 parameter set); "</span>
+        <span class="s2">"membrane potentials in mV, pH dimensionless."</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="FluxLayerConfig">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.flux_layer.FluxLayerConfig.html#torchcell.metabolism.flux_layer.FluxLayerConfig">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FluxLayerConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Every switch the flux layer has, in one place so a run records what it ran.</span>
+
+<span class="sd">    Kept as a pydantic model rather than kwargs so a config is serializable into the</span>
+<span class="sd">    experiment's results JSON and an ablation arm is a diff between two of these.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">hidden_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span>
+    <span class="n">reaction_embed_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16</span>
+    <span class="n">parameterization</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">"box"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"'box' -- v = lb + (ub-lb)*sigmoid(z); bounds exact, Sv=0 soft. "</span>
+            <span class="s2">"'nullspace' -- v = N z with S N = 0; Sv=0 exact, bounds soft. "</span>
+            <span class="s2">"The exactness budget has to be spent on one or the other, and which one "</span>
+            <span class="s2">"matters more is what the two arms measure."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">thermo_mode</span><span class="p">:</span> <span class="n">ThermoMode</span> <span class="o">=</span> <span class="n">ThermoMode</span><span class="o">.</span><span class="n">ANCHORED</span>
+    <span class="n">use_shipped_transport_delta_g</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"Recover the transport term for the 441 reactions whose recomputed standard "</span>
+            <span class="s2">"energy is structurally zero, from the GEM's shipped reaction table. Changes "</span>
+            <span class="s2">"what the thermodynamic term asserts, so it is off by default."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">use_enzyme_capacity</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">use_protein_budget</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">use_dissipation_limit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">stochastic</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"Draw z from a learned Gaussian instead of emitting it, making the layer an "</span>
+            <span class="s2">"amortized flux sampler rather than a flux selector."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">flux_scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">DEFAULT_FLUX_SCALE</span>
+    <span class="n">softmin_beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">8.0</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"Complex softmin temperature. Too soft and a complex behaves like a mean, so "</span>
+            <span class="s2">"a deletion stops being lethal; too hard and gradients reach one subunit only."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">thermo_epsilon</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0e-3</span>
+    <span class="n">balance_epsilon</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0e-6</span>
+    <span class="n">p_avail</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">0.35</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Metabolic protein budget, g protein / gDW. Organism-specific."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">g_diss_limit</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">3700.0</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"Gibbs dissipation limit, J/gDW/h. 3700 for S. cerevisiae per Niebel et al. "</span>
+            <span class="s2">"2019, the value Thermo-Flux uses for its iMM904 case study."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">default_kcat_per_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">13.7</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"Fallback turnover when no measured or predicted value exists. GECKO's own "</span>
+            <span class="s2">"practice is a default from the organism's kcat distribution; this is a "</span>
+            <span class="s2">"placeholder that MUST be reported with its coverage, never presented as a "</span>
+            <span class="s2">"measurement."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"balance"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+            <span class="s2">"thermo"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+            <span class="s2">"capacity"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+            <span class="s2">"budget"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+            <span class="s2">"dissipation"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+            <span class="s2">"parsimony"</span><span class="p">:</span> <span class="mf">1.0e-3</span><span class="p">,</span>
+            <span class="s2">"thermo_prior"</span><span class="p">:</span> <span class="mf">1.0e-2</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="gene_index_map">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.flux_layer.gene_index_map.html#torchcell.metabolism.flux_layer.gene_index_map">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">gene_index_map</span><span class="p">(</span>
+    <span class="n">model_gene_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">gem_gene_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Map GEM gene positions onto the model's gene-token positions.</span>
+
+<span class="sd">    The transformer's token index runs over the whole genome (6,607 ORFs); the GEM knows</span>
+<span class="sd">    only its metabolic subset (1,161). Both directions are needed: the flux layer reads</span>
+<span class="sd">    gene tokens at GEM positions, and a perturbation arrives as a token index that must be</span>
+<span class="sd">    tested for GEM membership.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``(gem_to_model, model_to_gem)``. ``gem_to_model[k]`` is the token index of GEM</span>
+<span class="sd">        gene ``k``, or ``-1`` if that gene is absent from the model's universe.</span>
+<span class="sd">        ``model_to_gem[t]`` is the GEM index of token ``t``, or ``-1``.</span>
+<span class="sd">    """</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="p">{</span><span class="n">g</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">model_gene_ids</span><span class="p">)}</span>
+    <span class="n">gem_to_model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">pos</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">gem_gene_ids</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span>
+    <span class="p">)</span>
+    <span class="n">model_to_gem</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">model_gene_ids</span><span class="p">),),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">gem_to_model</span><span class="o">.</span><span class="n">tolist</span><span class="p">()):</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">model_to_gem</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">k</span>
+    <span class="k">return</span> <span class="n">gem_to_model</span><span class="p">,</span> <span class="n">model_to_gem</span></div>
+
+
+
+<div class="viewcode-block" id="FluxLayer">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.flux_layer.FluxLayer.html#torchcell.metabolism.flux_layer.FluxLayer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FluxLayer</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Gene tokens in, a feasible flux vector and its feasibility residuals out.</span>
+
+<span class="sd">    The chain, and every arrow in it is differentiable:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \gamma_g \longrightarrow c_u \longrightarrow c_j \longrightarrow</span>
+<span class="sd">        [\,v^\ell_j,\ v^u_j\,] \longrightarrow v_j</span>
+<span class="sd">        \longrightarrow \{C_{\mathrm{bal}},C_{\mathrm{th}},C_{\mathrm{cap}},</span>
+<span class="sd">        C_{\mathrm{bud}},C_{\mathrm{diss}}\}</span>
+
+<span class="sd">    A deletion sets :math:`\gamma_g=0` **hard**, from the perturbation rather than from a</span>
+<span class="sd">    learned gate, because whether a deleted gene is absent is not something the model</span>
+<span class="sd">    should be free to disagree with. A complex takes a softmin over its subunits (the</span>
+<span class="sd">    scarcest limits); isozymes sum (capacities add). A reaction whose availability falls</span>
+<span class="sd">    to zero has :math:`v^\ell_j=v^u_j=0` and therefore carries **exactly** zero flux -- the</span>
+<span class="sd">    deletion bites through the parameterization, not through a penalty that could be</span>
+<span class="sd">    traded off against the data term.</span>
+<span class="sd">    """</span>
+
+    <span class="c1"># BUFFER TYPE DECLARATIONS. `nn.Module.__getattr__` is typed to return</span>
+    <span class="c1"># `Tensor | Module`, so every `register_buffer` read is a union to mypy and every</span>
+    <span class="c1"># index, call or bitwise op on one is an error. Declaring the buffers as class-level</span>
+    <span class="c1"># `Tensor` annotations is the documented way to tell the checker what they are; it</span>
+    <span class="c1"># changes no runtime behavior, since `register_buffer` still owns the values.</span>
+    <span class="n">s_indices</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">s_values</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">lb</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">ub</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">unit_gene_unit</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">unit_gene_gene</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">unit_reaction</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">has_gpr</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">gem_to_model</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">model_to_gem</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">constitutive</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">independent_rows</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">thermo_exempt</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">is_exchange</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">delta_r_g0</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">delta_r_g0_mask</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">met_g_mask</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">delta_r_g_transport</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">kcat_per_h</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">mw_kda</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">null_basis</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">gem</span><span class="p">:</span> <span class="n">GemTensors</span><span class="p">,</span>
+        <span class="n">model_gene_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">FluxLayerConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">compartments</span><span class="p">:</span> <span class="n">CompartmentParameters</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">kcat_per_s</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">molecular_weight_kda</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">null_space</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">constitutive_genes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build the layer against one GEM.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            gem: Constraint tensors from :func:`~torchcell.metabolism.constraints.build_gem_tensors`.</span>
+<span class="sd">            model_gene_ids: The transformer's gene ids, in token-index order.</span>
+<span class="sd">            config: Switches and weights.</span>
+<span class="sd">            compartments: pH / potential table for the transport term.</span>
+<span class="sd">            kcat_per_s: ``[n_units]`` turnover per catalytic unit, or None to use the</span>
+<span class="sd">                configured default for every unit. Coverage must be reported by the caller.</span>
+<span class="sd">            molecular_weight_kda: ``[n_gem_genes]`` gene-product molecular weight, or None</span>
+<span class="sd">                to disable the protein budget.</span>
+<span class="sd">            null_space: ``[r, nullity]`` basis of ``ker S``, required only when</span>
+<span class="sd">                ``config.parameterization == 'nullspace'``. Built once by the caller with</span>
+<span class="sd">                :func:`~torchcell.metabolism.constraints.null_space_basis`, since it costs</span>
+<span class="sd">                a singular value decomposition of the whole stoichiometric matrix.</span>
+<span class="sd">            constitutive_genes: GEM gene ids that are always present at full availability.</span>
+<span class="sd">                Heterologous cassette genes belong here: they are not open reading frames of</span>
+<span class="sd">                the host, so they own no gene token, and the availability chain would</span>
+<span class="sd">                otherwise read their absence from the token universe as availability zero</span>
+<span class="sd">                and switch off the very pathway that was added. There is no learned gate on</span>
+<span class="sd">                them, because a knockout library cannot delete them.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="n">FluxLayerConfig</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compartments</span> <span class="o">=</span> <span class="n">compartments</span> <span class="ow">or</span> <span class="n">CompartmentParameters</span><span class="p">()</span>
+        <span class="n">cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_reactions</span> <span class="o">=</span> <span class="n">gem</span><span class="o">.</span><span class="n">n_reactions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_metabolites</span> <span class="o">=</span> <span class="n">gem</span><span class="o">.</span><span class="n">n_metabolites</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rxn_ids</span> <span class="o">=</span> <span class="n">gem</span><span class="o">.</span><span class="n">rxn_ids</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">met_ids</span> <span class="o">=</span> <span class="n">gem</span><span class="o">.</span><span class="n">met_ids</span>
+        <span class="n">cu</span> <span class="o">=</span> <span class="n">gem</span><span class="o">.</span><span class="n">catalytic_units</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_units</span> <span class="o">=</span> <span class="n">cu</span><span class="o">.</span><span class="n">n_units</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_gem_genes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cu</span><span class="o">.</span><span class="n">gene_ids</span><span class="p">)</span>
+
+        <span class="c1"># -- structural buffers (never learned) -------------------------------</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"s_indices"</span><span class="p">,</span> <span class="n">gem</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">indices</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"s_values"</span><span class="p">,</span> <span class="n">gem</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">flux_scale</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"lb"</span><span class="p">,</span> <span class="n">gem</span><span class="o">.</span><span class="n">lb</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">min</span><span class="o">=-</span><span class="n">scale</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">scale</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"ub"</span><span class="p">,</span> <span class="n">gem</span><span class="o">.</span><span class="n">ub</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">min</span><span class="o">=-</span><span class="n">scale</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">scale</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"unit_gene_unit"</span><span class="p">,</span> <span class="n">cu</span><span class="o">.</span><span class="n">unit_gene_index</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"unit_gene_gene"</span><span class="p">,</span> <span class="n">cu</span><span class="o">.</span><span class="n">unit_gene_index</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"unit_reaction"</span><span class="p">,</span> <span class="n">cu</span><span class="o">.</span><span class="n">unit_reaction</span><span class="p">)</span>
+        <span class="n">has_gpr</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_reactions</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span>
+        <span class="n">has_gpr</span><span class="p">[</span><span class="n">cu</span><span class="o">.</span><span class="n">unit_reaction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"has_gpr"</span><span class="p">,</span> <span class="n">has_gpr</span><span class="p">)</span>
+
+        <span class="n">gem_to_model</span><span class="p">,</span> <span class="n">model_to_gem</span> <span class="o">=</span> <span class="n">gene_index_map</span><span class="p">(</span><span class="n">model_gene_ids</span><span class="p">,</span> <span class="n">cu</span><span class="o">.</span><span class="n">gene_ids</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"gem_to_model"</span><span class="p">,</span> <span class="n">gem_to_model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"model_to_gem"</span><span class="p">,</span> <span class="n">model_to_gem</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_genes_mapped</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">gem_to_model</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+
+        <span class="n">constitutive</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_gem_genes</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span>
+        <span class="n">named</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">constitutive_genes</span> <span class="ow">or</span> <span class="p">[])</span>
+        <span class="k">if</span> <span class="n">named</span><span class="p">:</span>
+            <span class="n">gene_pos</span> <span class="o">=</span> <span class="p">{</span><span class="n">g</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cu</span><span class="o">.</span><span class="n">gene_ids</span><span class="p">)}</span>
+            <span class="n">unknown</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">named</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">gene_pos</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"constitutive_genes not present in the GEM: </span><span class="si">{</span><span class="n">unknown</span><span class="si">}</span><span class="s2">. "</span>
+                    <span class="s2">"Apply the pathway to the model before building its tensors."</span>
+                <span class="p">)</span>
+            <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">named</span><span class="p">:</span>
+                <span class="n">constitutive</span><span class="p">[</span><span class="n">gene_pos</span><span class="p">[</span><span class="n">g</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"constitutive"</span><span class="p">,</span> <span class="n">constitutive</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_constitutive_genes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">constitutive</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+
+        <span class="n">rows</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">gem</span><span class="o">.</span><span class="n">independent_rows</span>
+            <span class="k">if</span> <span class="n">gem</span><span class="o">.</span><span class="n">independent_rows</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_metabolites</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"independent_rows"</span><span class="p">,</span> <span class="n">rows</span><span class="p">)</span>
+
+        <span class="c1"># -- second-law exemptions (Thermo-Flux Box 2) ------------------------</span>
+        <span class="n">exempt</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_reactions</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">gem</span><span class="o">.</span><span class="n">exchange_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">exempt</span><span class="p">[</span><span class="n">gem</span><span class="o">.</span><span class="n">exchange_indices</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">gem</span><span class="o">.</span><span class="n">biomass_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">exempt</span><span class="p">[</span><span class="n">gem</span><span class="o">.</span><span class="n">biomass_index</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">rid</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">gem</span><span class="o">.</span><span class="n">rxn_ids</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s2">"H2O"</span> <span class="ow">in</span> <span class="n">rid</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">"water"</span> <span class="ow">in</span> <span class="n">rid</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+                <span class="n">exempt</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"thermo_exempt"</span><span class="p">,</span> <span class="n">exempt</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_thermo_reactions</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="o">~</span><span class="n">exempt</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+
+        <span class="n">exch</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_reactions</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">gem</span><span class="o">.</span><span class="n">exchange_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">exch</span><span class="p">[</span><span class="n">gem</span><span class="o">.</span><span class="n">exchange_indices</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"is_exchange"</span><span class="p">,</span> <span class="n">exch</span><span class="p">)</span>
+
+        <span class="c1"># -- thermodynamics ---------------------------------------------------</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thermo_mode</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">thermo_mode</span>
+        <span class="k">if</span> <span class="n">gem</span><span class="o">.</span><span class="n">thermo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">drg0</span><span class="p">,</span> <span class="n">drg0_mask</span> <span class="o">=</span> <span class="n">gem</span><span class="o">.</span><span class="n">standard_reaction_delta_g</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"delta_r_g0"</span><span class="p">,</span> <span class="n">drg0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"delta_r_g0_mask"</span><span class="p">,</span> <span class="n">drg0_mask</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"met_g_mask"</span><span class="p">,</span> <span class="n">gem</span><span class="o">.</span><span class="n">thermo</span><span class="o">.</span><span class="n">met_mask</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rt</span> <span class="o">=</span> <span class="n">gem</span><span class="o">.</span><span class="n">thermo</span><span class="o">.</span><span class="n">temperature_k</span> <span class="o">*</span> <span class="mf">8.314462618e-3</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"delta_r_g0"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_reactions</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
+                <span class="s2">"delta_r_g0_mask"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_reactions</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
+                <span class="s2">"met_g_mask"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_metabolites</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compartments</span><span class="o">.</span><span class="n">temperature_k</span> <span class="o">*</span> <span class="mf">8.314462618e-3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_transport_terms_sourced</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"delta_r_g_transport"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transport_term</span><span class="p">(</span><span class="n">gem</span><span class="p">))</span>
+
+        <span class="c1"># -- kinetics ---------------------------------------------------------</span>
+        <span class="k">if</span> <span class="n">kcat_per_s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kcat</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_units</span><span class="p">,),</span> <span class="n">cfg</span><span class="o">.</span><span class="n">default_kcat_per_s</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">kcat_is_default</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">kcat</span> <span class="o">=</span> <span class="n">kcat_per_s</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">kcat_is_default</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="c1"># mmol/gDW/h per g enzyme: kcat [1/s] * 3600 s/h. The capacity bound is</span>
+        <span class="c1"># |v_j| &lt;= kcat_gj * E_g, so the units of E follow from this line.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"kcat_per_h"</span><span class="p">,</span> <span class="n">kcat</span> <span class="o">*</span> <span class="mf">3600.0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">molecular_weight_kda</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"mw_kda"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_gem_genes</span><span class="p">)</span> <span class="o">*</span> <span class="mf">40.0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mw_is_default</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"mw_kda"</span><span class="p">,</span> <span class="n">molecular_weight_kda</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mw_is_default</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># -- learned parts ----------------------------------------------------</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">hidden_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parameterization</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">parameterization</span>
+        <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">parameterization</span> <span class="o">==</span> <span class="s2">"nullspace"</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">null_space</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"parameterization='nullspace' needs the basis; build it with "</span>
+                    <span class="s2">"torchcell.metabolism.constraints.null_space_basis(gem.s)."</span>
+                <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"null_basis"</span><span class="p">,</span> <span class="n">null_space</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_latent</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">null_space</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">latent_mlp</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+                <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">),</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_latent</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_latent</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reaction_embedding</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_reactions</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">reaction_embed_dim</span><span class="p">)</span>
+        <span class="n">z_out</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">stochastic</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flux_mlp</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d</span> <span class="o">+</span> <span class="n">cfg</span><span class="o">.</span><span class="n">reaction_embed_dim</span><span class="p">,</span> <span class="n">d</span><span class="p">),</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">z_out</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="c1"># A learned gate on non-deleted genes: dosage, alleles, over-expression. Deleted</span>
+        <span class="c1"># genes never reach it.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">availability</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thermo_mode</span> <span class="ow">is</span> <span class="n">ThermoMode</span><span class="o">.</span><span class="n">FREE</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mu_base</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_metabolites</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mu_from_context</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_metabolites</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">thermo_mode</span> <span class="ow">is</span> <span class="n">ThermoMode</span><span class="o">.</span><span class="n">ANCHORED</span><span class="p">:</span>
+            <span class="c1"># log-concentration, squashed into the physiological window</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_c_base</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_metabolites</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_c_from_context</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_metabolites</span><span class="p">)</span>
+            <span class="c1"># the Q m offset of Thermo-Flux Eq. (5), isotropic because Q is unavailable</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">delta_g_offset</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_reactions</span><span class="p">))</span>
+
+    <span class="c1"># -- construction helpers -------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_transport_term</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gem</span><span class="p">:</span> <span class="n">GemTensors</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Recover :math:`\Delta_r G^t_j` for transport reactions from the GEM's own table.</span>
+
+<span class="sd">        Thermo-Flux Eq. (7) gives</span>
+<span class="sd">        :math:`\Delta_r G^t_j=-N_HRT\ln(10)\Delta\mathrm{pH}-Fq\Delta\Phi`, and computing it</span>
+<span class="sd">        from scratch needs the transported species and its charge. Identifying those is</span>
+<span class="sd">        Thermo-Flux's Step 4 and requires eQuilibrator species distributions plus manual</span>
+<span class="sd">        curation of the ambiguous cases, none of which is available here.</span>
+
+<span class="sd">        **But the term is recoverable, and a measurement says so.** Summing formation</span>
+<span class="sd">        energies over a transport reaction cancels exactly, because the same species appears</span>
+<span class="sd">        on both sides: :math:`\sum_i S_{ij}\Delta_f G'^{\circ}_i = 0`. So a transport</span>
+<span class="sd">        reaction's entire standard energy IS its transport term. Comparing the two shipped</span>
+<span class="sd">        tables on the 3,204 reactions where both carry a value:</span>
+
+<span class="sd">        * **441 reactions have a recomputed energy of exactly 0 and a shipped value above</span>
+<span class="sd">          5 kJ/mol, and all 441 of them are multi-compartment.** 441 of 441, not a</span>
+<span class="sd">          majority. Relaxing the 5 kJ/mol floor to any nonzero value gives 874, out of</span>
+<span class="sd">          1,099 reactions whose recomputed energy is degenerate.</span>
+<span class="sd">        * the 321 reactions with the opposite pattern are all single-compartment, so they</span>
+<span class="sd">          have a different cause.</span>
+
+<span class="sd">        The shipped reaction column therefore carries the driving force the metabolite sum</span>
+<span class="sd">        structurally cannot. Using it on exactly those reactions is sourcing the term from</span>
+<span class="sd">        the GEM's own curation rather than estimating it.</span>
+
+<span class="sd">        ``use_shipped_transport_delta_g`` gates this because it is a change in what the</span>
+<span class="sd">        thermodynamic term asserts, not a tuning knob, and the arms reported in</span>
+<span class="sd">        [[experiments.026-metabolism-flux.enzyme-constrained-thermodynamic-flux-layer]] were</span>
+<span class="sd">        run with it OFF. What it does not fix is the residual single-compartment</span>
+<span class="sd">        disagreement, median 10.2 kJ/mol, which is roughly 4 RT and remains unexplained.</span>
+<span class="sd">        """</span>
+        <span class="n">transport</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">gem</span><span class="o">.</span><span class="n">n_reactions</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">use_shipped_transport_delta_g</span> <span class="ow">or</span> <span class="n">gem</span><span class="o">.</span><span class="n">thermo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">transport</span>
+        <span class="n">recomputed</span><span class="p">,</span> <span class="n">recomputed_mask</span> <span class="o">=</span> <span class="n">gem</span><span class="o">.</span><span class="n">standard_reaction_delta_g</span><span class="p">()</span>
+        <span class="n">degenerate</span> <span class="o">=</span> <span class="n">recomputed_mask</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">recomputed</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mf">1e-6</span><span class="p">)</span>
+        <span class="n">usable</span> <span class="o">=</span> <span class="n">degenerate</span> <span class="o">&amp;</span> <span class="n">gem</span><span class="o">.</span><span class="n">thermo</span><span class="o">.</span><span class="n">rxn_mask</span>
+        <span class="n">transport</span><span class="p">[</span><span class="n">usable</span><span class="p">]</span> <span class="o">=</span> <span class="n">gem</span><span class="o">.</span><span class="n">thermo</span><span class="o">.</span><span class="n">rxn_delta_g</span><span class="p">[</span><span class="n">usable</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_transport_terms_sourced</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">usable</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">transport</span>
+
+    <span class="c1"># -- forward --------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="FluxLayer.gene_availability">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.flux_layer.FluxLayer.html#torchcell.metabolism.flux_layer.FluxLayer.gene_availability">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gene_availability</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">h_genes</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">perturbation_indices</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">perturbation_indices_batch</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Per-sample :math:`\gamma_g\in[0,1]` over the GEM's genes. ``[B, n_gem_genes]``.</span>
+
+<span class="sd">        Deleted genes are set to zero **hard**, from the perturbation. Everything else is</span>
+<span class="sd">        a learned sigmoid gate, which is what leaves room for dosage, hypomorphic alleles</span>
+<span class="sd">        and over-expression later without changing this signature.</span>
+
+<span class="sd">        Constitutive genes are pinned to one. A heterologous cassette gene has no gene</span>
+<span class="sd">        token, so the token-universe mask would otherwise zero it, and zeroing it switches</span>
+<span class="sd">        off the pathway it was added to provide in every sample.</span>
+<span class="sd">        """</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gem_to_model</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+        <span class="n">token_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gem_to_model</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">h_gem</span> <span class="o">=</span> <span class="n">h_genes</span><span class="p">[:,</span> <span class="n">token_idx</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># [B, n_gem_genes, d]</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">availability</span><span class="p">(</span><span class="n">h_gem</span><span class="p">))</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">valid</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_constitutive_genes</span><span class="p">:</span>
+            <span class="n">gamma</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">constitutive</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">gamma</span><span class="p">),</span> <span class="n">gamma</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Hard-zero the deleted genes that the GEM knows about.</span>
+        <span class="n">gem_of_pert</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_to_gem</span><span class="p">[</span><span class="n">perturbation_indices</span><span class="p">]</span>
+        <span class="n">in_gem</span> <span class="o">=</span> <span class="n">gem_of_pert</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">in_gem</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">perturbation_indices_batch</span><span class="p">[</span><span class="n">in_gem</span><span class="p">]</span>
+            <span class="n">cols</span> <span class="o">=</span> <span class="n">gem_of_pert</span><span class="p">[</span><span class="n">in_gem</span><span class="p">]</span>
+            <span class="n">keep</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">gamma</span><span class="p">)</span>
+            <span class="n">keep</span><span class="p">[</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">gamma</span> <span class="o">=</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">keep</span>
+        <span class="k">return</span> <span class="n">gamma</span></div>
+
+
+<div class="viewcode-block" id="FluxLayer.reaction_availability">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.flux_layer.FluxLayer.html#torchcell.metabolism.flux_layer.FluxLayer.reaction_availability">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reaction_availability</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gamma</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Fold :math:`\gamma_g` up the GPR: softmin over complexes, sum over isozymes.</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            c_u=-\tfrac1\beta\log\!\sum_{g\in C_u}e^{-\beta\gamma_g},\qquad</span>
+<span class="sd">            c_j=\min\Big(1,\ \sum_{u:\,\rho(u)=j}c_u\Big)</span>
+
+<span class="sd">        Reactions with no GPR keep availability 1: an unannotated reaction is not one that</span>
+<span class="sd">        no gene catalyzes, it is one nobody has assigned a gene to, and setting it to zero</span>
+<span class="sd">        would let a missing annotation delete a reaction.</span>
+<span class="sd">        """</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">softmin_beta</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">gamma</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">gathered</span> <span class="o">=</span> <span class="n">gamma</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit_gene_gene</span><span class="p">]</span>  <span class="c1"># [B, nnz]</span>
+        <span class="n">acc</span> <span class="o">=</span> <span class="n">gamma</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_units</span><span class="p">)</span>
+        <span class="n">acc</span><span class="o">.</span><span class="n">index_add_</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit_gene_unit</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">beta</span> <span class="o">*</span> <span class="n">gathered</span><span class="p">))</span>
+        <span class="c1"># Units with no genes would give log(0); the parser never emits them, but guard.</span>
+        <span class="n">c_u</span> <span class="o">=</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">acc</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mf">1e-30</span><span class="p">))</span> <span class="o">/</span> <span class="n">beta</span>
+        <span class="n">c_j</span> <span class="o">=</span> <span class="n">gamma</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_reactions</span><span class="p">)</span>
+        <span class="n">c_j</span><span class="o">.</span><span class="n">index_add_</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit_reaction</span><span class="p">,</span> <span class="n">c_u</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mf">0.0</span><span class="p">))</span>
+        <span class="n">c_j</span> <span class="o">=</span> <span class="n">c_j</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">max</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">has_gpr</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">c_j</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">c_j</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="FluxLayer.dynamic_box">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.flux_layer.FluxLayer.html#torchcell.metabolism.flux_layer.FluxLayer.dynamic_box">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dynamic_box</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c_j</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The genotype-dependent flux box :math:`[v^\ell_j,v^u_j]`.</span>
+
+<span class="sd">        Availability scales the box multiplicatively, so :math:`c_j=0` collapses it to the</span>
+<span class="sd">        single point :math:`0`. Enzyme capacity enters here too rather than as a penalty:</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \bar v^u_j=\min\Big(v^u_j,\ c_j\sum_{u:\rho(u)=j}k_{\mathrm{cat},u}\bar E\Big)</span>
+
+<span class="sd">        Putting capacity in the box rather than the objective is what makes it **exact** at</span>
+<span class="sd">        no cost, and it is why there is no ``C_box`` term in the loss.</span>
+<span class="sd">        """</span>
+        <span class="n">lb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lb</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">c_j</span>
+        <span class="n">ub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ub</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">c_j</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">use_enzyme_capacity</span><span class="p">:</span>
+            <span class="n">cap</span> <span class="o">=</span> <span class="n">c_j</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">c_j</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_reactions</span><span class="p">)</span>
+            <span class="c1"># Enzyme available per unit is not predicted; the capacity ceiling uses a</span>
+            <span class="c1"># nominal abundance so that kcat sets the SCALE of the bound. This is where a</span>
+            <span class="c1"># measured or predicted proteome would enter.</span>
+            <span class="n">per_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kcat_per_h</span> <span class="o">*</span> <span class="mf">1.0e-3</span>
+            <span class="n">cap</span><span class="o">.</span><span class="n">index_add_</span><span class="p">(</span>
+                <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit_reaction</span><span class="p">,</span> <span class="n">per_unit</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">c_j</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">cap</span> <span class="o">=</span> <span class="n">cap</span> <span class="o">*</span> <span class="n">c_j</span>
+            <span class="n">capped</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">has_gpr</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">cap</span><span class="p">,</span> <span class="n">ub</span><span class="o">.</span><span class="n">abs</span><span class="p">())</span>
+            <span class="n">ub</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">ub</span><span class="p">,</span> <span class="n">capped</span><span class="p">)</span>
+            <span class="n">lb</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">lb</span><span class="p">,</span> <span class="o">-</span><span class="n">capped</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span></div>
+
+
+<div class="viewcode-block" id="FluxLayer.reaction_potential">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.flux_layer.FluxLayer.html#torchcell.metabolism.flux_layer.FluxLayer.reaction_potential">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reaction_potential</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Per-reaction :math:`\Delta_r G_j` and the mask of reactions it is valid on.</span>
+
+<span class="sd">        In ``ANCHORED`` mode this is Thermo-Flux Eq. (4) term by term. In ``FREE`` mode it</span>
+<span class="sd">        is :math:`\sum_i S_{ij}\mu_i` with :math:`\mu` unconstrained. In ``OFF`` mode the</span>
+<span class="sd">        mask is empty and the caller skips the term.</span>
+<span class="sd">        """</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">extras</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thermo_mode</span> <span class="ow">is</span> <span class="n">ThermoMode</span><span class="o">.</span><span class="n">OFF</span><span class="p">:</span>
+            <span class="n">zeros</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_reactions</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">zeros</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delta_r_g0_mask</span><span class="p">),</span> <span class="n">extras</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thermo_mode</span> <span class="ow">is</span> <span class="n">ThermoMode</span><span class="o">.</span><span class="n">FREE</span><span class="p">:</span>
+            <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu_base</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu_from_context</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+            <span class="n">delta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_s_transpose_matmul</span><span class="p">(</span><span class="n">mu</span><span class="p">)</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delta_r_g0_mask</span><span class="p">)</span>
+            <span class="n">extras</span><span class="p">[</span><span class="s2">"mu"</span><span class="p">]</span> <span class="o">=</span> <span class="n">mu</span>
+            <span class="k">return</span> <span class="n">delta</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">extras</span>
+
+        <span class="c1"># ANCHORED</span>
+        <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">CONC_LOWER_M</span><span class="p">),</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">CONC_UPPER_M</span><span class="p">)</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_c_base</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_c_from_context</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+        <span class="n">log_c</span> <span class="o">=</span> <span class="n">lo</span> <span class="o">+</span> <span class="p">(</span><span class="n">hi</span> <span class="o">-</span> <span class="n">lo</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+        <span class="n">conc_term</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rt</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_s_transpose_matmul</span><span class="p">(</span><span class="n">log_c</span><span class="p">)</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">delta_r_g0</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">conc_term</span>
+            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">delta_r_g_transport</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">delta_g_offset</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">extras</span><span class="p">[</span><span class="s2">"log_c"</span><span class="p">]</span> <span class="o">=</span> <span class="n">log_c</span>
+        <span class="n">extras</span><span class="p">[</span><span class="s2">"conc_term"</span><span class="p">]</span> <span class="o">=</span> <span class="n">conc_term</span>
+        <span class="k">return</span> <span class="n">delta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">delta_r_g0_mask</span><span class="p">,</span> <span class="n">extras</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_s_transpose_matmul</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""``[B, m] -&gt; [B, r]`` via ``S^T x``, using the sparse structure directly."""</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sparse_coo_tensor</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">s_indices</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s_values</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_metabolites</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_reactions</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">out</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">mm</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">t</span><span class="p">(),</span> <span class="n">x</span><span class="o">.</span><span class="n">t</span><span class="p">())</span><span class="o">.</span><span class="n">t</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_s_matmul</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""``[B, r] -&gt; [B, m]`` via ``S v``."""</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sparse_coo_tensor</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">s_indices</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s_values</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_metabolites</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_reactions</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">out</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">mm</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">t</span><span class="p">())</span><span class="o">.</span><span class="n">t</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+<div class="viewcode-block" id="FluxLayer.turnover">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.flux_layer.FluxLayer.html#torchcell.metabolism.flux_layer.FluxLayer.turnover">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">turnover</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">""":math:`\omega_i(v)=\tfrac12\sum_j|S_{ij}v_j|`, the throughput of metabolite i.</span>
+
+<span class="sd">        Doubles as the mass-balance normalizer and as the precursor-pool readout. A</span>
+<span class="sd">        residual of 0.01 is negligible on a metabolite carrying flux 10 and nonsense on one</span>
+<span class="sd">        carrying 0.01, which is why the balance penalty is a ratio rather than a square.</span>
+<span class="sd">        """</span>
+        <span class="n">s_abs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sparse_coo_tensor</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">s_indices</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s_values</span><span class="o">.</span><span class="n">abs</span><span class="p">(),</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_metabolites</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_reactions</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">out</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">mm</span><span class="p">(</span><span class="n">s_abs</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">t</span><span class="p">())</span><span class="o">.</span><span class="n">t</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+
+<div class="viewcode-block" id="FluxLayer.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.flux_layer.FluxLayer.html#torchcell.metabolism.flux_layer.FluxLayer.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">h_genes</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">context</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">perturbation_indices</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">perturbation_indices_batch</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Predict a flux vector and every feasibility residual for it.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            h_genes: ``[B, N, d]`` perturbed gene token representations.</span>
+<span class="sd">            context: ``[B, d]`` whole-cell context (the perturbed-gene pool).</span>
+<span class="sd">            perturbation_indices: Flat ``[total_pert]`` gene-token indices.</span>
+<span class="sd">            perturbation_indices_batch: ``[total_pert]`` sample assignment.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A dict with ``v`` ``[B, r]``, every constraint residual as a scalar, and the</span>
+<span class="sd">            per-sample feasibility diagnostics. Residuals are returned rather than summed</span>
+<span class="sd">            so the caller owns the weighting and every term can be logged separately.</span>
+<span class="sd">        """</span>
+        <span class="n">cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">h_genes</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gene_availability</span><span class="p">(</span>
+            <span class="n">h_genes</span><span class="p">,</span> <span class="n">perturbation_indices</span><span class="p">,</span> <span class="n">perturbation_indices_batch</span>
+        <span class="p">)</span>
+        <span class="n">c_j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reaction_availability</span><span class="p">(</span><span class="n">gamma</span><span class="p">)</span>
+        <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_box</span><span class="p">(</span><span class="n">c_j</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameterization</span> <span class="o">==</span> <span class="s2">"nullspace"</span><span class="p">:</span>
+            <span class="c1"># Mass balance is exact here, for any latent: S (N z) = (S N) z = 0.</span>
+            <span class="n">z_latent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">latent_mlp</span><span class="p">(</span><span class="n">context</span><span class="p">)</span> <span class="o">*</span> <span class="n">cfg</span><span class="o">.</span><span class="n">flux_scale</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">z_latent</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">null_basis</span><span class="o">.</span><span class="n">t</span><span class="p">()</span>
+            <span class="c1"># The box is what is soft now, and directionality with it.</span>
+            <span class="n">out_of_box</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">v</span> <span class="o">-</span> <span class="n">ub</span><span class="p">)</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">lb</span> <span class="o">-</span> <span class="n">v</span><span class="p">)</span>
+            <span class="n">box_penalty</span> <span class="o">=</span> <span class="p">(</span><span class="n">out_of_box</span> <span class="o">/</span> <span class="n">cfg</span><span class="o">.</span><span class="n">flux_scale</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rxn_emb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reaction_embedding</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">ctx</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_reactions</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">z_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">flux_mlp</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">ctx</span><span class="p">,</span> <span class="n">rxn_emb</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">stochastic</span><span class="p">:</span>
+                <span class="n">mean</span><span class="p">,</span> <span class="n">log_std</span> <span class="o">=</span> <span class="n">z_out</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">z_out</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="o">-</span><span class="mf">6.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
+                <span class="n">z</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">mean</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn_like</span><span class="p">(</span><span class="n">mean</span><span class="p">)</span> <span class="o">*</span> <span class="n">log_std</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span>
+                    <span class="k">else</span> <span class="n">mean</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">z</span> <span class="o">=</span> <span class="n">z_out</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="c1"># The box, exactly. Nothing downstream may violate it.</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">lb</span> <span class="o">+</span> <span class="p">(</span><span class="n">ub</span> <span class="o">-</span> <span class="n">lb</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+            <span class="n">box_penalty</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(())</span>
+
+        <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"v"</span><span class="p">:</span> <span class="n">v</span><span class="p">,</span> <span class="s2">"c_j"</span><span class="p">:</span> <span class="n">c_j</span><span class="p">,</span> <span class="s2">"gamma"</span><span class="p">:</span> <span class="n">gamma</span><span class="p">}</span>
+        <span class="n">out</span><span class="p">[</span><span class="s2">"c_box"</span><span class="p">]</span> <span class="o">=</span> <span class="n">box_penalty</span>
+        <span class="n">out</span><span class="p">[</span><span class="s2">"feas_box_violation_frac"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">((</span><span class="n">v</span> <span class="o">&gt;</span> <span class="n">ub</span> <span class="o">+</span> <span class="mf">1e-4</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">v</span> <span class="o">&lt;</span> <span class="n">lb</span> <span class="o">-</span> <span class="mf">1e-4</span><span class="p">))</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="p">)</span>
+
+        <span class="c1"># (a) mass balance, scale-relative, on independent rows only</span>
+        <span class="n">residual</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_s_matmul</span><span class="p">(</span><span class="n">v</span><span class="p">)[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">independent_rows</span><span class="p">]</span>
+        <span class="n">omega</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">turnover</span><span class="p">(</span><span class="n">v</span><span class="p">)[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">independent_rows</span><span class="p">]</span>
+        <span class="n">ratio</span> <span class="o">=</span> <span class="n">residual</span> <span class="o">/</span> <span class="p">(</span><span class="n">omega</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span> <span class="o">+</span> <span class="n">cfg</span><span class="o">.</span><span class="n">balance_epsilon</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">[</span><span class="s2">"c_balance"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">ratio</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">out</span><span class="p">[</span><span class="s2">"feas_balance_median"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">residual</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span> <span class="o">/</span> <span class="p">(</span><span class="n">omega</span> <span class="o">+</span> <span class="n">cfg</span><span class="o">.</span><span class="n">balance_epsilon</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">median</span><span class="p">()</span>
+
+        <span class="c1"># (b) second law, relaxed to a hinge; no binary variables</span>
+        <span class="n">delta_g</span><span class="p">,</span> <span class="n">dg_mask</span><span class="p">,</span> <span class="n">extras</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reaction_potential</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="sa">f</span><span class="s2">"thermo_</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="n">t</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">extras</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+        <span class="n">active</span> <span class="o">=</span> <span class="n">dg_mask</span> <span class="o">&amp;</span> <span class="p">(</span><span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">thermo_exempt</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">active</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">thermo_mode</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">ThermoMode</span><span class="o">.</span><span class="n">OFF</span><span class="p">:</span>
+            <span class="n">va</span><span class="p">,</span> <span class="n">ga</span> <span class="o">=</span> <span class="n">v</span><span class="p">[:,</span> <span class="n">active</span><span class="p">],</span> <span class="n">delta_g</span><span class="p">[:,</span> <span class="n">active</span><span class="p">]</span>
+            <span class="n">drive</span> <span class="o">=</span> <span class="n">va</span> <span class="o">*</span> <span class="n">ga</span>
+            <span class="c1"># NORMALIZED to a dimensionless fraction of the available driving force.</span>
+            <span class="c1"># The raw hinge relu(v * dG) is in kJ mmol gDW^-1 h^-1 mol^-1 and, measured at</span>
+            <span class="c1"># init on a real batch, is ~72 against a data loss of ~1 -- so an unnormalized</span>
+            <span class="c1"># term does not regularize the model, it replaces it. Dividing by |v||dG|</span>
+            <span class="c1"># makes each reaction contribute at most 1 and turns the term into "what</span>
+            <span class="c1"># fraction of the driving force runs uphill", which is also the quantity worth</span>
+            <span class="c1"># reporting.</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">"c_thermo"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">drive</span> <span class="o">+</span> <span class="n">cfg</span><span class="o">.</span><span class="n">thermo_epsilon</span><span class="p">)</span>
+                <span class="o">/</span> <span class="p">(</span><span class="n">va</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span> <span class="o">*</span> <span class="n">ga</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span> <span class="o">+</span> <span class="n">cfg</span><span class="o">.</span><span class="n">thermo_epsilon</span><span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">"feas_thermo_violation_frac"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">drive</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">"delta_r_g"</span><span class="p">]</span> <span class="o">=</span> <span class="n">delta_g</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">"c_thermo"</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(())</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">"feas_thermo_violation_frac"</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(())</span>
+
+        <span class="c1"># (c) Gibbs dissipation rate (Niebel 2019), summed over exchange reactions</span>
+        <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">use_dissipation_limit</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">thermo_mode</span> <span class="ow">is</span> <span class="n">ThermoMode</span><span class="o">.</span><span class="n">ANCHORED</span><span class="p">:</span>
+            <span class="n">g_diss</span> <span class="o">=</span> <span class="p">(</span><span class="n">v</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_exchange</span><span class="p">]</span> <span class="o">*</span> <span class="n">delta_g</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_exchange</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="c1"># kJ/mol * mmol/gDW/h = J/gDW/h, so no unit conversion is needed.</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">"g_diss"</span><span class="p">]</span> <span class="o">=</span> <span class="n">g_diss</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="c1"># A RATIO hinge, not a squared excess. At init the dissipation is ~2e5 times</span>
+            <span class="c1"># the 3,700 J/gDW/h limit, so a squared excess divided by g_lim^2 evaluates to</span>
+            <span class="c1"># ~4e4 and its gradient dwarfs every other term into NaN within one step.</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">"c_dissipation"</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">g_diss</span> <span class="o">/</span> <span class="n">cfg</span><span class="o">.</span><span class="n">g_diss_limit</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">"c_dissipation"</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(())</span>
+
+        <span class="c1"># (d) enzyme demand and the protein budget</span>
+        <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">use_protein_budget</span><span class="p">:</span>
+            <span class="n">demand</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">v</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit_reaction</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">kcat_per_h</span>
+            <span class="n">e_g</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_gem_genes</span><span class="p">)</span>
+            <span class="n">e_g</span><span class="o">.</span><span class="n">index_add_</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit_gene_gene</span><span class="p">,</span> <span class="n">demand</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit_gene_unit</span><span class="p">])</span>
+            <span class="n">protein</span> <span class="o">=</span> <span class="p">(</span><span class="n">e_g</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">mw_kda</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e-3</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">"protein_used"</span><span class="p">]</span> <span class="o">=</span> <span class="n">protein</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">"c_budget"</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">protein</span> <span class="o">/</span> <span class="n">cfg</span><span class="o">.</span><span class="n">p_avail</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">"feas_budget_ratio"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">protein</span> <span class="o">/</span> <span class="n">cfg</span><span class="o">.</span><span class="n">p_avail</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">"e_g"</span><span class="p">]</span> <span class="o">=</span> <span class="n">e_g</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">"c_budget"</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(())</span>
+
+        <span class="c1"># (e) parsimony: the main defence against a 1,538-dimensional null space</span>
+        <span class="n">out</span><span class="p">[</span><span class="s2">"c_parsimony"</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">v</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">/</span> <span class="n">cfg</span><span class="o">.</span><span class="n">flux_scale</span>
+
+        <span class="c1"># (f) prior on the Thermo-Flux uncertainty latent</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thermo_mode</span> <span class="ow">is</span> <span class="n">ThermoMode</span><span class="o">.</span><span class="n">ANCHORED</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">"c_thermo_prior"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delta_g_offset</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">"c_thermo_prior"</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(())</span>
+
+        <span class="k">return</span> <span class="n">out</span></div>
+
+
+<div class="viewcode-block" id="FluxLayer.constraint_loss">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.flux_layer.FluxLayer.html#torchcell.metabolism.flux_layer.FluxLayer.constraint_loss">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">constraint_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Weighted sum of the physics terms. Every term is already dimensionless.</span>
+
+<span class="sd">        Normalization to dimensionless happens inside :meth:`forward` rather than here,</span>
+<span class="sd">        because a term whose scale depends on the phenotype's units cannot be tuned</span>
+<span class="sd">        against another one: that is the failure the 019 joint runs hit, where an</span>
+<span class="sd">        un-normalized morphology MSE swamped expression.</span>
+<span class="sd">        """</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">weights</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">w</span><span class="p">[</span><span class="s2">"balance"</span><span class="p">]</span> <span class="o">*</span> <span class="n">out</span><span class="p">[</span><span class="s2">"c_balance"</span><span class="p">]</span>
+            <span class="o">+</span> <span class="n">w</span><span class="p">[</span><span class="s2">"thermo"</span><span class="p">]</span> <span class="o">*</span> <span class="n">out</span><span class="p">[</span><span class="s2">"c_thermo"</span><span class="p">]</span>
+            <span class="o">+</span> <span class="n">w</span><span class="p">[</span><span class="s2">"budget"</span><span class="p">]</span> <span class="o">*</span> <span class="n">out</span><span class="p">[</span><span class="s2">"c_budget"</span><span class="p">]</span>
+            <span class="o">+</span> <span class="n">w</span><span class="p">[</span><span class="s2">"dissipation"</span><span class="p">]</span> <span class="o">*</span> <span class="n">out</span><span class="p">[</span><span class="s2">"c_dissipation"</span><span class="p">]</span>
+            <span class="o">+</span> <span class="n">w</span><span class="p">[</span><span class="s2">"parsimony"</span><span class="p">]</span> <span class="o">*</span> <span class="n">out</span><span class="p">[</span><span class="s2">"c_parsimony"</span><span class="p">]</span>
+            <span class="o">+</span> <span class="n">w</span><span class="p">[</span><span class="s2">"thermo_prior"</span><span class="p">]</span> <span class="o">*</span> <span class="n">out</span><span class="p">[</span><span class="s2">"c_thermo_prior"</span><span class="p">]</span>
+            <span class="o">+</span> <span class="n">w</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"box"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">out</span><span class="p">[</span><span class="s2">"c_box"</span><span class="p">]</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FluxLayer.coverage_report">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.flux_layer.FluxLayer.html#torchcell.metabolism.flux_layer.FluxLayer.coverage_report">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">coverage_report</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""What fraction of the layer rests on data rather than on a default.</span>
+
+<span class="sd">        This is not optional reporting. A capacity constraint built on a default</span>
+<span class="sd">        ``kcat`` for every reaction is a uniform rescaling of the box, not an enzyme</span>
+<span class="sd">        constraint, and the two are indistinguishable from the loss curve alone.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"n_reactions"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_reactions</span><span class="p">,</span>
+            <span class="s2">"n_metabolites"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_metabolites</span><span class="p">,</span>
+            <span class="s2">"n_catalytic_units"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_units</span><span class="p">,</span>
+            <span class="s2">"n_gem_genes"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_gem_genes</span><span class="p">,</span>
+            <span class="s2">"n_gem_genes_in_model_universe"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_genes_mapped</span><span class="p">,</span>
+            <span class="s2">"n_constitutive_genes"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_constitutive_genes</span><span class="p">,</span>
+            <span class="s2">"n_reactions_with_gpr"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">has_gpr</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+            <span class="s2">"n_independent_balance_rows"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">independent_rows</span><span class="o">.</span><span class="n">numel</span><span class="p">()),</span>
+            <span class="s2">"n_reactions_second_law_applied"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span>
+                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delta_r_g0_mask</span> <span class="o">&amp;</span> <span class="p">(</span><span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">thermo_exempt</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+            <span class="p">),</span>
+            <span class="s2">"n_reactions_second_law_exempt"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thermo_exempt</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+            <span class="s2">"n_reactions_delta_g_known"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delta_r_g0_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+            <span class="s2">"frac_reactions_delta_g_known"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delta_r_g0_mask</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
+            <span class="s2">"n_metabolites_delta_f_g_known"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">met_g_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+            <span class="s2">"frac_metabolites_delta_f_g_known"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">met_g_mask</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
+            <span class="s2">"kcat_is_default_for_all_units"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">kcat_is_default</span><span class="p">,</span>
+            <span class="s2">"mw_is_default_for_all_genes"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mw_is_default</span><span class="p">,</span>
+            <span class="s2">"n_transport_terms_sourced"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_transport_terms_sourced</span><span class="p">,</span>
+            <span class="s2">"transport_term_is_zero"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_transport_terms_sourced</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">"thermo_mode"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thermo_mode</span><span class="p">),</span>
+        <span class="p">}</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

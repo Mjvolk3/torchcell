@@ -1,0 +1,8 @@
+﻿torchcell.losses.multi\_dim\_nan\_tolerant.WeightedDistLoss
+===========================================================
+
+.. currentmodule:: torchcell.losses.multi_dim_nan_tolerant
+
+.. autoclass:: WeightedDistLoss
+   :show-inheritance:
+   :members:

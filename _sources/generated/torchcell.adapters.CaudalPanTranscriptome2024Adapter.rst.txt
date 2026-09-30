@@ -1,0 +1,8 @@
+﻿torchcell.adapters.CaudalPanTranscriptome2024Adapter
+====================================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: CaudalPanTranscriptome2024Adapter
+   :show-inheritance:
+   :members:

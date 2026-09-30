@@ -1,0 +1,6 @@
+﻿torchcell.literature.build\_manifest
+====================================
+
+.. currentmodule:: torchcell.literature
+
+.. autofunction:: build_manifest

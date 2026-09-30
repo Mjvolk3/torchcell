@@ -1,0 +1,8 @@
+﻿torchcell.adapters.CellAdapter
+==============================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: CellAdapter
+   :show-inheritance:
+   :members:

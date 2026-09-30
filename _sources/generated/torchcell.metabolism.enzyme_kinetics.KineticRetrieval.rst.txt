@@ -1,0 +1,8 @@
+﻿torchcell.metabolism.enzyme\_kinetics.KineticRetrieval
+======================================================
+
+.. currentmodule:: torchcell.metabolism.enzyme_kinetics
+
+.. autoclass:: KineticRetrieval
+   :show-inheritance:
+   :members:

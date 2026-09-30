@@ -1,0 +1,575 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datasets.scerevisiae.messner2023 &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/datasets/scerevisiae/messner2023.html" />
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html">
+            
+              <img src="../../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.datasets.scerevisiae.messner2023</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.datasets.scerevisiae.messner2023</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/datasets/scerevisiae/messner2023</span>
+<span class="c1"># [[torchcell.datasets.scerevisiae.messner2023]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/messner2023</span>
+<span class="c1"># Test file: tests/torchcell/datasets/scerevisiae/test_messner2023.py</span>
+<span class="sd">"""Messner 2023 genome-wide gene-KO proteome dataset (Cell).</span>
+
+<span class="sd">Messner et al. 2023 (Cell, doi:10.1016/j.cell.2023.03.026, PMID 37080200) measured</span>
+<span class="sd">the proteomes of the whole *S. cerevisiae* (S288C) haploid (MATa) gene-deletion</span>
+<span class="sd">collection with restored prototrophy, by an adapted microflow-SWATH-MS (DIA)</span>
+<span class="sd">approach. ``ProteomeMessner2023Dataset`` ingests the authors' processed protein</span>
+<span class="sd">matrix and maps each knockout strain to ``ProteinAbundancePhenotype`` (WS9).</span>
+
+<span class="sd">Data (mirror-once + hash-pin). The curated processed matrix is deposited ONLY on</span>
+<span class="sd">Mendeley Data (doi:10.17632/w8jtmnszd9.1); PRIDE/MassIVE holds only the 74.8 GB raw</span>
+<span class="sd">DIA-NN report, the Cell SI defers the matrix to Mendeley, and the y5k web app has no</span>
+<span class="sd">scriptable download. Per the "artifact + sha256 is canonical, not the URL" rule we</span>
+<span class="sd">fetched the matrix from Mendeley ONCE into the library mirror</span>
+<span class="sd">(``$DATA_ROOT/torchcell-library/messnerProteomicLandscapeGenomewide2023/data/``) and</span>
+<span class="sd">pin it by sha256; the loader reads from that mirror -- there is NO live Mendeley</span>
+<span class="sd">dependency. Two files are used:</span>
+
+<span class="sd">- ``yeast5k_noimpute_wide.csv`` -- proteins (rows) x samples (columns) batch-corrected</span>
+<span class="sd">  MaxLFQ quantities. We use the NO-IMPUTATION variant so every stored value is an</span>
+<span class="sd">  actually-measured quantity (missing values are dropped per strain, never imputed).</span>
+<span class="sd">  Row ids are UniProt accessions (``Protein.Group``); 1,850 proteins x 5,476 samples.</span>
+<span class="sd">- ``yeast5k_metadata.csv`` -- per-sample annotation: ``Filename`` (the matrix column</span>
+<span class="sd">  id), ``sampletype`` (``ko`` | ``HIS3`` | ``qc``), ``ORF`` (deleted gene), plate nr.</span>
+
+<span class="sd">Structure sourced from the paper (STAR Methods, OCR'd mirror):</span>
+
+<span class="sd">- **Single-replicate KOs.** "Strains were not measured in replicates." Each of the</span>
+<span class="sd">  4,699 KO strains is ONE measurement, so per-strain ``n_replicates = 1`` and the</span>
+<span class="sd">  per-strain standard error is undefined (``protein_abundance_se = None``).</span>
+<span class="sd">- **388-replicate WT reference.** The control is the his3D::kanMX strain complemented</span>
+<span class="sd">  by heterologous HIS3 expression (``sampletype == "HIS3"``, ``ORF == YOR202W``),</span>
+<span class="sd">  measured 388 times across 57 batches. We aggregate those to a per-protein</span>
+<span class="sd">  mean + standard error (n = number of WT samples in which the protein was measured),</span>
+<span class="sd">  giving ONE shared reference profile whose SE IS defined.</span>
+<span class="sd">- **Duplicate strains kept per-instance.** 145 ORFs have &gt;1 deletion strain "of</span>
+<span class="sd">  different origins" (141 duplicated, 4 triplicated); the paper analyses each strain</span>
+<span class="sd">  independently, so we emit one experiment per KO SAMPLE (4,699 records), not per ORF.</span>
+<span class="sd">- **UniProt -&gt; systematic ORF.** Protein ids are UniProt accessions; we map them to</span>
+<span class="sd">  systematic ORFs (authoritatively, via the SGD S288C GFF ``protein_id=UniProtKB:``</span>
+<span class="sd">  cross-refs) so this proteome is joinable with the ORF-keyed Zelezniak2018 proteome.</span>
+<span class="sd">  All 1,850 map (incl. the mito-encoded ``P00410`` -&gt; ``Q0250``/COX2); an unmapped id</span>
+<span class="sd">  raises rather than being silently dropped.</span>
+
+<span class="sd">The value is a LINEAR (not log2) batch-corrected MaxLFQ quantity</span>
+<span class="sd">(``measurement_type = "swath_ms_maxlfq_batch_corrected_quantity"``); log2 is applied</span>
+<span class="sd">only downstream in the paper's differential analysis. Background = S288C BY4741 MATa</span>
+<span class="sd">deletion collection with restored prototrophy (Mulleder); the prototrophy-restoring</span>
+<span class="sd">marker is not yet modeled as a GeneAddition (as in the Mulleder loader). Cells were</span>
+<span class="sd">grown in synthetic minimal (SM) liquid medium at 30 C.</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">glob</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">SM</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Environment</span><span class="p">,</span>
+    <span class="n">Experiment</span><span class="p">,</span>
+    <span class="n">ExperimentReference</span><span class="p">,</span>
+    <span class="n">Genotype</span><span class="p">,</span>
+    <span class="n">KanMxDeletionPerturbation</span><span class="p">,</span>
+    <span class="n">ProteinAbundanceExperiment</span><span class="p">,</span>
+    <span class="n">ProteinAbundanceExperimentReference</span><span class="p">,</span>
+    <span class="n">ProteinAbundancePhenotype</span><span class="p">,</span>
+    <span class="n">Publication</span><span class="p">,</span>
+    <span class="n">ReferenceGenome</span><span class="p">,</span>
+    <span class="n">Temperature</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">MEASUREMENT_TYPE</span> <span class="o">=</span> <span class="s2">"swath_ms_maxlfq_batch_corrected_quantity"</span>
+
+<span class="c1"># Library-mirror data files (fetched once from Mendeley 10.17632/w8jtmnszd9.1;</span>
+<span class="c1"># canonical = these bytes + sha256, NOT the Mendeley URL).</span>
+<span class="n">_CITATION_KEY</span> <span class="o">=</span> <span class="s2">"messnerProteomicLandscapeGenomewide2023"</span>
+<span class="n">MATRIX_FILENAME</span> <span class="o">=</span> <span class="s2">"yeast5k_noimpute_wide.csv"</span>
+<span class="n">MATRIX_SHA256</span> <span class="o">=</span> <span class="s2">"69a9df05b6db011f595a4e0b3ce25c1cc247f22cbdd066c79e6da9a706aa1df9"</span>
+<span class="n">METADATA_FILENAME</span> <span class="o">=</span> <span class="s2">"yeast5k_metadata.csv"</span>
+<span class="n">METADATA_SHA256</span> <span class="o">=</span> <span class="s2">"48864282c82d516ae929dc87aff7fae9e05e9b922e316c001f3d29dce0ff878b"</span>
+<span class="c1"># Historical retrieval metadata (Mendeley public-file ids), for provenance only.</span>
+<span class="n">MENDELEY_DOI</span> <span class="o">=</span> <span class="s2">"10.17632/w8jtmnszd9.1"</span>
+
+<span class="c1"># Sample classes in yeast5k_metadata.csv "sampletype".</span>
+<span class="n">_KO</span> <span class="o">=</span> <span class="s2">"ko"</span>
+<span class="n">_WT</span> <span class="o">=</span> <span class="s2">"HIS3"</span>
+
+<span class="c1"># Systematic ORF: nuclear (Y..) for KO deletions; protein ids also include mito</span>
+<span class="c1"># (Q\d{4}, e.g. COX2 = Q0250) after UniProt-&gt;ORF mapping.</span>
+<span class="n">_NUCLEAR_ORF_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](?:-[A-Z])?$"</span><span class="p">)</span>
+<span class="n">_ORF_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(?:Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](?:-[A-Z])?|Q\d</span><span class="si">{4}</span><span class="s2">)"</span><span class="p">)</span>
+<span class="n">_UNIPROT_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"UniProtKB:([A-Z0-9]+)"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">build_uniprot_to_orf_map</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Map UniProt accession -&gt; systematic ORF from the SGD S288C GFF.</span>
+
+<span class="sd">    Authoritative source: the ``protein_id=UniProtKB:&lt;acc&gt;`` cross-references in the</span>
+<span class="sd">    SGD reference GFF (``$DATA_ROOT/data/sgd/genome/*/saccharomyces_cerevisiae_*.gff``,</span>
+<span class="sd">    the same file :class:`SCerevisiaeGenome` uses). The first ORF token on a line</span>
+<span class="sd">    carrying a UniProt id is taken as that accession's ORF. Never invents ids.</span>
+<span class="sd">    """</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">data_root</span> <span class="k">if</span> <span class="n">data_root</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
+    <span class="n">pattern</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="n">root</span><span class="p">,</span> <span class="s2">"data"</span><span class="p">,</span> <span class="s2">"sgd"</span><span class="p">,</span> <span class="s2">"genome"</span><span class="p">,</span> <span class="s2">"*"</span><span class="p">,</span> <span class="s2">"saccharomyces_cerevisiae_*.gff"</span>
+    <span class="p">)</span>
+    <span class="n">gffs</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">gffs</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"SGD GFF not found under </span><span class="si">{</span><span class="n">pattern</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">up2orf</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">gffs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">"UniProtKB:"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">cols</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">9</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">orf_match</span> <span class="o">=</span> <span class="n">_ORF_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">cols</span><span class="p">[</span><span class="mi">8</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">orf_match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">acc</span> <span class="ow">in</span> <span class="n">_UNIPROT_RE</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">cols</span><span class="p">[</span><span class="mi">8</span><span class="p">]):</span>
+                <span class="n">up2orf</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">acc</span><span class="p">,</span> <span class="n">orf_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">up2orf</span>
+
+
+<div class="viewcode-block" id="ProteomeMessner2023Dataset">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.messner2023.ProteomeMessner2023Dataset.html#torchcell.datasets.scerevisiae.messner2023.ProteomeMessner2023Dataset">[docs]</a>
+<span class="nd">@register_dataset</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProteomeMessner2023Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Microflow-SWATH-MS proteome of the yeast gene-KO collection (4,699 strains)."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/proteome_messner2023"</span><span class="p">,</span>
+        <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset (KO ORFs are systematic; no genome injection)."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Experiment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Experiment schema class produced by this dataset."""</span>
+        <span class="k">return</span> <span class="n">ProteinAbundanceExperiment</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reference_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">ExperimentReference</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Experiment-reference schema class produced by this dataset."""</span>
+        <span class="k">return</span> <span class="n">ProteinAbundanceExperimentReference</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The processed matrix + sample metadata required before processing."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">MATRIX_FILENAME</span><span class="p">,</span> <span class="n">METADATA_FILENAME</span><span class="p">]</span>
+
+<div class="viewcode-block" id="ProteomeMessner2023Dataset.download">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.messner2023.ProteomeMessner2023Dataset.html#torchcell.datasets.scerevisiae.messner2023.ProteomeMessner2023Dataset.download">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Copy the hash-pinned matrix + metadata from the library mirror to raw_dir.</span>
+
+<span class="sd">        The mirror is the canonical source (Mendeley fetched once); we verify each</span>
+<span class="sd">        file's sha256 after copy and never touch a live Mendeley URL.</span>
+<span class="sd">        """</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">mirror</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">],</span> <span class="s2">"torchcell-library"</span><span class="p">,</span> <span class="n">_CITATION_KEY</span><span class="p">,</span> <span class="s2">"data"</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">filename</span><span class="p">,</span> <span class="n">expected</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">MATRIX_FILENAME</span><span class="p">,</span> <span class="n">MATRIX_SHA256</span><span class="p">),</span>
+            <span class="p">(</span><span class="n">METADATA_FILENAME</span><span class="p">,</span> <span class="n">METADATA_SHA256</span><span class="p">),</span>
+        <span class="p">):</span>
+            <span class="n">dest</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">src</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mirror</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">src</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Messner mirror file missing: </span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">. The mirror is canonical; "</span>
+                    <span class="sa">f</span><span class="s2">"restore it from backup (fetched once from Mendeley </span><span class="si">{</span><span class="n">MENDELEY_DOI</span><span class="si">}</span><span class="s2">)."</span>
+                <span class="p">)</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">fh</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">20</span><span class="p">),</span> <span class="sa">b</span><span class="s2">""</span><span class="p">):</span>
+                    <span class="n">h</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Messner </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2"> sha256 mismatch: got </span><span class="si">{</span><span class="n">h</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span><span class="si">}</span><span class="s2">, "</span>
+                    <span class="sa">f</span><span class="s2">"expected </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copy2</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">"Copied </span><span class="si">%s</span><span class="s2"> from mirror (</span><span class="si">%d</span><span class="s2"> bytes, sha256 verified)"</span><span class="p">,</span>
+                <span class="n">filename</span><span class="p">,</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">dest</span><span class="p">),</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ProteomeMessner2023Dataset.process">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.messner2023.ProteomeMessner2023Dataset.html#torchcell.datasets.scerevisiae.messner2023.ProteomeMessner2023Dataset.process">[docs]</a>
+    <span class="nd">@post_process</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Aggregate the proteome matrix into per-strain experiments and write LMDB."""</span>
+        <span class="n">matrix</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">MATRIX_FILENAME</span><span class="p">))</span>
+        <span class="n">id_col</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># "Protein.Group" (UniProt accession)</span>
+        <span class="n">matrix</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">id_col</span><span class="p">)</span>
+
+        <span class="c1"># UniProt -&gt; systematic ORF; every measured protein must map (fail loud).</span>
+        <span class="n">up2orf</span> <span class="o">=</span> <span class="n">build_uniprot_to_orf_map</span><span class="p">()</span>
+        <span class="n">unmapped</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">matrix</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">up2orf</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">unmapped</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">unmapped</span><span class="p">)</span><span class="si">}</span><span class="s2"> Messner proteins have no UniProt-&gt;ORF mapping "</span>
+                <span class="sa">f</span><span class="s2">"(e.g. </span><span class="si">{</span><span class="n">unmapped</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">); refusing to silently drop."</span>
+            <span class="p">)</span>
+        <span class="n">matrix</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">up2orf</span><span class="p">)</span>
+
+        <span class="n">meta</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">METADATA_FILENAME</span><span class="p">))</span>
+        <span class="n">by_filename</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">"Filename"</span><span class="p">)</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="n">wt_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">meta</span><span class="p">[</span><span class="n">meta</span><span class="p">[</span><span class="s2">"sampletype"</span><span class="p">]</span> <span class="o">==</span> <span class="n">_WT</span><span class="p">][</span><span class="s2">"Filename"</span><span class="p">]</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">]</span>
+        <span class="n">ko_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">meta</span><span class="p">[</span><span class="n">meta</span><span class="p">[</span><span class="s2">"sampletype"</span><span class="p">]</span> <span class="o">==</span> <span class="n">_KO</span><span class="p">][</span><span class="s2">"Filename"</span><span class="p">]</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">wt_cols</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Messner matrix missing the HIS3 (WT) control columns"</span><span class="p">)</span>
+
+        <span class="c1"># WT reference: per-protein mean / SE / n across the 388 WT replicates</span>
+        <span class="c1"># (non-NaN only). This one profile is shared by every KO record.</span>
+        <span class="n">wt</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">[</span><span class="n">wt_cols</span><span class="p">]</span>
+        <span class="n">wt_mean</span> <span class="o">=</span> <span class="n">wt</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">wt_std</span> <span class="o">=</span> <span class="n">wt</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">wt_n</span> <span class="o">=</span> <span class="n">wt</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">keep</span> <span class="o">=</span> <span class="n">wt_n</span><span class="p">[</span><span class="n">wt_n</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"abundance"</span><span class="p">:</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">o</span><span class="p">):</span> <span class="nb">float</span><span class="p">(</span><span class="n">wt_mean</span><span class="p">[</span><span class="n">o</span><span class="p">])</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">keep</span><span class="p">},</span>
+            <span class="s2">"se"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">o</span><span class="p">):</span> <span class="p">(</span>
+                    <span class="nb">float</span><span class="p">(</span><span class="n">wt_std</span><span class="p">[</span><span class="n">o</span><span class="p">])</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">wt_n</span><span class="p">[</span><span class="n">o</span><span class="p">]))</span>
+                    <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">wt_n</span><span class="p">[</span><span class="n">o</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">1</span>
+                    <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">keep</span>
+            <span class="p">},</span>
+            <span class="s2">"n"</span><span class="p">:</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">o</span><span class="p">):</span> <span class="nb">int</span><span class="p">(</span><span class="n">wt_n</span><span class="p">[</span><span class="n">o</span><span class="p">])</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">keep</span><span class="p">},</span>
+        <span class="p">}</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">n_bad_orf</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">ko_cols</span><span class="p">:</span>
+            <span class="c1"># Metadata ORF casing is inconsistent (e.g. "YML009c", "YAL043C-a");</span>
+            <span class="c1"># systematic names are uppercase -- normalize, never drop on case alone.</span>
+            <span class="n">deletion_orf</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">by_filename</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">filename</span><span class="p">,</span> <span class="s2">"ORF"</span><span class="p">])</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">_NUCLEAR_ORF_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">deletion_orf</span><span class="p">):</span>
+                <span class="n">n_bad_orf</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+            <span class="n">series</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">[</span><span class="n">filename</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>  <span class="c1"># measured proteins only (noimpute)</span>
+            <span class="n">abundance</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">o</span><span class="p">):</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">series</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"filename"</span><span class="p">:</span> <span class="n">filename</span><span class="p">,</span>
+                    <span class="s2">"orf"</span><span class="p">:</span> <span class="n">deletion_orf</span><span class="p">,</span>
+                    <span class="s2">"gene"</span><span class="p">:</span> <span class="n">_gene_from_filename</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">deletion_orf</span><span class="p">),</span>
+                    <span class="s2">"abundance"</span><span class="p">:</span> <span class="n">abundance</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Messner: </span><span class="si">%d</span><span class="s2"> KO strains, WT reference with </span><span class="si">%d</span><span class="s2"> proteins, </span><span class="si">%d</span><span class="s2"> non-systematic "</span>
+            <span class="s2">"KO ORF skipped"</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">[</span><span class="s2">"abundance"</span><span class="p">]),</span>
+            <span class="n">n_bad_orf</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">"filename"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"filename"</span><span class="p">],</span>
+                    <span class="s2">"orf"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">],</span>
+                    <span class="s2">"gene"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">],</span>
+                    <span class="s2">"n_proteins"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"abundance"</span><span class="p">]),</span>
+                <span class="p">}</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span>
+            <span class="p">]</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e11</span><span class="p">))</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">record_row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">rows</span><span class="p">):</span>
+                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span><span class="n">record_row</span><span class="p">)</span>
+                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+                    <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                        <span class="p">{</span>
+                            <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                            <span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                            <span class="s2">"publication"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                        <span class="p">}</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Messner proteome experiments to LMDB"</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ProteomeMessner2023Dataset.preprocess_raw">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.messner2023.ProteomeMessner2023Dataset.html#torchcell.datasets.scerevisiae.messner2023.ProteomeMessner2023Dataset.preprocess_raw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Preprocessing is handled inside process() for this dataset."""</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="ProteomeMessner2023Dataset.create_experiment">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.messner2023.ProteomeMessner2023Dataset.html#torchcell.datasets.scerevisiae.messner2023.ProteomeMessner2023Dataset.create_experiment">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span>  <span class="c1"># type: ignore[override]</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
+        <span class="n">ProteinAbundanceExperiment</span><span class="p">,</span> <span class="n">ProteinAbundanceExperimentReference</span><span class="p">,</span> <span class="n">Publication</span>
+    <span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Build the ProteinAbundance experiment/reference/publication for one strain."""</span>
+        <span class="c1"># Background = S288C BY4741 MATa deletion collection with restored prototrophy</span>
+        <span class="c1"># (Mulleder); the prototrophy-restoring marker is not yet modeled as a</span>
+        <span class="c1"># GeneAddition here (as in the Mulleder loader).</span>
+        <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4741"</span>
+        <span class="p">)</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">],</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="c1"># Grown in synthetic minimal (SM) liquid medium at 30 C: 6.7 g/L YNB without</span>
+        <span class="c1"># amino acids + 2% glucose, restated by this paper and deferred by it to</span>
+        <span class="c1"># Mulleder 2016 (its ref 15), both quoted on ``SM``.</span>
+        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span><span class="n">media</span><span class="o">=</span><span class="n">SM</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">30</span><span class="p">))</span>
+        <span class="c1"># Single-replicate KO: n=1 per protein, per-strain SE undefined.</span>
+        <span class="n">abundance</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"abundance"</span><span class="p">]</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">ProteinAbundancePhenotype</span><span class="p">(</span>
+            <span class="n">protein_abundance</span><span class="o">=</span><span class="n">abundance</span><span class="p">,</span>
+            <span class="n">protein_abundance_se</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="p">{</span><span class="n">orf</span><span class="p">:</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">abundance</span><span class="p">},</span>
+            <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Reference = the 388-replicate WT baseline RESTRICTED to the proteins this</span>
+        <span class="c1"># strain measured (as in the Zelezniak metabolite loader). Keeps reference keys</span>
+        <span class="c1"># a subset-equal of the experiment's and every reference value a real WT</span>
+        <span class="c1"># measurement; all 1,850 proteins have WT coverage, so every exp key resolves.</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span>
+        <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">ProteinAbundancePhenotype</span><span class="p">(</span>
+            <span class="n">protein_abundance</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">ref</span><span class="p">[</span><span class="s2">"abundance"</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">abundance</span><span class="p">},</span>
+            <span class="n">protein_abundance_se</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">ref</span><span class="p">[</span><span class="s2">"se"</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">abundance</span><span class="p">},</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">ref</span><span class="p">[</span><span class="s2">"n"</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">abundance</span><span class="p">},</span>
+            <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">experiment</span> <span class="o">=</span> <span class="n">ProteinAbundanceExperiment</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">genotype</span><span class="o">=</span><span class="n">genotype</span><span class="p">,</span>
+            <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">phenotype</span><span class="o">=</span><span class="n">phenotype</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="n">ProteinAbundanceExperimentReference</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="n">genome_reference</span><span class="p">,</span>
+            <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(),</span>
+            <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">phenotype_reference</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span>
+            <span class="n">pubmed_id</span><span class="o">=</span><span class="s2">"37080200"</span><span class="p">,</span>
+            <span class="n">pubmed_url</span><span class="o">=</span><span class="s2">"https://pubmed.ncbi.nlm.nih.gov/37080200/"</span><span class="p">,</span>
+            <span class="n">doi</span><span class="o">=</span><span class="s2">"10.1016/j.cell.2023.03.026"</span><span class="p">,</span>
+            <span class="n">doi_url</span><span class="o">=</span><span class="s2">"https://doi.org/10.1016/j.cell.2023.03.026"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_gene_from_filename</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Standard gene name from the sample Filename, falling back to the ORF.</span>
+
+<span class="sd">    Filenames look like ``10_9_hpr1_ko_YAL059W_ECM1_0.47`` -- the token immediately</span>
+<span class="sd">    after the deletion ORF is the standard gene name (or a lowercased ORF when no</span>
+<span class="sd">    standard name exists). The ORF token is matched case-insensitively (metadata</span>
+<span class="sd">    casing is inconsistent). Falls back to the systematic ORF if not parseable.</span>
+<span class="sd">    """</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"_"</span><span class="p">)</span>
+    <span class="n">upper</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">orf</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">in</span> <span class="n">upper</span><span class="p">:</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">upper</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">orf</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="ow">and</span> <span class="n">parts</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="n">parts</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">orf</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build/load the dataset for interactive debugging.</span>
+
+<span class="sd">    Loads the existing LMDB if already built; delete ``&lt;root&gt;/processed`` to re-run</span>
+<span class="sd">    ``process()`` under a debugger.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">],</span> <span class="s2">"data/torchcell/proteome_messner2023"</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">ProteomeMessner2023Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"proteome len = </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

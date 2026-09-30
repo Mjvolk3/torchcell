@@ -1,0 +1,8 @@
+﻿torchcell.trainers.fit\_int\_deep\_set\_regression.RegressionTask
+=================================================================
+
+.. currentmodule:: torchcell.trainers.fit_int_deep_set_regression
+
+.. autoclass:: RegressionTask
+   :show-inheritance:
+   :members:

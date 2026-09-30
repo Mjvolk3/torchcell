@@ -1,0 +1,579 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.nn.hetero_nsa &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/nn/hetero_nsa.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.nn.hetero_nsa</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.nn.hetero_nsa</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Heterogeneous Node-Set Attention blocks and encoder over HeteroData graphs."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">HeteroData</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.nn.aggr.attention</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttentionalAggregation</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.nn.masked_attention_block</span><span class="w"> </span><span class="kn">import</span> <span class="n">NodeSelfAttention</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.nn.self_attention_block</span><span class="w"> </span><span class="kn">import</span> <span class="n">SelfAttentionBlock</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_HeteroNSA_Block</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Internal HeteroNSA block applying one masked or self-attention layer.</span>
+
+<span class="sd">    If layer_type=='M', applies masked attention (MAB) using per-edge-type</span>
+<span class="sd">    NodeSelfAttention (with an optional aggregator if aggregation=='attention').</span>
+<span class="sd">    If layer_type=='S', applies self-attention (SAB) using per-node-type</span>
+<span class="sd">    SelfAttentionBlock.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">layer_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"M"</span><span class="p">,</span> <span class="s2">"S"</span><span class="p">],</span>
+        <span class="n">hidden_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">node_types</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">edge_types</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+        <span class="n">num_heads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
+        <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">GELU</span><span class="p">(),</span>
+        <span class="n">aggregation</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"sum"</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">,</span> <span class="s2">"attention"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"sum"</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">layer_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"M"</span><span class="p">,</span> <span class="s2">"S"</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid layer_type '</span><span class="si">{</span><span class="n">layer_type</span><span class="si">}</span><span class="s2">'. Must be 'M' or 'S'."</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layer_type</span> <span class="o">=</span> <span class="n">layer_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hidden_dim</span> <span class="o">=</span> <span class="n">hidden_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_types</span> <span class="o">=</span> <span class="n">node_types</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">edge_types</span> <span class="o">=</span> <span class="n">edge_types</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aggregation</span> <span class="o">=</span> <span class="n">aggregation</span>
+
+        <span class="k">if</span> <span class="n">layer_type</span> <span class="o">==</span> <span class="s2">"M"</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">masked_blocks</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">src</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">dst</span> <span class="ow">in</span> <span class="n">edge_types</span><span class="p">:</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">rel</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">dst</span><span class="si">}</span><span class="s2">"</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">masked_blocks</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">NodeSelfAttention</span><span class="p">(</span>
+                    <span class="n">hidden_dim</span><span class="o">=</span><span class="n">hidden_dim</span><span class="p">,</span>
+                    <span class="n">num_heads</span><span class="o">=</span><span class="n">num_heads</span><span class="p">,</span>
+                    <span class="n">dropout</span><span class="o">=</span><span class="n">dropout</span><span class="p">,</span>
+                    <span class="n">activation</span><span class="o">=</span><span class="n">activation</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">aggregation</span> <span class="o">==</span> <span class="s2">"attention"</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">node_aggregators</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">nt</span> <span class="ow">in</span> <span class="n">node_types</span><span class="p">:</span>
+                    <span class="n">connected</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="ow">in</span> <span class="n">edge_types</span> <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="n">nt</span> <span class="ow">or</span> <span class="n">d</span> <span class="o">==</span> <span class="n">nt</span>
+                    <span class="p">]</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">connected</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">gate_nn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+                            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">hidden_dim</span> <span class="o">//</span> <span class="mi">2</span><span class="p">),</span>
+                            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+                            <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">),</span>
+                            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                        <span class="p">)</span>
+                        <span class="n">transform_nn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+                            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">),</span>
+                            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+                            <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">),</span>
+                        <span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">node_aggregators</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span> <span class="o">=</span> <span class="n">AttentionalAggregation</span><span class="p">(</span>
+                            <span class="n">gate_nn</span><span class="o">=</span><span class="n">gate_nn</span><span class="p">,</span> <span class="n">nn</span><span class="o">=</span><span class="n">transform_nn</span>
+                        <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># layer_type == "S"</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">self_blocks</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">nt</span> <span class="ow">in</span> <span class="n">node_types</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">self_blocks</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span> <span class="o">=</span> <span class="n">SelfAttentionBlock</span><span class="p">(</span>
+                    <span class="n">hidden_dim</span><span class="o">=</span><span class="n">hidden_dim</span><span class="p">,</span>
+                    <span class="n">num_heads</span><span class="o">=</span><span class="n">num_heads</span><span class="p">,</span>
+                    <span class="n">dropout</span><span class="o">=</span><span class="n">dropout</span><span class="p">,</span>
+                    <span class="n">activation</span><span class="o">=</span><span class="n">activation</span><span class="p">,</span>
+                <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_process_with_mask</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">block</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
+        <span class="n">embeddings</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">mask</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">edge_attr</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">edge_index</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">original_dim</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">mask</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">embeddings</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">mask</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">embeddings</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">mask</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">embeddings</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">NodeSelfAttention</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">edge_attr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">edge_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">out</span> <span class="o">=</span> <span class="n">block</span><span class="p">(</span><span class="n">embeddings</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">edge_attr</span><span class="p">,</span> <span class="n">edge_index</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">out</span> <span class="o">=</span> <span class="n">block</span><span class="p">(</span><span class="n">embeddings</span><span class="p">,</span> <span class="n">mask</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">block</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">original_dim</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">out</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">,</span>
+        <span class="n">batch_idx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer_type</span> <span class="o">==</span> <span class="s2">"M"</span><span class="p">:</span>
+            <span class="n">relation_outputs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">nt</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">nt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_types</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">src</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">dst</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">edge_types</span><span class="p">:</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">rel</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">dst</span><span class="si">}</span><span class="s2">"</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">masked_blocks</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">edge_types</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">masked_blocks</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                <span class="n">src_emb</span> <span class="o">=</span> <span class="n">x_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="n">dst_emb</span> <span class="o">=</span> <span class="n">x_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">src_emb</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">dst_emb</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">edge_store</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">src</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">dst</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">edge_store</span><span class="p">,</span> <span class="s2">"adj_mask"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">edge_store</span><span class="o">.</span><span class="n">adj_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">adj_mask</span> <span class="o">=</span> <span class="n">edge_store</span><span class="o">.</span><span class="n">adj_mask</span>
+                    <span class="n">edge_attr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">edge_store</span><span class="p">,</span> <span class="s2">"edge_attr"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="n">edge_index</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">edge_store</span><span class="p">,</span> <span class="s2">"edge_index"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">rel</span> <span class="o">==</span> <span class="s2">"rmr"</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">edge_store</span><span class="p">,</span> <span class="s2">"stoichiometry"</span><span class="p">):</span>
+                        <span class="n">edge_attr</span> <span class="o">=</span> <span class="n">edge_store</span><span class="o">.</span><span class="n">stoichiometry</span>
+                        <span class="n">edge_index</span> <span class="o">=</span> <span class="n">edge_store</span><span class="o">.</span><span class="n">edge_index</span>
+                    <span class="k">if</span> <span class="n">src</span> <span class="o">==</span> <span class="n">dst</span><span class="p">:</span>
+                        <span class="n">out_src</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_with_mask</span><span class="p">(</span>
+                            <span class="n">block</span><span class="p">,</span> <span class="n">src_emb</span><span class="p">,</span> <span class="n">adj_mask</span><span class="p">,</span> <span class="n">edge_attr</span><span class="p">,</span> <span class="n">edge_index</span>
+                        <span class="p">)</span>
+                        <span class="n">relation_outputs</span><span class="p">[</span><span class="n">src</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out_src</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">out_src</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_with_mask</span><span class="p">(</span>
+                            <span class="n">block</span><span class="p">,</span> <span class="n">src_emb</span><span class="p">,</span> <span class="n">adj_mask</span><span class="p">,</span> <span class="n">edge_attr</span><span class="p">,</span> <span class="n">edge_index</span>
+                        <span class="p">)</span>
+                        <span class="n">relation_outputs</span><span class="p">[</span><span class="n">src</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out_src</span><span class="p">)</span>
+                        <span class="n">adj_mask_t</span> <span class="o">=</span> <span class="n">adj_mask</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                        <span class="n">out_dst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_with_mask</span><span class="p">(</span>
+                            <span class="n">block</span><span class="p">,</span> <span class="n">dst_emb</span><span class="p">,</span> <span class="n">adj_mask_t</span><span class="p">,</span> <span class="n">edge_attr</span><span class="p">,</span> <span class="n">edge_index</span>
+                        <span class="p">)</span>
+                        <span class="n">relation_outputs</span><span class="p">[</span><span class="n">dst</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out_dst</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="p">(</span>
+                    <span class="nb">hasattr</span><span class="p">(</span><span class="n">edge_store</span><span class="p">,</span> <span class="s2">"inc_mask"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">edge_store</span><span class="o">.</span><span class="n">inc_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="p">):</span>
+                    <span class="n">inc_mask</span> <span class="o">=</span> <span class="n">edge_store</span><span class="o">.</span><span class="n">inc_mask</span>
+                    <span class="n">edge_attr</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="n">edge_index</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="k">if</span> <span class="n">rel</span> <span class="o">==</span> <span class="s2">"rmr"</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">edge_store</span><span class="p">,</span> <span class="s2">"stoichiometry"</span><span class="p">):</span>
+                        <span class="n">edge_attr</span> <span class="o">=</span> <span class="n">edge_store</span><span class="o">.</span><span class="n">stoichiometry</span>
+                        <span class="c1"># Prefer hyperedge_index when present, else edge_index.</span>
+                        <span class="c1"># Use an explicit None check: `a or b` raises</span>
+                        <span class="c1"># "Boolean value of Tensor ... is ambiguous" on a</span>
+                        <span class="c1"># multi-element tensor.</span>
+                        <span class="n">edge_index</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">edge_store</span><span class="p">,</span> <span class="s2">"hyperedge_index"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">edge_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                            <span class="n">edge_index</span> <span class="o">=</span> <span class="n">edge_store</span><span class="o">.</span><span class="n">edge_index</span>
+                    <span class="n">out_src</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_with_mask</span><span class="p">(</span>
+                        <span class="n">block</span><span class="p">,</span> <span class="n">src_emb</span><span class="p">,</span> <span class="n">inc_mask</span><span class="p">,</span> <span class="n">edge_attr</span><span class="p">,</span> <span class="n">edge_index</span>
+                    <span class="p">)</span>
+                    <span class="n">relation_outputs</span><span class="p">[</span><span class="n">src</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out_src</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">src</span> <span class="o">!=</span> <span class="n">dst</span><span class="p">:</span>
+                        <span class="n">inc_mask_t</span> <span class="o">=</span> <span class="n">inc_mask</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                        <span class="n">out_dst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_with_mask</span><span class="p">(</span>
+                            <span class="n">block</span><span class="p">,</span> <span class="n">dst_emb</span><span class="p">,</span> <span class="n">inc_mask_t</span><span class="p">,</span> <span class="n">edge_attr</span><span class="p">,</span> <span class="n">edge_index</span>
+                        <span class="p">)</span>
+                        <span class="n">relation_outputs</span><span class="p">[</span><span class="n">dst</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out_dst</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">edge_store</span><span class="p">,</span> <span class="s2">"edge_index"</span><span class="p">):</span>
+                    <span class="n">edge_index</span> <span class="o">=</span> <span class="n">edge_store</span><span class="o">.</span><span class="n">edge_index</span>
+                    <span class="n">edge_attr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">edge_store</span><span class="p">,</span> <span class="s2">"edge_attr"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">src</span> <span class="o">==</span> <span class="n">dst</span><span class="p">:</span>
+                        <span class="n">adj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">src_emb</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">src_emb</span><span class="o">.</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">bool</span><span class="p">()</span>
+                        <span class="n">out_src</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_with_mask</span><span class="p">(</span>
+                            <span class="n">block</span><span class="p">,</span> <span class="n">src_emb</span><span class="p">,</span> <span class="n">adj</span><span class="p">,</span> <span class="n">edge_attr</span><span class="p">,</span> <span class="n">edge_index</span>
+                        <span class="p">)</span>
+                        <span class="n">relation_outputs</span><span class="p">[</span><span class="n">src</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out_src</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">src_adj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span>
+                            <span class="n">src_emb</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">src_emb</span><span class="o">.</span><span class="n">device</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">bool</span><span class="p">()</span>
+                        <span class="n">dst_adj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span>
+                            <span class="n">dst_emb</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">dst_emb</span><span class="o">.</span><span class="n">device</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">bool</span><span class="p">()</span>
+                        <span class="n">out_src</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_with_mask</span><span class="p">(</span>
+                            <span class="n">block</span><span class="p">,</span> <span class="n">src_emb</span><span class="p">,</span> <span class="n">src_adj</span><span class="p">,</span> <span class="n">edge_attr</span><span class="p">,</span> <span class="n">edge_index</span>
+                        <span class="p">)</span>
+                        <span class="n">out_dst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_with_mask</span><span class="p">(</span>
+                            <span class="n">block</span><span class="p">,</span> <span class="n">dst_emb</span><span class="p">,</span> <span class="n">dst_adj</span><span class="p">,</span> <span class="n">edge_attr</span><span class="p">,</span> <span class="n">edge_index</span>
+                        <span class="p">)</span>
+                        <span class="n">relation_outputs</span><span class="p">[</span><span class="n">src</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out_src</span><span class="p">)</span>
+                        <span class="n">relation_outputs</span><span class="p">[</span><span class="n">dst</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out_dst</span><span class="p">)</span>
+            <span class="n">new_x</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">nt</span><span class="p">,</span> <span class="n">outs</span> <span class="ow">in</span> <span class="n">relation_outputs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">outs</span><span class="p">:</span>
+                    <span class="c1"># Preserve original fallback semantics (may be None at</span>
+                    <span class="c1"># runtime if nt is absent); cast keeps the value unchanged.</span>
+                    <span class="n">new_x</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">x_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">nt</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">outs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">new_x</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span> <span class="o">=</span> <span class="n">outs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregation</span> <span class="o">==</span> <span class="s2">"sum"</span><span class="p">:</span>
+                        <span class="n">new_x</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="n">outs</span><span class="p">))</span>
+                    <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregation</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>
+                        <span class="n">new_x</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="n">outs</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">outs</span><span class="p">))</span>
+                    <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregation</span> <span class="o">==</span> <span class="s2">"attention"</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="p">,</span> <span class="s2">"node_aggregators"</span>
+                    <span class="p">):</span>
+                        <span class="k">if</span> <span class="n">nt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_aggregators</span><span class="p">:</span>
+                            <span class="n">flat_embs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">outs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                            <span class="n">node_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+                                <span class="nb">len</span><span class="p">(</span><span class="n">outs</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">flat_embs</span><span class="o">.</span><span class="n">device</span>
+                            <span class="p">)</span><span class="o">.</span><span class="n">repeat_interleave</span><span class="p">(</span><span class="n">outs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+                            <span class="n">new_x</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_aggregators</span><span class="p">[</span><span class="n">nt</span><span class="p">](</span>
+                                <span class="n">flat_embs</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">node_indices</span>
+                            <span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">new_x</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="n">outs</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">outs</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">new_x</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="n">outs</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">outs</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">new_x</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">new_x_s</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">nt</span><span class="p">,</span> <span class="n">emb</span> <span class="ow">in</span> <span class="n">x_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">nt</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">self_blocks</span><span class="p">:</span>
+                    <span class="n">new_x_s</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span> <span class="o">=</span> <span class="n">emb</span>
+                    <span class="k">continue</span>
+                <span class="n">block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">self_blocks</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">emb</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="n">emb</span> <span class="o">=</span> <span class="n">emb</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">out</span> <span class="o">=</span> <span class="n">block</span><span class="p">(</span><span class="n">emb</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">out</span> <span class="o">=</span> <span class="n">block</span><span class="p">(</span><span class="n">emb</span><span class="p">)</span>
+                <span class="n">new_x_s</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span>
+            <span class="k">return</span> <span class="n">new_x_s</span>
+
+
+<div class="viewcode-block" id="HeteroNSA">
+<a class="viewcode-back" href="../../../generated/torchcell.nn.hetero_nsa.HeteroNSA.html#torchcell.nn.hetero_nsa.HeteroNSA">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HeteroNSA</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Heterogeneous Node-Set Attention module stacking per-pattern blocks.</span>
+
+<span class="sd">    Instead of reusing a single set of modules for every block, this version</span>
+<span class="sd">    builds a stack of independent blocks, one per element in the provided pattern.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">hidden_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">node_types</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">edge_types</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+        <span class="n">pattern</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">num_heads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
+        <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">GELU</span><span class="p">(),</span>
+        <span class="n">aggregation</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"sum"</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">,</span> <span class="s2">"attention"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"sum"</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Validate the pattern/aggregation and build the per-pattern block stack."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">pattern</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Pattern list cannot be empty"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">block_type</span> <span class="ow">in</span> <span class="n">pattern</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">block_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"M"</span><span class="p">,</span> <span class="s2">"S"</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Invalid block type '</span><span class="si">{</span><span class="n">block_type</span><span class="si">}</span><span class="s2">'. Must be 'M' or 'S'."</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="n">aggregation</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"sum"</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">,</span> <span class="s2">"attention"</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Invalid aggregation '</span><span class="si">{</span><span class="n">aggregation</span><span class="si">}</span><span class="s2">'. Must be 'sum', 'mean', or 'attention'."</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hidden_dim</span> <span class="o">=</span> <span class="n">hidden_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_types</span> <span class="o">=</span> <span class="n">node_types</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">edge_types</span> <span class="o">=</span> <span class="n">edge_types</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pattern</span> <span class="o">=</span> <span class="n">pattern</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aggregation</span> <span class="o">=</span> <span class="n">aggregation</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">blocks</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">_HeteroNSA_Block</span><span class="p">(</span>
+                    <span class="n">layer_type</span><span class="o">=</span><span class="n">cast</span><span class="p">(</span><span class="n">Literal</span><span class="p">[</span><span class="s2">"M"</span><span class="p">,</span> <span class="s2">"S"</span><span class="p">],</span> <span class="n">layer_type</span><span class="p">),</span>
+                    <span class="n">hidden_dim</span><span class="o">=</span><span class="n">hidden_dim</span><span class="p">,</span>
+                    <span class="n">node_types</span><span class="o">=</span><span class="n">node_types</span><span class="p">,</span>
+                    <span class="n">edge_types</span><span class="o">=</span><span class="n">edge_types</span><span class="p">,</span>
+                    <span class="n">num_heads</span><span class="o">=</span><span class="n">num_heads</span><span class="p">,</span>
+                    <span class="n">dropout</span><span class="o">=</span><span class="n">dropout</span><span class="p">,</span>
+                    <span class="n">activation</span><span class="o">=</span><span class="n">activation</span><span class="p">,</span>
+                    <span class="n">aggregation</span><span class="o">=</span><span class="n">aggregation</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">layer_type</span> <span class="ow">in</span> <span class="n">pattern</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="c1"># Expose the first block's _process_with_mask for monkey patching.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_process_with_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">_process_with_mask</span>
+
+<div class="viewcode-block" id="HeteroNSA.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.nn.hetero_nsa.HeteroNSA.html#torchcell.nn.hetero_nsa.HeteroNSA.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">node_embeddings</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">,</span>
+        <span class="n">batch_idx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Apply each block in sequence to the cloned node embeddings."""</span>
+        <span class="n">x_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">node_embeddings</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocks</span><span class="p">:</span>
+            <span class="n">x_dict</span> <span class="o">=</span> <span class="n">block</span><span class="p">(</span><span class="n">x_dict</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">batch_idx</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x_dict</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="HeteroNSAEncoder">
+<a class="viewcode-back" href="../../../generated/torchcell.nn.hetero_nsa.HeteroNSAEncoder.html#torchcell.nn.hetero_nsa.HeteroNSAEncoder">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HeteroNSAEncoder</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Full HeteroNSA encoder with input projections and stacked layers.</span>
+
+<span class="sd">    The constructor accepts a 'pattern' (a list of 'M'/'S' strings) and a</span>
+<span class="sd">    'num_layers' count; a separate HeteroNSA is built for each layer.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_dims</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+        <span class="n">hidden_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">node_types</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">edge_types</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+        <span class="n">pattern</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">num_layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="n">num_heads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
+        <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">GELU</span><span class="p">(),</span>
+        <span class="n">aggregation</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"sum"</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">,</span> <span class="s2">"attention"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"sum"</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build input projections, per-layer HeteroNSA blocks, and output heads."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">aggregation</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"sum"</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">,</span> <span class="s2">"attention"</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Invalid aggregation '</span><span class="si">{</span><span class="n">aggregation</span><span class="si">}</span><span class="s2">'. Must be 'sum', 'mean', or 'attention'."</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hidden_dim</span> <span class="o">=</span> <span class="n">hidden_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_types</span> <span class="o">=</span> <span class="n">node_types</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">edge_types</span> <span class="o">=</span> <span class="n">edge_types</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_projections</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">nt</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">)</span> <span class="k">for</span> <span class="n">nt</span><span class="p">,</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">input_dims</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Build a separate HeteroNSA layer for each repetition.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nsa_layers</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">HeteroNSA</span><span class="p">(</span>
+                    <span class="n">hidden_dim</span><span class="o">=</span><span class="n">hidden_dim</span><span class="p">,</span>
+                    <span class="n">node_types</span><span class="o">=</span><span class="n">node_types</span><span class="p">,</span>
+                    <span class="n">edge_types</span><span class="o">=</span><span class="n">edge_types</span><span class="p">,</span>
+                    <span class="n">pattern</span><span class="o">=</span><span class="n">pattern</span><span class="p">,</span>
+                    <span class="n">num_heads</span><span class="o">=</span><span class="n">num_heads</span><span class="p">,</span>
+                    <span class="n">dropout</span><span class="o">=</span><span class="n">dropout</span><span class="p">,</span>
+                    <span class="n">activation</span><span class="o">=</span><span class="n">activation</span><span class="p">,</span>
+                    <span class="n">aggregation</span><span class="o">=</span><span class="n">aggregation</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_layers</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">layer_norms</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="n">nt</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">([</span><span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_layers</span><span class="p">)])</span>
+                <span class="k">for</span> <span class="n">nt</span> <span class="ow">in</span> <span class="n">node_types</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph_projections</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">nt</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">)</span> <span class="k">for</span> <span class="n">nt</span> <span class="ow">in</span> <span class="n">node_types</span><span class="p">}</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">final_projection</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">node_types</span><span class="p">),</span> <span class="n">hidden_dim</span><span class="p">)</span>
+
+<div class="viewcode-block" id="HeteroNSAEncoder.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.nn.hetero_nsa.HeteroNSAEncoder.html#torchcell.nn.hetero_nsa.HeteroNSAEncoder.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Project, encode, and pool node embeddings into per-type and graph outputs."""</span>
+        <span class="n">x_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">batch_idx</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">nt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_types</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">nt</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">node_types</span>
+                <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">nt</span><span class="p">],</span> <span class="s2">"x"</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="n">data</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span><span class="o">.</span><span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="p">):</span>
+                <span class="n">proj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_projections</span><span class="p">[</span><span class="n">nt</span><span class="p">](</span><span class="n">data</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">clone</span><span class="p">())</span>
+                <span class="n">x_dict</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span> <span class="o">=</span> <span class="n">proj</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">nt</span><span class="p">],</span> <span class="s2">"batch"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">data</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span><span class="o">.</span><span class="n">batch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">batch_idx</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span><span class="o">.</span><span class="n">batch</span>
+        <span class="n">final_embeddings</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">x_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">nsa_layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nsa_layers</span><span class="p">):</span>
+            <span class="n">new_x</span> <span class="o">=</span> <span class="n">nsa_layer</span><span class="p">(</span><span class="n">x_dict</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">batch_idx</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">nt</span> <span class="ow">in</span> <span class="n">new_x</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">nt</span> <span class="ow">in</span> <span class="n">x_dict</span><span class="p">:</span>
+                    <span class="n">residual</span> <span class="o">=</span> <span class="n">x_dict</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">residual</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">!=</span> <span class="n">new_x</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span><span class="o">.</span><span class="n">dim</span><span class="p">():</span>
+                        <span class="k">if</span> <span class="n">residual</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">new_x</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                            <span class="n">residual</span> <span class="o">=</span> <span class="n">residual</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                        <span class="k">elif</span> <span class="n">residual</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">new_x</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                            <span class="n">residual</span> <span class="o">=</span> <span class="n">residual</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">layer_norm_list</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer_norms</span><span class="p">[</span><span class="n">nt</span><span class="p">])</span>
+                    <span class="n">new_x</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span> <span class="o">=</span> <span class="n">layer_norm_list</span><span class="p">[</span><span class="n">i</span><span class="p">](</span><span class="n">new_x</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span> <span class="o">+</span> <span class="n">residual</span><span class="p">)</span>
+            <span class="n">x_dict</span> <span class="o">=</span> <span class="n">new_x</span>
+            <span class="n">final_embeddings</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">x_dict</span><span class="p">)</span>
+        <span class="n">graph_embeddings</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">nt</span><span class="p">,</span> <span class="n">emb</span> <span class="ow">in</span> <span class="n">final_embeddings</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">emb</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">emb</span> <span class="o">=</span> <span class="n">emb</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">proj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_projections</span><span class="p">[</span><span class="n">nt</span><span class="p">](</span><span class="n">emb</span><span class="p">)</span>
+            <span class="n">graph_embeddings</span><span class="p">[</span><span class="n">nt</span><span class="p">]</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">sorted_nts</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">node_types</span><span class="p">)</span>
+        <span class="n">cat_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span><span class="o">.</span><span class="n">device</span>
+        <span class="k">for</span> <span class="n">nt</span> <span class="ow">in</span> <span class="n">sorted_nts</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">nt</span> <span class="ow">in</span> <span class="n">graph_embeddings</span><span class="p">:</span>
+                <span class="n">cat_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">graph_embeddings</span><span class="p">[</span><span class="n">nt</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cat_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">))</span>
+        <span class="n">concatenated</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">cat_list</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">final_graph_embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_projection</span><span class="p">(</span><span class="n">concatenated</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">final_embeddings</span><span class="p">,</span> <span class="n">final_graph_embedding</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

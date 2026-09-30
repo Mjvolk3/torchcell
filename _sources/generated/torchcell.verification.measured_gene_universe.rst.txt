@@ -1,0 +1,6 @@
+﻿torchcell.verification.measured\_gene\_universe
+===============================================
+
+.. currentmodule:: torchcell.verification
+
+.. autofunction:: measured_gene_universe

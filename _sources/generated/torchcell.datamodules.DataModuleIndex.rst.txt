@@ -1,0 +1,8 @@
+﻿torchcell.datamodules.DataModuleIndex
+=====================================
+
+.. currentmodule:: torchcell.datamodules
+
+.. autoclass:: DataModuleIndex
+   :show-inheritance:
+   :members:

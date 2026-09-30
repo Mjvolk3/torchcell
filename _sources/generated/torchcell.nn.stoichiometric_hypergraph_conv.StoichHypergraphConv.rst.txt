@@ -1,0 +1,8 @@
+﻿torchcell.nn.stoichiometric\_hypergraph\_conv.StoichHypergraphConv
+==================================================================
+
+.. currentmodule:: torchcell.nn.stoichiometric_hypergraph_conv
+
+.. autoclass:: StoichHypergraphConv
+   :show-inheritance:
+   :members:

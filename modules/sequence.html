@@ -6,25 +6,25 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>torchcell.sequence &mdash; torchcell 1.4.0 documentation</title>
+  <title>torchcell.sequence &mdash; TorchCell 1.4.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
 
   
-    <link rel="shortcut icon" href="https://raw.githubusercontent.com/pyg-team/torchcell_sphinx_theme/master/torchcell_sphinx_theme/static/img/favicon.png"/>
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/modules/sequence.html" />
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="../_static/documentation_options.js?v=9172181d"></script>
       <script src="../_static/doctools.js?v=9bcbadda"></script>
       <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
-      <script src="../_static/js/version_alert.js?v=97509fea"></script>
       <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="torchcell.sequence.DnaSelectionResult" href="../generated/torchcell.sequence.DnaSelectionResult.html" />
-    <link rel="prev" title="PyG Documentation" href="../index.html" /> 
+    <link rel="prev" title="torchcell.scheduler.cosine_annealing_warmup.CosineAnnealingWarmupRestarts" href="../generated/torchcell.scheduler.cosine_annealing_warmup.CosineAnnealingWarmupRestarts.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -37,7 +37,7 @@
           
           <a href="../index.html">
             
-              <img src="https://raw.githubusercontent.com/pyg-team/torchcell_sphinx_theme/master/torchcell_sphinx_theme/static/img/pyg_logo.png" class="logo" alt="Logo"/>
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -47,14 +47,48 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Package Reference</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scheduler.html">torchcell.scheduler</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">torchcell.sequence</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#data-objects">Data Objects</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#helper-functions">Helper Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#classes">Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#functions">Functions</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="viz.html">torchcell.viz</a></li>
 </ul>
 
         </div>
@@ -63,7 +97,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">torchcell</a>
+          <a href="../index.html">TorchCell</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -81,17 +115,18 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="torchcell-sequence">
-<h1>torchcell.sequence<a class="headerlink" href="#torchcell-sequence" title="Link to this heading"></a></h1>
+  <section id="module-torchcell.sequence">
+<span id="torchcell-sequence"></span><h1>torchcell.sequence<a class="headerlink" href="#module-torchcell.sequence" title="Link to this heading"></a></h1>
+<p>Genome and sequence data structures. <a class="reference internal" href="../generated/torchcell.sequence.Genome.html#torchcell.sequence.Genome" title="torchcell.sequence.Genome"><code class="xref py py-class docutils literal notranslate"><span class="pre">Genome</span></code></a> is the abstract genome interface (lazy gene-set and sequence access), <a class="reference internal" href="../generated/torchcell.sequence.Gene.html#torchcell.sequence.Gene" title="torchcell.sequence.Gene"><code class="xref py py-class docutils literal notranslate"><span class="pre">Gene</span></code></a> a gene within it, and <a class="reference internal" href="../generated/torchcell.sequence.DnaWindowResult.html#torchcell.sequence.DnaWindowResult" title="torchcell.sequence.DnaWindowResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">DnaWindowResult</span></code></a> and <a class="reference internal" href="../generated/torchcell.sequence.DnaSelectionResult.html#torchcell.sequence.DnaSelectionResult" title="torchcell.sequence.DnaSelectionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">DnaSelectionResult</span></code></a> the sequence windows the embedding datasets consume. The <em>S. cerevisiae</em> S288C implementation lives in <code class="docutils literal notranslate"><span class="pre">torchcell.sequence.genome.scerevisiae</span></code>, and <code class="docutils literal notranslate"><span class="pre">torchcell.sequence.genome.registry</span></code> resolves the sha256-pinned reference genome files.</p>
 <nav class="contents local" id="contents">
 <p class="topic-title">Contents</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#data-objects" id="id1">Data Objects</a></p></li>
-<li><p><a class="reference internal" href="#helper-functions" id="id2">Helper Functions</a></p></li>
+<li><p><a class="reference internal" href="#classes" id="id1">Classes</a></p></li>
+<li><p><a class="reference internal" href="#functions" id="id2">Functions</a></p></li>
 </ul>
 </nav>
-<section id="data-objects">
-<h2><a class="toc-backref" href="#id1" role="doc-backlink">Data Objects</a><a class="headerlink" href="#data-objects" title="Link to this heading"></a></h2>
+<section id="classes">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Classes</a><a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.sequence.DnaSelectionResult.html#torchcell.sequence.DnaSelectionResult" title="torchcell.sequence.DnaSelectionResult"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DnaSelectionResult</span></code></a></p></td>
@@ -115,29 +150,26 @@
 </tbody>
 </table>
 </section>
-<section id="helper-functions">
-<h2><a class="toc-backref" href="#id2" role="doc-backlink">Helper Functions</a><a class="headerlink" href="#helper-functions" title="Link to this heading"></a></h2>
+<section id="functions">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.sequence.DnaSelectionResult.html#torchcell.sequence.DnaSelectionResult" title="torchcell.sequence.DnaSelectionResult"><code class="xref py py-obj docutils literal notranslate"><span class="pre">torchcell.sequence.DnaSelectionResult</span></code></a></p></td>
-<td><p>A validated DNA region selection with coordinates, strand, and sequence.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.sequence.calculate_window_bounds.html#torchcell.sequence.calculate_window_bounds" title="torchcell.sequence.calculate_window_bounds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calculate_window_bounds</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.sequence.calculate_window_bounds.html#torchcell.sequence.calculate_window_bounds" title="torchcell.sequence.calculate_window_bounds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calculate_window_bounds</span></code></a></p></td>
 <td><p>Calculate the window bounds for genomic sequences.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.sequence.calculate_window_bounds_symmetric.html#torchcell.sequence.calculate_window_bounds_symmetric" title="torchcell.sequence.calculate_window_bounds_symmetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calculate_window_bounds_symmetric</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.sequence.calculate_window_bounds_symmetric.html#torchcell.sequence.calculate_window_bounds_symmetric" title="torchcell.sequence.calculate_window_bounds_symmetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calculate_window_bounds_symmetric</span></code></a></p></td>
 <td><p>Calculate symmetric window bounds considering chromosome limits.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.sequence.compute_codon_frequency.html#torchcell.sequence.compute_codon_frequency" title="torchcell.sequence.compute_codon_frequency"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_codon_frequency</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.sequence.compute_codon_frequency.html#torchcell.sequence.compute_codon_frequency" title="torchcell.sequence.compute_codon_frequency"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_codon_frequency</span></code></a></p></td>
 <td><p>Compute relative codon frequencies for a coding sequence.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.sequence.get_chr_from_description.html#torchcell.sequence.get_chr_from_description" title="torchcell.sequence.get_chr_from_description"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_chr_from_description</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.sequence.get_chr_from_description.html#torchcell.sequence.get_chr_from_description" title="torchcell.sequence.get_chr_from_description"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_chr_from_description</span></code></a></p></td>
 <td><p>Extracts the chromosome number from a given description string.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.sequence.mismatch_positions.html#torchcell.sequence.mismatch_positions" title="torchcell.sequence.mismatch_positions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mismatch_positions</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.sequence.mismatch_positions.html#torchcell.sequence.mismatch_positions" title="torchcell.sequence.mismatch_positions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mismatch_positions</span></code></a></p></td>
 <td><p>Computes the positions at which two sequences differ.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.sequence.roman_to_int.html#torchcell.sequence.roman_to_int" title="torchcell.sequence.roman_to_int"><code class="xref py py-obj docutils literal notranslate"><span class="pre">roman_to_int</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.sequence.roman_to_int.html#torchcell.sequence.roman_to_int" title="torchcell.sequence.roman_to_int"><code class="xref py py-obj docutils literal notranslate"><span class="pre">roman_to_int</span></code></a></p></td>
 <td><p>Converts a Roman numeral string to an integer.</p></td>
 </tr>
 </tbody>
@@ -149,14 +181,14 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="../index.html" class="btn btn-neutral float-left" title="PyG Documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../generated/torchcell.scheduler.cosine_annealing_warmup.CosineAnnealingWarmupRestarts.html" class="btn btn-neutral float-left" title="torchcell.scheduler.cosine_annealing_warmup.CosineAnnealingWarmupRestarts" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="../generated/torchcell.sequence.DnaSelectionResult.html" class="btn btn-neutral float-right" title="torchcell.sequence.DnaSelectionResult" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2026, Your Name.</p>
+    <p>&#169; Copyright 2026, Michael Volk.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

@@ -1,0 +1,8 @@
+﻿torchcell.losses.multi\_dim\_nan\_tolerant.CombinedOrdinalCELoss
+================================================================
+
+.. currentmodule:: torchcell.losses.multi_dim_nan_tolerant
+
+.. autoclass:: CombinedOrdinalCELoss
+   :show-inheritance:
+   :members:

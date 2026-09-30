@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.batch\_report\_from\_members
+=====================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autofunction:: batch_report_from_members

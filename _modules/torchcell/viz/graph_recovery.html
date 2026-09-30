@@ -1,0 +1,896 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.viz.graph_recovery &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/viz/graph_recovery.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.viz.graph_recovery</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.viz.graph_recovery</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/viz/graph_recovery</span>
+<span class="c1"># [[torchcell.viz.graph_recovery]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/viz/graph_recovery</span>
+<span class="c1"># Test file: tests/torchcell/viz/test_graph_recovery.py</span>
+<span class="sd">"""Plotting utilities for graph regularization and edge-recovery metrics."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">wandb</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">rc_params_from_file</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.figure</span><span class="w"> </span><span class="kn">import</span> <span class="n">Figure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
+
+
+<div class="viewcode-block" id="GraphRecoveryVisualization">
+<a class="viewcode-back" href="../../../generated/torchcell.viz.graph_recovery.GraphRecoveryVisualization.html#torchcell.viz.graph_recovery.GraphRecoveryVisualization">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GraphRecoveryVisualization</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Visualization class for graph regularization and edge recovery metrics."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mplstyle_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Set the output directory and load the color palette from an mplstyle."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_dir</span> <span class="o">=</span> <span class="n">base_dir</span>
+
+        <span class="c1"># Load color palette from mplstyle</span>
+        <span class="k">if</span> <span class="n">mplstyle_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Default to torchcell.mplstyle in the package</span>
+            <span class="n">mplstyle_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">osp</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)),</span> <span class="s2">"torchcell.mplstyle"</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">colors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_colors_from_mplstyle</span><span class="p">(</span><span class="n">mplstyle_path</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_colors_from_mplstyle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mplstyle_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Parse color palette from mplstyle file using matplotlib's rc_params_from_file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            mplstyle_path: Path to .mplstyle file</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of hex color strings with '#' prefix</span>
+<span class="sd">        """</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Use matplotlib's official parser for style files</span>
+            <span class="n">rc_params</span> <span class="o">=</span> <span class="n">rc_params_from_file</span><span class="p">(</span><span class="n">mplstyle_path</span><span class="p">,</span> <span class="n">use_default_template</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">prop_cycle</span> <span class="o">=</span> <span class="n">rc_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"axes.prop_cycle"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">prop_cycle</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">colors</span> <span class="o">=</span> <span class="n">prop_cycle</span><span class="o">.</span><span class="n">by_key</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"color"</span><span class="p">,</span> <span class="p">[])</span>
+                <span class="c1"># Ensure '#' prefix on all colors</span>
+                <span class="k">return</span> <span class="p">[</span><span class="s2">"#"</span> <span class="o">+</span> <span class="n">c</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">c</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"#"</span><span class="p">)</span> <span class="k">else</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">colors</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Warning: Could not load colors from </span><span class="si">{</span><span class="n">mplstyle_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="c1"># Fallback to full torchcell.mplstyle palette (22 colors)</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="s2">"#000000"</span><span class="p">,</span>
+            <span class="s2">"#CC8250"</span><span class="p">,</span>
+            <span class="s2">"#7191A9"</span><span class="p">,</span>
+            <span class="s2">"#6B8D3A"</span><span class="p">,</span>
+            <span class="s2">"#B73C39"</span><span class="p">,</span>
+            <span class="s2">"#34699D"</span><span class="p">,</span>
+            <span class="s2">"#3D796E"</span><span class="p">,</span>
+            <span class="s2">"#4A9C60"</span><span class="p">,</span>
+            <span class="s2">"#E6A65D"</span><span class="p">,</span>
+            <span class="s2">"#A05B2C"</span><span class="p">,</span>
+            <span class="s2">"#3978B5"</span><span class="p">,</span>
+            <span class="s2">"#D86E2F"</span><span class="p">,</span>
+            <span class="s2">"#775A9F"</span><span class="p">,</span>
+            <span class="s2">"#EBB386"</span><span class="p">,</span>
+            <span class="s2">"#8D5694"</span><span class="p">,</span>
+            <span class="s2">"#52B2A8"</span><span class="p">,</span>
+            <span class="s2">"#35978A"</span><span class="p">,</span>
+            <span class="s2">"#AB4B4B"</span><span class="p">,</span>
+            <span class="s2">"#6D666F"</span><span class="p">,</span>
+            <span class="s2">"#4E7C7F"</span><span class="p">,</span>
+            <span class="s2">"#905353"</span><span class="p">,</span>
+            <span class="s2">"#C17132"</span><span class="p">,</span>
+        <span class="p">]</span>
+
+<div class="viewcode-block" id="GraphRecoveryVisualization.save_and_log_figure">
+<a class="viewcode-back" href="../../../generated/torchcell.viz.graph_recovery.GraphRecoveryVisualization.html#torchcell.viz.graph_recovery.GraphRecoveryVisualization.save_and_log_figure">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_and_log_figure</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">fig</span><span class="p">:</span> <span class="n">Figure</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">timestamp_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Log figure to wandb only (no disk save).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fig: Matplotlib figure</span>
+<span class="sd">            name: Wandb panel key (e.g., "val_edge_recovery_summary/recall")</span>
+<span class="sd">            timestamp_str: Unused, kept for API compatibility</span>
+<span class="sd">        """</span>
+        <span class="c1"># Guard: Check wandb is initialized</span>
+        <span class="k">if</span> <span class="n">wandb</span><span class="o">.</span><span class="n">run</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Warning: wandb.run is None, skipping log for </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Allow all ranks to log plots (DDP rank guard removed)</span>
+
+        <span class="c1"># Log to wandb only</span>
+        <span class="n">buf</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"png"</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">"tight"</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+        <span class="n">buf</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">wandb_image</span> <span class="o">=</span> <span class="n">wandb</span><span class="o">.</span><span class="n">Image</span><span class="p">(</span><span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">buf</span><span class="p">))</span>
+        <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="n">wandb_image</span><span class="p">},</span> <span class="n">commit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">buf</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GraphRecoveryVisualization.plot_graph_info_summary">
+<a class="viewcode-back" href="../../../generated/torchcell.viz.graph_recovery.GraphRecoveryVisualization.html#torchcell.viz.graph_recovery.GraphRecoveryVisualization.plot_graph_info_summary">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_graph_info_summary</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">graph_info</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span> <span class="n">save_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create a comprehensive summary visualization of graph statistics.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            graph_info: Dict mapping graph_name -&gt; {num_edges, num_nodes, avg_degree, reg_layer, reg_head}</span>
+<span class="sd">            save_path: Optional path to save the figure to disk</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">graph_info</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"No graph info to plot"</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Sort graph names alphabetically</span>
+        <span class="n">graph_names</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">graph_info</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">n_graphs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">graph_names</span><span class="p">)</span>
+
+        <span class="c1"># Create figure with subplots</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
+        <span class="n">gs</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_gridspec</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">hspace</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">wspace</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">height_ratios</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+        <span class="c1"># Subplot 1: Number of edges</span>
+        <span class="n">ax1</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">edges</span> <span class="o">=</span> <span class="p">[</span><span class="n">graph_info</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"num_edges"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">graph_names</span><span class="p">]</span>
+        <span class="n">bars1</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_graphs</span><span class="p">),</span> <span class="n">edges</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+        <span class="c1"># Add headspace and bold labels</span>
+        <span class="n">max_edge</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">edges</span><span class="p">)</span> <span class="k">if</span> <span class="n">edges</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_edge</span> <span class="o">*</span> <span class="mf">1.15</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">bar</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">bars1</span><span class="p">,</span> <span class="n">edges</span><span class="p">):</span>
+            <span class="n">ax1</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+                <span class="n">bar</span><span class="o">.</span><span class="n">get_x</span><span class="p">()</span> <span class="o">+</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_width</span><span class="p">()</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
+                <span class="n">bar</span><span class="o">.</span><span class="n">get_height</span><span class="p">(),</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">val</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="n">ha</span><span class="o">=</span><span class="s2">"center"</span><span class="p">,</span>
+                <span class="n">va</span><span class="o">=</span><span class="s2">"bottom"</span><span class="p">,</span>
+                <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+                <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"Graph Type"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"Number of Edges"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"Edge Count by Graph Type"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_graphs</span><span class="p">))</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">graph_names</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">"right"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">"y"</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+        <span class="c1"># Subplot 2: Average degree</span>
+        <span class="n">ax2</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">degrees</span> <span class="o">=</span> <span class="p">[</span><span class="n">graph_info</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"avg_degree"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">graph_names</span><span class="p">]</span>
+        <span class="n">bars2</span> <span class="o">=</span> <span class="n">ax2</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_graphs</span><span class="p">),</span> <span class="n">degrees</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+        <span class="c1"># Add headspace and bold labels</span>
+        <span class="n">max_degree</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">degrees</span><span class="p">)</span> <span class="k">if</span> <span class="n">degrees</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_degree</span> <span class="o">*</span> <span class="mf">1.15</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">bar</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">bars2</span><span class="p">,</span> <span class="n">degrees</span><span class="p">):</span>
+            <span class="n">ax2</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+                <span class="n">bar</span><span class="o">.</span><span class="n">get_x</span><span class="p">()</span> <span class="o">+</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_width</span><span class="p">()</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
+                <span class="n">bar</span><span class="o">.</span><span class="n">get_height</span><span class="p">(),</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">val</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="n">ha</span><span class="o">=</span><span class="s2">"center"</span><span class="p">,</span>
+                <span class="n">va</span><span class="o">=</span><span class="s2">"bottom"</span><span class="p">,</span>
+                <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+                <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"Graph Type"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"Average Degree"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"Graph Density (Avg Degree)"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_graphs</span><span class="p">))</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">graph_names</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">"right"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">"y"</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+        <span class="c1"># Subplot 3: Regularization mapping table</span>
+        <span class="n">ax3</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">"tight"</span><span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">"off"</span><span class="p">)</span>
+
+        <span class="c1"># Prepare table data</span>
+        <span class="n">table_data</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">graph_names</span><span class="p">:</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="n">graph_info</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+            <span class="c1"># Handle reg_layer: can be int, list[int], or missing</span>
+            <span class="k">if</span> <span class="s2">"reg_layer"</span> <span class="ow">in</span> <span class="n">info</span><span class="p">:</span>
+                <span class="n">reg_layer_val</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s2">"reg_layer"</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">reg_layer_val</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="n">reg_layer_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">reg_layer_val</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">reg_layer_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">reg_layer_val</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">reg_layer_str</span> <span class="o">=</span> <span class="s2">"N/A"</span>
+
+            <span class="c1"># Handle reg_head: can be int or missing</span>
+            <span class="k">if</span> <span class="s2">"reg_head"</span> <span class="ow">in</span> <span class="n">info</span><span class="p">:</span>
+                <span class="n">reg_head_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">"reg_head"</span><span class="p">]))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">reg_head_str</span> <span class="o">=</span> <span class="s2">"N/A"</span>
+
+            <span class="n">row</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">name</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'num_nodes'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">))</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'num_edges'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">))</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'avg_degree'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="n">reg_layer_str</span><span class="p">,</span>
+                <span class="n">reg_head_str</span><span class="p">,</span>
+            <span class="p">]</span>
+            <span class="n">table_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
+        <span class="c1"># Create table</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="n">ax3</span><span class="o">.</span><span class="n">table</span><span class="p">(</span>
+            <span class="n">cellText</span><span class="o">=</span><span class="n">table_data</span><span class="p">,</span>
+            <span class="n">colLabels</span><span class="o">=</span><span class="p">[</span>
+                <span class="s2">"Graph"</span><span class="p">,</span>
+                <span class="s2">"Nodes"</span><span class="p">,</span>
+                <span class="s2">"Edges"</span><span class="p">,</span>
+                <span class="s2">"Avg Degree"</span><span class="p">,</span>
+                <span class="s2">"Reg Layer"</span><span class="p">,</span>
+                <span class="s2">"Reg Head"</span><span class="p">,</span>
+            <span class="p">],</span>
+            <span class="n">cellLoc</span><span class="o">=</span><span class="s2">"center"</span><span class="p">,</span>
+            <span class="n">loc</span><span class="o">=</span><span class="s2">"center"</span><span class="p">,</span>
+            <span class="n">bbox</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>  <span class="c1"># type: ignore[arg-type]  # mpl accepts [x,y,w,h] list; stub types bbox as Bbox|None</span>
+        <span class="p">)</span>
+        <span class="n">table</span><span class="o">.</span><span class="n">auto_set_font_size</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">table</span><span class="o">.</span><span class="n">set_fontsize</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">table</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># Style header row</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">):</span>
+            <span class="n">table</span><span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">)]</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="s2">"#4A4A4A"</span><span class="p">)</span>
+            <span class="n">table</span><span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">)]</span><span class="o">.</span><span class="n">set_text_props</span><span class="p">(</span><span class="n">weight</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"white"</span><span class="p">)</span>
+
+        <span class="c1"># Alternate row colors (grayscale)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">table</span><span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)]</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="s2">"#F0F0F0"</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">table</span><span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)]</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="s2">"#FFFFFF"</span><span class="p">)</span>
+
+        <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">"Graph Statistics Summary"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.98</span><span class="p">)</span>
+
+        <span class="c1"># Save to disk if path provided</span>
+        <span class="k">if</span> <span class="n">save_path</span><span class="p">:</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"png"</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">"tight"</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Graph info summary saved to: </span><span class="si">{</span><span class="n">save_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="c1"># Log to wandb under graph_regularization_info panel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_and_log_figure</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="s2">"graph_regularization_info/summary"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GraphRecoveryVisualization.plot_edge_recovery_recall">
+<a class="viewcode-back" href="../../../generated/torchcell.viz.graph_recovery.GraphRecoveryVisualization.html#torchcell.viz.graph_recovery.GraphRecoveryVisualization.plot_edge_recovery_recall">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_edge_recovery_recall</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">recall_metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">num_epochs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">timestamp_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">stage</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"val"</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Plot recall@degree for each graph as a bar chart.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            recall_metrics: Dict mapping metric_key (e.g., "physical_L0_H1") -&gt; recall@degree value</span>
+<span class="sd">            num_epochs: Current epoch number</span>
+<span class="sd">            timestamp_str: Unused, kept for API compatibility</span>
+<span class="sd">            stage: Stage name (e.g., "val")</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">recall_metrics</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"No recall metrics to plot"</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Parse metric keys to extract graph names and layers</span>
+        <span class="c1"># Format: "graph_name_L{layer}_H{head}"</span>
+        <span class="n">parsed_metrics</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">metric_key</span><span class="p">,</span> <span class="n">recall_value</span> <span class="ow">in</span> <span class="n">recall_metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="c1"># Extract graph name (everything before _L)</span>
+            <span class="n">parts</span> <span class="o">=</span> <span class="n">metric_key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"_L"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="c1"># Fallback for keys without layer info</span>
+                <span class="n">graph_name</span> <span class="o">=</span> <span class="n">metric_key</span>
+                <span class="n">layer_idx</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">graph_name</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="c1"># Extract layer number</span>
+                <span class="n">layer_part</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"_H"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">layer_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">layer_part</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="n">layer_idx</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="c1"># Create display label</span>
+            <span class="k">if</span> <span class="s2">"_L"</span> <span class="ow">in</span> <span class="n">metric_key</span><span class="p">:</span>
+                <span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">graph_name</span><span class="si">}</span><span class="s2"> (L</span><span class="si">{</span><span class="n">layer_idx</span><span class="si">}</span><span class="s2">)"</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">label</span> <span class="o">=</span> <span class="n">graph_name</span>
+
+            <span class="n">parsed_metrics</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">graph_name</span><span class="p">,</span> <span class="n">layer_idx</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">recall_value</span><span class="p">))</span>
+
+        <span class="c1"># Sort by graph name, then layer</span>
+        <span class="n">parsed_metrics</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+        <span class="c1"># Extract sorted labels and values</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">parsed_metrics</span><span class="p">]</span>
+        <span class="n">recall_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">parsed_metrics</span><span class="p">]</span>
+        <span class="n">graph_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">parsed_metrics</span><span class="p">]</span>
+
+        <span class="c1"># Create figure</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+        <span class="c1"># Assign colors based on graph name</span>
+        <span class="n">unique_graphs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">graph_to_color_idx</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">graph_name</span> <span class="ow">in</span> <span class="n">graph_names</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">graph_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">graph_to_color_idx</span><span class="p">:</span>
+                <span class="n">graph_to_color_idx</span><span class="p">[</span><span class="n">graph_name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_graphs</span><span class="p">)</span>
+                <span class="n">unique_graphs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">graph_name</span><span class="p">)</span>
+
+        <span class="n">bar_colors</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="n">graph_to_color_idx</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">)]</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">graph_names</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Create bar chart with colors by graph name</span>
+        <span class="n">bars</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)),</span> <span class="n">recall_values</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">bar_colors</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+        <span class="c1"># Use natural bounds for recall [0, 1]</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+        <span class="c1"># Add bold value labels on top of bars</span>
+        <span class="k">for</span> <span class="n">bar</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">bars</span><span class="p">,</span> <span class="n">recall_values</span><span class="p">):</span>
+            <span class="n">height</span> <span class="o">=</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_height</span><span class="p">()</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+                <span class="n">bar</span><span class="o">.</span><span class="n">get_x</span><span class="p">()</span> <span class="o">+</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_width</span><span class="p">()</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
+                <span class="n">height</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">val</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="n">ha</span><span class="o">=</span><span class="s2">"center"</span><span class="p">,</span>
+                <span class="n">va</span><span class="o">=</span><span class="s2">"bottom"</span><span class="p">,</span>
+                <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span>
+                <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Formatting</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"Graph + Layer"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"Recall@Degree"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Edge Recovery: Recall@Degree</span><span class="se">\n</span><span class="s2">Epoch </span><span class="si">{</span><span class="n">num_epochs</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span>
+            <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">"right"</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">"y"</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+
+        <span class="c1"># Save and log to summary panel</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">_edge_recovery_summary/recall"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_and_log_figure</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">timestamp_str</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GraphRecoveryVisualization.plot_edge_recovery_precision">
+<a class="viewcode-back" href="../../../generated/torchcell.viz.graph_recovery.GraphRecoveryVisualization.html#torchcell.viz.graph_recovery.GraphRecoveryVisualization.plot_edge_recovery_precision">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_edge_recovery_precision</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">precision_metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+        <span class="n">k_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">num_epochs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">timestamp_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">stage</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"val"</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Plot precision@k for each graph as line plots.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            precision_metrics: Dict mapping metric_key (e.g., "physical_L0_H1") -&gt; {k -&gt; precision value}</span>
+<span class="sd">            k_values: List of k values (e.g., [8, 32, 128, 320])</span>
+<span class="sd">            num_epochs: Current epoch number</span>
+<span class="sd">            timestamp_str: Unused, kept for API compatibility</span>
+<span class="sd">            stage: Stage name (e.g., "val")</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">precision_metrics</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"No precision metrics to plot"</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Parse metric keys to extract graph names and layers</span>
+        <span class="c1"># Format: "graph_name_L{layer}_H{head}"</span>
+        <span class="n">parsed_metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">metric_key</span> <span class="ow">in</span> <span class="n">precision_metrics</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="c1"># Extract graph name (everything before _L)</span>
+            <span class="n">parts</span> <span class="o">=</span> <span class="n">metric_key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"_L"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="c1"># Fallback for keys without layer info</span>
+                <span class="n">graph_name</span> <span class="o">=</span> <span class="n">metric_key</span>
+                <span class="n">layer_idx</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">graph_name</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="c1"># Extract layer number</span>
+                <span class="n">layer_part</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"_H"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">layer_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">layer_part</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="n">layer_idx</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="k">if</span> <span class="n">graph_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">parsed_metrics</span><span class="p">:</span>
+                <span class="n">parsed_metrics</span><span class="p">[</span><span class="n">graph_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">parsed_metrics</span><span class="p">[</span><span class="n">graph_name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">metric_key</span><span class="p">,</span> <span class="n">layer_idx</span><span class="p">))</span>
+
+        <span class="c1"># Sort graph names alphabetically</span>
+        <span class="n">graph_names</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">parsed_metrics</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+        <span class="c1"># Collect all unique layer indices and create sequential mapping</span>
+        <span class="n">all_layer_indices</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">entries</span> <span class="ow">in</span> <span class="n">parsed_metrics</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">layer_idx</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">:</span>
+                <span class="n">all_layer_indices</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">layer_idx</span><span class="p">)</span>
+        <span class="n">sorted_layers</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">all_layer_indices</span><span class="p">)</span>
+        <span class="n">layer_to_style_idx</span> <span class="o">=</span> <span class="p">{</span><span class="n">layer</span><span class="p">:</span> <span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sorted_layers</span><span class="p">)}</span>
+
+        <span class="c1"># Create figure</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+
+        <span class="c1"># Line styles for different layers (sequential mapping)</span>
+        <span class="n">line_styles</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"-"</span><span class="p">,</span> <span class="s2">"--"</span><span class="p">,</span> <span class="s2">"-."</span><span class="p">,</span> <span class="s2">":"</span><span class="p">]</span>  <span class="c1"># solid, dashed, dash-dot, dotted</span>
+
+        <span class="c1"># Assign one color per graph name</span>
+        <span class="n">colors</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">name</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">)]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">graph_names</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Plot lines grouped by graph name</span>
+        <span class="n">data_lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># (Line2D, graph_name) for graph legend</span>
+        <span class="k">for</span> <span class="n">graph_name</span> <span class="ow">in</span> <span class="n">graph_names</span><span class="p">:</span>
+            <span class="n">entries</span> <span class="o">=</span> <span class="n">parsed_metrics</span><span class="p">[</span><span class="n">graph_name</span><span class="p">]</span>
+            <span class="n">metric_entries</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>  <span class="c1"># Sort by layer</span>
+            <span class="n">color</span> <span class="o">=</span> <span class="n">colors</span><span class="p">[</span><span class="n">graph_name</span><span class="p">]</span>
+
+            <span class="k">for</span> <span class="n">metric_key</span><span class="p">,</span> <span class="n">layer_idx</span> <span class="ow">in</span> <span class="n">metric_entries</span><span class="p">:</span>
+                <span class="n">prec_dict</span> <span class="o">=</span> <span class="n">precision_metrics</span><span class="p">[</span><span class="n">metric_key</span><span class="p">]</span>
+                <span class="c1"># Get precision values for this metric at each k</span>
+                <span class="n">prec_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">prec_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span><span class="p">]</span>
+
+                <span class="c1"># Map actual layer index to sequential style index</span>
+                <span class="n">style_idx</span> <span class="o">=</span> <span class="n">layer_to_style_idx</span><span class="p">[</span><span class="n">layer_idx</span><span class="p">]</span>
+                <span class="n">linestyle</span> <span class="o">=</span> <span class="n">line_styles</span><span class="p">[</span><span class="n">style_idx</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">line_styles</span><span class="p">)]</span>
+
+                <span class="c1"># Plot line with markers (no label yet)</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                    <span class="n">k_values</span><span class="p">,</span>
+                    <span class="n">prec_values</span><span class="p">,</span>
+                    <span class="n">marker</span><span class="o">=</span><span class="s2">"o"</span><span class="p">,</span>
+                    <span class="n">markersize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+                    <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                    <span class="n">linestyle</span><span class="o">=</span><span class="n">linestyle</span><span class="p">,</span>
+                    <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
+                    <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
+                <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+                <span class="c1"># Store first line per graph for legend</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">dl</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">graph_name</span> <span class="k">for</span> <span class="n">dl</span> <span class="ow">in</span> <span class="n">data_lines</span><span class="p">):</span>
+                    <span class="n">data_lines</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">line</span><span class="p">,</span> <span class="n">graph_name</span><span class="p">))</span>
+
+        <span class="c1"># Create two separate legends</span>
+        <span class="c1"># Legend 1: Graph names (colors)</span>
+        <span class="n">graph_legend_handles</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span> <span class="k">for</span> <span class="n">line</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">data_lines</span><span class="p">]</span>
+        <span class="n">graph_legend_labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">data_lines</span><span class="p">]</span>
+        <span class="n">legend1</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span>
+            <span class="n">graph_legend_handles</span><span class="p">,</span>
+            <span class="n">graph_legend_labels</span><span class="p">,</span>
+            <span class="n">loc</span><span class="o">=</span><span class="s2">"upper left"</span><span class="p">,</span>
+            <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span>
+            <span class="n">framealpha</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">"Graph Type"</span><span class="p">,</span>
+            <span class="n">title_fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Legend 2: Layer indices (line styles)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.lines</span><span class="w"> </span><span class="kn">import</span> <span class="n">Line2D</span>
+
+        <span class="n">layer_legend_handles</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">layer_legend_labels</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">layer_idx</span> <span class="ow">in</span> <span class="n">sorted_layers</span><span class="p">:</span>
+            <span class="n">style_idx</span> <span class="o">=</span> <span class="n">layer_to_style_idx</span><span class="p">[</span><span class="n">layer_idx</span><span class="p">]</span>
+            <span class="n">linestyle</span> <span class="o">=</span> <span class="n">line_styles</span><span class="p">[</span><span class="n">style_idx</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">line_styles</span><span class="p">)]</span>
+            <span class="n">handle</span> <span class="o">=</span> <span class="n">Line2D</span><span class="p">(</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">color</span><span class="o">=</span><span class="s2">"gray"</span><span class="p">,</span>
+                <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                <span class="n">linestyle</span><span class="o">=</span><span class="n">linestyle</span><span class="p">,</span>
+                <span class="n">marker</span><span class="o">=</span><span class="s2">"o"</span><span class="p">,</span>
+                <span class="n">markersize</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">layer_legend_handles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+            <span class="n">layer_legend_labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Layer </span><span class="si">{</span><span class="n">layer_idx</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span>
+            <span class="n">layer_legend_handles</span><span class="p">,</span>
+            <span class="n">layer_legend_labels</span><span class="p">,</span>
+            <span class="n">loc</span><span class="o">=</span><span class="s2">"upper right"</span><span class="p">,</span>
+            <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span>
+            <span class="n">framealpha</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">"Reg Layer"</span><span class="p">,</span>
+            <span class="n">title_fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Add first legend back to the plot (second legend is added automatically)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">add_artist</span><span class="p">(</span><span class="n">legend1</span><span class="p">)</span>
+
+        <span class="c1"># Formatting</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"k (Top-k Attention)"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"Precision@k"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Edge Recovery: Precision@k</span><span class="se">\n</span><span class="s2">Epoch </span><span class="si">{</span><span class="n">num_epochs</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span>
+            <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xscale</span><span class="p">(</span><span class="s2">"log"</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">k_values</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span><span class="p">])</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s2">"both"</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+
+        <span class="c1"># Save and log to summary panel</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">_edge_recovery_summary/precision"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_and_log_figure</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">timestamp_str</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GraphRecoveryVisualization.plot_edge_recovery_per_graph">
+<a class="viewcode-back" href="../../../generated/torchcell.viz.graph_recovery.GraphRecoveryVisualization.html#torchcell.viz.graph_recovery.GraphRecoveryVisualization.plot_edge_recovery_per_graph">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_edge_recovery_per_graph</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">recall_metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">precision_metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+        <span class="n">k_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">num_epochs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">timestamp_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">stage</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"val"</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create individual edge recovery plots for each graph showing both recall and precision@k.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            recall_metrics: Dict mapping graph_name -&gt; recall@degree value</span>
+<span class="sd">            precision_metrics: Dict mapping graph_name -&gt; {k -&gt; precision value}</span>
+<span class="sd">            k_values: List of k values (e.g., [8, 32, 128, 320])</span>
+<span class="sd">            num_epochs: Current epoch number</span>
+<span class="sd">            timestamp_str: Unused, kept for API compatibility</span>
+<span class="sd">            stage: Stage name (e.g., "val")</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">recall_metrics</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">precision_metrics</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"No edge recovery metrics to plot"</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Sort graphs alphabetically</span>
+        <span class="n">graph_names</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">recall_metrics</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+        <span class="c1"># Create a plot for each graph</span>
+        <span class="k">for</span> <span class="n">graph_name</span> <span class="ow">in</span> <span class="n">graph_names</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">graph_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">precision_metrics</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">recall_val</span> <span class="o">=</span> <span class="n">recall_metrics</span><span class="p">[</span><span class="n">graph_name</span><span class="p">]</span>
+            <span class="n">prec_dict</span> <span class="o">=</span> <span class="n">precision_metrics</span><span class="p">[</span><span class="n">graph_name</span><span class="p">]</span>
+            <span class="n">prec_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">prec_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span><span class="p">]</span>
+
+            <span class="c1"># Create figure</span>
+            <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+            <span class="c1"># Plot precision@k as bars</span>
+            <span class="n">x_pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">k_values</span><span class="p">))</span>
+            <span class="n">bars</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
+                <span class="n">x_pos</span><span class="p">,</span>
+                <span class="n">prec_values</span><span class="p">,</span>
+                <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
+                <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>  <span class="c1"># #7191A9</span>
+                <span class="n">label</span><span class="o">=</span><span class="s2">"Precision@k"</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Add headspace and bold value labels on bars</span>
+            <span class="n">max_prec</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">prec_values</span><span class="p">)</span> <span class="k">if</span> <span class="n">prec_values</span> <span class="k">else</span> <span class="mf">1.0</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">max_prec</span><span class="p">,</span> <span class="n">recall_val</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1.15</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+
+            <span class="k">for</span> <span class="n">bar</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">bars</span><span class="p">,</span> <span class="n">prec_values</span><span class="p">):</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+                    <span class="n">bar</span><span class="o">.</span><span class="n">get_x</span><span class="p">()</span> <span class="o">+</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_width</span><span class="p">()</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
+                    <span class="n">bar</span><span class="o">.</span><span class="n">get_height</span><span class="p">(),</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">val</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                    <span class="n">ha</span><span class="o">=</span><span class="s2">"center"</span><span class="p">,</span>
+                    <span class="n">va</span><span class="o">=</span><span class="s2">"bottom"</span><span class="p">,</span>
+                    <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                    <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Add recall@degree as horizontal line</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span>
+                <span class="n">y</span><span class="o">=</span><span class="n">recall_val</span><span class="p">,</span>
+                <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span>  <span class="c1"># #B73C39 (red-ish)</span>
+                <span class="n">linestyle</span><span class="o">=</span><span class="s2">"--"</span><span class="p">,</span>
+                <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Recall@degree = </span><span class="si">{</span><span class="n">recall_val</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Formatting</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"k (Top-k Attention)"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"Score"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Edge Recovery: </span><span class="si">{</span><span class="n">graph_name</span><span class="si">}</span><span class="se">\n</span><span class="s2">Epoch </span><span class="si">{</span><span class="n">num_epochs</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">,</span>
+                <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">x_pos</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span><span class="p">])</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">"y"</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">"upper right"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+            <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+
+            <span class="c1"># Save and log</span>
+            <span class="n">safe_graph_name</span> <span class="o">=</span> <span class="n">graph_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="s2">"_"</span><span class="p">)</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">_edge_recovery/per_graph/</span><span class="si">{</span><span class="n">safe_graph_name</span><span class="si">}</span><span class="s2">"</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_and_log_figure</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">timestamp_str</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GraphRecoveryVisualization.plot_edge_mass_alignment">
+<a class="viewcode-back" href="../../../generated/torchcell.viz.graph_recovery.GraphRecoveryVisualization.html#torchcell.viz.graph_recovery.GraphRecoveryVisualization.plot_edge_mass_alignment">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_edge_mass_alignment</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">edge_mass_metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">num_epochs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">timestamp_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">stage</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"val"</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Plot edge-mass alignment for each graph as a bar chart.</span>
+
+<span class="sd">        Edge-mass alignment = fraction of total attention mass on known graph edges.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            edge_mass_metrics: Dict mapping metric_key (e.g., "physical_L0_H1") -&gt; edge_mass_fraction</span>
+<span class="sd">            num_epochs: Current epoch number</span>
+<span class="sd">            timestamp_str: Unused, kept for API compatibility</span>
+<span class="sd">            stage: Stage name (e.g., "val")</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">edge_mass_metrics</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"No edge-mass metrics to plot"</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Parse metric keys to extract graph names and create labels</span>
+        <span class="c1"># Format: "graph_name_L{layer}_H{head}"</span>
+        <span class="n">parsed_metrics</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">metric_key</span><span class="p">,</span> <span class="n">edge_mass_value</span> <span class="ow">in</span> <span class="n">edge_mass_metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="c1"># Extract graph name (everything before _L)</span>
+            <span class="n">parts</span> <span class="o">=</span> <span class="n">metric_key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"_L"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="c1"># Fallback for keys without layer info</span>
+                <span class="n">graph_name</span> <span class="o">=</span> <span class="n">metric_key</span>
+                <span class="n">label</span> <span class="o">=</span> <span class="n">metric_key</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">graph_name</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="c1"># Extract layer and head for label</span>
+                <span class="n">layer_head</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># e.g., "0_H1"</span>
+                <span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">graph_name</span><span class="si">}</span><span class="s2"> (L</span><span class="si">{</span><span class="n">layer_head</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'_H'</span><span class="p">,</span><span class="w"> </span><span class="s1">' H'</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
+
+            <span class="n">parsed_metrics</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">graph_name</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">edge_mass_value</span><span class="p">))</span>
+
+        <span class="c1"># Sort by graph name, then label</span>
+        <span class="n">parsed_metrics</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+        <span class="c1"># Extract sorted data</span>
+        <span class="n">graph_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">parsed_metrics</span><span class="p">]</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">parsed_metrics</span><span class="p">]</span>
+        <span class="n">edge_mass_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">parsed_metrics</span><span class="p">]</span>
+
+        <span class="c1"># Create figure</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+        <span class="c1"># Assign colors based on graph name</span>
+        <span class="n">unique_graphs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">graph_to_color_idx</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">graph_name</span> <span class="ow">in</span> <span class="n">graph_names</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">graph_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">graph_to_color_idx</span><span class="p">:</span>
+                <span class="n">graph_to_color_idx</span><span class="p">[</span><span class="n">graph_name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_graphs</span><span class="p">)</span>
+                <span class="n">unique_graphs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">graph_name</span><span class="p">)</span>
+
+        <span class="n">bar_colors</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="n">graph_to_color_idx</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">)]</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">graph_names</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Create bar chart with colors by graph name</span>
+        <span class="n">bars</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)),</span> <span class="n">edge_mass_values</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">bar_colors</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+        <span class="c1"># Use natural bounds [0, 1]</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+        <span class="c1"># Add bold value labels on top of bars</span>
+        <span class="k">for</span> <span class="n">bar</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">bars</span><span class="p">,</span> <span class="n">edge_mass_values</span><span class="p">):</span>
+            <span class="n">height</span> <span class="o">=</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_height</span><span class="p">()</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+                <span class="n">bar</span><span class="o">.</span><span class="n">get_x</span><span class="p">()</span> <span class="o">+</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_width</span><span class="p">()</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
+                <span class="n">height</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">val</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="n">ha</span><span class="o">=</span><span class="s2">"center"</span><span class="p">,</span>
+                <span class="n">va</span><span class="o">=</span><span class="s2">"bottom"</span><span class="p">,</span>
+                <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span>
+                <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Add reference line at random baseline (varies by graph density)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span>
+            <span class="n">y</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">"gray"</span><span class="p">,</span>
+            <span class="n">linestyle</span><span class="o">=</span><span class="s2">"--"</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">"Random baseline (approx.)"</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Formatting</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"Graph + Layer + Head"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"Edge-Mass Fraction"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Edge-Mass Alignment: Fraction of Attention on Known Edges</span><span class="se">\n</span><span class="s2">Epoch </span><span class="si">{</span><span class="n">num_epochs</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span>
+            <span class="n">fontweight</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">"right"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">"y"</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">"upper right"</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+
+        <span class="c1"># Save and log to summary panel</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">_edge_recovery_summary/edge_mass"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_and_log_figure</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">timestamp_str</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

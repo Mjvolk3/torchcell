@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.hillenmeyer2008.HetHillenmeyer2008Dataset
+========================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.hillenmeyer2008
+
+.. autoclass:: HetHillenmeyer2008Dataset
+   :show-inheritance:
+   :members:

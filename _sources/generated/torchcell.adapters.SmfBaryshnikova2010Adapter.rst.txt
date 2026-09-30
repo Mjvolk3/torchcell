@@ -1,0 +1,8 @@
+﻿torchcell.adapters.SmfBaryshnikova2010Adapter
+=============================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: SmfBaryshnikova2010Adapter
+   :show-inheritance:
+   :members:

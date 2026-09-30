@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.smith2006.FattyAcidSmith2006Dataset
+==================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.smith2006
+
+.. autoclass:: FattyAcidSmith2006Dataset
+   :show-inheritance:
+   :members:

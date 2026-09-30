@@ -1,0 +1,994 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datasets.scerevisiae.baryshnikova2010 &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/datasets/scerevisiae/baryshnikova2010.html" />
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html">
+            
+              <img src="../../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.datasets.scerevisiae.baryshnikova2010</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.datasets.scerevisiae.baryshnikova2010</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/datasets/scerevisiae/baryshnikova2010</span>
+<span class="c1"># [[torchcell.datasets.scerevisiae.baryshnikova2010]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/baryshnikova2010</span>
+<span class="c1"># Test file: tests/torchcell/datasets/scerevisiae/test_baryshnikova2010.py</span>
+<span class="sd">"""Baryshnikova 2010 genome-scale single-mutant fitness (SMF) dataset.</span>
+
+<span class="sd">Baryshnikova A et al. 2010 (Boone/Andrews lab), "Quantitative analysis of fitness and</span>
+<span class="sd">genetic interactions in yeast on a genome scale", Nat Methods 7(12):1017-1024</span>
+<span class="sd">(doi:10.1038/nmeth.1534). This is the SGA-scoring methods paper that Costanzo 2016 and</span>
+<span class="sd">Kuzmin 2018 DEFER to for the fitness/interaction formulas, but it ALSO releases a NEW</span>
+<span class="sd">genome-scale single-mutant fitness catalog (Supplementary Data 1) -- the data this loader</span>
+<span class="sd">builds.</span>
+
+<span class="sd">WHAT THE FILE CONTAINS (Supplementary Data 1, sheet ``S1_SMF_standard_100209``; 6023 rows,</span>
+<span class="sd">3 columns, no header):</span>
+<span class="sd">  - col0: SGA strain/allele id -- a plain systematic ORF for a nonessential deletion</span>
+<span class="sd">    (e.g. YML062C), an essential-gene DAmP allele (``&lt;ORF&gt;_damp``, e.g. YAL001C_damp), or a</span>
+<span class="sd">    temperature-sensitive allele (``&lt;ORF&gt;_tsq&lt;NNN&gt;``, e.g. YBR156C_tsq236).</span>
+<span class="sd">  - col1: single-mutant fitness, WT-normalized so the fitness-distribution MODE == 1.0</span>
+<span class="sd">    (``_SV_REFERENCE_FITNESS``). Range 0.063 .. 1.161.</span>
+<span class="sd">  - col2: uncertainty = a BOOTSTRAP standard error of the median fitness estimate</span>
+<span class="sd">    (``_SV_UNCERTAINTY_TYPE``), NOT a sample SD. Range 0.0006 .. 0.1141.</span>
+
+<span class="sd">COMPOSITION (6023 = 4635 deletions + 1082 DAmP + 306 TS; ``_SV_COMPOSITION``):</span>
+<span class="sd">  - 4635 nonessential gene deletions (kanMX-marked ARRAY) -&gt; SgaKanMxDeletionPerturbation.</span>
+<span class="sd">  - 1082 essential-gene DAmP hypomorphs (``_damp``) -&gt; SgaDampPerturbation.</span>
+<span class="sd">  - 306 temperature-sensitive essential alleles (``_tsq``) -&gt; SgaTsAllelePerturbation.</span>
+<span class="sd">  The full raw id is preserved on ``strain_id`` so an allelic series is distinct: 58 genes</span>
+<span class="sd">  carry &gt;1 TS allele (e.g. YAL041W x4), which the fitness L1 signature separates via</span>
+<span class="sd">  strain_id (see torchcell/verification/fitness.py ``_genotype_signature``).</span>
+
+<span class="sd">ARRAY SIDE vs QUERY SIDE, and why it decides ``n_samples``. SI Supplementary Table 2</span>
+<span class="sd">  describes TWO measurement designs. The ARRAY side crosses a neutral natMX query against</span>
+<span class="sd">  the nonessential deletion collection, and only THAT side carries a screen count</span>
+<span class="sd">  ("Fitness measurements were based on 80 control screens.", ``_SV_N_SAMPLES_ARRAY``). The</span>
+<span class="sd">  QUERY side arrays the natMX-marked query strains against a single kanMX control array,</span>
+<span class="sd">  and the SI states no screen count for it. The released ids say which side a row is on:</span>
+<span class="sd">  ``_tsq`` and ``_DAmP`` are the SGA QUERY strain labels (``_SV_TSQ_IS_QUERY``,</span>
+<span class="sd">  ``_SV_DAMP_IS_QUERY``, both from the Costanzo 2016 SI, which uses the same lab</span>
+<span class="sd">  nomenclature and lists both collections). So ``n_samples = 80`` is stored for the 4635</span>
+<span class="sd">  deletion rows and the 1388 query-side rows carry a typed</span>
+<span class="sd">  ``ProvenanceGap(field="n_samples")`` instead of the extrapolated 80. The main text's</span>
+<span class="sd">  looser sentence (``_SV_COMPOSITION``) describes all 6023 as measured "using a neutral</span>
+<span class="sd">  (control) query mutation", which is the array-side phrasing; the SI's two-sided table</span>
+<span class="sd">  and the strain labels are the precise statement.</span>
+
+<span class="sd">ENVIRONMENT: the SGA final-selection plate, SD/MSG -His/Arg/Lys +canavanine/thialysine/</span>
+<span class="sd">  G418/clonNAT (``SGA_DM_SELECTION``, the shared library medium whose recipe is quoted from</span>
+<span class="sd">  the same Tong and Boone 2006 protocol), solid, at the final-selection temperature. The</span>
+<span class="sd">  temperature is SPLIT by allele kind and neither half is this paper's own number: the</span>
+<span class="sd">  Online Methods defer ("as described previously1,7") and state no incubation temperature.</span>
+<span class="sd">  - deletion + DAmP -&gt; 30 C (``_SV_TEMPERATURE_30``, Tong and Boone 2006 step 18, the</span>
+<span class="sd">    final kanR/natR selection incubation on exactly this medium; corroborated by</span>
+<span class="sd">    ``_SV_DMA_30``).</span>
+<span class="sd">  - TS (``_tsq``) -&gt; 26 C (``_SV_TEMPERATURE_26``: every SGA selection step involving a TS</span>
+<span class="sd">    allele runs at a permissive 22 C except the final haploid double-mutant selection at a</span>
+<span class="sd">    semipermissive 26 C, and ``_SV_TS_26_EITHER_SIDE`` extends that to a TS allele used as</span>
+<span class="sd">    a query OR as an array mutant).</span>
+<span class="sd">  BACK-SOLVE (measured, not assumed): 291 of the 306 TS rows share their exact strain id</span>
+<span class="sd">  with a Costanzo 2016 SMF row, and Costanzo releases that SMF at BOTH 26 C and 30 C. The</span>
+<span class="sd">  Baryshnikova value tracks the 26 C column (Pearson r 0.8777, mean |difference| 0.0577)</span>
+<span class="sd">  far better than the 30 C column (r 0.7105, mean |difference| 0.1401). In the same</span>
+<span class="sd">  Costanzo release the 26 C and 30 C columns are EXACTLY equal for every deletion, _sn and</span>
+<span class="sd">  _damp strain (3876/3876, 3845/3845, 733/733) and never equal for a TS strain (0/792</span>
+<span class="sd">  _tsa, 0/961 _tsq) -- only TS alleles are temperature-resolved at all, which is what makes</span>
+<span class="sd">  30 C the right value for the non-TS rows and 26 C the right value for the TS rows.</span>
+
+<span class="sd">GENOTYPE / REFERENCE: each strain is one gene perturbation in the BY4741 SGA background</span>
+<span class="sd">  (``_SV_BACKGROUND_STRAIN``; note the quote is the SI's border-control sentence, the only</span>
+<span class="sd">  place the mirror names the array background, and the main text's BY4741 sentence is</span>
+<span class="sd">  scoped to the serial-dilution/actin/RIM101 follow-up strains). The release carries only</span>
+<span class="sd">  systematic allele ids (no common names), so ``perturbed_gene_name`` is the resolved</span>
+<span class="sd">  systematic ORF and ``strain_id`` is the cross-dataset strain key; the allele names of the</span>
+<span class="sd">  291 TS strains shared with Costanzo 2016 are NOT imported, because the Costanzo strain</span>
+<span class="sd">  table is not in the raw mirror and a derivation cannot be pinned to it. The reference</span>
+<span class="sd">  fitness 1.0 is the mode-normalization convention, not an averaged control measurement, so</span>
+<span class="sd">  every reference phenotype gaps ``n_samples`` and ``sample_unit``.</span>
+
+<span class="sd">DATA SOURCE: the publisher's Supplementary Data 1 (``SupplementaryData1_SMF.xls``, sha256</span>
+<span class="sd">  086bfadf..., Springer ESM MediaObject MOESM168), deposited in</span>
+<span class="sd">  ``$DATA_ROOT/torchcell-raw/baryshnikovaQuantitativeAnalysisFitness2010/`` with a</span>
+<span class="sd">  ``manifest.json`` recording the URL, the retriever and the hash. It supersedes the</span>
+<span class="sd">  ``data/S1_SMF_standard_100209.txt`` text export this loader used to read, which had no</span>
+<span class="sd">  recorded retrieval. MEASURED: sorted on (id, fitness, se) the two files are the same data</span>
+<span class="sd">  -- every fitness value is bit-identical and the SEs agree to 1.7e-18 -- and they differ</span>
+<span class="sd">  only in ROW ORDER. The previous docstring's claim that they "differ by up to 0.031" was</span>
+<span class="sd">  an artifact of joining on the duplicated YDL227C id, whose two rows (1.000155 and</span>
+<span class="sd">  1.031582) cross-join.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">MappingProxyType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">SGA_DM_SELECTION</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Environment</span><span class="p">,</span>
+    <span class="n">Experiment</span><span class="p">,</span>
+    <span class="n">ExperimentReference</span><span class="p">,</span>
+    <span class="n">FitnessExperiment</span><span class="p">,</span>
+    <span class="n">FitnessExperimentReference</span><span class="p">,</span>
+    <span class="n">FitnessPhenotype</span><span class="p">,</span>
+    <span class="n">Genotype</span><span class="p">,</span>
+    <span class="n">Publication</span><span class="p">,</span>
+    <span class="n">ReferenceGenome</span><span class="p">,</span>
+    <span class="n">SampleUnit</span><span class="p">,</span>
+    <span class="n">SgaDampPerturbation</span><span class="p">,</span>
+    <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">,</span>
+    <span class="n">SgaTsAllelePerturbation</span><span class="p">,</span>
+    <span class="n">Temperature</span><span class="p">,</span>
+    <span class="n">UncertaintyType</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.literature.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ROLE_RAW_DATA</span><span class="p">,</span>
+    <span class="n">ArtifactRecord</span><span class="p">,</span>
+    <span class="n">Manifest</span><span class="p">,</span>
+    <span class="n">RetrievalMethod</span><span class="p">,</span>
+    <span class="n">RetrievalRecord</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ProvenanceGap</span><span class="p">,</span>
+    <span class="n">ProvenanceGapReason</span><span class="p">,</span>
+    <span class="n">SourcedValue</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">DOI</span> <span class="o">=</span> <span class="s2">"10.1038/nmeth.1534"</span>
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Provenance anchors: the three mirrored artifacts every constant below is pinned to.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">CITATION_KEY</span> <span class="o">=</span> <span class="s2">"baryshnikovaQuantitativeAnalysisFitness2010"</span>
+<span class="n">_PAPER_MD</span> <span class="o">=</span> <span class="s2">"paper.md"</span>
+<span class="n">_PAPER_MD_SHA</span> <span class="o">=</span> <span class="s2">"7ebd3880c052d1808c055f2ba2445e016f79080f222591bb023b755806ccd3d0"</span>
+<span class="n">_SI_MD</span> <span class="o">=</span> <span class="s2">"si/si1.md"</span>
+<span class="n">_SI_MD_SHA</span> <span class="o">=</span> <span class="s2">"f85ea57ce9f5ec60b633b837ff2c5ee18cc65e113db2f034b892739690d8046e"</span>
+
+<span class="c1"># Deferral targets. Baryshnikova 2010's Online Methods say the screens were run "as</span>
+<span class="c1"># described previously1,7"; ref 1 (Methods Enzymol 470) and ref 7 (Costanzo 2010 Science)</span>
+<span class="c1"># are NOT mirrored. These two ARE, they are the same lab describing the same SGA system,</span>
+<span class="c1"># and between them they fix the final-selection temperature and the strain nomenclature.</span>
+<span class="n">_TONG2006</span> <span class="o">=</span> <span class="s2">"yantongSyntheticGeneticArray2006"</span>
+<span class="n">_TONG2006_TXT</span> <span class="o">=</span> <span class="s2">"paper.txt"</span>
+<span class="n">_TONG2006_SHA</span> <span class="o">=</span> <span class="s2">"dda5fc727c5e532e02884cd1d30ad0774bfb773ed55e8f6b7074ee2158ab9aca"</span>
+<span class="n">_COSTANZO2016</span> <span class="o">=</span> <span class="s2">"costanzoGlobalGeneticInteraction2016"</span>
+<span class="n">_COSTANZO2016_SI</span> <span class="o">=</span> <span class="s2">"si/si1.md"</span>
+<span class="n">_COSTANZO2016_SI_SHA</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"1828703b0ff739fdf1c0d9232fe4fd81a3ce95a1b111780f55ef63bfa676880e"</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sv</span><span class="p">(</span>
+    <span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span>
+    <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">ck</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">CITATION_KEY</span><span class="p">,</span>
+    <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_SI_MD</span><span class="p">,</span>
+    <span class="n">sha</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_SI_MD_SHA</span><span class="p">,</span>
+    <span class="n">page</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A SourcedValue pinned to a mirrored, sha256-verified artifact (quote + hash)."""</span>
+    <span class="k">return</span> <span class="n">SourcedValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span><span class="n">source_uri</span><span class="o">=</span><span class="n">uri</span><span class="p">,</span> <span class="n">citation_key</span><span class="o">=</span><span class="n">ck</span><span class="p">,</span> <span class="n">sha256</span><span class="o">=</span><span class="n">sha</span><span class="p">,</span> <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">),</span>
+        <span class="n">quote</span><span class="o">=</span><span class="n">quote</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="c1">#: Replicate count for the ARRAY-side measurement (the nonessential deletion collection).</span>
+<span class="c1">#: The sentence is inside the SI's "Single mutant fitness" row and attaches to the array</span>
+<span class="c1">#: measurement described in the two sentences before it; the query-side description that</span>
+<span class="c1">#: follows carries no count.</span>
+<span class="n">_SV_N_SAMPLES_ARRAY</span> <span class="o">=</span> <span class="n">_sv</span><span class="p">(</span>
+    <span class="mi">80</span><span class="p">,</span>
+    <span class="s2">"Thus, colony sizes derived from these control screens (after applying standard "</span>
+    <span class="s2">"normalization procedures) reflect array strain single mutant fitness. Fitness "</span>
+    <span class="s2">"measurements were based on 80 control screens."</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Supplementary Table 2, 'Single mutant fitness'"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"scopes to the nonessential deletion ARRAY; the query-side paragraph that "</span>
+    <span class="s2">"follows states no screen count, so the 1388 _damp and _tsq rows gap n_samples"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: The query-side design, stated without a screen count. Anchors the gap's reason.</span>
+<span class="n">_SV_QUERY_SIDE_NO_COUNT</span> <span class="o">=</span> <span class="n">_sv</span><span class="p">(</span>
+    <span class="kc">None</span><span class="p">,</span>
+    <span class="s2">"Query strain single mutant fitness was obtained in a similar manner."</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Supplementary Table 2, 'Single mutant fitness'"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the query-side measurement is described but its number of control screens is "</span>
+    <span class="s2">"never released"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: What the released uncertainty column IS.</span>
+<span class="n">_SV_UNCERTAINTY_TYPE</span> <span class="o">=</span> <span class="n">_sv</span><span class="p">(</span>
+    <span class="n">UncertaintyType</span><span class="o">.</span><span class="n">bootstrap_se</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">"Variance in single mutant fitness estimates was estimated from bootstrap sampling "</span>
+    <span class="s2">"of the median, and final fitness estimates were derived by pooling across each "</span>
+    <span class="s2">"array spatial configuration."</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Supplementary Note 1"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"a bootstrap SD of the estimator is already an SE, so it is used as fitness_se "</span>
+    <span class="s2">"without dividing by sqrt(n)"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: The WT-normalization convention that fixes the reference fitness at 1.0.</span>
+<span class="n">_SV_REFERENCE_FITNESS</span> <span class="o">=</span> <span class="n">_sv</span><span class="p">(</span>
+    <span class="mf">1.0</span><span class="p">,</span>
+    <span class="s2">"The parameter $</span><span class="se">\\</span><span class="s2">alpha$ was estimated by setting the mode of the fitness "</span>
+    <span class="s2">"distribution to 1, reflecting our assumption that most deletions should have near "</span>
+    <span class="s2">"wild-type fitness."</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Supplementary Note 1"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the reference is a normalization convention, not an averaged WT measurement"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: Genetic background of the arrayed collection.</span>
+<span class="n">_SV_BACKGROUND_STRAIN</span> <span class="o">=</span> <span class="n">_sv</span><span class="p">(</span>
+    <span class="s2">"BY4741"</span><span class="p">,</span>
+    <span class="s2">"isogenic to BY4741"</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Supplementary Table 2, 'Plate border control'"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the only place the mirror names the array background: every array plate's "</span>
+    <span class="s2">"border-control strain is isogenic to BY4741 (his3 replaced with KanMX). The main "</span>
+    <span class="s2">"text's BY4741 sentence (paper.md, Online Methods 'Strains') is scoped to the "</span>
+    <span class="s2">"serial-dilution, actin-staining and RIM101 follow-up strains, so it is NOT the "</span>
+    <span class="s2">"citation for the collection background"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: Released composition, from the main text.</span>
+<span class="n">_SV_COMPOSITION</span> <span class="o">=</span> <span class="n">_sv</span><span class="p">(</span>
+    <span class="p">{</span><span class="s2">"deletion"</span><span class="p">:</span> <span class="mi">4635</span><span class="p">,</span> <span class="s2">"damp"</span><span class="p">:</span> <span class="mi">1082</span><span class="p">,</span> <span class="s2">"ts"</span><span class="p">:</span> <span class="mi">306</span><span class="p">},</span>
+    <span class="s2">"We measured colony sizes for 4,635 viable deletion mutants and 1,388 "</span>
+    <span class="s2">"temperature-sensitive or hypomorphic alleles of essential genes after SGA analysis "</span>
+    <span class="s2">"using a neutral (control) query mutation"</span><span class="p">,</span>
+    <span class="n">uri</span><span class="o">=</span><span class="n">_PAPER_MD</span><span class="p">,</span>
+    <span class="n">sha</span><span class="o">=</span><span class="n">_PAPER_MD_SHA</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Results, 'Quantitative analysis of single-mutant fitness'"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"1388 = 1082 DAmP + 306 TS, split here by the released id suffix"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: The Online-Methods deferral that makes the temperature a cross-paper chain.</span>
+<span class="n">_SV_METHODS_DEFERRAL</span> <span class="o">=</span> <span class="n">_sv</span><span class="p">(</span>
+    <span class="kc">None</span><span class="p">,</span>
+    <span class="s2">"as described previously1,7"</span><span class="p">,</span>
+    <span class="n">uri</span><span class="o">=</span><span class="n">_PAPER_MD</span><span class="p">,</span>
+    <span class="n">sha</span><span class="o">=</span><span class="n">_PAPER_MD_SHA</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Online Methods, 'SGA screens'"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"ref 1 = Baryshnikova et al. Methods Enzymol. 470:146-180 (2010), ref 7 = "</span>
+    <span class="s2">"Costanzo et al. Science 327:425-431 (2010); NEITHER is mirrored, so the "</span>
+    <span class="s2">"temperature is sourced from the two mirrored papers of the same lab describing "</span>
+    <span class="s2">"the same SGA system"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: Final SGA selection incubation on exactly the SGA_DM_SELECTION plate.</span>
+<span class="n">_SV_TEMPERATURE_30</span> <span class="o">=</span> <span class="n">_sv</span><span class="p">(</span>
+    <span class="mf">30.0</span><span class="p">,</span>
+    <span class="s2">"18. Incubate the kanR/natR-selection plates at 30°C for 2 d."</span><span class="p">,</span>
+    <span class="n">ck</span><span class="o">=</span><span class="n">_TONG2006</span><span class="p">,</span>
+    <span class="n">uri</span><span class="o">=</span><span class="n">_TONG2006_TXT</span><span class="p">,</span>
+    <span class="n">sha</span><span class="o">=</span><span class="n">_TONG2006_SHA</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"SGA screen protocol, MATa-kanR-natR meiotic progeny selection"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"step 17 pins onto the (SD/MSG) -His/Arg/Lys +canavanine/thialysine/G418/"</span>
+    <span class="s2">"clonNAT plate, i.e. SGA_DM_SELECTION, and step 18 is its incubation"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: Corroboration of 30 C for the nonessential deletion array.</span>
+<span class="n">_SV_DMA_30</span> <span class="o">=</span> <span class="n">_sv</span><span class="p">(</span>
+    <span class="mf">30.0</span><span class="p">,</span>
+    <span class="s2">"Double mutant selection plates involving a nonessential deletion mutant query "</span>
+    <span class="s2">"strain and the DMA were incubated at"</span><span class="p">,</span>
+    <span class="n">ck</span><span class="o">=</span><span class="n">_COSTANZO2016</span><span class="p">,</span>
+    <span class="n">uri</span><span class="o">=</span><span class="n">_COSTANZO2016_SI</span><span class="p">,</span>
+    <span class="n">sha</span><span class="o">=</span><span class="n">_COSTANZO2016_SI_SHA</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"SGA query strain construction and screening"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the sentence ends with the OCR'd LaTeX rendering of 30 C, so the quote stops "</span>
+    <span class="s2">"before it; the value is the 30 C that follows"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: The TS exception: a semipermissive 26 C for the final selection.</span>
+<span class="n">_SV_TEMPERATURE_26</span> <span class="o">=</span> <span class="n">_sv</span><span class="p">(</span>
+    <span class="mf">26.0</span><span class="p">,</span>
+    <span class="s2">"All SGA selection steps involving a TS allele were conducted at permissive "</span>
+    <span class="s2">"temperature $( 2 2 ^ { </span><span class="se">\\</span><span class="s2">circ } </span><span class="se">\\</span><span class="s2">mathsf { C } )$ except for the final selection of "</span>
+    <span class="s2">"haploid double mutants, which were incubated at a semipermissive temperature "</span>
+    <span class="s2">"$( 2 6 ^ { </span><span class="se">\\</span><span class="s2">circ } </span><span class="se">\\</span><span class="s2">mathsf { C } )$ prior to imaging."</span><span class="p">,</span>
+    <span class="n">ck</span><span class="o">=</span><span class="n">_COSTANZO2016</span><span class="p">,</span>
+    <span class="n">uri</span><span class="o">=</span><span class="n">_COSTANZO2016_SI</span><span class="p">,</span>
+    <span class="n">sha</span><span class="o">=</span><span class="n">_COSTANZO2016_SI_SHA</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"SGA query strain construction and screening"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: ...and it holds whether the TS allele is the query or the array mutant.</span>
+<span class="n">_SV_TS_26_EITHER_SIDE</span> <span class="o">=</span> <span class="n">_sv</span><span class="p">(</span>
+    <span class="mf">26.0</span><span class="p">,</span>
+    <span class="s2">"higher quality interactions from screens involving a TS allele (either as a query "</span>
+    <span class="s2">"or an array mutant) were obtained when plates were grown at"</span><span class="p">,</span>
+    <span class="n">ck</span><span class="o">=</span><span class="n">_COSTANZO2016</span><span class="p">,</span>
+    <span class="n">uri</span><span class="o">=</span><span class="n">_COSTANZO2016_SI</span><span class="p">,</span>
+    <span class="n">sha</span><span class="o">=</span><span class="n">_COSTANZO2016_SI_SHA</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"SGA query strain construction and screening"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"Baryshnikova's TS rows are query strains (see _SV_TSQ_IS_QUERY), and this "</span>
+    <span class="s2">"sentence covers that case explicitly"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: What a ``_tsq`` id IS: an SGA QUERY strain, crossed to a neutral kanMX control array.</span>
+<span class="n">_SV_TSQ_IS_QUERY</span> <span class="o">=</span> <span class="n">_sv</span><span class="p">(</span>
+    <span class="s2">"SGA TS-allele query strain"</span><span class="p">,</span>
+    <span class="s2">"ordered arrays of SGA query mutant strains carrying natMX-marked, nonessential "</span>
+    <span class="s2">"deletion mutations (_sn#) or TS alleles of essential genes (_tsq#) were crossed to "</span>
+    <span class="s2">"a different SGA control strain, which carried a kanMX marker inserted at a neutral "</span>
+    <span class="s2">"genomic locus."</span><span class="p">,</span>
+    <span class="n">ck</span><span class="o">=</span><span class="n">_COSTANZO2016</span><span class="p">,</span>
+    <span class="n">uri</span><span class="o">=</span><span class="n">_COSTANZO2016_SI</span><span class="p">,</span>
+    <span class="n">sha</span><span class="o">=</span><span class="n">_COSTANZO2016_SI_SHA</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Estimating single mutant fitness"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the same lab nomenclature Baryshnikova's ids use, so a _tsq row is a "</span>
+    <span class="s2">"query-side measurement and the 80-control-screen count does not apply to it"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: ...and a DAmP allele is likewise a query mutant.</span>
+<span class="n">_SV_DAMP_IS_QUERY</span> <span class="o">=</span> <span class="n">_sv</span><span class="p">(</span>
+    <span class="s2">"SGA DAmP-allele query strain"</span><span class="p">,</span>
+    <span class="s2">"a set of query mutants carrying hypomorphic, Decreased Abundance by mRNA "</span>
+    <span class="s2">"Perturbation (labeled _DAmP#) alleles of essential genes, which are potential "</span>
+    <span class="s2">"hypomorphic mutants, was screened against the DMA and TSA"</span><span class="p">,</span>
+    <span class="n">ck</span><span class="o">=</span><span class="n">_COSTANZO2016</span><span class="p">,</span>
+    <span class="n">uri</span><span class="o">=</span><span class="n">_COSTANZO2016_SI</span><span class="p">,</span>
+    <span class="n">sha</span><span class="o">=</span><span class="n">_COSTANZO2016_SI_SHA</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"DAmP query mutant SGA screens"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: Every SourcedValue above, for the test that re-audits them against the mirror.</span>
+<span class="n">SOURCED_VALUES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SourcedValue</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">_SV_N_SAMPLES_ARRAY</span><span class="p">,</span>
+    <span class="n">_SV_QUERY_SIDE_NO_COUNT</span><span class="p">,</span>
+    <span class="n">_SV_UNCERTAINTY_TYPE</span><span class="p">,</span>
+    <span class="n">_SV_REFERENCE_FITNESS</span><span class="p">,</span>
+    <span class="n">_SV_BACKGROUND_STRAIN</span><span class="p">,</span>
+    <span class="n">_SV_COMPOSITION</span><span class="p">,</span>
+    <span class="n">_SV_METHODS_DEFERRAL</span><span class="p">,</span>
+    <span class="n">_SV_TEMPERATURE_30</span><span class="p">,</span>
+    <span class="n">_SV_DMA_30</span><span class="p">,</span>
+    <span class="n">_SV_TEMPERATURE_26</span><span class="p">,</span>
+    <span class="n">_SV_TS_26_EITHER_SIDE</span><span class="p">,</span>
+    <span class="n">_SV_TSQ_IS_QUERY</span><span class="p">,</span>
+    <span class="n">_SV_DAMP_IS_QUERY</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Raw mirror</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">RAW_DIR_REL</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"torchcell-raw/</span><span class="si">{</span><span class="n">CITATION_KEY</span><span class="si">}</span><span class="s2">"</span>
+<span class="n">XLS_NAME</span> <span class="o">=</span> <span class="s2">"SupplementaryData1_SMF.xls"</span>
+<span class="n">XLS_REL</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"data/</span><span class="si">{</span><span class="n">XLS_NAME</span><span class="si">}</span><span class="s2">"</span>
+<span class="n">XLS_SHEET</span> <span class="o">=</span> <span class="s2">"S1_SMF_standard_100209"</span>
+<span class="n">XLS_SHA256</span> <span class="o">=</span> <span class="s2">"086bfadf2684f28940500dd87e3be74c53a957448d2016f7a02370540da8a04e"</span>
+<span class="n">XLS_URL</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"https://static-content.springer.com/esm/art%3A10.1038</span><span class="si">%2F</span><span class="s2">nmeth.1534/"</span>
+    <span class="s2">"MediaObjects/41592_2010_BFnmeth1534_MOESM168_ESM.xls"</span>
+<span class="p">)</span>
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Release constants, checked against the file on every build</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">_EXPECTED_ROWS</span> <span class="o">=</span> <span class="mi">6023</span>
+
+<span class="c1">#: Raw allele ids whose ORF the CURRENT R64 annotation cannot resolve (retired, merged or</span>
+<span class="c1">#: dubious ORFs removed since 2010), frozen so the drop is a documented release fact and</span>
+<span class="c1">#: the record-count oracle is ``_EXPECTED_ROWS - len(_UNRESOLVABLE)`` rather than whatever</span>
+<span class="c1">#: the genome on disk happens to yield. A build whose drop set differs from this raises.</span>
+<span class="n">_UNRESOLVABLE</span><span class="p">:</span> <span class="n">MappingProxyType</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">MappingProxyType</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"YAR037W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YAR040C"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YAR043C"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YAR061W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YAR062W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YCL006C"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YCL013W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YCL026C"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YCL074W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YCL075W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YDR134C"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YER108C"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YER109C"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YFL056C"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YFL057C"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YIL080W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YIL167W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YIL168W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YIL170W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YIL171W_damp"</span><span class="p">:</span> <span class="s2">"damp"</span><span class="p">,</span>
+        <span class="s2">"YIL174W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YIL175W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YIR043C"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YLL016W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YLL017W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YOL153C"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YOR031W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YPL060C-A"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YPL275W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+        <span class="s2">"YPL276W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+<span class="n">DROP_RULE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"a released allele whose ORF token does not resolve to a gene of the current R64 "</span>
+    <span class="s2">"annotation (retired, merged or dubious ORF) is dropped; the set is frozen in "</span>
+    <span class="s2">"_UNRESOLVABLE and asserted on every build"</span>
+<span class="p">)</span>
+<span class="n">EXPECTED_RECORDS</span> <span class="o">=</span> <span class="n">_EXPECTED_ROWS</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">_UNRESOLVABLE</span><span class="p">)</span>
+
+<span class="c1">#: 30 C carries the deletions and the DAmP hypomorphs; 26 C carries the TS alleles.</span>
+<span class="n">_TEMPERATURE_C</span><span class="p">:</span> <span class="n">MappingProxyType</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">MappingProxyType</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"deletion"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">_SV_TEMPERATURE_30</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+        <span class="s2">"damp"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">_SV_TEMPERATURE_30</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+        <span class="s2">"ts"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">_SV_TEMPERATURE_26</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="c1">#: The array side is the only side with a released screen count.</span>
+<span class="n">_ARRAY_SIDE_KIND</span> <span class="o">=</span> <span class="s2">"deletion"</span>
+
+<span class="n">_N_SAMPLES_GAP</span> <span class="o">=</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
+    <span class="n">field</span><span class="o">=</span><span class="s2">"n_samples"</span><span class="p">,</span>
+    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+    <span class="n">looked_in</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+        <span class="n">source_uri</span><span class="o">=</span><span class="n">_SI_MD</span><span class="p">,</span>
+        <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+        <span class="n">sha256</span><span class="o">=</span><span class="n">_SI_MD_SHA</span><span class="p">,</span>
+        <span class="n">page</span><span class="o">=</span><span class="s2">"Supplementary Table 2, 'Single mutant fitness'"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"SI Supplementary Table 2 states 80 control screens for the ARRAY-side "</span>
+    <span class="s2">"(nonessential deletion collection) measurement only; this row is a query strain "</span>
+    <span class="s2">"(_tsq / _damp) and the query-side control-screen count is not released"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">_REFERENCE_GAP_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"the reference fitness 1.0 is the mode-normalization convention (the fitness "</span>
+    <span class="s2">"distribution's mode is set to 1), not an averaged wild-type measurement, so the "</span>
+    <span class="s2">"primary reports no replicate count or replicate unit for it"</span>
+<span class="p">)</span>
+<span class="n">_REFERENCE_GAPS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">ProvenanceGap</span><span class="p">(</span>
+        <span class="n">field</span><span class="o">=</span><span class="n">field</span><span class="p">,</span>
+        <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+        <span class="n">looked_in</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+            <span class="n">source_uri</span><span class="o">=</span><span class="n">_SI_MD</span><span class="p">,</span>
+            <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">_SI_MD_SHA</span><span class="p">,</span>
+            <span class="n">page</span><span class="o">=</span><span class="s2">"Supplementary Note 1"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">_REFERENCE_GAP_NOTE</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"n_samples"</span><span class="p">,</span> <span class="s2">"sample_unit"</span><span class="p">)</span>
+<span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_allele</span><span class="p">(</span><span class="n">allele</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Split a raw SGA allele id into (systematic-ORF token, perturbation kind)."""</span>
+    <span class="k">if</span> <span class="n">allele</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"_damp"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">allele</span><span class="p">[:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="s2">"_damp"</span><span class="p">)],</span> <span class="s2">"damp"</span>
+    <span class="k">if</span> <span class="s2">"_tsq"</span> <span class="ow">in</span> <span class="n">allele</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">allele</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"_tsq"</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">"ts"</span>
+    <span class="k">return</span> <span class="n">allele</span><span class="p">,</span> <span class="s2">"deletion"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sha256</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">20</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">handle</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">chunk_size</span><span class="p">),</span> <span class="sa">b</span><span class="s2">""</span><span class="p">):</span>
+            <span class="n">digest</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">digest</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_data_root</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``$DATA_ROOT/torchcell-raw/baryshnikovaQuantitativeAnalysisFitness2010``."""</span>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">data_root</span> <span class="ow">or</span> <span class="n">_data_root</span><span class="p">())</span> <span class="o">/</span> <span class="n">RAW_DIR_REL</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">deposit_raw_mirror</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">xls_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">retrieved_at</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Write the raw mirror from an already-retrieved Supplementary Data 1 and its manifest.</span>
+
+<span class="sd">    Run once by hand after retrieving ``XLS_URL``; idempotent by sha256 (an existing file</span>
+<span class="sd">    with the recorded hash is left alone, a differing one raises). The Springer ESM CDN is</span>
+<span class="sd">    directly scriptable, so the recorded retriever re-downloads these exact bytes.</span>
+<span class="sd">    """</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
+    <span class="n">digest</span> <span class="o">=</span> <span class="n">_sha256</span><span class="p">(</span><span class="n">xls_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">digest</span> <span class="o">!=</span> <span class="n">XLS_SHA256</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">xls_path</span><span class="si">}</span><span class="s2"> sha256 </span><span class="si">{</span><span class="n">digest</span><span class="si">}</span><span class="s2"> != expected </span><span class="si">{</span><span class="n">XLS_SHA256</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">dest</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="n">XLS_REL</span>
+    <span class="n">dest</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dest</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">_sha256</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span> <span class="o">!=</span> <span class="n">XLS_SHA256</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dest</span><span class="si">}</span><span class="s2"> exists with a different sha256; refusing"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy2</span><span class="p">(</span><span class="n">xls_path</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+    <span class="n">manifest</span> <span class="o">=</span> <span class="n">Manifest</span><span class="p">(</span>
+        <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+        <span class="n">doi</span><span class="o">=</span><span class="n">DOI</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"Quantitative analysis of fitness and genetic interactions in yeast on a "</span>
+            <span class="s2">"genome scale"</span>
+        <span class="p">),</span>
+        <span class="n">files</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">ArtifactRecord</span><span class="p">(</span>
+                <span class="n">path</span><span class="o">=</span><span class="n">XLS_REL</span><span class="p">,</span>
+                <span class="n">role</span><span class="o">=</span><span class="n">ROLE_RAW_DATA</span><span class="p">,</span>
+                <span class="nb">bytes</span><span class="o">=</span><span class="n">dest</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span><span class="p">,</span>
+                <span class="n">sha256</span><span class="o">=</span><span class="n">XLS_SHA256</span><span class="p">,</span>
+                <span class="n">source</span><span class="o">=</span><span class="n">XLS_URL</span><span class="p">,</span>
+                <span class="n">retrieval</span><span class="o">=</span><span class="n">RetrievalRecord</span><span class="p">(</span>
+                    <span class="n">method</span><span class="o">=</span><span class="n">RetrievalMethod</span><span class="o">.</span><span class="n">springer_esm</span><span class="p">,</span>
+                    <span class="n">source_url</span><span class="o">=</span><span class="n">XLS_URL</span><span class="p">,</span>
+                    <span class="n">retriever</span><span class="o">=</span><span class="s2">"torchcell.literature.retrieve.springer_esm"</span><span class="p">,</span>
+                    <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">"url"</span><span class="p">:</span> <span class="n">XLS_URL</span><span class="p">},</span>
+                    <span class="n">sha256</span><span class="o">=</span><span class="n">XLS_SHA256</span><span class="p">,</span>
+                    <span class="n">retrieved_at</span><span class="o">=</span><span class="n">retrieved_at</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">],</span>
+        <span class="n">si_data_sources</span><span class="o">=</span><span class="p">[</span><span class="n">XLS_URL</span><span class="p">],</span>
+        <span class="n">si_expected</span><span class="o">=</span><span class="p">[</span><span class="s2">"Supplementary Data 1 (single-mutant fitness)"</span><span class="p">],</span>
+        <span class="n">provenance_complete</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">created_at</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+    <span class="p">)</span>
+    <span class="p">(</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"manifest.json"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">root</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">load_manifest</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Manifest</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Read the raw mirror's ``manifest.json``."""</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"manifest.json"</span>
+    <span class="k">return</span> <span class="n">Manifest</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">manifest_sha256</span><span class="p">(</span><span class="n">manifest</span><span class="p">:</span> <span class="n">Manifest</span><span class="p">,</span> <span class="n">relpath</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The recorded sha256 of one mirror file."""</span>
+    <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">files</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">path</span> <span class="o">==</span> <span class="n">relpath</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">record</span><span class="o">.</span><span class="n">sha256</span>
+    <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">relpath</span><span class="si">}</span><span class="s2"> is not in the raw-mirror manifest"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="SmfBaryshnikova2010Dataset">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.baryshnikova2010.SmfBaryshnikova2010Dataset.html#torchcell.datasets.scerevisiae.baryshnikova2010.SmfBaryshnikova2010Dataset">[docs]</a>
+<span class="nd">@register_dataset</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SmfBaryshnikova2010Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Baryshnikova 2010 genome-scale single-mutant fitness dataset (6023 alleles)."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/smf_baryshnikova2010"</span><span class="p">,</span>
+        <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset; a genome is REQUIRED to resolve ORFs to current R64."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Experiment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Experiment schema class produced by this dataset."""</span>
+        <span class="k">return</span> <span class="n">FitnessExperiment</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reference_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">ExperimentReference</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Experiment-reference schema class produced by this dataset."""</span>
+        <span class="k">return</span> <span class="n">FitnessExperimentReference</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The publisher's Supplementary Data 1 workbook."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">XLS_NAME</span><span class="p">]</span>
+
+<div class="viewcode-block" id="SmfBaryshnikova2010Dataset.download">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.baryshnikova2010.SmfBaryshnikova2010Dataset.html#torchcell.datasets.scerevisiae.baryshnikova2010.SmfBaryshnikova2010Dataset.download">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Symlink the manifest-listed mirror file into ``raw/`` and verify its sha256."""</span>
+        <span class="n">data_root</span> <span class="o">=</span> <span class="n">_data_root</span><span class="p">()</span>
+        <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="n">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span> <span class="o">/</span> <span class="n">XLS_REL</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">src</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"required raw artifact missing from mirror: </span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">expected</span> <span class="o">=</span> <span class="n">manifest_sha256</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">XLS_REL</span><span class="p">)</span>
+        <span class="n">got</span> <span class="o">=</span> <span class="n">_sha256</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">got</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">XLS_NAME</span><span class="si">}</span><span class="s2"> sha256 mismatch: got </span><span class="si">{</span><span class="n">got</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">dest</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">XLS_NAME</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Baryshnikova 2010 raw file linked into </span><span class="si">%s</span><span class="s2"> (sha256 </span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">got</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolver</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Build an ORF -&gt; current-R64-systematic-name resolver from the genome."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">"SmfBaryshnikova2010Dataset requires a genome for ORF resolution; "</span>
+                <span class="s2">"inject SCerevisiaeGenome(...)"</span>
+            <span class="p">)</span>
+        <span class="n">genome</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">gene_attribute_table</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"ID"</span><span class="p">])</span>
+        <span class="n">alias_map</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">alias_to_systematic</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gene</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">gene</span>
+            <span class="n">candidates</span> <span class="o">=</span> <span class="n">alias_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gene</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="k">if</span> <span class="n">candidates</span> <span class="ow">and</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="n">resolve</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_read_smf</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Read + validate Supplementary Data 1 (3 columns, no header, composition check)."""</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">XLS_NAME</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span>
+            <span class="n">path</span><span class="p">,</span> <span class="n">sheet_name</span><span class="o">=</span><span class="n">XLS_SHEET</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">"allele"</span><span class="p">,</span> <span class="s2">"fitness"</span><span class="p">,</span> <span class="s2">"se"</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">!=</span> <span class="n">_EXPECTED_ROWS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"SMF row-count self-checksum failed: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">}</span><span class="s2"> != </span><span class="si">{</span><span class="n">_EXPECTED_ROWS</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">kinds</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"allele"</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">_parse_allele</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="p">))[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">comp</span> <span class="o">=</span> <span class="n">kinds</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">comp</span> <span class="o">!=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">_SV_COMPOSITION</span><span class="o">.</span><span class="n">value</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"SMF composition self-checksum failed: </span><span class="si">{</span><span class="n">comp</span><span class="si">}</span><span class="s2"> != </span><span class="si">{</span><span class="n">_SV_COMPOSITION</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">df</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_perturbation</span><span class="p">(</span>
+        <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">strain_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SgaKanMxDeletionPerturbation</span> <span class="o">|</span> <span class="n">SgaDampPerturbation</span> <span class="o">|</span> <span class="n">SgaTsAllelePerturbation</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build the SGA perturbation for one allele, preserving the raw id on strain_id."""</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"deletion"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
+                <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span> <span class="n">strain_id</span><span class="o">=</span><span class="n">strain_id</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"damp"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">SgaDampPerturbation</span><span class="p">(</span>
+                <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span> <span class="n">strain_id</span><span class="o">=</span><span class="n">strain_id</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">SgaTsAllelePerturbation</span><span class="p">(</span>
+            <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span> <span class="n">strain_id</span><span class="o">=</span><span class="n">strain_id</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="SmfBaryshnikova2010Dataset.environment">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.baryshnikova2010.SmfBaryshnikova2010Dataset.html#torchcell.datasets.scerevisiae.baryshnikova2010.SmfBaryshnikova2010Dataset.environment">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">environment</span><span class="p">(</span><span class="n">kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Environment</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The SGA final-selection plate for one allele kind (30 C, or 26 C for TS)."""</span>
+        <span class="k">return</span> <span class="n">Environment</span><span class="p">(</span>
+            <span class="n">media</span><span class="o">=</span><span class="n">SGA_DM_SELECTION</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">_TEMPERATURE_C</span><span class="p">[</span><span class="n">kind</span><span class="p">])</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_n_samples</span><span class="p">(</span><span class="n">kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""80 released control screens on the array side; nothing released on the query side."""</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="n">_ARRAY_SIDE_KIND</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">_SV_N_SAMPLES_ARRAY</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_phenotype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fitness</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">se</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FitnessPhenotype</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The measured fitness, with the query-side replicate count declared as a gap."""</span>
+        <span class="n">n_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_samples</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">FitnessPhenotype</span><span class="p">(</span>
+            <span class="n">fitness</span><span class="o">=</span><span class="n">fitness</span><span class="p">,</span>
+            <span class="n">fitness_uncertainty</span><span class="o">=</span><span class="n">se</span><span class="p">,</span>
+            <span class="n">fitness_uncertainty_type</span><span class="o">=</span><span class="n">UncertaintyType</span><span class="p">(</span><span class="n">_SV_UNCERTAINTY_TYPE</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+            <span class="n">n_samples</span><span class="o">=</span><span class="n">n_samples</span><span class="p">,</span>
+            <span class="n">sample_unit</span><span class="o">=</span><span class="n">SampleUnit</span><span class="o">.</span><span class="n">screen</span><span class="p">,</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[]</span> <span class="k">if</span> <span class="n">n_samples</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[</span><span class="n">_N_SAMPLES_GAP</span><span class="p">],</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FitnessExperimentReference</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The wild-type reference: fitness 1.0 by the mode-normalization convention."""</span>
+        <span class="k">return</span> <span class="n">FitnessExperimentReference</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="n">ReferenceGenome</span><span class="p">(</span>
+                <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
+                <span class="n">strain</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">_SV_BACKGROUND_STRAIN</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">environment_reference</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="p">(</span><span class="n">kind</span><span class="p">),</span>
+            <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">FitnessPhenotype</span><span class="p">(</span>
+                <span class="n">fitness</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">_SV_REFERENCE_FITNESS</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+                <span class="n">provenance_gaps</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">_REFERENCE_GAPS</span><span class="p">),</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="SmfBaryshnikova2010Dataset.process">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.baryshnikova2010.SmfBaryshnikova2010Dataset.html#torchcell.datasets.scerevisiae.baryshnikova2010.SmfBaryshnikova2010Dataset.process">[docs]</a>
+    <span class="nd">@post_process</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Convert each SMF row into a fitness record; write LMDB."""</span>
+        <span class="n">resolve</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="p">()</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_smf</span><span class="p">()</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># A few raw allele ids repeat in the source with DIFFERENT fitness -- YDL227C (HO,</span>
+        <span class="c1"># the neutral SGA marker locus) appears twice (1.000155 vs 1.031582). Both source</span>
+        <span class="c1"># rows are kept as distinct records; a positional suffix on strain_id</span>
+        <span class="c1"># disambiguates them so the L1 (strain, environment) signature stays unique (never</span>
+        <span class="c1"># guess-merge two measurements).</span>
+        <span class="n">dup_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"allele"</span><span class="p">][</span><span class="n">df</span><span class="p">[</span><span class="s2">"allele"</span><span class="p">]</span><span class="o">.</span><span class="n">duplicated</span><span class="p">(</span><span class="n">keep</span><span class="o">=</span><span class="kc">False</span><span class="p">)]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">))</span>
+        <span class="n">occ</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">environments</span> <span class="o">=</span> <span class="p">{</span><span class="n">kind</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span> <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">_TEMPERATURE_C</span><span class="p">}</span>
+        <span class="n">references</span> <span class="o">=</span> <span class="p">{</span><span class="n">kind</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span> <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">_TEMPERATURE_C</span><span class="p">}</span>
+        <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span><span class="n">doi</span><span class="o">=</span><span class="n">DOI</span><span class="p">,</span> <span class="n">doi_url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"https://doi.org/</span><span class="si">{</span><span class="n">DOI</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="n">dropped</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">env</span><span class="p">,</span> <span class="n">interned_env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_write_lmdb</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">))</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">,</span> <span class="n">interned_env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"baryshnikova2010"</span><span class="p">):</span>
+                <span class="n">raw_allele</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"allele"</span><span class="p">])</span>
+                <span class="n">orf_token</span><span class="p">,</span> <span class="n">kind</span> <span class="o">=</span> <span class="n">_parse_allele</span><span class="p">(</span><span class="n">raw_allele</span><span class="p">)</span>
+                <span class="n">orf</span> <span class="o">=</span> <span class="n">resolve</span><span class="p">(</span><span class="n">orf_token</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">orf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">dropped</span><span class="p">[</span><span class="n">raw_allele</span><span class="p">]</span> <span class="o">=</span> <span class="n">kind</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">raw_allele</span> <span class="ow">in</span> <span class="n">dup_ids</span><span class="p">:</span>
+                    <span class="n">occ</span><span class="p">[</span><span class="n">raw_allele</span><span class="p">]</span> <span class="o">=</span> <span class="n">occ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">raw_allele</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+                    <span class="n">strain_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">raw_allele</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">occ</span><span class="p">[</span><span class="n">raw_allele</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">strain_id</span> <span class="o">=</span> <span class="n">raw_allele</span>
+                <span class="n">experiment</span> <span class="o">=</span> <span class="n">FitnessExperiment</span><span class="p">(</span>
+                    <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">genotype</span><span class="o">=</span><span class="n">Genotype</span><span class="p">(</span>
+                        <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_perturbation</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">orf</span><span class="p">,</span> <span class="n">strain_id</span><span class="p">)]</span>
+                    <span class="p">),</span>
+                    <span class="n">environment</span><span class="o">=</span><span class="n">environments</span><span class="p">[</span><span class="n">kind</span><span class="p">],</span>
+                    <span class="n">phenotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_phenotype</span><span class="p">(</span>
+                        <span class="n">kind</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"fitness"</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"se"</span><span class="p">])</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_intern_record</span><span class="p">(</span>
+                        <span class="n">experiment</span><span class="p">,</span> <span class="n">references</span><span class="p">[</span><span class="n">kind</span><span class="p">],</span> <span class="n">publication</span><span class="p">,</span> <span class="n">itxn</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">interned_env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">dropped</span> <span class="o">!=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">_UNRESOLVABLE</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">"unresolvable allele set drifted from the frozen release constant: "</span>
+                <span class="sa">f</span><span class="s2">"unexpected </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">dropped</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">set</span><span class="p">(</span><span class="n">_UNRESOLVABLE</span><span class="p">))</span><span class="si">}</span><span class="s2">, "</span>
+                <span class="sa">f</span><span class="s2">"missing </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">_UNRESOLVABLE</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">set</span><span class="p">(</span><span class="n">dropped</span><span class="p">))</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="o">!=</span> <span class="n">EXPECTED_RECORDS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"wrote </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2"> records, expected </span><span class="si">{</span><span class="n">EXPECTED_RECORDS</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_records.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"rule"</span><span class="p">:</span> <span class="n">DROP_RULE</span><span class="p">,</span>
+                    <span class="s2">"n_raw_rows"</span><span class="p">:</span> <span class="n">_EXPECTED_ROWS</span><span class="p">,</span>
+                    <span class="s2">"n_dropped"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">dropped</span><span class="p">),</span>
+                    <span class="s2">"n_kept"</span><span class="p">:</span> <span class="n">idx</span><span class="p">,</span>
+                    <span class="s2">"dropped_by_kind"</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="n">kind</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dropped</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="n">kind</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">dropped</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+                    <span class="p">},</span>
+                    <span class="s2">"dropped"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">dropped</span><span class="o">.</span><span class="n">items</span><span class="p">())),</span>
+                <span class="p">},</span>
+                <span class="n">fh</span><span class="p">,</span>
+                <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Baryshnikova2010 fitness experiments to LMDB (</span><span class="si">%d</span><span class="s2"> dropped: </span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span>
+            <span class="n">idx</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">dropped</span><span class="p">),</span>
+            <span class="nb">sorted</span><span class="p">(</span><span class="n">dropped</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SmfBaryshnikova2010Dataset.preprocess_raw">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.baryshnikova2010.SmfBaryshnikova2010Dataset.html#torchcell.datasets.scerevisiae.baryshnikova2010.SmfBaryshnikova2010Dataset.preprocess_raw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Preprocessing is handled inside process() for this dataset."""</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="SmfBaryshnikova2010Dataset.create_experiment">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.baryshnikova2010.SmfBaryshnikova2010Dataset.html#torchcell.datasets.scerevisiae.baryshnikova2010.SmfBaryshnikova2010Dataset.create_experiment">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Experiment construction is handled inline in process() for this dataset."""</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build/load the dataset for interactive debugging."""</span>
+    <span class="n">data_root</span> <span class="o">=</span> <span class="n">_data_root</span><span class="p">()</span>
+    <span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
+        <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
+        <span class="n">go_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/go"</span><span class="p">),</span>
+        <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/torchcell/smf_baryshnikova2010"</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">SmfBaryshnikova2010Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"len = </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

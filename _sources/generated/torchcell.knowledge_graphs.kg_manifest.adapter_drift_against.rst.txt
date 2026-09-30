@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.adapter\_drift\_against
+================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autofunction:: adapter_drift_against

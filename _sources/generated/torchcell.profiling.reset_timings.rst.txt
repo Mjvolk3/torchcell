@@ -1,0 +1,6 @@
+﻿torchcell.profiling.reset\_timings
+==================================
+
+.. currentmodule:: torchcell.profiling
+
+.. autofunction:: reset_timings

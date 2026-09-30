@@ -1,0 +1,531 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.metabolism &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/modules/metabolism.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="torchcell.metabolism.betaxanthin.build_betaxanthin_pathway" href="../generated/torchcell.metabolism.betaxanthin.build_betaxanthin_pathway.html" />
+    <link rel="prev" title="torchcell.losses.point_dist_graph_reg.PointDistGraphReg" href="../generated/torchcell.losses.point_dist_graph_reg.PointDistGraphReg.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="losses.html">torchcell.losses</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">torchcell.metabolism</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#betaxanthin"><code class="docutils literal notranslate"><span class="pre">betaxanthin</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#constraints"><code class="docutils literal notranslate"><span class="pre">constraints</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enzyme-kinetics"><code class="docutils literal notranslate"><span class="pre">enzyme_kinetics</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#flux-layer"><code class="docutils literal notranslate"><span class="pre">flux_layer</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#media"><code class="docutils literal notranslate"><span class="pre">media</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#parameters"><code class="docutils literal notranslate"><span class="pre">parameters</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pathway"><code class="docutils literal notranslate"><span class="pre">pathway</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#yeast-gem"><code class="docutils literal notranslate"><span class="pre">yeast_GEM</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">torchcell.metabolism</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/modules/metabolism.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-torchcell.metabolism">
+<span id="torchcell-metabolism"></span><h1>torchcell.metabolism<a class="headerlink" href="#module-torchcell.metabolism" title="Link to this heading"></a></h1>
+<p>Genome-scale metabolic modeling. <code class="docutils literal notranslate"><span class="pre">yeast_GEM</span></code> wraps the yeast-GEM model (through cobra) and derives its reaction and metabolite graphs; <code class="docutils literal notranslate"><span class="pre">constraints</span></code> turns a genome-scale model into constraint tensors; <code class="docutils literal notranslate"><span class="pre">flux_layer</span></code> is a differentiable, enzyme-constrained flux layer; <code class="docutils literal notranslate"><span class="pre">media</span></code> maps an ontology <code class="docutils literal notranslate"><span class="pre">Media</span></code> object onto exchange bounds; <code class="docutils literal notranslate"><span class="pre">pathway</span></code> adds a heterologous pathway to a model as a typed perturbation; and <code class="docutils literal notranslate"><span class="pre">enzyme_kinetics</span></code> and <code class="docutils literal notranslate"><span class="pre">parameters</span></code> hold kinetic parameters with their provenance. Nothing is re-exported at the package level, because <code class="docutils literal notranslate"><span class="pre">yeast_GEM</span></code> imports cobra and downloads the model on first use; import the submodule you need.</p>
+<nav class="contents local" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#betaxanthin" id="id14"><code class="docutils literal notranslate"><span class="pre">betaxanthin</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#functions" id="id15">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#constraints" id="id16"><code class="docutils literal notranslate"><span class="pre">constraints</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#classes" id="id17">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id1" id="id18">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#enzyme-kinetics" id="id19"><code class="docutils literal notranslate"><span class="pre">enzyme_kinetics</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id2" id="id20">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id3" id="id21">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#flux-layer" id="id22"><code class="docutils literal notranslate"><span class="pre">flux_layer</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id4" id="id23">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id5" id="id24">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#media" id="id25"><code class="docutils literal notranslate"><span class="pre">media</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id6" id="id26">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id7" id="id27">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#parameters" id="id28"><code class="docutils literal notranslate"><span class="pre">parameters</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id8" id="id29">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id9" id="id30">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#pathway" id="id31"><code class="docutils literal notranslate"><span class="pre">pathway</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id10" id="id32">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id11" id="id33">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#yeast-gem" id="id34"><code class="docutils literal notranslate"><span class="pre">yeast_GEM</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id12" id="id35">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id13" id="id36">Functions</a></p></li>
+</ul>
+</li>
+</ul>
+</nav>
+<section id="betaxanthin">
+<h2><a class="toc-backref" href="#id14" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">betaxanthin</span></code></a><a class="headerlink" href="#betaxanthin" title="Link to this heading"></a></h2>
+<p>The betaxanthin cassette Cachera transferred into the yeast knockout collection.</p>
+<section id="functions">
+<h3><a class="toc-backref" href="#id15" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.betaxanthin.build_betaxanthin_pathway.html#torchcell.metabolism.betaxanthin.build_betaxanthin_pathway" title="torchcell.metabolism.betaxanthin.build_betaxanthin_pathway"><code class="xref py py-obj docutils literal notranslate"><span class="pre">betaxanthin.build_betaxanthin_pathway</span></code></a></p></td>
+<td><p>Build the cassette as a pathway object against one genome-scale model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.betaxanthin.betaxanthin_demand_ids.html#torchcell.metabolism.betaxanthin.betaxanthin_demand_ids" title="torchcell.metabolism.betaxanthin.betaxanthin_demand_ids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">betaxanthin.betaxanthin_demand_ids</span></code></a></p></td>
+<td><p>Demand reactions whose flux sums to the measured yellow pigment.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="constraints">
+<h2><a class="toc-backref" href="#id16" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">constraints</span></code></a><a class="headerlink" href="#constraints" title="Link to this heading"></a></h2>
+<p>Genome-scale model -&gt; constraint tensors, as pure functions of a GEM.</p>
+<section id="classes">
+<h3><a class="toc-backref" href="#id17" role="doc-backlink">Classes</a><a class="headerlink" href="#classes" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.constraints.ThermoMode.html#torchcell.metabolism.constraints.ThermoMode" title="torchcell.metabolism.constraints.ThermoMode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">constraints.ThermoMode</span></code></a></p></td>
+<td><p>How the flux layer forms its reaction potential.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.constraints.TableCoverage.html#torchcell.metabolism.constraints.TableCoverage" title="torchcell.metabolism.constraints.TableCoverage"><code class="xref py py-obj docutils literal notranslate"><span class="pre">constraints.TableCoverage</span></code></a></p></td>
+<td><p>How much of a parameter table is real, stated rather than assumed.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.constraints.ThermoTable.html#torchcell.metabolism.constraints.ThermoTable" title="torchcell.metabolism.constraints.ThermoTable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">constraints.ThermoTable</span></code></a></p></td>
+<td><p>Standard transformed Gibbs energies for one GEM, with provenance.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.constraints.CatalyticUnits.html#torchcell.metabolism.constraints.CatalyticUnits" title="torchcell.metabolism.constraints.CatalyticUnits"><code class="xref py py-obj docutils literal notranslate"><span class="pre">constraints.CatalyticUnits</span></code></a></p></td>
+<td><p>The GPR, flattened into AND-terms, as index arrays rather than strings.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.constraints.GemTensors.html#torchcell.metabolism.constraints.GemTensors" title="torchcell.metabolism.constraints.GemTensors"><code class="xref py py-obj docutils literal notranslate"><span class="pre">constraints.GemTensors</span></code></a></p></td>
+<td><p>A genome-scale model as tensors: stoichiometry, bounds, GPR, thermodynamics.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id1">
+<h3><a class="toc-backref" href="#id18" role="doc-backlink">Functions</a><a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.constraints.load_thermo_table.html#torchcell.metabolism.constraints.load_thermo_table" title="torchcell.metabolism.constraints.load_thermo_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">constraints.load_thermo_table</span></code></a></p></td>
+<td><p>Load <span class="math notranslate nohighlight">\(\Delta_f G'^\circ\)</span> / <span class="math notranslate nohighlight">\(\Delta_r G'^\circ\)</span> from a GEM checkout.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.constraints.parse_catalytic_units.html#torchcell.metabolism.constraints.parse_catalytic_units" title="torchcell.metabolism.constraints.parse_catalytic_units"><code class="xref py py-obj docutils literal notranslate"><span class="pre">constraints.parse_catalytic_units</span></code></a></p></td>
+<td><p>Flatten every GPR into AND-terms indexed against <code class="docutils literal notranslate"><span class="pre">rxn_ids</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.constraints.independent_balance_rows.html#torchcell.metabolism.constraints.independent_balance_rows" title="torchcell.metabolism.constraints.independent_balance_rows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">constraints.independent_balance_rows</span></code></a></p></td>
+<td><p>Pick a maximal set of linearly independent rows of <code class="docutils literal notranslate"><span class="pre">S</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.constraints.null_space_basis.html#torchcell.metabolism.constraints.null_space_basis" title="torchcell.metabolism.constraints.null_space_basis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">constraints.null_space_basis</span></code></a></p></td>
+<td><p>An orthonormal basis <span class="math notranslate nohighlight">\(\mathcal{N}\)</span> of <span class="math notranslate nohighlight">\(\ker S\)</span>, so <span class="math notranslate nohighlight">\(S\mathcal{N}=0\)</span>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.constraints.build_gem_tensors.html#torchcell.metabolism.constraints.build_gem_tensors" title="torchcell.metabolism.constraints.build_gem_tensors"><code class="xref py py-obj docutils literal notranslate"><span class="pre">constraints.build_gem_tensors</span></code></a></p></td>
+<td><p>Extract every constraint tensor from a cobra model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.constraints.compare_reaction_delta_g.html#torchcell.metabolism.constraints.compare_reaction_delta_g" title="torchcell.metabolism.constraints.compare_reaction_delta_g"><code class="xref py py-obj docutils literal notranslate"><span class="pre">constraints.compare_reaction_delta_g</span></code></a></p></td>
+<td><p>Check the recomputed <span class="math notranslate nohighlight">\(\Delta_r G'^\circ\)</span> against the shipped column.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="enzyme-kinetics">
+<h2><a class="toc-backref" href="#id19" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">enzyme_kinetics</span></code></a><a class="headerlink" href="#enzyme-kinetics" title="Link to this heading"></a></h2>
+<p>Enzyme kinetic parameters (k_cat, K_M) with provenance, from the Open Enzyme Database.</p>
+<section id="id2">
+<h3><a class="toc-backref" href="#id20" role="doc-backlink">Classes</a><a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.enzyme_kinetics.KineticKind.html#torchcell.metabolism.enzyme_kinetics.KineticKind" title="torchcell.metabolism.enzyme_kinetics.KineticKind"><code class="xref py py-obj docutils literal notranslate"><span class="pre">enzyme_kinetics.KineticKind</span></code></a></p></td>
+<td><p>Which constant is being resolved.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.enzyme_kinetics.KineticSource.html#torchcell.metabolism.enzyme_kinetics.KineticSource" title="torchcell.metabolism.enzyme_kinetics.KineticSource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">enzyme_kinetics.KineticSource</span></code></a></p></td>
+<td><p>Where a value came from.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.enzyme_kinetics.KineticRetrieval.html#torchcell.metabolism.enzyme_kinetics.KineticRetrieval" title="torchcell.metabolism.enzyme_kinetics.KineticRetrieval"><code class="xref py py-obj docutils literal notranslate"><span class="pre">enzyme_kinetics.KineticRetrieval</span></code></a></p></td>
+<td><p>Provenance for one retrieved OED slice.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.enzyme_kinetics.OedKineticRecord.html#torchcell.metabolism.enzyme_kinetics.OedKineticRecord" title="torchcell.metabolism.enzyme_kinetics.OedKineticRecord"><code class="xref py py-obj docutils literal notranslate"><span class="pre">enzyme_kinetics.OedKineticRecord</span></code></a></p></td>
+<td><p>One OED row, kept verbatim.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.enzyme_kinetics.ResolvedKineticParameter.html#torchcell.metabolism.enzyme_kinetics.ResolvedKineticParameter" title="torchcell.metabolism.enzyme_kinetics.ResolvedKineticParameter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">enzyme_kinetics.ResolvedKineticParameter</span></code></a></p></td>
+<td><p>A single parameter chosen for a (protein, substrate) pair, with its audit trail.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id3">
+<h3><a class="toc-backref" href="#id21" role="doc-backlink">Functions</a><a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.enzyme_kinetics.fetch_oed_records.html#torchcell.metabolism.enzyme_kinetics.fetch_oed_records" title="torchcell.metabolism.enzyme_kinetics.fetch_oed_records"><code class="xref py py-obj docutils literal notranslate"><span class="pre">enzyme_kinetics.fetch_oed_records</span></code></a></p></td>
+<td><p>Page the OED <code class="docutils literal notranslate"><span class="pre">/data</span></code> endpoint for one organism.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.enzyme_kinetics.mirror_oed_slice.html#torchcell.metabolism.enzyme_kinetics.mirror_oed_slice" title="torchcell.metabolism.enzyme_kinetics.mirror_oed_slice"><code class="xref py py-obj docutils literal notranslate"><span class="pre">enzyme_kinetics.mirror_oed_slice</span></code></a></p></td>
+<td><p>Fetch an organism slice, write it with a sha256-pinned provenance record.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.enzyme_kinetics.load_mirrored_records.html#torchcell.metabolism.enzyme_kinetics.load_mirrored_records" title="torchcell.metabolism.enzyme_kinetics.load_mirrored_records"><code class="xref py py-obj docutils literal notranslate"><span class="pre">enzyme_kinetics.load_mirrored_records</span></code></a></p></td>
+<td><p>Read the mirror and VERIFY its sha256 before returning anything.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.enzyme_kinetics.resolve_parameter.html#torchcell.metabolism.enzyme_kinetics.resolve_parameter" title="torchcell.metabolism.enzyme_kinetics.resolve_parameter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">enzyme_kinetics.resolve_parameter</span></code></a></p></td>
+<td><p>Choose one value from many measurements, by the documented cascade.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.enzyme_kinetics.index_by_uniprot.html#torchcell.metabolism.enzyme_kinetics.index_by_uniprot" title="torchcell.metabolism.enzyme_kinetics.index_by_uniprot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">enzyme_kinetics.index_by_uniprot</span></code></a></p></td>
+<td><p>Group rows by UniProt accession, the key the GPR maps yeast genes onto.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="flux-layer">
+<h2><a class="toc-backref" href="#id22" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">flux_layer</span></code></a><a class="headerlink" href="#flux-layer" title="Link to this heading"></a></h2>
+<p>A differentiable, enzyme-constrained, thermodynamically-feasible flux layer.</p>
+<section id="id4">
+<h3><a class="toc-backref" href="#id23" role="doc-backlink">Classes</a><a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.flux_layer.CompartmentParameters.html#torchcell.metabolism.flux_layer.CompartmentParameters" title="torchcell.metabolism.flux_layer.CompartmentParameters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">flux_layer.CompartmentParameters</span></code></a></p></td>
+<td><p>pH, ionic strength and membrane potential per compartment.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.flux_layer.FluxLayerConfig.html#torchcell.metabolism.flux_layer.FluxLayerConfig" title="torchcell.metabolism.flux_layer.FluxLayerConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">flux_layer.FluxLayerConfig</span></code></a></p></td>
+<td><p>Every switch the flux layer has, in one place so a run records what it ran.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.flux_layer.FluxLayer.html#torchcell.metabolism.flux_layer.FluxLayer" title="torchcell.metabolism.flux_layer.FluxLayer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">flux_layer.FluxLayer</span></code></a></p></td>
+<td><p>Gene tokens in, a feasible flux vector and its feasibility residuals out.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id5">
+<h3><a class="toc-backref" href="#id24" role="doc-backlink">Functions</a><a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.flux_layer.gene_index_map.html#torchcell.metabolism.flux_layer.gene_index_map" title="torchcell.metabolism.flux_layer.gene_index_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">flux_layer.gene_index_map</span></code></a></p></td>
+<td><p>Map GEM gene positions onto the model's gene-token positions.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="media">
+<h2><a class="toc-backref" href="#id25" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">media</span></code></a><a class="headerlink" href="#media" title="Link to this heading"></a></h2>
+<p>Map an ontology <code class="docutils literal notranslate"><span class="pre">Media</span></code> object onto genome-scale-model exchange bounds.</p>
+<section id="id6">
+<h3><a class="toc-backref" href="#id26" role="doc-backlink">Classes</a><a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.media.UptakePolicy.html#torchcell.metabolism.media.UptakePolicy" title="torchcell.metabolism.media.UptakePolicy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">media.UptakePolicy</span></code></a></p></td>
+<td><p>Magnitudes assigned to an uptake bound, by the component's functional role.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.media.ExchangeBound.html#torchcell.metabolism.media.ExchangeBound" title="torchcell.metabolism.media.ExchangeBound"><code class="xref py py-obj docutils literal notranslate"><span class="pre">media.ExchangeBound</span></code></a></p></td>
+<td><p>One exchange reaction opened to an uptake magnitude, with its provenance.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.media.ComponentResolution.html#torchcell.metabolism.media.ComponentResolution" title="torchcell.metabolism.media.ComponentResolution"><code class="xref py py-obj docutils literal notranslate"><span class="pre">media.ComponentResolution</span></code></a></p></td>
+<td><p>What became of one ontology component on the way to a bound vector.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.media.MediaBounds.html#torchcell.metabolism.media.MediaBounds" title="torchcell.metabolism.media.MediaBounds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">media.MediaBounds</span></code></a></p></td>
+<td><p>A medium expressed as exchange bounds for one specific model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.media.MediaBoundsDiff.html#torchcell.metabolism.media.MediaBoundsDiff" title="torchcell.metabolism.media.MediaBoundsDiff"><code class="xref py py-obj docutils literal notranslate"><span class="pre">media.MediaBoundsDiff</span></code></a></p></td>
+<td><p>Exchange-level difference between two bound vectors on the same model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.media.ExchangeIndex.html#torchcell.metabolism.media.ExchangeIndex" title="torchcell.metabolism.media.ExchangeIndex"><code class="xref py py-obj docutils literal notranslate"><span class="pre">media.ExchangeIndex</span></code></a></p></td>
+<td><p>Lookup tables built once from a model's exchange reactions.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id7">
+<h3><a class="toc-backref" href="#id27" role="doc-backlink">Functions</a><a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.media.build_exchange_index.html#torchcell.metabolism.media.build_exchange_index" title="torchcell.metabolism.media.build_exchange_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">media.build_exchange_index</span></code></a></p></td>
+<td><p>Index a model's exchange reactions by annotation identifier and by name.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.media.resolve_component.html#torchcell.metabolism.media.resolve_component" title="torchcell.metabolism.media.resolve_component"><code class="xref py py-obj docutils literal notranslate"><span class="pre">media.resolve_component</span></code></a></p></td>
+<td><p>Place one ontology component on zero or more exchange reactions.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.media.media_to_bounds.html#torchcell.metabolism.media.media_to_bounds" title="torchcell.metabolism.media.media_to_bounds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">media.media_to_bounds</span></code></a></p></td>
+<td><p>Map an ontology <code class="docutils literal notranslate"><span class="pre">Media</span></code> onto exchange bounds for <code class="docutils literal notranslate"><span class="pre">model</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.media.diff_bounds.html#torchcell.metabolism.media.diff_bounds" title="torchcell.metabolism.media.diff_bounds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">media.diff_bounds</span></code></a></p></td>
+<td><p>Exchange-level difference between two bound vectors.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="parameters">
+<h2><a class="toc-backref" href="#id28" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">parameters</span></code></a><a class="headerlink" href="#parameters" title="Link to this heading"></a></h2>
+<p>Kinetic and physical parameters for a GEM, database-first and provenance-tagged.</p>
+<section id="id8">
+<h3><a class="toc-backref" href="#id29" role="doc-backlink">Classes</a><a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.parameters.ParameterProvenance.html#torchcell.metabolism.parameters.ParameterProvenance" title="torchcell.metabolism.parameters.ParameterProvenance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters.ParameterProvenance</span></code></a></p></td>
+<td><p>Where one parameter value came from.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.parameters.KcatPredictor.html#torchcell.metabolism.parameters.KcatPredictor" title="torchcell.metabolism.parameters.KcatPredictor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters.KcatPredictor</span></code></a></p></td>
+<td><p>A sequence-based turnover predictor.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.parameters.PredictorRegistry.html#torchcell.metabolism.parameters.PredictorRegistry" title="torchcell.metabolism.parameters.PredictorRegistry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters.PredictorRegistry</span></code></a></p></td>
+<td><p>The predictors a run is allowed to use, in priority order.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.parameters.ParameterTable.html#torchcell.metabolism.parameters.ParameterTable" title="torchcell.metabolism.parameters.ParameterTable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters.ParameterTable</span></code></a></p></td>
+<td><p>One resolved parameter per entity, with a per-entity provenance tag.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id9">
+<h3><a class="toc-backref" href="#id30" role="doc-backlink">Functions</a><a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.parameters.load_swissprot.html#torchcell.metabolism.parameters.load_swissprot" title="torchcell.metabolism.parameters.load_swissprot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters.load_swissprot</span></code></a></p></td>
+<td><p>Read <code class="docutils literal notranslate"><span class="pre">data/databases/swissprot.tsv</span></code>, keyed by systematic ORF name.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.parameters.molecular_weight_table.html#torchcell.metabolism.parameters.molecular_weight_table" title="torchcell.metabolism.parameters.molecular_weight_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters.molecular_weight_table</span></code></a></p></td>
+<td><p>Per-gene molecular weight in kDa, from SwissProt.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.parameters.uniprot_for_genes.html#torchcell.metabolism.parameters.uniprot_for_genes" title="torchcell.metabolism.parameters.uniprot_for_genes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters.uniprot_for_genes</span></code></a></p></td>
+<td><p>Systematic ORF name -&gt; UniProt accession, the join key into any kinetics database.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.parameters.resolve_kcat_table.html#torchcell.metabolism.parameters.resolve_kcat_table" title="torchcell.metabolism.parameters.resolve_kcat_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters.resolve_kcat_table</span></code></a></p></td>
+<td><p>One <span class="math notranslate nohighlight">\(k_{cat}\)</span> per catalytic unit, database-first.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.parameters.load_measured_concentrations.html#torchcell.metabolism.parameters.load_measured_concentrations" title="torchcell.metabolism.parameters.load_measured_concentrations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters.load_measured_concentrations</span></code></a></p></td>
+<td><p>ChEBI id -&gt; measured intracellular concentration in molar, from YMDB.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.parameters.concentration_prior.html#torchcell.metabolism.parameters.concentration_prior" title="torchcell.metabolism.parameters.concentration_prior"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters.concentration_prior</span></code></a></p></td>
+<td><p>Per-metabolite measured concentration prior, in molar, plus its coverage mask.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="pathway">
+<h2><a class="toc-backref" href="#id31" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">pathway</span></code></a><a class="headerlink" href="#pathway" title="Link to this heading"></a></h2>
+<p>Add a heterologous pathway to a genome-scale model, as a typed perturbation.</p>
+<section id="id10">
+<h3><a class="toc-backref" href="#id32" role="doc-backlink">Classes</a><a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.pathway.EvidenceTier.html#torchcell.metabolism.pathway.EvidenceTier" title="torchcell.metabolism.pathway.EvidenceTier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pathway.EvidenceTier</span></code></a></p></td>
+<td><p>Where a coefficient came from, so a guess can never read as a measurement.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.pathway.MetaboliteSpec.html#torchcell.metabolism.pathway.MetaboliteSpec" title="torchcell.metabolism.pathway.MetaboliteSpec"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pathway.MetaboliteSpec</span></code></a></p></td>
+<td><p>A metabolite the genome-scale model does not have yet.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.pathway.ReactionSpec.html#torchcell.metabolism.pathway.ReactionSpec" title="torchcell.metabolism.pathway.ReactionSpec"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pathway.ReactionSpec</span></code></a></p></td>
+<td><p>A reaction the genome-scale model does not have yet.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.pathway.HeterologousPathway.html#torchcell.metabolism.pathway.HeterologousPathway" title="torchcell.metabolism.pathway.HeterologousPathway"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pathway.HeterologousPathway</span></code></a></p></td>
+<td><p>A named set of metabolites, reactions and genes added to a base strain.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id11">
+<h3><a class="toc-backref" href="#id33" role="doc-backlink">Functions</a><a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.pathway.apply_pathway.html#torchcell.metabolism.pathway.apply_pathway" title="torchcell.metabolism.pathway.apply_pathway"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pathway.apply_pathway</span></code></a></p></td>
+<td><p>Add a pathway's metabolites, reactions and genes to a genome-scale model.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="yeast-gem">
+<h2><a class="toc-backref" href="#id34" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">yeast_GEM</span></code></a><a class="headerlink" href="#yeast-gem" title="Link to this heading"></a></h2>
+<p>Wrapper around the yeast-GEM metabolic model and its derived graphs.</p>
+<section id="id12">
+<h3><a class="toc-backref" href="#id35" role="doc-backlink">Classes</a><a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.yeast_GEM.YeastGEM.html#torchcell.metabolism.yeast_GEM.YeastGEM" title="torchcell.metabolism.yeast_GEM.YeastGEM"><code class="xref py py-obj docutils literal notranslate"><span class="pre">yeast_GEM.YeastGEM</span></code></a></p></td>
+<td><p>Download, load, and expose the yeast-GEM genome-scale model.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id13">
+<h3><a class="toc-backref" href="#id36" role="doc-backlink">Functions</a><a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.yeast_GEM.plot_reaction_map.html#torchcell.metabolism.yeast_GEM.plot_reaction_map" title="torchcell.metabolism.yeast_GEM.plot_reaction_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">yeast_GEM.plot_reaction_map</span></code></a></p></td>
+<td><p>Plot hypergraph for a specific reaction.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.yeast_GEM.plot_full_network.html#torchcell.metabolism.yeast_GEM.plot_full_network" title="torchcell.metabolism.yeast_GEM.plot_full_network"><code class="xref py py-obj docutils literal notranslate"><span class="pre">yeast_GEM.plot_full_network</span></code></a></p></td>
+<td><p>Plot the entire metabolic network structure without labels.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.yeast_GEM.plot_random_network.html#torchcell.metabolism.yeast_GEM.plot_random_network" title="torchcell.metabolism.yeast_GEM.plot_random_network"><code class="xref py py-obj docutils literal notranslate"><span class="pre">yeast_GEM.plot_random_network</span></code></a></p></td>
+<td><p>Plot a random subgraph of the metabolic network and save it.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.yeast_GEM.plot_bipartite_network.html#torchcell.metabolism.yeast_GEM.plot_bipartite_network" title="torchcell.metabolism.yeast_GEM.plot_bipartite_network"><code class="xref py py-obj docutils literal notranslate"><span class="pre">yeast_GEM.plot_bipartite_network</span></code></a></p></td>
+<td><p>Plot a bipartite network visualization of genes to metabolites.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.yeast_GEM.sanity_check_metabolic_networks.html#torchcell.metabolism.yeast_GEM.sanity_check_metabolic_networks" title="torchcell.metabolism.yeast_GEM.sanity_check_metabolic_networks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">yeast_GEM.sanity_check_metabolic_networks</span></code></a></p></td>
+<td><p>Print details for a few random reactions as a sanity check.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.yeast_GEM.analyze_reactions_without_genes.html#torchcell.metabolism.yeast_GEM.analyze_reactions_without_genes" title="torchcell.metabolism.yeast_GEM.analyze_reactions_without_genes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">yeast_GEM.analyze_reactions_without_genes</span></code></a></p></td>
+<td><p>Analyze reactions without gene associations in the YeastGEM model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.metabolism.yeast_GEM.test_bipartite_attributes.html#torchcell.metabolism.yeast_GEM.test_bipartite_attributes" title="torchcell.metabolism.yeast_GEM.test_bipartite_attributes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">yeast_GEM.test_bipartite_attributes</span></code></a></p></td>
+<td><p>Test and display the new attributes added to the bipartite graph.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../generated/torchcell.losses.point_dist_graph_reg.PointDistGraphReg.html" class="btn btn-neutral float-left" title="torchcell.losses.point_dist_graph_reg.PointDistGraphReg" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../generated/torchcell.metabolism.betaxanthin.build_betaxanthin_pathway.html" class="btn btn-neutral float-right" title="torchcell.metabolism.betaxanthin.build_betaxanthin_pathway" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

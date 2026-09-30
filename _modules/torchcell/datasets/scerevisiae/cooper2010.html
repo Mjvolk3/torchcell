@@ -1,0 +1,1443 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datasets.scerevisiae.cooper2010 &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/datasets/scerevisiae/cooper2010.html" />
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html">
+            
+              <img src="../../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.datasets.scerevisiae.cooper2010</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.datasets.scerevisiae.cooper2010</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/datasets/scerevisiae/cooper2010</span>
+<span class="c1"># [[torchcell.datasets.scerevisiae.cooper2010]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/cooper2010</span>
+<span class="c1"># Test file: tests/torchcell/datasets/scerevisiae/test_cooper2010.py</span>
+<span class="sd">"""Cooper 2010 amino-acid metabolome of the yeast deletion collection (CE-LIF).</span>
+
+<span class="sd">Cooper et al. 2010 (Genome Res 20:1288-1296, doi:10.1101/gr.105825.110, PMID 20610602)</span>
+<span class="sd">profiled the free amine-containing metabolite pools of the haploid MATa deletion</span>
+<span class="sd">collection (Open Biosystems YSC1053) after overnight growth in synthetic complete medium:</span>
+<span class="sd">cold-methanol extracts were derivatized with NBD-F, separated by capillary electrophoresis</span>
+<span class="sd">and detected by laser-induced fluorescence (CE-LIF), and every trace was aligned to a</span>
+<span class="sd">curated template so that 18 numbered peaks could be assigned by spike-in standards. The</span>
+<span class="sd">released per-strain table is Genome Research Supplemental Table 4, and the deposited copy</span>
+<span class="sd">of it is the ONLY file this loader consumes.</span>
+
+<span class="sd">WHAT SUPPLEMENTAL TABLE 4 HOLDS (measured on the deposited file, sha256</span>
+<span class="sd">3c56cd492b4cab51249358e90c7e9731982960eb619e45b8850093e616a471fb): 4,382 rows x 19</span>
+<span class="sd">tab-separated columns, ``Sysname``, ``NAME``, then 17 peak columns named by the authors'</span>
+<span class="sd">template rather than by Fig. 1: ``RPS19``, ``arg1``, ``gshbiotin``, ``NacOrn``,</span>
+<span class="sd">``LeuIleCit``, ``GlnVal``, ``MetPro``, ``Thr``, ``Ala``, ``Ser``, ``Asn-Tyr``, ``Gly``,</span>
+<span class="sd">``LysA``, ``Orn``, ``LysB``, ``Glu``, ``Asp``. Missing cells are ``-``. The 17 headers are</span>
+<span class="sd">the 17 column labels of Fig. 4B (Biotin, Threonine, N-acetylOrnithine, Leu,Ile,Cit,</span>
+<span class="sd">Asn,Tyr, Lysine-related, LysineA, LysineB, Gln,Val, Arginine, Met,Pro, Ornithine, Alanine,</span>
+<span class="sd">Glycine, Serine, Glu, Asp; the Fig. 4 caption says *"Columns represent each amino acid as</span>
+<span class="sd">labeled in B."*), matched one to one by name, which is how ``RPS19`` is read as the</span>
+<span class="sd">"lysine-related" peak 1 of Fig. 1 (the metabolite that accumulates in rps19a/rps19b</span>
+<span class="sd">strains, paper.md line 88), ``arg1`` as the arginine peak, ``gshbiotin`` as Fig. 4B's</span>
+<span class="sd">"Biotin" column, and ``LeuIleCit`` as a single released column for Fig. 1's separate</span>
+<span class="sd">peaks 3 (citrulline) and 4 (leucine+isoleucine). ``PEAK_KEYS`` fixes the header -&gt; key</span>
+<span class="sd">map and ``process()`` refuses any header set that is not exactly this one.</span>
+
+<span class="sd">LEGEND VS VALUES: the deposited legend reads *"Supplemental Table 4. Log2 transformed</span>
+<span class="sd">ratios representing fold change compared to average for each identified amino acid in</span>
+<span class="sd">each of nearly 4500 samples."* and the Methods say a log2-transformed ratio to the plate</span>
+<span class="sd">average was calculated. The released numbers are NOT log2 values: every value is &gt;= 0,</span>
+<span class="sd">the minima are exactly 0 (201 zeros in ``RPS19``, 236 in ``NacOrn``, 74 in ``Ser``), the</span>
+<span class="sd">maxima reach 83, and the column means of the nine dense peaks (``arg1``, ``LeuIleCit``,</span>
+<span class="sd">``GlnVal``, ``MetPro``, ``Ala``, ``Asn-Tyr``, ``Gly``, ``LysA``, ``LysB``) sit within 0.03</span>
+<span class="sd">of 1.0, which is what a LINEAR ratio to the plate mean gives. The values are therefore</span>
+<span class="sd">stored exactly as released with ``measurement_type`` naming the linear ratio, the</span>
+<span class="sd">reference is 1.0 per key (a strain equal to its plate average), and a released 0 is a</span>
+<span class="sd">released value (a peak of zero area), never a missing cell. Five columns have means</span>
+<span class="sd">above 1 with no stated reason (``RPS19`` 2.23, ``Glu`` 2.15, ``Asp`` 1.99,</span>
+<span class="sd">``gshbiotin`` 1.53, ``NacOrn`` 1.30); that observation is recorded here and in the loader</span>
+<span class="sd">note, not corrected.</span>
+
+<span class="sd">RECORD SHAPE: one ``MetaboliteExperiment`` per kept Table 4 row. Missingness is ragged</span>
+<span class="sd">(``RPS19`` is missing in 2,348 rows, ``gshbiotin`` 1,502, ``NacOrn`` 1,016, ``Asp`` 361,</span>
+<span class="sd">``Thr`` 338, ``Ser`` 322, ``Orn`` 285; the dense peaks miss fewer than 40), so a record</span>
+<span class="sd">carries exactly the keys its row has (``MetabolitePhenotype`` forbids NaN and requires</span>
+<span class="sd">matching ``n_replicates`` keys), and its reference carries the same keys at 1.0.</span>
+<span class="sd">``n_replicates`` is the conservative lower end 1 for every key: strains were screened in</span>
+<span class="sd">duplicate and the two replicates averaged, but *"In the case where only one quality</span>
+<span class="sd">trace was collected, those data were used alone."* and no per-row replicate count is</span>
+<span class="sd">released. Supplemental Tables 3A/3B list the integrated peaks of the first and second</span>
+<span class="sd">collection, but they are not a per-row join (two Table 4 rows are in neither after</span>
+<span class="sd">identifier normalization, 46 duplicated identifiers cannot be paired row to row, and</span>
+<span class="sd">membership counts collected traces rather than traces that passed the 0.35 template</span>
+<span class="sd">correlation cut), so they are not consumed. ``metabolite_level_se`` is a typed</span>
+<span class="sd">``ProvenanceGap`` on every phenotype.</span>
+
+<span class="sd">RETENTION RULES (every count written to ``preprocess/dropped_records.json``):</span>
+
+<span class="sd">- Identifier normalization: five cells are malformed by whitespace, case or a misplaced</span>
+<span class="sd">  suffix (``YJL038C `` , ``YLR228 C``, ``YML009c``, ``YMR062 C``, ``YML048WA-``); they</span>
+<span class="sd">  are normalized (whitespace removed, upper-cased, trailing ``WA-`` -&gt; ``W-A``) BEFORE</span>
+<span class="sd">  the resolver, and every normalization is recorded with the verbatim cell.</span>
+<span class="sd">- Resolver retention (the shared ``SCerevisiaeGenome.resolve_gene_name``): CURRENT kept</span>
+<span class="sd">  as is; RENAMED kept under the current systematic name with the normalized source name</span>
+<span class="sd">  as ``perturbed_gene_name`` (a merged-ORF strain stays a distinct strain of that gene);</span>
+<span class="sd">  NON_GENE_FEATURE, RETIRED and AMBIGUOUS go to the ``dropped_orfs`` ledger.</span>
+<span class="sd">- Duplicate identifiers: 46 identifiers occur twice (92 rows), replicate strains of the</span>
+<span class="sd">  collection with different values. They are NOT averaged. The metabolite verifier's L1</span>
+<span class="sd">  ``genotype_uniqueness`` keys a record on ``(systematic_gene_name, perturbation_type,</span>
+<span class="sd">  perturbed_gene_name)`` and ``KanMxDeletionPerturbation`` carries no strain</span>
+<span class="sd">  discriminator, so a second row cannot be a distinct served record without a schema or</span>
+<span class="sd">  verifier change; the FIRST row in file order is kept and the second is written, with</span>
+<span class="sd">  all of its values, to the ``duplicate_strain_rows`` ledger. Re-admitting those rows is a</span>
+<span class="sd">  follow-up that needs a strain_id-aware L1 (as ``verification/fitness.py`` has).</span>
+<span class="sd">- Non-deletion rows: a parent-strain (BY4742) row would go to ``excluded_non_deletion``</span>
+<span class="sd">  (a wild type has no perturbation and cannot be a deletion record); Table 4 carries</span>
+<span class="sd">  none. Tet-promoter (YSC1182) strains are essential-gene knockdowns under doxycycline,</span>
+<span class="sd">  not deletions, and would be excluded the same way; Table 4 carries no canonical</span>
+<span class="sd">  essential gene (CDC28, ACT1, TUB2, RPB1, FAS1, FAS2, GLC7, CMD1 and CDC42 are all</span>
+<span class="sd">  absent), so no tet-promoter row is present and the exclusion count is 0.</span>
+<span class="sd">- SGD essentiality flag: the local ``gene_essentiality_sgd`` store is consulted and every</span>
+<span class="sd">  kept ORF it lists is written to the ``essentiality_flagged`` ledger and KEPT. The store</span>
+<span class="sd">  holds SGD "inviable" null-phenotype annotations, which include conditionally inviable</span>
+<span class="sd">  genes (the 21 hits are ATG1, ATG2, ATG3, ATG5, ATG7, ATG8, ATG9, ATG10, ATG12, ATG15,</span>
+<span class="sd">  ATG16, ATG17, ATG18, ERG24, HHT2, PLC1, RPS28A, SAC1, SPC72, VPS30, YMR185W, all viable</span>
+<span class="sd">  deletion-collection strains; the deletion-only Mulleder 2016 set carries 28 of the same</span>
+<span class="sd">  kind), so the flag is diagnostic, not an exclusion.</span>
+
+<span class="sd">ENVIRONMENT: ``COOPER_SC``, a loader-local ``dropout(SC, ...)`` medium (never a</span>
+<span class="sd">``media.py`` edit, which would move the value surface and block incremental admission):</span>
+<span class="sd">the paper's recipe sentence lists 15 supplements and no uracil, and alanine, asparagine,</span>
+<span class="sd">cysteine, glutamine, glycine and proline are absent, so those seven are typed dropouts of</span>
+<span class="sd">the library ``SC`` and the medium joins Mulleder's and Hillenmeyer's at ``base_medium ==</span>
+<span class="sd">"SC"``. The 15 stated concentrations stay in the quote only: serine 3.64, threonine 1.6</span>
+<span class="sd">and valine 1.19 uM are two to three orders below the rest and were never corrected.</span>
+<span class="sd">Growth is ~16 h in deep-well plates; no growth temperature is stated anywhere in the</span>
+<span class="sd">paper, so ``temperature=None`` with a typed gap. The parent is stored as ``BY4741``: the</span>
+<span class="sd">paper names ``BY4742`` twice but calls the YSC1053 strains MATa, and YSC1053 is the MATa</span>
+<span class="sd">(BY4741-background) collection; ``PARENT_STRAIN_QUOTE`` carries the discrepancy.</span>
+
+<span class="sd">DATA SOURCE (manual, sha256-pinned): the Genome Research supplement is behind an</span>
+<span class="sd">institutional login (every scripted attempt returned 429/403/404 on 2026-09-15), so the</span>
+<span class="sd">retrieval record is a genuine ``manual_browser`` recipe and the canonical copy is the RAW</span>
+<span class="sd">MIRROR ``$DATA_ROOT/torchcell-raw/cooperHighthroughputProfilingAmino2010/`` with its</span>
+<span class="sd">``manifest.json``. ``download()`` symlinks and sha256-verifies from the mirror and has</span>
+<span class="sd">NO network path: when the mirror is absent it raises with the recipe.</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.experiment_dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_interned</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">SC</span><span class="p">,</span> <span class="n">dropout</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Environment</span><span class="p">,</span>
+    <span class="n">Experiment</span><span class="p">,</span>
+    <span class="n">ExperimentReference</span><span class="p">,</span>
+    <span class="n">Genotype</span><span class="p">,</span>
+    <span class="n">KanMxDeletionPerturbation</span><span class="p">,</span>
+    <span class="n">Media</span><span class="p">,</span>
+    <span class="n">MetaboliteExperiment</span><span class="p">,</span>
+    <span class="n">MetaboliteExperimentReference</span><span class="p">,</span>
+    <span class="n">MetabolitePhenotype</span><span class="p">,</span>
+    <span class="n">Publication</span><span class="p">,</span>
+    <span class="n">ReferenceGenome</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.literature.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ROLE_RAW_DATA</span><span class="p">,</span>
+    <span class="n">ROLE_SI_DATA</span><span class="p">,</span>
+    <span class="n">ArtifactRecord</span><span class="p">,</span>
+    <span class="n">Manifest</span><span class="p">,</span>
+    <span class="n">RetrievalMethod</span><span class="p">,</span>
+    <span class="n">RetrievalRecord</span><span class="p">,</span>
+    <span class="n">sha256_file</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae.s288c</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeneNameStatus</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ProvenanceGap</span><span class="p">,</span>
+    <span class="n">ProvenanceGapReason</span><span class="p">,</span>
+    <span class="n">SourcedValue</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">DOI</span> <span class="o">=</span> <span class="s2">"10.1101/gr.105825.110"</span>
+<span class="n">PMID</span> <span class="o">=</span> <span class="s2">"20610602"</span>
+<span class="n">CITATION_KEY</span> <span class="o">=</span> <span class="s2">"cooperHighthroughputProfilingAmino2010"</span>
+
+<span class="c1"># The mirrored OCR markdown every paper quote below is anchored to.</span>
+<span class="n">PAPER_MD</span> <span class="o">=</span> <span class="s2">"paper.md"</span>
+<span class="n">PAPER_MD_SHA256</span> <span class="o">=</span> <span class="s2">"b7739b1eeaf68b609a3e13b870f28649c331fe36b3c930bbbfd8a4c4fd19e52a"</span>
+
+<span class="c1"># The deposited supplement files this loader consumes, under ``data/`` in the raw mirror.</span>
+<span class="n">TABLE4_NAME</span> <span class="o">=</span> <span class="s2">"SupplementalTable4.txt"</span>
+<span class="n">TABLE4_SHA256</span> <span class="o">=</span> <span class="s2">"3c56cd492b4cab51249358e90c7e9731982960eb619e45b8850093e616a471fb"</span>
+<span class="n">LEGENDS_NAME</span> <span class="o">=</span> <span class="s2">"Supplemental_Table_Legends.doc"</span>
+<span class="n">LEGENDS_SHA256</span> <span class="o">=</span> <span class="s2">"ca4983cda4c34318dbc3a05d10edf8e05df11f1560ffc99442df83a6a4399184"</span>
+<span class="n">_RAW_FILES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">TABLE4_NAME</span><span class="p">:</span> <span class="p">{</span><span class="s2">"relpath"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"data/</span><span class="si">{</span><span class="n">TABLE4_NAME</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"sha256"</span><span class="p">:</span> <span class="n">TABLE4_SHA256</span><span class="p">},</span>
+    <span class="n">LEGENDS_NAME</span><span class="p">:</span> <span class="p">{</span><span class="s2">"relpath"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"data/</span><span class="si">{</span><span class="n">LEGENDS_NAME</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"sha256"</span><span class="p">:</span> <span class="n">LEGENDS_SHA256</span><span class="p">},</span>
+<span class="p">}</span>
+<span class="n">SHA256SUMS_NAME</span> <span class="o">=</span> <span class="s2">"SHA256SUMS.txt"</span>
+
+<span class="n">ARTICLE_URL</span> <span class="o">=</span> <span class="s2">"https://genome.cshlp.org/content/20/9/1288"</span>
+<span class="n">DC1_URL</span> <span class="o">=</span> <span class="s2">"http://genome.cshlp.org/content/suppl/2010/07/07/gr.105825.110.DC1"</span>
+<span class="n">RETRIEVED_AT</span> <span class="o">=</span> <span class="s2">"2026-09-15"</span>
+
+<span class="c1">#: The manual recipe that produced the deposited bytes, recorded as the</span>
+<span class="c1">#: ``retrieval_command`` of a typed ``manual_browser`` record: un-scriptable, but not</span>
+<span class="c1">#: unknown, so the manifest is ``provenance_complete=True`` and a rebuild re-runs it by</span>
+<span class="c1">#: hand and verifies the sha256.</span>
+<span class="n">MANUAL_RECIPE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"manual browser download -- the Genome Research supplement is behind an institutional "</span>
+    <span class="s2">"login wall and every scripted request to the DC1 page returned HTTP 429/403/404 or a "</span>
+    <span class="sa">f</span><span class="s2">"login redirect (measured 2026-09-15), so: open </span><span class="si">{</span><span class="n">ARTICLE_URL</span><span class="si">}</span><span class="s2"> in a browser signed in "</span>
+    <span class="sa">f</span><span class="s2">"through an institutional subscription, follow 'Supplemental Material' (</span><span class="si">{</span><span class="n">DC1_URL</span><span class="si">}</span><span class="s2">), "</span>
+    <span class="sa">f</span><span class="s2">"download '</span><span class="si">{</span><span class="n">TABLE4_NAME</span><span class="si">}</span><span class="s2">' and '</span><span class="si">{</span><span class="n">LEGENDS_NAME</span><span class="si">}</span><span class="s2">' unchanged, and verify sha256 "</span>
+    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">TABLE4_SHA256</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">LEGENDS_SHA256</span><span class="si">}</span><span class="s2">"</span>
+<span class="p">)</span>
+
+<span class="n">MEASUREMENT_TYPE</span> <span class="o">=</span> <span class="s2">"ce_lif_peak_area_ratio_to_plate_mean"</span>
+
+<span class="n">MEASUREMENT_UNITS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"linear ratio of the strain's NBD-F peak area to the average peak area of its 96-well "</span>
+    <span class="s2">"plate (Cooper 2010 Supplemental Table 4, replicate traces averaged); 1 = equal to the "</span>
+    <span class="s2">"plate average, 0 = a peak of zero area; the deposited legend says log2 but the "</span>
+    <span class="s2">"released values are the linear ratio"</span>
+<span class="p">)</span>
+
+<span class="c1">#: Table 4 header -&gt; stored metabolite key, in the file's column order. Composite keys</span>
+<span class="c1">#: are peaks the platform did not separate; ``gshbiotin``, ``lysine_a`` and ``lysine_b``</span>
+<span class="c1">#: keep the released label because the paper does not resolve them further.</span>
+<span class="n">PEAK_KEYS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"RPS19"</span><span class="p">:</span> <span class="s2">"lysine_related_peak1"</span><span class="p">,</span>
+    <span class="s2">"arg1"</span><span class="p">:</span> <span class="s2">"arginine"</span><span class="p">,</span>
+    <span class="s2">"gshbiotin"</span><span class="p">:</span> <span class="s2">"gshbiotin"</span><span class="p">,</span>
+    <span class="s2">"NacOrn"</span><span class="p">:</span> <span class="s2">"n_acetylornithine"</span><span class="p">,</span>
+    <span class="s2">"LeuIleCit"</span><span class="p">:</span> <span class="s2">"leucine+isoleucine+citrulline"</span><span class="p">,</span>
+    <span class="s2">"GlnVal"</span><span class="p">:</span> <span class="s2">"glutamine+valine"</span><span class="p">,</span>
+    <span class="s2">"MetPro"</span><span class="p">:</span> <span class="s2">"methionine+proline"</span><span class="p">,</span>
+    <span class="s2">"Thr"</span><span class="p">:</span> <span class="s2">"threonine"</span><span class="p">,</span>
+    <span class="s2">"Ala"</span><span class="p">:</span> <span class="s2">"alanine"</span><span class="p">,</span>
+    <span class="s2">"Ser"</span><span class="p">:</span> <span class="s2">"serine"</span><span class="p">,</span>
+    <span class="s2">"Asn-Tyr"</span><span class="p">:</span> <span class="s2">"asparagine+tyrosine"</span><span class="p">,</span>
+    <span class="s2">"Gly"</span><span class="p">:</span> <span class="s2">"glycine"</span><span class="p">,</span>
+    <span class="s2">"LysA"</span><span class="p">:</span> <span class="s2">"lysine_a"</span><span class="p">,</span>
+    <span class="s2">"Orn"</span><span class="p">:</span> <span class="s2">"ornithine"</span><span class="p">,</span>
+    <span class="s2">"LysB"</span><span class="p">:</span> <span class="s2">"lysine_b"</span><span class="p">,</span>
+    <span class="s2">"Glu"</span><span class="p">:</span> <span class="s2">"glutamate"</span><span class="p">,</span>
+    <span class="s2">"Asp"</span><span class="p">:</span> <span class="s2">"aspartate"</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">PEAK_ORDER</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">PEAK_KEYS</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+<span class="n">IDENTIFIER_COLUMN</span> <span class="o">=</span> <span class="s2">"Sysname"</span>
+<span class="n">NAME_COLUMN</span> <span class="o">=</span> <span class="s2">"NAME"</span>
+<span class="n">EXPECTED_HEADER</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">IDENTIFIER_COLUMN</span><span class="p">,</span> <span class="n">NAME_COLUMN</span><span class="p">,</span> <span class="o">*</span><span class="n">PEAK_KEYS</span><span class="p">)</span>
+<span class="n">MISSING_CELL</span> <span class="o">=</span> <span class="s2">"-"</span>
+
+<span class="c1">#: How each Table 4 header was read (the Fig. 4B column label it matches, and the Fig. 1</span>
+<span class="c1">#: peak where one is stated). Recorded, never used to alter a value.</span>
+<span class="n">PEAK_NOTES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"RPS19"</span><span class="p">:</span> <span class="s2">"Fig. 4B column 'Lysine-related' = Fig. 1 peak 1 'Lysine-related'; the "</span>
+    <span class="s2">"unidentified metabolite that accumulates in rps19a/rps19b strains; the header names "</span>
+    <span class="s2">"the strain, not a compound"</span><span class="p">,</span>
+    <span class="s2">"arg1"</span><span class="p">:</span> <span class="s2">"Fig. 4B column 'Arginine' = Fig. 1 peak 2; the header names the arg1 mutant "</span>
+    <span class="s2">"that lacks arginine"</span><span class="p">,</span>
+    <span class="s2">"gshbiotin"</span><span class="p">:</span> <span class="s2">"Fig. 4B column 'Biotin'; glutathione and biotin were both spike-in "</span>
+    <span class="s2">"standards; which compound(s) the peak carries is not stated, so the released label "</span>
+    <span class="s2">"is kept and the absence is a typed gap on target_metabolite_ids"</span><span class="p">,</span>
+    <span class="s2">"NacOrn"</span><span class="p">:</span> <span class="s2">"Fig. 4B column 'N-acetylOrnithine'; N-acetyl ornithine was a spike-in "</span>
+    <span class="s2">"standard and is named as accumulating in slow growers"</span><span class="p">,</span>
+    <span class="s2">"LeuIleCit"</span><span class="p">:</span> <span class="s2">"Fig. 4B column 'Leu,Ile,Cit'; Fig. 1 draws citrulline (peak 3) and "</span>
+    <span class="s2">"leucine+isoleucine (peak 4) separately but the released table has one column"</span><span class="p">,</span>
+    <span class="s2">"GlnVal"</span><span class="p">:</span> <span class="s2">"Fig. 4B 'Gln,Val' = Fig. 1 peak 5; glutamine does not separate from valine"</span><span class="p">,</span>
+    <span class="s2">"MetPro"</span><span class="p">:</span> <span class="s2">"Fig. 4B 'Met,Pro' = Fig. 1 peak 6"</span><span class="p">,</span>
+    <span class="s2">"Thr"</span><span class="p">:</span> <span class="s2">"Fig. 4B 'Threonine' = Fig. 1 peak 8"</span><span class="p">,</span>
+    <span class="s2">"Ala"</span><span class="p">:</span> <span class="s2">"Fig. 4B 'Alanine' = Fig. 1 peak 7"</span><span class="p">,</span>
+    <span class="s2">"Ser"</span><span class="p">:</span> <span class="s2">"Fig. 4B 'Serine' = Fig. 1 peak 10"</span><span class="p">,</span>
+    <span class="s2">"Asn-Tyr"</span><span class="p">:</span> <span class="s2">"Fig. 4B 'Asn,Tyr' = Fig. 1 peak 9"</span><span class="p">,</span>
+    <span class="s2">"Gly"</span><span class="p">:</span> <span class="s2">"Fig. 4B 'Glycine' = Fig. 1 peak 11"</span><span class="p">,</span>
+    <span class="s2">"LysA"</span><span class="p">:</span> <span class="s2">"Fig. 4B 'LysineA'; lysine gives two peaks (Fig. 1 peaks 12 and 14, once- and "</span>
+    <span class="s2">"twice-labeled); which of A/B is which peak is not stated"</span><span class="p">,</span>
+    <span class="s2">"Orn"</span><span class="p">:</span> <span class="s2">"Fig. 4B 'Ornithine' = Fig. 1 peak 13"</span><span class="p">,</span>
+    <span class="s2">"LysB"</span><span class="p">:</span> <span class="s2">"Fig. 4B 'LysineB'; see LysA"</span><span class="p">,</span>
+    <span class="s2">"Glu"</span><span class="p">:</span> <span class="s2">"Fig. 4B 'Glu' = Fig. 1 peak 17"</span><span class="p">,</span>
+    <span class="s2">"Asp"</span><span class="p">:</span> <span class="s2">"Fig. 4B 'Asp' = Fig. 1 peak 18"</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1">#: Retention rule for a row's ORF: kept only when it resolves to a LIVE R64 gene.</span>
+<span class="n">_KEPT_STATUSES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="n">GeneNameStatus</span><span class="o">.</span><span class="n">CURRENT</span><span class="p">,</span> <span class="n">GeneNameStatus</span><span class="o">.</span><span class="n">RENAMED</span><span class="p">})</span>
+
+<span class="n">ORF_RULE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"a row is kept only when its normalized 'Sysname' resolves through the shared "</span>
+    <span class="s2">"SCerevisiaeGenome.resolve_gene_name to CURRENT (stored as is) or RENAMED (stored "</span>
+    <span class="s2">"under the current systematic name, the normalized source name kept as "</span>
+    <span class="s2">"perturbed_gene_name so a merged-ORF strain stays distinct); a NON_GENE_FEATURE, a "</span>
+    <span class="s2">"RETIRED name or an AMBIGUOUS name drops the row with its status in the ledger"</span>
+<span class="p">)</span>
+<span class="n">NORMALIZATION_RULE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"the 'Sysname' cell has all whitespace removed and is upper-cased, and a trailing "</span>
+    <span class="s2">"'WA-' is rewritten 'W-A' (YML048WA- -&gt; YML048W-A), before the resolver; every "</span>
+    <span class="s2">"changed cell is recorded verbatim"</span>
+<span class="p">)</span>
+<span class="n">DUPLICATE_RULE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"an identifier occurring on more than one row (replicate strains of the collection, "</span>
+    <span class="s2">"different values) keeps its FIRST row in file order as the served record; later "</span>
+    <span class="s2">"rows are written to the duplicate_strain_rows ledger with all their values, never "</span>
+    <span class="s2">"averaged, because the metabolite verifier keys L1 uniqueness on the deletion set "</span>
+    <span class="s2">"and KanMxDeletionPerturbation carries no strain discriminator"</span>
+<span class="p">)</span>
+<span class="n">EXCLUSION_RULE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"a row is excluded when its identifier or NAME names the parent strain (BY4742, WT, "</span>
+    <span class="s2">"wild type) rather than a deletion, or when it is a tet-promoter (YSC1182) "</span>
+    <span class="s2">"essential-gene knockdown, which is not a deletion; Table 4 carries neither (no "</span>
+    <span class="s2">"canonical essential gene is present), measured 0"</span>
+<span class="p">)</span>
+<span class="n">ESSENTIALITY_RULE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"every kept ORF listed in the local gene_essentiality_sgd store (SGD inviable null "</span>
+    <span class="s2">"phenotypes, which include conditionally inviable genes such as ATG1) is flagged and "</span>
+    <span class="s2">"KEPT; the flag is diagnostic because the store lists viable deletion-collection "</span>
+    <span class="s2">"strains and Table 4 holds no essential-gene knockdown"</span>
+<span class="p">)</span>
+<span class="n">REPLICATE_RULE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"n_replicates = 1 for every key (conservative lower end): strains were screened in "</span>
+    <span class="s2">"duplicate and averaged, but a strain with only one quality trace was used alone and "</span>
+    <span class="s2">"no per-row replicate count is released; Supplemental Tables 3A/3B do not join row "</span>
+    <span class="s2">"to row and count collected rather than quality traces"</span>
+<span class="p">)</span>
+<span class="n">LEGEND_CONTRADICTION</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"the deposited legend and the Methods call Table 4 log2-transformed ratios; the "</span>
+    <span class="s2">"released values are non-negative with exact zeros, maxima up to 83 and dense-column "</span>
+    <span class="s2">"means within 0.03 of 1.0, i.e. the linear ratio to the plate mean; stored as "</span>
+    <span class="s2">"released with the measurement type naming the linear ratio and reference 1.0"</span>
+<span class="p">)</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Sourced metadata. Every number this loader hardcodes is anchored to a verbatim</span>
+<span class="c1"># quote from the mirrored paper.md (or the deposited legend) plus its sha256.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_sv</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A ``SourcedValue`` anchored to the mirrored ``paper.md`` by sha256."""</span>
+    <span class="k">return</span> <span class="n">SourcedValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+            <span class="n">source_uri</span><span class="o">=</span><span class="n">PAPER_MD</span><span class="p">,</span>
+            <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">PAPER_MD_SHA256</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">"MinerU OCR of the publisher PDF (mirrored artifact)"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">quote</span><span class="o">=</span><span class="n">quote</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="n">_RECIPE_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Yeast growth was in synthetic complete media (adenine $1 4 0 ~ </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { M }$ "</span>
+    <span class="s2">", arginine $1 0 9 </span><span class="se">\\</span><span class="s2"> </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { M } ,$ aspartic acid $7 2 0 ~ { </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm "</span>
+    <span class="s2">"{ M } } ,$ glutamic acid $6 5 1 ~ </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { M } ,$ histidine $1 2 2 </span><span class="se">\\</span><span class="s2"> </span><span class="se">\\</span><span class="s2">mu "</span>
+    <span class="s2">"</span><span class="se">\\</span><span class="s2">mathrm { M } _ { i }$ isoleucine $5 7 9 ~ </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { M } _ { i }$ leucine "</span>
+    <span class="s2">"$5 7 9 </span><span class="se">\\</span><span class="s2"> </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { M } ,$ , lysine $3 9 0 ~ </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { M } _ { </span><span class="se">\\</span><span class="s2">mathrm "</span>
+    <span class="s2">"{ { </span><span class="se">\\</span><span class="s2">ell } } }$ , methionine $1 2 7 </span><span class="se">\\</span><span class="s2"> </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { M } ,$ phenylalanine "</span>
+    <span class="s2">"$2 8 9 ~ </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { M } ,$ , serine $3 . 6 4 ~ </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { M }$ , threonine "</span>
+    <span class="s2">"1.6 $</span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { M } ,$ , tryptophan $3 7 2 </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { M } _ { i }$ , "</span>
+    <span class="s2">"tyrosine $3 1 4 ~ { </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { M } } _ { </span><span class="se">\\</span><span class="s2">mathrm { </span><span class="se">\\</span><span class="s2">Omega } }$ , and valine "</span>
+    <span class="s2">"$1 . 1 9 ~ </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { M } )$ ."</span>
+<span class="p">)</span>
+
+<span class="n">PARENT_STRAIN_QUOTE</span> <span class="o">=</span> <span class="n">_sv</span><span class="p">(</span>
+    <span class="s2">"BY4742 (as written) / BY4741 (as stored)"</span><span class="p">,</span>
+    <span class="s2">"Compared with the parent strain, BY4742, arginine mutants had only one-quarter the "</span>
+    <span class="s2">"arginine in the extract (Fig. 3)."</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the paper names the parent BY4742 here and in the spike-in methods, but calls "</span>
+    <span class="s2">"the YSC1053 deletion strains MATa, and YSC1053 is the MATa (BY4741-background) "</span>
+    <span class="s2">"collection; ReferenceGenome.strain is stored as BY4741 and this quote flags the "</span>
+    <span class="s2">"discrepancy; a one-line change flips it"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">SOURCED_VALUES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SourcedValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"collection"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="s2">"YSC1053"</span><span class="p">,</span>
+        <span class="s2">"Haploid yeast deletion strains of the MATa mating type were obtained from Open "</span>
+        <span class="s2">"Biosystems (YSC1053), originally constructed as part of the Saccharomyces Genome "</span>
+        <span class="s2">"Deletion Project (Winzeler et al. 1999)."</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the KanMX deletion collection of the Saccharomyces Genome Deletion Project; "</span>
+        <span class="s2">"the marker is not named in this paper and follows from the Winzeler 1999 "</span>
+        <span class="s2">"citation"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"tet_promoter_collection"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="s2">"YSC1182"</span><span class="p">,</span>
+        <span class="s2">"We obtained the tet-promoter collection allowing regulation of essential genes "</span>
+        <span class="s2">"by doxycycline from Open Biosystems (YSC1182) (Mnaimneh et al. 2004)."</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"essential-gene knockdowns, not deletions; out of scope, and Table 4 carries "</span>
+        <span class="s2">"no essential-gene row"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"parent_strain"</span><span class="p">:</span> <span class="n">PARENT_STRAIN_QUOTE</span><span class="p">,</span>
+    <span class="s2">"medium_recipe"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="s2">"synthetic complete: 15 listed supplements, no uracil, no Ala/Asn/Cys/Gln/Gly/Pro"</span><span class="p">,</span>
+        <span class="n">_RECIPE_QUOTE</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the seven absent SC components are typed dropouts of the library SC; the "</span>
+        <span class="s2">"15 concentrations are not typed because serine 3.64, threonine 1.6 and valine "</span>
+        <span class="s2">"1.19 uM are two to three orders below the rest and were never corrected"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"duration_hours"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="mf">16.0</span><span class="p">,</span>
+        <span class="s2">"In brief, cells were grown for ${ </span><span class="se">\\</span><span class="s2">sim } 1 6 </span><span class="se">\\</span><span class="s2">mathrm { h }$ in synthetic "</span>
+        <span class="s2">"complete media in deepwell 96 well plates (VWR)."</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the tilde is the source's; overnight growth in deep-well 96-well plates"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"replicates"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="s2">"Strains were screened in duplicate, starting from fresh yeast colonies."</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the screen design; the stored n_replicates is the conservative 1 because a "</span>
+        <span class="s2">"strain with one quality trace was used alone and no per-row count is released"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"replicate_averaging"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="s2">"An average of the two replicates was calculated (Supplemental Table 4). In the "</span>
+        <span class="s2">"case where only one quality trace was collected, those data were used alone."</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"n_replicates = 1 per key, the conservative lower end of one or two traces"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"normalization"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="s2">"ratio to the plate average"</span><span class="p">,</span>
+        <span class="s2">"For each sample, a $</span><span class="se">\\</span><span class="s2">log _ { 2 }$ -transformed ratio of the amino acid quantity "</span>
+        <span class="s2">"in the sample to the average for the plate was calculated. This ratio corrects "</span>
+        <span class="s2">"for plate effects."</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">LEGEND_CONTRADICTION</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"quantification"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="s2">"peak area"</span><span class="p">,</span>
+        <span class="s2">"The resulting output is a quantification of peak area correlating to relative "</span>
+        <span class="s2">"amino acid concentration in each profile."</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"detection"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="s2">"CE-LIF"</span><span class="p">,</span>
+        <span class="s2">"Capillary electrophoresis was used to separate the derivatized samples and "</span>
+        <span class="s2">"detection was achieved by laser-induced fluorescence."</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"derivatization"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="s2">"NBD-F"</span><span class="p">,</span>
+        <span class="s2">"We performed a cold methanol extraction of small molecules from the yeast cells "</span>
+        <span class="s2">"and derivatized the extracts with the amine-reactive fluorophore, "</span>
+        <span class="s2">"4-nitro-7-benzofurazan (NBD-F) (Villas-Boas et al. 2005; Zhu et al. 2005)."</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"qc_threshold"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="mf">0.35</span><span class="p">,</span>
+        <span class="s2">"Following alignment of all the traces, we eliminated data for which correlation "</span>
+        <span class="s2">"with the template was below 0.35."</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"applied by the authors before Table 4 was released; no record is dropped on "</span>
+        <span class="s2">"it here"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"n_samples"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="mi">4382</span><span class="p">,</span>
+        <span class="s2">"We analyzed 4382 samples with data meeting quality standards for at least one "</span>
+        <span class="s2">"replicate."</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"equals the Table 4 row count before resolver drops and duplicate rows"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"n_clustered_strains"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="mi">4337</span><span class="p">,</span> <span class="s2">"we ordered 4337 yeast deletion strains using hierarchical clustering"</span>
+    <span class="p">),</span>
+    <span class="s2">"median_od600"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="mf">0.370</span><span class="p">,</span>
+        <span class="s2">"The median optical density measurement was 0.370"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"note material; no record is filtered on growth"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"peak_assignment"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="s2">"18 numbered peaks by spike-in"</span><span class="p">,</span>
+        <span class="s2">"Peaks were assigned by spike-in experiments and are labeled "</span>
+        <span class="s2">"$</span><span class="se">\\</span><span class="s2">scriptstyle 1 - 1 8 ,$ corresponding to the compounds shown."</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the 1-18 list is inside the Fig. 1 image; Table 4 releases 17 columns "</span>
+        <span class="s2">"matching the Fig. 4B labels"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"lysine_two_peaks"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="s2">"lysine_a, lysine_b"</span><span class="p">,</span>
+        <span class="s2">"(Lysine has two peaks as it has two reactive amine groups and therefore can be "</span>
+        <span class="s2">"labeled once or twice.)"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"lysine_peaks_reported_separately"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="s2">"lysine peak 1 and peak 2 correlate with OD600 independently"</span><span class="p">,</span>
+        <span class="s2">"The greatest correlations we identified were between growth rate (measured "</span>
+        <span class="s2">"optical densities) and lysine levels (lysine peak 1 versus "</span>
+        <span class="s2">"$</span><span class="se">\\</span><span class="s2">mathrm { O D } _ { 6 0 0 }$ , $</span><span class="se">\\</span><span class="s2">mathrm { R } = - 0 . 3 2$ and peak "</span>
+        <span class="s2">"$2 , </span><span class="se">\\</span><span class="s2">mathrm { R } = - 0 . 3 7 )$ ."</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"why the two lysine peaks are two keys rather than one"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"glutamine_valine"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="s2">"glutamine+valine"</span><span class="p">,</span>
+        <span class="s2">"The one amino acid that did not show a high correlation was glutamine, which "</span>
+        <span class="s2">"does not separate from valine by capillary electrophoresis under these "</span>
+        <span class="s2">"conditions."</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"asparagine_tyrosine"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span><span class="s2">"asparagine+tyrosine"</span><span class="p">,</span> <span class="s2">"&lt;td&gt;Asparagine + tyrosine&lt;/td&gt;"</span><span class="p">),</span>
+    <span class="s2">"fig4b_columns"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="s2">"the 17 Table 4 headers match the 17 Fig. 4B column labels"</span><span class="p">,</span>
+        <span class="s2">"Columns represent each amino acid as labeled in B."</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the bridge from the template headers (RPS19, arg1, gshbiotin, NacOrn, ...) "</span>
+        <span class="s2">"to the peak identities"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"lysine_related_metabolite"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="s2">"lysine_related_peak1"</span><span class="p">,</span>
+        <span class="s2">"A striking example of the accumulation of the lysine-related metabolite occurs "</span>
+        <span class="s2">"in strains lacking the ribosomal protein gene RPS19A or RPS19B (Fig. 5A)."</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"why the header RPS19 is read as the lysine-related peak"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"n_acetylornithine"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="s2">"n_acetylornithine"</span><span class="p">,</span>
+        <span class="s2">"we confirmed our initial finding and additionally identified significant "</span>
+        <span class="s2">"accumulations of ornithine, lysine, leucine, and $N </span><span class="se">\\</span><span class="s2">cdot$ -acetyl ornithine, "</span>
+        <span class="s2">"as well as depletion of glutamine in slow growers (Supplemental Table 1)."</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"spike_in_standards"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="s2">"glutathione and biotin were spike-in standards"</span><span class="p">,</span>
+        <span class="s2">"The following amine-containing molecules were tested: all 20 coding amino acids, "</span>
+        <span class="s2">"spermidine, spermine, ornithine, citrulline, glutathione, biotin, creatine, $N$ "</span>
+        <span class="s2">"-acetyl lysine, $N </span><span class="se">\\</span><span class="s2">cdot$ -acetyl ornithine, $N </span><span class="se">\\</span><span class="s2">cdot$ -acetyl aspartate, "</span>
+        <span class="s2">"diaminobutane, carnitine, and carnosine (all from Sigma-Aldrich)."</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the only text behind the header gshbiotin"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"log_ratios_clustered"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="s2">"log-transformed ratios (as described)"</span><span class="p">,</span>
+        <span class="s2">"hierarchical clustering of the log-transformed ratios"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the paper's own description of Table 4's transform, contradicted by the "</span>
+        <span class="s2">"released values"</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+<span class="c1">#: The one quote taken from the deposited legend rather than from paper.md.</span>
+<span class="n">LEGEND_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Supplemental Table 4. Log2 transformed ratios representing fold change compared to "</span>
+    <span class="s2">"average for each identified amino acid in each of nearly 4500 samples."</span>
+<span class="p">)</span>
+<span class="n">LEGEND_SOURCED_VALUES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SourcedValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"table4_legend"</span><span class="p">:</span> <span class="n">SourcedValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="s2">"log2 (as written) / linear ratio (as released)"</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+            <span class="n">source_uri</span><span class="o">=</span><span class="n">_RAW_FILES</span><span class="p">[</span><span class="n">LEGENDS_NAME</span><span class="p">][</span><span class="s2">"relpath"</span><span class="p">],</span>
+            <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">LEGENDS_SHA256</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">"manual browser deposit of the Genome Research supplement; the legend "</span>
+            <span class="s2">"text is 8-bit in the Word binary"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">quote</span><span class="o">=</span><span class="n">LEGEND_QUOTE</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">LEGEND_CONTRADICTION</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="p">}</span>
+
+<span class="n">_TEMPERATURE_GAP</span> <span class="o">=</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
+    <span class="n">field</span><span class="o">=</span><span class="s2">"temperature"</span><span class="p">,</span>
+    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"growth temperature is not stated; the only degree values in the paper are GC-MS "</span>
+    <span class="s2">"derivatization and oven settings"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">_SE_GAP</span> <span class="o">=</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
+    <span class="n">field</span><span class="o">=</span><span class="s2">"metabolite_level_se"</span><span class="p">,</span>
+    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"duplicates were averaged; no per-strain spread is released"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">_TARGET_IDS_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"amino-acid keys -&gt; Yeast9 s_NNNN ids are to be sourced from YeastGEM in a follow-up, "</span>
+    <span class="s2">"never guessed (Mulleder 2016 defers the same mapping)"</span>
+<span class="p">)</span>
+<span class="n">_TARGET_IDS_GSHBIOTIN_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_TARGET_IDS_NOTE</span><span class="si">}</span><span class="s2">; the key gshbiotin has no metabolite identity to map: "</span>
+    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">PEAK_NOTES</span><span class="p">[</span><span class="s1">'gshbiotin'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_phenotype_gaps</span><span class="p">(</span><span class="n">keys</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ProvenanceGap</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The typed absences a phenotype with these keys declares.</span>
+
+<span class="sd">    ``target_metabolite_ids`` is the field where a key's compound identity would live, so</span>
+<span class="sd">    the unexplained ``gshbiotin`` header is recorded there (a gap must name a real field</span>
+<span class="sd">    that is ``None``; ``metabolite_level`` holds a value and cannot be gapped).</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">_SE_GAP</span><span class="p">,</span>
+        <span class="n">ProvenanceGap</span><span class="p">(</span>
+            <span class="n">field</span><span class="o">=</span><span class="s2">"target_metabolite_ids"</span><span class="p">,</span>
+            <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">deferred_pending_source_review</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">_TARGET_IDS_GSHBIOTIN_NOTE</span> <span class="k">if</span> <span class="s2">"gshbiotin"</span> <span class="ow">in</span> <span class="n">keys</span> <span class="k">else</span> <span class="n">_TARGET_IDS_NOTE</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># The medium: the paper's synthetic complete recipe as a typed edit of library SC</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">COOPER_SC_DROPOUTS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"L-alanine"</span><span class="p">,</span>
+    <span class="s2">"L-asparagine"</span><span class="p">,</span>
+    <span class="s2">"L-cysteine"</span><span class="p">,</span>
+    <span class="s2">"L-glutamine"</span><span class="p">,</span>
+    <span class="s2">"glycine"</span><span class="p">,</span>
+    <span class="s2">"L-proline"</span><span class="p">,</span>
+    <span class="s2">"uracil"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">COOPER_SC</span><span class="p">:</span> <span class="n">Media</span> <span class="o">=</span> <span class="n">dropout</span><span class="p">(</span>
+    <span class="n">SC</span><span class="p">,</span>
+    <span class="o">*</span><span class="n">COOPER_SC_DROPOUTS</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"SC minus Ala/Asn/Cys/Gln/Gly/Pro/Ura (Cooper 2010 synthetic complete recipe)"</span><span class="p">,</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span><span class="n">SOURCED_VALUES</span><span class="p">[</span><span class="s2">"medium_recipe"</span><span class="p">]],</span>
+<span class="p">)</span>
+<span class="sd">"""Cooper 2010's synthetic complete medium: library ``SC`` minus the seven components the</span>
+<span class="sd">recipe sentence does not list. Loader-local on purpose: ``media.py`` is a value surface of</span>
+<span class="sd">the served graph, and editing it blocks incremental admission."""</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Raw mirror</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``$DATA_ROOT/torchcell-raw/&lt;citation_key&gt;/`` -- the canonical raw copy."""</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">data_root</span> <span class="k">if</span> <span class="n">data_root</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"torchcell-raw"</span> <span class="o">/</span> <span class="n">CITATION_KEY</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_sha256sums</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""``{file name: sha256}`` from a ``sha256sum``-format listing."""</span>
+    <span class="n">sums</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">continue</span>
+        <span class="n">digest</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">maxsplit</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">sums</span><span class="p">[</span><span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span> <span class="o">=</span> <span class="n">digest</span>
+    <span class="k">return</span> <span class="n">sums</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">deposit_raw_mirror</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">source_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">retrieved_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">RETRIEVED_AT</span><span class="p">,</span>
+    <span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Write the raw mirror from the user's browser download plus its ``manifest.json``.</span>
+
+<span class="sd">    Run once by hand. ``source_dir`` is the staged deposit holding the supplement files</span>
+<span class="sd">    unchanged and a ``SHA256SUMS.txt``; only the two files the loader consumes are</span>
+<span class="sd">    deposited, under ``data/``. Idempotent by sha256: a mirror file already carrying the</span>
+<span class="sd">    pinned hash is left alone, one carrying a different hash raises. Every file's sha256</span>
+<span class="sd">    is checked against the pinned constant AND against ``SHA256SUMS.txt`` before it is</span>
+<span class="sd">    recorded, so the manifest can only describe the bytes the build consumed.</span>
+<span class="sd">    """</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">source_dir</span><span class="p">)</span>
+    <span class="n">sums</span> <span class="o">=</span> <span class="n">_read_sha256sums</span><span class="p">(</span><span class="n">source</span> <span class="o">/</span> <span class="n">SHA256SUMS_NAME</span><span class="p">)</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
+    <span class="n">files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArtifactRecord</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">_RAW_FILES</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">sums</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">!=</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"sha256"</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">SHA256SUMS_NAME</span><span class="si">}</span><span class="s2"> lists </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> as </span><span class="si">{</span><span class="n">sums</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="si">}</span><span class="s2">, pinned </span><span class="si">{</span><span class="n">spec</span><span class="p">[</span><span class="s1">'sha256'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">staged</span> <span class="o">=</span> <span class="n">source</span> <span class="o">/</span> <span class="n">name</span>
+        <span class="n">digest</span> <span class="o">=</span> <span class="n">sha256_file</span><span class="p">(</span><span class="n">staged</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">digest</span> <span class="o">!=</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"sha256"</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">staged</span><span class="si">}</span><span class="s2"> sha256 </span><span class="si">{</span><span class="n">digest</span><span class="si">}</span><span class="s2"> != pinned </span><span class="si">{</span><span class="n">spec</span><span class="p">[</span><span class="s1">'sha256'</span><span class="p">]</span><span class="si">}</span><span class="s2">; refusing to deposit"</span>
+            <span class="p">)</span>
+        <span class="n">dest</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"relpath"</span><span class="p">]</span>
+        <span class="n">dest</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dest</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">existing</span> <span class="o">=</span> <span class="n">sha256_file</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">existing</span> <span class="o">!=</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"sha256"</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dest</span><span class="si">}</span><span class="s2"> exists with sha256 </span><span class="si">{</span><span class="n">existing</span><span class="si">}</span><span class="s2"> != pinned </span><span class="si">{</span><span class="n">spec</span><span class="p">[</span><span class="s1">'sha256'</span><span class="p">]</span><span class="si">}</span><span class="s2">; "</span>
+                    <span class="s2">"refusing to overwrite"</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copy2</span><span class="p">(</span><span class="n">staged</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ArtifactRecord</span><span class="p">(</span>
+                <span class="n">path</span><span class="o">=</span><span class="n">spec</span><span class="p">[</span><span class="s2">"relpath"</span><span class="p">],</span>
+                <span class="n">role</span><span class="o">=</span><span class="n">ROLE_RAW_DATA</span> <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="n">TABLE4_NAME</span> <span class="k">else</span> <span class="n">ROLE_SI_DATA</span><span class="p">,</span>
+                <span class="nb">bytes</span><span class="o">=</span><span class="n">dest</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span><span class="p">,</span>
+                <span class="n">sha256</span><span class="o">=</span><span class="n">spec</span><span class="p">[</span><span class="s2">"sha256"</span><span class="p">],</span>
+                <span class="n">source</span><span class="o">=</span><span class="n">DC1_URL</span><span class="p">,</span>
+                <span class="n">retrieval</span><span class="o">=</span><span class="n">RetrievalRecord</span><span class="p">(</span>
+                    <span class="n">method</span><span class="o">=</span><span class="n">RetrievalMethod</span><span class="o">.</span><span class="n">manual_browser</span><span class="p">,</span>
+                    <span class="n">source_url</span><span class="o">=</span><span class="n">ARTICLE_URL</span><span class="p">,</span>
+                    <span class="n">retriever</span><span class="o">=</span><span class="s2">"manual"</span><span class="p">,</span>
+                    <span class="n">params</span><span class="o">=</span><span class="p">{</span>
+                        <span class="s2">"retrieval_command"</span><span class="p">:</span> <span class="n">MANUAL_RECIPE</span><span class="p">,</span>
+                        <span class="s2">"supplement_page"</span><span class="p">:</span> <span class="n">DC1_URL</span><span class="p">,</span>
+                        <span class="s2">"retrieved_by"</span><span class="p">:</span> <span class="s2">"the user, browser download with institutional "</span>
+                        <span class="s2">"login, copied to the staging directory unchanged (cp -p) and "</span>
+                        <span class="s2">"listed in SHA256SUMS.txt"</span><span class="p">,</span>
+                    <span class="p">},</span>
+                    <span class="n">sha256</span><span class="o">=</span><span class="n">spec</span><span class="p">[</span><span class="s2">"sha256"</span><span class="p">],</span>
+                    <span class="n">retrieved_at</span><span class="o">=</span><span class="n">retrieved_at</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="n">manifest</span> <span class="o">=</span> <span class="n">Manifest</span><span class="p">(</span>
+        <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+        <span class="n">doi</span><span class="o">=</span><span class="n">DOI</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"High-throughput profiling of amino acids in strains of the Saccharomyces "</span>
+            <span class="s2">"cerevisiae deletion collection"</span>
+        <span class="p">),</span>
+        <span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span>
+        <span class="n">si_data_sources</span><span class="o">=</span><span class="p">[</span><span class="n">DC1_URL</span><span class="p">],</span>
+        <span class="n">si_expected</span><span class="o">=</span><span class="p">[</span>
+            <span class="s2">"Supplemental Table 1 (SupplementalTable1.xls; growth-rate effects)"</span><span class="p">,</span>
+            <span class="s2">"Supplemental Tables 2A,B (raw electropherograms; not deposited)"</span><span class="p">,</span>
+            <span class="s2">"Supplemental Tables 3A,B (integrated peaks per replicate; not deposited)"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"Supplemental Table 4 (</span><span class="si">{</span><span class="n">TABLE4_NAME</span><span class="si">}</span><span class="s2">; consumed)"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"Supplemental Table Legends (</span><span class="si">{</span><span class="n">LEGENDS_NAME</span><span class="si">}</span><span class="s2">; consumed for the Table 4 legend)"</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="n">provenance_complete</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">created_at</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+    <span class="p">)</span>
+    <span class="p">(</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"manifest.json"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">root</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">load_manifest</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Manifest</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Read the raw mirror's ``manifest.json``."""</span>
+    <span class="k">return</span> <span class="n">Manifest</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"manifest.json"</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
+    <span class="p">)</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Typed build-side records (written beside the LMDB, not into it)</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TableRow</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One Table 4 row after parsing and identifier normalization."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">row_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"0-based data row in the deposited file"</span><span class="p">)</span>
+    <span class="n">source_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the 'Sysname' cell, verbatim"</span><span class="p">)</span>
+    <span class="n">normalized_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the identifier after NORMALIZATION_RULE"</span><span class="p">)</span>
+    <span class="n">name_cell</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the 'NAME' cell, verbatim"</span><span class="p">)</span>
+    <span class="n">levels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"metabolite key -&gt; released value, present keys only"</span>
+    <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">KeptRow</span><span class="p">(</span><span class="n">TableRow</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A retained row with what the resolver made of its identifier."""</span>
+
+    <span class="n">systematic_gene_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">perturbed_gene_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">status</span><span class="p">:</span> <span class="nb">str</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">IdentifierNormalization</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One 'Sysname' cell the normalization rule changed."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">row_index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">source_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">normalized_name</span><span class="p">:</span> <span class="nb">str</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DroppedOrf</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One source identifier the retention rule removed, with what the resolver said."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">row_index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">source_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the 'Sysname' cell, verbatim"</span><span class="p">)</span>
+    <span class="n">normalized_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">status</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"GeneNameStatus the shared resolver returned"</span><span class="p">)</span>
+    <span class="n">resolved_to</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"what the resolver mapped it to, when anything"</span>
+    <span class="p">)</span>
+    <span class="n">feature_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"GFF feature type for a NON_GENE_FEATURE"</span>
+    <span class="p">)</span>
+    <span class="n">n_values</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"present peak values lost with this row"</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DuplicateStrainRow</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A row whose identifier already has a served record, with all of its values."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">row_index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">source_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">normalized_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">systematic_gene_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">name_cell</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">kept_row_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the served row of the same identifier"</span><span class="p">)</span>
+    <span class="n">levels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ExcludedRow</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A row that is not a deletion-collection strain, with its values."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">row_index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">source_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">name_cell</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">levels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EssentialityFlag</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A kept ORF the SGD essentiality store lists (diagnostic, not an exclusion)."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">row_index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">systematic_gene_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">name_cell</span><span class="p">:</span> <span class="nb">str</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BuildLedger</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The build's retention accounting: the rules, and exactly what they did."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">orf_rule</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">normalization_rule</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">duplicate_rule</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">exclusion_rule</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">essentiality_rule</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">replicate_rule</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">legend_contradiction</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">n_source_rows</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_kept</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_dropped_orfs</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_renamed</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_normalized</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_duplicate_rows</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_excluded_non_deletion</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_essentiality_flagged</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_values_kept</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">normalizations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">IdentifierNormalization</span><span class="p">]</span>
+    <span class="n">dropped_orfs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DroppedOrf</span><span class="p">]</span>
+    <span class="n">renamed_orfs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"normalized source name -&gt; current systematic name for every RENAMED "</span>
+        <span class="s2">"row kept; the source name stays on the record as perturbed_gene_name"</span>
+    <span class="p">)</span>
+    <span class="n">duplicate_strain_rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DuplicateStrainRow</span><span class="p">]</span>
+    <span class="n">excluded_non_deletion</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ExcludedRow</span><span class="p">]</span>
+    <span class="n">essentiality_flagged</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EssentialityFlag</span><span class="p">]</span>
+    <span class="n">created_at</span><span class="p">:</span> <span class="nb">str</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Source readers</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">_WA_SUFFIX_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^(Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[CW])A-$"</span><span class="p">)</span>
+<span class="n">_PARENT_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"BY47|^WT$|WILD.?TYPE"</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">normalize_identifier</span><span class="p">(</span><span class="n">cell</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Apply ``NORMALIZATION_RULE`` to one 'Sysname' cell."""</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\s+"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="n">cell</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">_WA_SUFFIX_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">-A"</span>
+    <span class="k">return</span> <span class="n">name</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">read_table4</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">TableRow</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Parse the deposited Table 4; refuse any header that is not exactly the known one."""</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">reader</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">header</span> <span class="o">!=</span> <span class="n">EXPECTED_HEADER</span><span class="p">:</span>
+            <span class="n">unmapped</span> <span class="o">=</span> <span class="p">[</span><span class="n">h</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">header</span> <span class="k">if</span> <span class="n">h</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">EXPECTED_HEADER</span><span class="p">]</span>
+            <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">h</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">EXPECTED_HEADER</span> <span class="k">if</span> <span class="n">h</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">header</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2"> header is not the expected Table 4 header; unmapped columns "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">unmapped</span><span class="si">}</span><span class="s2">, missing columns </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">, order </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">header</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">TableRow</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">row_index</span><span class="p">,</span> <span class="n">parts</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">reader</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">EXPECTED_HEADER</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2"> row </span><span class="si">{</span><span class="n">row_index</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span><span class="si">}</span><span class="s2"> cells, expected "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">EXPECTED_HEADER</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+            <span class="n">levels</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">PEAK_KEYS</span><span class="p">[</span><span class="n">column</span><span class="p">]:</span> <span class="nb">float</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">column</span><span class="p">,</span> <span class="n">cell</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">header</span><span class="p">[</span><span class="mi">2</span><span class="p">:],</span> <span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">:],</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cell</span> <span class="o">!=</span> <span class="n">MISSING_CELL</span>
+            <span class="p">}</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">TableRow</span><span class="p">(</span>
+                    <span class="n">row_index</span><span class="o">=</span><span class="n">row_index</span><span class="p">,</span>
+                    <span class="n">source_name</span><span class="o">=</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                    <span class="n">normalized_name</span><span class="o">=</span><span class="n">normalize_identifier</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                    <span class="n">name_cell</span><span class="o">=</span><span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                    <span class="n">levels</span><span class="o">=</span><span class="n">levels</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">rows</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">load_sgd_essential_genes</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Systematic names whose stored SGD essentiality phenotype is ``is_essential=True``.</span>
+
+<span class="sd">    Read from the dev-tree ``gene_essentiality_sgd`` LMDB (SGD inviable null phenotypes).</span>
+<span class="sd">    The store must exist: the flag is measured against it, never assumed.</span>
+<span class="sd">    """</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/torchcell/gene_essentiality_sgd"</span><span class="p">)</span>
+    <span class="n">lmdb_dir</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"processed"</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">lmdb_dir</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">lmdb_dir</span><span class="si">}</span><span class="s2"> is absent; build GeneEssentialitySgdDataset first, the "</span>
+            <span class="s2">"essentiality flag is measured against it"</span>
+        <span class="p">)</span>
+    <span class="n">interned</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">interned_dir</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"processed"</span><span class="p">,</span> <span class="s2">"interned"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">interned_dir</span><span class="p">):</span>
+        <span class="n">ienv</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">interned_dir</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">lock</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">ienv</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">itxn</span><span class="o">.</span><span class="n">cursor</span><span class="p">():</span>
+                <span class="n">interned</span><span class="p">[</span><span class="n">key</span><span class="o">.</span><span class="n">decode</span><span class="p">()]</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="n">ienv</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">essential</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">lmdb_dir</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">lock</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">txn</span><span class="o">.</span><span class="n">cursor</span><span class="p">():</span>
+            <span class="n">record</span> <span class="o">=</span> <span class="n">resolve_interned</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="n">interned</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">record</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"phenotype"</span><span class="p">][</span><span class="s2">"is_essential"</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">record</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"genotype"</span><span class="p">][</span><span class="s2">"perturbations"</span><span class="p">]:</span>
+                <span class="n">essential</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">perturbation</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">])</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">essential</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">retain_rows</span><span class="p">(</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TableRow</span><span class="p">],</span>
+    <span class="n">resolve</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">essential_genes</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">KeptRow</span><span class="p">],</span> <span class="n">BuildLedger</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Apply every retention rule in order and return the kept rows plus the ledger.</span>
+
+<span class="sd">    Order per row: parent-strain exclusion, resolver retention (``ORF_RULE``), duplicate</span>
+<span class="sd">    identifier (``DUPLICATE_RULE``), essentiality flag (``ESSENTIALITY_RULE``, kept).</span>
+<span class="sd">    """</span>
+    <span class="n">kept</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">KeptRow</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">normalizations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">IdentifierNormalization</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">dropped</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DroppedOrf</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">renamed</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">duplicates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DuplicateStrainRow</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">excluded</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ExcludedRow</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">flagged</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EssentialityFlag</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">served</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">row</span><span class="o">.</span><span class="n">source_name</span> <span class="o">!=</span> <span class="n">row</span><span class="o">.</span><span class="n">normalized_name</span><span class="p">:</span>
+            <span class="n">normalizations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">IdentifierNormalization</span><span class="p">(</span>
+                    <span class="n">row_index</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">row_index</span><span class="p">,</span>
+                    <span class="n">source_name</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">source_name</span><span class="p">,</span>
+                    <span class="n">normalized_name</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">normalized_name</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">_PARENT_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">normalized_name</span><span class="p">)</span> <span class="ow">or</span> <span class="n">_PARENT_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">name_cell</span><span class="p">):</span>
+            <span class="n">excluded</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">ExcludedRow</span><span class="p">(</span>
+                    <span class="n">row_index</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">row_index</span><span class="p">,</span>
+                    <span class="n">source_name</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">source_name</span><span class="p">,</span>
+                    <span class="n">name_cell</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">name_cell</span><span class="p">,</span>
+                    <span class="n">reason</span><span class="o">=</span><span class="s2">"parent-strain row, not a deletion"</span><span class="p">,</span>
+                    <span class="n">levels</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">levels</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">resolution</span> <span class="o">=</span> <span class="n">resolve</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">normalized_name</span><span class="p">)</span>
+        <span class="n">orf</span> <span class="o">=</span> <span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span>
+        <span class="k">if</span> <span class="n">resolution</span><span class="o">.</span><span class="n">status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_KEPT_STATUSES</span> <span class="ow">or</span> <span class="n">orf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dropped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">DroppedOrf</span><span class="p">(</span>
+                    <span class="n">row_index</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">row_index</span><span class="p">,</span>
+                    <span class="n">source_name</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">source_name</span><span class="p">,</span>
+                    <span class="n">normalized_name</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">normalized_name</span><span class="p">,</span>
+                    <span class="n">status</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">resolution</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+                    <span class="n">resolved_to</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                    <span class="n">feature_type</span><span class="o">=</span><span class="n">resolution</span><span class="o">.</span><span class="n">feature_type</span><span class="p">,</span>
+                    <span class="n">n_values</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">levels</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">resolution</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">GeneNameStatus</span><span class="o">.</span><span class="n">RENAMED</span><span class="p">:</span>
+            <span class="n">renamed</span><span class="p">[</span><span class="n">row</span><span class="o">.</span><span class="n">normalized_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">orf</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">normalized_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">served</span><span class="p">:</span>
+            <span class="n">duplicates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">DuplicateStrainRow</span><span class="p">(</span>
+                    <span class="n">row_index</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">row_index</span><span class="p">,</span>
+                    <span class="n">source_name</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">source_name</span><span class="p">,</span>
+                    <span class="n">normalized_name</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">normalized_name</span><span class="p">,</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                    <span class="n">name_cell</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">name_cell</span><span class="p">,</span>
+                    <span class="n">kept_row_index</span><span class="o">=</span><span class="n">served</span><span class="p">[</span><span class="n">key</span><span class="p">],</span>
+                    <span class="n">levels</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">levels</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">served</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">row_index</span>
+        <span class="k">if</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">essential_genes</span><span class="p">:</span>
+            <span class="n">flagged</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">EssentialityFlag</span><span class="p">(</span>
+                    <span class="n">row_index</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">row_index</span><span class="p">,</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                    <span class="n">name_cell</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">name_cell</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">kept</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">KeptRow</span><span class="p">(</span>
+                <span class="o">**</span><span class="n">row</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">normalized_name</span><span class="p">,</span>
+                <span class="n">status</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">resolution</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="n">ledger</span> <span class="o">=</span> <span class="n">BuildLedger</span><span class="p">(</span>
+        <span class="n">dataset</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+        <span class="n">orf_rule</span><span class="o">=</span><span class="n">ORF_RULE</span><span class="p">,</span>
+        <span class="n">normalization_rule</span><span class="o">=</span><span class="n">NORMALIZATION_RULE</span><span class="p">,</span>
+        <span class="n">duplicate_rule</span><span class="o">=</span><span class="n">DUPLICATE_RULE</span><span class="p">,</span>
+        <span class="n">exclusion_rule</span><span class="o">=</span><span class="n">EXCLUSION_RULE</span><span class="p">,</span>
+        <span class="n">essentiality_rule</span><span class="o">=</span><span class="n">ESSENTIALITY_RULE</span><span class="p">,</span>
+        <span class="n">replicate_rule</span><span class="o">=</span><span class="n">REPLICATE_RULE</span><span class="p">,</span>
+        <span class="n">legend_contradiction</span><span class="o">=</span><span class="n">LEGEND_CONTRADICTION</span><span class="p">,</span>
+        <span class="n">n_source_rows</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
+        <span class="n">n_kept</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">kept</span><span class="p">),</span>
+        <span class="n">n_dropped_orfs</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">dropped</span><span class="p">),</span>
+        <span class="n">n_renamed</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">renamed</span><span class="p">),</span>
+        <span class="n">n_normalized</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">normalizations</span><span class="p">),</span>
+        <span class="n">n_duplicate_rows</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">duplicates</span><span class="p">),</span>
+        <span class="n">n_excluded_non_deletion</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">excluded</span><span class="p">),</span>
+        <span class="n">n_essentiality_flagged</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">flagged</span><span class="p">),</span>
+        <span class="n">n_values_kept</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">levels</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">kept</span><span class="p">),</span>
+        <span class="n">normalizations</span><span class="o">=</span><span class="n">normalizations</span><span class="p">,</span>
+        <span class="n">dropped_orfs</span><span class="o">=</span><span class="n">dropped</span><span class="p">,</span>
+        <span class="n">renamed_orfs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">renamed</span><span class="o">.</span><span class="n">items</span><span class="p">())),</span>
+        <span class="n">duplicate_strain_rows</span><span class="o">=</span><span class="n">duplicates</span><span class="p">,</span>
+        <span class="n">excluded_non_deletion</span><span class="o">=</span><span class="n">excluded</span><span class="p">,</span>
+        <span class="n">essentiality_flagged</span><span class="o">=</span><span class="n">flagged</span><span class="p">,</span>
+        <span class="n">created_at</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">kept</span><span class="p">,</span> <span class="n">ledger</span>
+
+
+<div class="viewcode-block" id="AminoAcidCooper2010Dataset">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.cooper2010.AminoAcidCooper2010Dataset.html#torchcell.datasets.scerevisiae.cooper2010.AminoAcidCooper2010Dataset">[docs]</a>
+<span class="nd">@register_dataset</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AminoAcidCooper2010Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Cooper 2010 CE-LIF amino-acid pools of the deletion collection (ratio to plate)."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/amino_acid_cooper2010"</span><span class="p">,</span>
+        <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">genome</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset. ``genome`` supplies ``resolve_gene_name``; when it is</span>
+<span class="sd">        None a read-only S288C genome is opened at build time (never at import).</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolver</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""``resolve_gene_name`` from the supplied genome, or a read-only S288C genome."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+            <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
+
+            <span class="n">load_dotenv</span><span class="p">()</span>
+            <span class="n">data_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
+            <span class="c1"># overwrite=False is mandatory: a rebuild here would race any other process</span>
+            <span class="c1"># holding the same gffutils database.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
+                <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
+                <span class="n">go_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/go"</span><span class="p">),</span>
+                <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">resolver</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="o">.</span><span class="n">resolve_gene_name</span>
+        <span class="k">return</span> <span class="n">resolver</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Experiment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Experiment schema class produced by this dataset."""</span>
+        <span class="k">return</span> <span class="n">MetaboliteExperiment</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reference_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">ExperimentReference</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Experiment-reference schema class produced by this dataset."""</span>
+        <span class="k">return</span> <span class="n">MetaboliteExperimentReference</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The deposited Supplemental Table 4 required before processing."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">TABLE4_NAME</span><span class="p">]</span>
+
+    <span class="c1"># ---- retrieval ------------------------------------------------------------ #</span>
+<div class="viewcode-block" id="AminoAcidCooper2010Dataset.download">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.cooper2010.AminoAcidCooper2010Dataset.html#torchcell.datasets.scerevisiae.cooper2010.AminoAcidCooper2010Dataset.download">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Link Table 4 from the sha256-verified raw mirror. There is no network path.</span>
+
+<span class="sd">        The supplement is behind a login wall, so the mirror (the stored artifact plus</span>
+<span class="sd">        its sha256) is the only source; an absent mirror raises with the manual recipe.</span>
+<span class="sd">        """</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">dest</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">TABLE4_NAME</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">raw_mirror_dir</span><span class="p">()</span> <span class="o">/</span> <span class="n">_RAW_FILES</span><span class="p">[</span><span class="n">TABLE4_NAME</span><span class="p">][</span><span class="s2">"relpath"</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">source</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"raw mirror file </span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2"> is absent and the source is not scriptable; "</span>
+                <span class="sa">f</span><span class="s2">"deposit it with deposit_raw_mirror(). Recipe: </span><span class="si">{</span><span class="n">MANUAL_RECIPE</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">digest</span> <span class="o">=</span> <span class="n">sha256_file</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">digest</span> <span class="o">!=</span> <span class="n">TABLE4_SHA256</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"raw mirror </span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2"> sha256 mismatch: got </span><span class="si">{</span><span class="n">digest</span><span class="si">}</span><span class="s2">, expected "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">TABLE4_SHA256</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Linked </span><span class="si">%s</span><span class="s2"> from the raw mirror (sha256 verified)"</span><span class="p">,</span> <span class="n">TABLE4_NAME</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ---- record builders ------------------------------------------------------ #</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_environment</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Environment</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Cooper's SC recipe as a typed SC dropout, ~16 h, temperature a typed gap."""</span>
+        <span class="k">return</span> <span class="n">Environment</span><span class="p">(</span>
+            <span class="n">media</span><span class="o">=</span><span class="n">COOPER_SC</span><span class="p">,</span>
+            <span class="n">temperature</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">duration_hours</span><span class="o">=</span><span class="mf">16.0</span><span class="p">,</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">_TEMPERATURE_GAP</span><span class="p">],</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="AminoAcidCooper2010Dataset.create_experiment">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.cooper2010.AminoAcidCooper2010Dataset.html#torchcell.datasets.scerevisiae.cooper2010.AminoAcidCooper2010Dataset.create_experiment">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span>  <span class="c1"># type: ignore[override]</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="n">KeptRow</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">MetaboliteExperiment</span><span class="p">,</span> <span class="n">MetaboliteExperimentReference</span><span class="p">,</span> <span class="n">Publication</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Build the Metabolite experiment/reference/publication for one kept row."""</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">PEAK_ORDER</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">row</span><span class="o">.</span><span class="n">levels</span><span class="p">]</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="p">,</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">perturbed_gene_name</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">environment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment</span><span class="p">()</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">MetabolitePhenotype</span><span class="p">(</span>
+            <span class="n">metabolite_level</span><span class="o">=</span><span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">row</span><span class="o">.</span><span class="n">levels</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">},</span>
+            <span class="n">metabolite_level_se</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
+            <span class="n">target_metabolite_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># a typed gap: see _phenotype_gaps</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="n">_phenotype_gaps</span><span class="p">(</span><span class="n">keys</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="c1"># The reference is the plate average by construction: a ratio of 1.0 per key.</span>
+        <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">MetabolitePhenotype</span><span class="p">(</span>
+            <span class="n">metabolite_level</span><span class="o">=</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>
+            <span class="n">metabolite_level_se</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
+            <span class="n">target_metabolite_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">experiment</span> <span class="o">=</span> <span class="n">MetaboliteExperiment</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">genotype</span><span class="o">=</span><span class="n">genotype</span><span class="p">,</span>
+            <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">phenotype</span><span class="o">=</span><span class="n">phenotype</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="n">MetaboliteExperimentReference</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="n">ReferenceGenome</span><span class="p">(</span>
+                <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4741"</span>
+            <span class="p">),</span>
+            <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(),</span>
+            <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">phenotype_reference</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span>
+            <span class="n">pubmed_id</span><span class="o">=</span><span class="n">PMID</span><span class="p">,</span>
+            <span class="n">pubmed_url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"https://pubmed.ncbi.nlm.nih.gov/</span><span class="si">{</span><span class="n">PMID</span><span class="si">}</span><span class="s2">/"</span><span class="p">,</span>
+            <span class="n">doi</span><span class="o">=</span><span class="n">DOI</span><span class="p">,</span>
+            <span class="n">doi_url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"https://doi.org/</span><span class="si">{</span><span class="n">DOI</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span></div>
+
+
+    <span class="c1"># ---- build ---------------------------------------------------------------- #</span>
+<div class="viewcode-block" id="AminoAcidCooper2010Dataset.process">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.cooper2010.AminoAcidCooper2010Dataset.html#torchcell.datasets.scerevisiae.cooper2010.AminoAcidCooper2010Dataset.process">[docs]</a>
+    <span class="nd">@post_process</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Parse Table 4, apply the retention rules, write the LMDB and the ledgers."""</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+        <span class="n">load_dotenv</span><span class="p">()</span>
+        <span class="n">data_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">read_table4</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">TABLE4_NAME</span><span class="p">))</span>
+        <span class="n">kept</span><span class="p">,</span> <span class="n">ledger</span> <span class="o">=</span> <span class="n">retain_rows</span><span class="p">(</span>
+            <span class="n">rows</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="p">(),</span>
+            <span class="n">load_sgd_essential_genes</span><span class="p">(</span><span class="n">data_root</span><span class="p">),</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Cooper2010: </span><span class="si">%d</span><span class="s2"> source rows -&gt; </span><span class="si">%d</span><span class="s2"> kept (</span><span class="si">%d</span><span class="s2"> values); dropped </span><span class="si">%d</span><span class="s2"> ORFs "</span>
+            <span class="s2">"(</span><span class="si">%s</span><span class="s2">); </span><span class="si">%d</span><span class="s2"> RENAMED kept under the current name; </span><span class="si">%d</span><span class="s2"> normalized identifiers; "</span>
+            <span class="s2">"</span><span class="si">%d</span><span class="s2"> duplicate rows to the ledger; </span><span class="si">%d</span><span class="s2"> excluded non-deletion rows; "</span>
+            <span class="s2">"</span><span class="si">%d</span><span class="s2"> essentiality-flagged rows kept"</span><span class="p">,</span>
+            <span class="n">ledger</span><span class="o">.</span><span class="n">n_source_rows</span><span class="p">,</span>
+            <span class="n">ledger</span><span class="o">.</span><span class="n">n_kept</span><span class="p">,</span>
+            <span class="n">ledger</span><span class="o">.</span><span class="n">n_values_kept</span><span class="p">,</span>
+            <span class="n">ledger</span><span class="o">.</span><span class="n">n_dropped_orfs</span><span class="p">,</span>
+            <span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">source_name</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">ledger</span><span class="o">.</span><span class="n">dropped_orfs</span><span class="p">],</span>
+            <span class="n">ledger</span><span class="o">.</span><span class="n">n_renamed</span><span class="p">,</span>
+            <span class="n">ledger</span><span class="o">.</span><span class="n">n_normalized</span><span class="p">,</span>
+            <span class="n">ledger</span><span class="o">.</span><span class="n">n_duplicate_rows</span><span class="p">,</span>
+            <span class="n">ledger</span><span class="o">.</span><span class="n">n_excluded_non_deletion</span><span class="p">,</span>
+            <span class="n">ledger</span><span class="o">.</span><span class="n">n_essentiality_flagged</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write_data_csv</span><span class="p">(</span><span class="n">kept</span><span class="p">)</span>
+
+        <span class="n">env</span><span class="p">,</span> <span class="n">interned_env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_write_lmdb</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">))</span>
+        <span class="c1"># LIFO exit: the interned txn commits before the records txn (crash safety).</span>
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">,</span> <span class="n">interned_env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">kept</span><span class="p">):</span>
+                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_intern_record</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span><span class="p">,</span> <span class="n">itxn</span><span class="p">),</span>
+                <span class="p">)</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">interned_env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Cooper2010 amino-acid experiments to LMDB"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">kept</span><span class="p">))</span>
+
+        <span class="n">ledger_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_records.json"</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">ledger_path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">ledger</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Cooper2010 ledger -&gt; </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">ledger_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write_sourced_values</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_write_data_csv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kept</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">KeptRow</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""``preprocess/data.csv``: one kept row per line, missing peaks left empty."""</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+            <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="s2">"systematic_gene_name"</span><span class="p">,</span>
+                    <span class="s2">"perturbed_gene_name"</span><span class="p">,</span>
+                    <span class="s2">"source_name"</span><span class="p">,</span>
+                    <span class="s2">"name_cell"</span><span class="p">,</span>
+                    <span class="s2">"row_index"</span><span class="p">,</span>
+                    <span class="o">*</span><span class="n">PEAK_ORDER</span><span class="p">,</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">kept</span><span class="p">:</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="n">row</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="p">,</span>
+                        <span class="n">row</span><span class="o">.</span><span class="n">perturbed_gene_name</span><span class="p">,</span>
+                        <span class="n">row</span><span class="o">.</span><span class="n">source_name</span><span class="p">,</span>
+                        <span class="n">row</span><span class="o">.</span><span class="n">name_cell</span><span class="p">,</span>
+                        <span class="n">row</span><span class="o">.</span><span class="n">row_index</span><span class="p">,</span>
+                        <span class="o">*</span><span class="p">[</span><span class="n">row</span><span class="o">.</span><span class="n">levels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">PEAK_ORDER</span><span class="p">],</span>
+                    <span class="p">]</span>
+                <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_write_sourced_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""``preprocess/sourced_values.json``: every hardcoded number's quote."""</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"sourced_values.json"</span><span class="p">)</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">key</span><span class="p">:</span> <span class="n">value</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span>
+                <span class="p">{</span><span class="o">**</span><span class="n">SOURCED_VALUES</span><span class="p">,</span> <span class="o">**</span><span class="n">LEGEND_SOURCED_VALUES</span><span class="p">}</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="p">}</span>
+        <span class="n">payload</span><span class="p">[</span><span class="s2">"peak_notes"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">PEAK_NOTES</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Cooper2010 sourced values -&gt; </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AminoAcidCooper2010Dataset.preprocess_raw">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.cooper2010.AminoAcidCooper2010Dataset.html#torchcell.datasets.scerevisiae.cooper2010.AminoAcidCooper2010Dataset.preprocess_raw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Preprocessing is handled inside process() for this dataset."""</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build/load the dataset for interactive debugging."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">],</span> <span class="s2">"data/torchcell/amino_acid_cooper2010"</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">AminoAcidCooper2010Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"len = </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

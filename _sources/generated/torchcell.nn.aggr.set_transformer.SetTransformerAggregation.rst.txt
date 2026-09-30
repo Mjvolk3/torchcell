@@ -1,0 +1,8 @@
+﻿torchcell.nn.aggr.set\_transformer.SetTransformerAggregation
+============================================================
+
+.. currentmodule:: torchcell.nn.aggr.set_transformer
+
+.. autoclass:: SetTransformerAggregation
+   :show-inheritance:
+   :members:

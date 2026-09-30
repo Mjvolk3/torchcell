@@ -1,0 +1,8 @@
+﻿torchcell.knowledge\_graphs.releases.ServedDatabase
+===================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.releases
+
+.. autoclass:: ServedDatabase
+   :show-inheritance:
+   :members:

@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.ontology\_checks.lane\_back\_edges
+=======================================================
+
+.. currentmodule:: torchcell.datamodels.ontology_checks
+
+.. autofunction:: lane_back_edges

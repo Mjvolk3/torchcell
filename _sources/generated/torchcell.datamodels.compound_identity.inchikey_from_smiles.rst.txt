@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.compound\_identity.inchikey\_from\_smiles
+==============================================================
+
+.. currentmodule:: torchcell.datamodels.compound_identity
+
+.. autofunction:: inchikey_from_smiles

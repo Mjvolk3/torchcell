@@ -1,0 +1,6 @@
+﻿torchcell.database.build\_dataset\_lmdb.build\_dataset
+======================================================
+
+.. currentmodule:: torchcell.database.build_dataset_lmdb
+
+.. autofunction:: build_dataset

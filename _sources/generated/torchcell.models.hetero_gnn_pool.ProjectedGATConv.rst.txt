@@ -1,0 +1,8 @@
+﻿torchcell.models.hetero\_gnn\_pool.ProjectedGATConv
+===================================================
+
+.. currentmodule:: torchcell.models.hetero_gnn_pool
+
+.. autoclass:: ProjectedGATConv
+   :show-inheritance:
+   :members:

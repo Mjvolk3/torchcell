@@ -1,0 +1,8 @@
+﻿torchcell.data.Neo4jCellDataset
+===============================
+
+.. currentmodule:: torchcell.data
+
+.. autoclass:: Neo4jCellDataset
+   :show-inheritance:
+   :members:

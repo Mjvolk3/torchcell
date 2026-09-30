@@ -1,0 +1,8 @@
+﻿torchcell.models.hetero\_cell\_bipartite\_dango\_gi.PreProcessor
+================================================================
+
+.. currentmodule:: torchcell.models.hetero_cell_bipartite_dango_gi
+
+.. autoclass:: PreProcessor
+   :show-inheritance:
+   :members:

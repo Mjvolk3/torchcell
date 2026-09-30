@@ -1,0 +1,6 @@
+﻿torchcell.verification.shared\_rule\_results
+============================================
+
+.. currentmodule:: torchcell.verification
+
+.. autofunction:: shared_rule_results

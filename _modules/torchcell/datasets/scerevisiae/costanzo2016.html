@@ -1,0 +1,1367 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datasets.scerevisiae.costanzo2016 &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/datasets/scerevisiae/costanzo2016.html" />
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html">
+            
+              <img src="../../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.datasets.scerevisiae.costanzo2016</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.datasets.scerevisiae.costanzo2016</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Costanzo 2016 single/double mutant fitness and interaction datasets."""</span>
+
+<span class="c1"># torchcell/datasets/scerevisiae/costanzo2016</span>
+<span class="c1"># [[torchcell.datasets.scerevisiae.costanzo2016]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/costanzo2016</span>
+<span class="c1"># Test file: tests/torchcell/datasets/scerevisiae/test_costanzo2016.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">zipfile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">download_url</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Environment</span><span class="p">,</span>
+    <span class="n">FitnessExperiment</span><span class="p">,</span>
+    <span class="n">FitnessExperimentReference</span><span class="p">,</span>
+    <span class="n">FitnessPhenotype</span><span class="p">,</span>
+    <span class="n">GeneInteractionExperiment</span><span class="p">,</span>
+    <span class="n">GeneInteractionExperimentReference</span><span class="p">,</span>
+    <span class="n">GeneInteractionPhenotype</span><span class="p">,</span>
+    <span class="n">Genotype</span><span class="p">,</span>
+    <span class="n">Publication</span><span class="p">,</span>
+    <span class="n">ReferenceGenome</span><span class="p">,</span>
+    <span class="n">SgaDampPerturbation</span><span class="p">,</span>
+    <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">,</span>
+    <span class="n">SgaNatMxDeletionPerturbation</span><span class="p">,</span>
+    <span class="n">SgaSuppressorAllelePerturbation</span><span class="p">,</span>
+    <span class="n">SgaTsAllelePerturbation</span><span class="p">,</span>
+    <span class="n">Temperature</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">SGA_DM_SELECTION</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GenePerturbationType</span><span class="p">,</span>
+    <span class="n">SampleUnit</span><span class="p">,</span>
+    <span class="n">UncertaintyType</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># Sample Size Metadata - Extracted from Costanzo et al. 2016</span>
+<span class="c1"># ============================================================================</span>
+
+<span class="c1"># Default sample size for double mutant fitness measurements (technical replicates)</span>
+<span class="c1"># Quote: "All screens were conducted a single time with 4 replicate colonies</span>
+<span class="c1">#         per double mutant, unless otherwise indicated"</span>
+<span class="c1"># Source: SI-costanzoGlobalGeneticInteraction2016.mmd, Line 74</span>
+<span class="c1"># Verified: SI-costanzoGlobalGeneticInteraction2016.pdf, Page 5,</span>
+<span class="c1">#           Section "SGA query strain construction and screening"</span>
+<span class="c1"># Date extracted: 2026-01-20</span>
+<span class="n">N_SAMPLES_DOUBLE_MUTANT</span> <span class="o">=</span> <span class="mi">4</span>
+
+<span class="c1"># Sample size for query strain single mutant fitness (control screens)</span>
+<span class="c1"># Quote: "Colony size measurements of SGA deletion and TS query mutant strains</span>
+<span class="c1">#         were based on an average of 17 replicate control screens performed</span>
+<span class="c1">#         at 26°C or 30°C."</span>
+<span class="c1"># Source: SI-costanzoGlobalGeneticInteraction2016.mmd, Line 88</span>
+<span class="c1"># Verified: SI-costanzoGlobalGeneticInteraction2016.pdf, Page 5,</span>
+<span class="c1">#           Section "Single mutant fitness standard"</span>
+<span class="c1"># Date extracted: 2026-01-20</span>
+<span class="c1"># Note: colonies within a screen are averaged BEFORE bootstrap resampling, so the</span>
+<span class="c1"># SMF resampling unit (and n_samples) is the screen, not the 68 colonies.</span>
+<span class="n">N_SAMPLES_QUERY_SMF_SCREENS</span> <span class="o">=</span> <span class="mi">17</span>
+
+<span class="c1"># Sample size for array strain single mutant fitness (control screens)</span>
+<span class="c1"># Quote: "Colony size measurements of SGA deletion and TS array mutant strains</span>
+<span class="c1">#         were based on an average of 350 replicate control screens performed</span>
+<span class="c1">#         at 26°C or 30°C."</span>
+<span class="c1"># Source: SI-costanzoGlobalGeneticInteraction2016.mmd, Line 88</span>
+<span class="c1"># Verified: SI-costanzoGlobalGeneticInteraction2016.pdf, Page 5,</span>
+<span class="c1">#           Section "Single mutant fitness standard"</span>
+<span class="c1"># Date extracted: 2026-01-20</span>
+<span class="c1"># Array-strain SMF uses 350 control screens (kept for provenance; the simplified</span>
+<span class="c1"># loader records the query-strain screen count for SMF).</span>
+<span class="n">N_SAMPLES_ARRAY_SMF_SCREENS</span> <span class="o">=</span> <span class="mi">350</span>
+
+<span class="c1"># Temperature-specific measurements (all use 4 technical replicates per screen)</span>
+<span class="c1"># Quote: "Double mutant selection plates involving a nonessential deletion</span>
+<span class="c1">#         mutant query strain and the DMA were incubated at 30°C."</span>
+<span class="c1"># Quote: "All SGA selection steps involving a TS allele were conducted at</span>
+<span class="c1">#         permissive temperature (22°C) except for the final selection of</span>
+<span class="c1">#         haploid double mutants, which were incubated at a semipermissive</span>
+<span class="c1">#         temperature (26°C) prior to imaging."</span>
+<span class="c1"># Source: SI-costanzoGlobalGeneticInteraction2016.mmd, Line 74</span>
+<span class="c1"># Verified: SI-costanzoGlobalGeneticInteraction2016.pdf, Page 5</span>
+<span class="c1"># Date extracted: 2026-01-20</span>
+<span class="n">N_SAMPLES_TEMP_30C</span> <span class="o">=</span> <span class="mi">4</span>  <span class="c1"># For KanMX deletion mutants</span>
+<span class="n">N_SAMPLES_TEMP_26C</span> <span class="o">=</span> <span class="mi">4</span>  <span class="c1"># For TS alleles at semipermissive temperature</span>
+
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># Fitness</span>
+<div class="viewcode-block" id="SmfCostanzo2016Dataset">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset.html#torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset">[docs]</a>
+<span class="nd">@register_dataset</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SmfCostanzo2016Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Single-mutant fitness dataset from Costanzo et al. 2016."""</span>
+
+    <span class="n">url</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"https://thecellmap.org/costanzo2016/data_files/"</span>
+        <span class="s2">"Raw</span><span class="si">%20g</span><span class="s2">enetic</span><span class="si">%20i</span><span class="s2">nteraction</span><span class="si">%20d</span><span class="s2">atasets:%20Pair-wise</span><span class="si">%20i</span><span class="s2">nteraction</span><span class="si">%20f</span><span class="s2">ormat.zip"</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/smf_costanzo2016"</span><span class="p">,</span>
+        <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize the SMF dataset under ``root`` via the base dataset."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">FitnessExperiment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the FitnessExperiment type for SMF data."""</span>
+        <span class="k">return</span> <span class="n">FitnessExperiment</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reference_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">FitnessExperimentReference</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the FitnessExperimentReference type for SMF data."""</span>
+        <span class="k">return</span> <span class="n">FitnessExperimentReference</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>  <span class="c1"># type: ignore[override]  # single raw file as str, base is list[str]</span>
+<span class="w">        </span><span class="sd">"""Return the single-mutant fitness raw spreadsheet name."""</span>
+        <span class="k">return</span> <span class="s2">"strain_ids_and_single_mutant_fitness.xlsx"</span>
+
+<div class="viewcode-block" id="SmfCostanzo2016Dataset.download">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset.html#torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset.download">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Download and unpack the Costanzo archive, keeping the SMF spreadsheet."""</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">download_url</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">zip_ref</span><span class="p">:</span>
+            <span class="n">zip_ref</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="c1"># Move the contents of the subdirectory to the parent raw directory</span>
+        <span class="n">sub_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span>
+            <span class="s2">"Data File S1. Raw genetic interaction datasets: Pair-wise interaction format"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">sub_dir</span><span class="p">):</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sub_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">rmdir</span><span class="p">(</span><span class="n">sub_dir</span><span class="p">)</span>
+        <span class="c1"># remove any excess files not needed</span>
+        <span class="k">for</span> <span class="n">file_name</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">):</span>
+            <span class="c1"># if the file name ends in .txt remove it</span>
+            <span class="k">if</span> <span class="n">file_name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".txt"</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">file_name</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="SmfCostanzo2016Dataset.process">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset.html#torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset.process">[docs]</a>
+    <span class="nd">@post_process</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Read the SMF spreadsheet and write experiment records into LMDB."""</span>
+        <span class="n">xlsx_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="s2">"strain_ids_and_single_mutant_fitness.xlsx"</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">xlsx_path</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_raw</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">phenotype_reference_std_26</span><span class="p">,</span> <span class="n">phenotype_reference_std_30</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">compute_phenotype_reference_std</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Save preprocssed df - mainly for quick stats</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Processing SMF Files..."</span><span class="p">)</span>
+
+        <span class="c1"># Initialize LMDB environment</span>
+        <span class="n">env</span><span class="p">,</span> <span class="n">interned_env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_write_lmdb</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">))</span>
+
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">,</span> <span class="n">interned_env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">row</span><span class="p">,</span>
+                    <span class="n">phenotype_reference_std_26</span><span class="o">=</span><span class="n">phenotype_reference_std_26</span><span class="p">,</span>
+                    <span class="n">phenotype_reference_std_30</span><span class="o">=</span><span class="n">phenotype_reference_std_30</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_intern_record</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span><span class="p">,</span> <span class="n">itxn</span><span class="p">),</span>
+                <span class="p">)</span>
+
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">interned_env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="SmfCostanzo2016Dataset.preprocess_raw">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset.html#torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset.preprocess_raw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>  <span class="c1"># type: ignore[override]  # dataset-specific signature</span>
+<span class="w">        </span><span class="sd">"""Derive perturbation type from strain IDs and clean the SMF table."""</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"Strain_ID_suffix"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"Strain ID"</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="n">expand</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># Determine perturbation type based on Strain_ID_suffix</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"perturbation_type"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"Strain_ID_suffix"</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span>
+                <span class="s2">"damp"</span>
+                <span class="k">if</span> <span class="s2">"damp"</span> <span class="ow">in</span> <span class="n">x</span>
+                <span class="k">else</span> <span class="p">(</span>
+                    <span class="s2">"temperature_sensitive"</span>
+                    <span class="k">if</span> <span class="s2">"tsa"</span> <span class="ow">in</span> <span class="n">x</span> <span class="ow">or</span> <span class="s2">"tsq"</span> <span class="ow">in</span> <span class="n">x</span>
+                    <span class="k">else</span> <span class="p">(</span>
+                        <span class="s2">"KanMX_deletion"</span>
+                        <span class="k">if</span> <span class="s2">"dma"</span> <span class="ow">in</span> <span class="n">x</span>
+                        <span class="k">else</span> <span class="p">(</span>
+                            <span class="s2">"NatMX_deletion"</span>
+                            <span class="k">if</span> <span class="s2">"sn"</span> <span class="ow">in</span> <span class="n">x</span>  <span class="c1"># or "S" in x or "A_S" in x</span>
+                            <span class="k">else</span> <span class="s2">"suppression_allele"</span>
+                            <span class="k">if</span> <span class="s2">"S"</span> <span class="ow">in</span> <span class="n">x</span>
+                            <span class="k">else</span> <span class="s2">"unknown"</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Create separate dataframes for the two temperatures</span>
+        <span class="n">df_26</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span>
+            <span class="p">[</span>
+                <span class="s2">"Strain ID"</span><span class="p">,</span>
+                <span class="s2">"Systematic gene name"</span><span class="p">,</span>
+                <span class="s2">"Allele/Gene name"</span><span class="p">,</span>
+                <span class="s2">"Single mutant fitness (26°)"</span><span class="p">,</span>
+                <span class="s2">"Single mutant fitness (26°) stddev"</span><span class="p">,</span>
+                <span class="s2">"perturbation_type"</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">df_26</span><span class="p">[</span><span class="s2">"Temperature"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">26</span>
+
+        <span class="n">df_30</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span>
+            <span class="p">[</span>
+                <span class="s2">"Strain ID"</span><span class="p">,</span>
+                <span class="s2">"Systematic gene name"</span><span class="p">,</span>
+                <span class="s2">"Allele/Gene name"</span><span class="p">,</span>
+                <span class="s2">"Single mutant fitness (30°)"</span><span class="p">,</span>
+                <span class="s2">"Single mutant fitness (30°) stddev"</span><span class="p">,</span>
+                <span class="s2">"perturbation_type"</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">df_30</span><span class="p">[</span><span class="s2">"Temperature"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">30</span>
+
+        <span class="c1"># Rename the columns for fitness and stddev to be common for both dataframes</span>
+        <span class="n">df_26</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"Single mutant fitness (26°)"</span><span class="p">:</span> <span class="s2">"Single mutant fitness"</span><span class="p">,</span>
+                <span class="s2">"Single mutant fitness (26°) stddev"</span><span class="p">:</span> <span class="s2">"Single mutant fitness stddev"</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">df_30</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"Single mutant fitness (30°)"</span><span class="p">:</span> <span class="s2">"Single mutant fitness"</span><span class="p">,</span>
+                <span class="s2">"Single mutant fitness (30°) stddev"</span><span class="p">:</span> <span class="s2">"Single mutant fitness stddev"</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Concatenate the two dataframes</span>
+        <span class="n">combined_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df_26</span><span class="p">,</span> <span class="n">df_30</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">combined_df</span> <span class="o">=</span> <span class="n">combined_df</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+        <span class="n">combined_df</span> <span class="o">=</span> <span class="n">combined_df</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()</span>
+        <span class="n">combined_df</span> <span class="o">=</span> <span class="n">combined_df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">combined_df</span></div>
+
+
+<div class="viewcode-block" id="SmfCostanzo2016Dataset.compute_phenotype_reference_std">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset.html#torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset.compute_phenotype_reference_std">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_phenotype_reference_std</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="c1"># reason: pandas Series scalar indexing yields dynamically-typed values</span>
+<span class="w">        </span><span class="sd">"""Return mean SMF stddev at 26C and 30C used as reference noise."""</span>
+        <span class="n">mean_stds</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"Temperature"</span><span class="p">)[</span><span class="s2">"Single mutant fitness stddev"</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">phenotype_reference_std_26</span> <span class="o">=</span> <span class="n">mean_stds</span><span class="p">[</span><span class="mi">26</span><span class="p">]</span>
+        <span class="n">phenotype_reference_std_30</span> <span class="o">=</span> <span class="n">mean_stds</span><span class="p">[</span><span class="mi">30</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">phenotype_reference_std_26</span><span class="p">,</span> <span class="n">phenotype_reference_std_30</span></div>
+
+
+<div class="viewcode-block" id="SmfCostanzo2016Dataset.create_experiment">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset.html#torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset.create_experiment">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span>  <span class="c1"># type: ignore[override]  # dataset-specific signature</span>
+        <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">row</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span>
+        <span class="n">phenotype_reference_std_26</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">phenotype_reference_std_30</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">FitnessExperiment</span><span class="p">,</span> <span class="n">FitnessExperimentReference</span><span class="p">,</span> <span class="n">Publication</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Build SMF experiment, reference, and publication objects for a row."""</span>
+        <span class="c1"># Common attributes for both temperatures</span>
+        <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"S288C"</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Deal with different types of perturbations</span>
+        <span class="k">if</span> <span class="s2">"temperature_sensitive"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"perturbation_type"</span><span class="p">]:</span>
+            <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+                <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">SgaTsAllelePerturbation</span><span class="p">(</span>
+                        <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Systematic gene name"</span><span class="p">],</span>
+                        <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Allele/Gene name"</span><span class="p">],</span>
+                        <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Strain ID"</span><span class="p">],</span>
+                    <span class="p">)</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">"damp"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"perturbation_type"</span><span class="p">]:</span>
+            <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+                <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">SgaDampPerturbation</span><span class="p">(</span>
+                        <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Systematic gene name"</span><span class="p">],</span>
+                        <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Allele/Gene name"</span><span class="p">],</span>
+                        <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Strain ID"</span><span class="p">],</span>
+                    <span class="p">)</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">"KanMX_deletion"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"perturbation_type"</span><span class="p">]:</span>
+            <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+                <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
+                        <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Systematic gene name"</span><span class="p">],</span>
+                        <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Allele/Gene name"</span><span class="p">],</span>
+                        <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Strain ID"</span><span class="p">],</span>
+                    <span class="p">)</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">"NatMX_deletion"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"perturbation_type"</span><span class="p">]:</span>
+            <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+                <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">SgaNatMxDeletionPerturbation</span><span class="p">(</span>
+                        <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Systematic gene name"</span><span class="p">],</span>
+                        <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Allele/Gene name"</span><span class="p">],</span>
+                        <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Strain ID"</span><span class="p">],</span>
+                    <span class="p">)</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">"suppression_allele"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"perturbation_type"</span><span class="p">]:</span>
+            <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+                <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">SgaSuppressorAllelePerturbation</span><span class="p">(</span>
+                        <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Systematic gene name"</span><span class="p">],</span>
+                        <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Allele/Gene name"</span><span class="p">],</span>
+                        <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Strain ID"</span><span class="p">],</span>
+                    <span class="p">)</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+
+        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
+            <span class="n">media</span><span class="o">=</span><span class="n">SGA_DM_SELECTION</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Temperature"</span><span class="p">])</span>
+        <span class="p">)</span>
+        <span class="n">environment_reference</span> <span class="o">=</span> <span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">()</span>
+        <span class="c1"># Phenotype based on temperature</span>
+        <span class="n">smf_key</span> <span class="o">=</span> <span class="s2">"Single mutant fitness"</span>
+        <span class="n">smf_std_key</span> <span class="o">=</span> <span class="s2">"Single mutant fitness stddev"</span>
+
+        <span class="c1"># SMF stddev is a BOOTSTRAP standard error of the bootstrapped-mean fitness</span>
+        <span class="c1"># estimate (SOM: "bootstrapped means ... used in variance estimation and</span>
+        <span class="c1"># final fitness values"), so it is already an SE -&gt; used AS-IS, never</span>
+        <span class="c1"># divided by sqrt(n). The bootstrap resampling unit is the control screen</span>
+        <span class="c1"># (17 for query strains); the 4 colonies per screen are averaged before</span>
+        <span class="c1"># resampling, so n is screens, not the 68 colony measurements. fitness_se</span>
+        <span class="c1"># is auto-derived from (uncertainty, type). See</span>
+        <span class="c1"># [[torchcell.datasets.scerevisiae.costanzo2016.noise-computation]].</span>
+        <span class="n">fitness_std_val</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">smf_std_key</span><span class="p">]</span>
+        <span class="n">smf_unc_type</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">UncertaintyType</span><span class="o">.</span><span class="n">bootstrap_se</span> <span class="k">if</span> <span class="n">fitness_std_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">FitnessPhenotype</span><span class="p">(</span>
+            <span class="n">fitness</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="n">smf_key</span><span class="p">],</span>
+            <span class="n">fitness_std</span><span class="o">=</span><span class="n">fitness_std_val</span><span class="p">,</span>
+            <span class="n">fitness_uncertainty</span><span class="o">=</span><span class="n">fitness_std_val</span><span class="p">,</span>
+            <span class="n">fitness_uncertainty_type</span><span class="o">=</span><span class="n">smf_unc_type</span><span class="p">,</span>
+            <span class="n">n_samples</span><span class="o">=</span><span class="n">N_SAMPLES_QUERY_SMF_SCREENS</span><span class="p">,</span>
+            <span class="n">sample_unit</span><span class="o">=</span><span class="n">SampleUnit</span><span class="o">.</span><span class="n">screen</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">"Temperature"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">26</span><span class="p">:</span>
+            <span class="n">phenotype_reference_std</span> <span class="o">=</span> <span class="n">phenotype_reference_std_26</span>
+        <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s2">"Temperature"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">30</span><span class="p">:</span>
+            <span class="n">phenotype_reference_std</span> <span class="o">=</span> <span class="n">phenotype_reference_std_30</span>
+
+        <span class="c1"># WT reference noise is the mean SMF stddev (an average of bootstrap SEs),</span>
+        <span class="c1"># so it is likewise a bootstrap SE -&gt; used as-is (no sqrt(n) division).</span>
+        <span class="n">ref_unc_type</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">UncertaintyType</span><span class="o">.</span><span class="n">bootstrap_se</span>
+            <span class="k">if</span> <span class="n">phenotype_reference_std</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">FitnessPhenotype</span><span class="p">(</span>
+            <span class="n">fitness</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+            <span class="n">fitness_std</span><span class="o">=</span><span class="n">phenotype_reference_std</span><span class="p">,</span>
+            <span class="n">fitness_uncertainty</span><span class="o">=</span><span class="n">phenotype_reference_std</span><span class="p">,</span>
+            <span class="n">fitness_uncertainty_type</span><span class="o">=</span><span class="n">ref_unc_type</span><span class="p">,</span>
+            <span class="n">n_samples</span><span class="o">=</span><span class="n">N_SAMPLES_QUERY_SMF_SCREENS</span><span class="p">,</span>
+            <span class="n">sample_unit</span><span class="o">=</span><span class="n">SampleUnit</span><span class="o">.</span><span class="n">screen</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">reference</span> <span class="o">=</span> <span class="n">FitnessExperimentReference</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="n">genome_reference</span><span class="p">,</span>
+            <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment_reference</span><span class="p">,</span>
+            <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">phenotype_reference</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">experiment</span> <span class="o">=</span> <span class="n">FitnessExperiment</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">genotype</span><span class="o">=</span><span class="n">genotype</span><span class="p">,</span>
+            <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">phenotype</span><span class="o">=</span><span class="n">phenotype</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span>
+            <span class="n">pubmed_id</span><span class="o">=</span><span class="s2">"27708008"</span><span class="p">,</span>
+            <span class="n">pubmed_url</span><span class="o">=</span><span class="s2">"https://pubmed.ncbi.nlm.nih.gov/27708008/"</span><span class="p">,</span>
+            <span class="n">doi</span><span class="o">=</span><span class="s2">"10.1126/science.aaf1420"</span><span class="p">,</span>
+            <span class="n">doi_url</span><span class="o">=</span><span class="s2">"https://www.science.org/doi/10.1126/science.aaf1420"</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DmfCostanzo2016Dataset">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.costanzo2016.DmfCostanzo2016Dataset.html#torchcell.datasets.scerevisiae.costanzo2016.DmfCostanzo2016Dataset">[docs]</a>
+<span class="nd">@register_dataset</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DmfCostanzo2016Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Double-mutant fitness dataset from Costanzo et al. 2016."""</span>
+
+    <span class="n">url</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"https://thecellmap.org/costanzo2016/data_files/"</span>
+        <span class="s2">"Raw</span><span class="si">%20g</span><span class="s2">enetic</span><span class="si">%20i</span><span class="s2">nteraction</span><span class="si">%20d</span><span class="s2">atasets:%20Pair-wise</span><span class="si">%20i</span><span class="s2">nteraction</span><span class="si">%20f</span><span class="s2">ormat.zip"</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/dmf_costanzo2016"</span><span class="p">,</span>
+        <span class="n">subset_n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1e4</span><span class="p">),</span>
+        <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset with optional subsetting and batched IO."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">io_workers</span> <span class="o">=</span> <span class="n">io_workers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subset_n</span> <span class="o">=</span> <span class="n">subset_n</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DmfCostanzo2016Dataset.download">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.costanzo2016.DmfCostanzo2016Dataset.html#torchcell.datasets.scerevisiae.costanzo2016.DmfCostanzo2016Dataset.download">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Download and unpack the Costanzo archive, keeping the SGA text files."""</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">download_url</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">zip_ref</span><span class="p">:</span>
+            <span class="n">zip_ref</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="c1"># Move the contents of the subdirectory to the parent raw directory</span>
+        <span class="n">sub_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span>
+            <span class="s2">"Data File S1. Raw genetic interaction datasets: Pair-wise interaction format"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">sub_dir</span><span class="p">):</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sub_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">rmdir</span><span class="p">(</span><span class="n">sub_dir</span><span class="p">)</span>
+        <span class="c1"># remove any excess files not needed</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="s2">"strain_ids_and_single_mutant_fitness.xlsx"</span><span class="p">))</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">FitnessExperiment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the FitnessExperiment type for DMF data."""</span>
+        <span class="k">return</span> <span class="n">FitnessExperiment</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reference_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">FitnessExperimentReference</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the FitnessExperimentReference type for DMF data."""</span>
+        <span class="k">return</span> <span class="n">FitnessExperimentReference</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the SGA interaction text files used as raw input."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">"SGA_DAmP.txt"</span><span class="p">,</span> <span class="s2">"SGA_ExE.txt"</span><span class="p">,</span> <span class="s2">"SGA_ExN_NxE.txt"</span><span class="p">,</span> <span class="s2">"SGA_NxN.txt"</span><span class="p">]</span>
+
+<div class="viewcode-block" id="DmfCostanzo2016Dataset.preprocess_raw">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.costanzo2016.DmfCostanzo2016Dataset.html#torchcell.datasets.scerevisiae.costanzo2016.DmfCostanzo2016Dataset.preprocess_raw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Concatenate and clean the SGA files into a double-mutant fitness table."""</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Preprocess on raw data..."</span><span class="p">)</span>
+
+        <span class="c1"># Function to extract gene name</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">extract_systematic_name</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"pd.Series"</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">y</span><span class="p">:</span> <span class="n">y</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"_"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]))</span>
+
+        <span class="c1"># Extract gene names</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"Query Systematic Name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">extract_systematic_name</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"Query Strain ID"</span><span class="p">])</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"Array Systematic Name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">extract_systematic_name</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"Array Strain ID"</span><span class="p">])</span>
+        <span class="n">Temperature</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"Arraytype/Temp"</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(\d+)"</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"Temperature"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Temperature</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"query_perturbation_type"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"Query Strain ID"</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span>
+                <span class="s2">"damp"</span>
+                <span class="k">if</span> <span class="s2">"damp"</span> <span class="ow">in</span> <span class="n">x</span>
+                <span class="k">else</span> <span class="p">(</span>
+                    <span class="s2">"temperature_sensitive"</span>
+                    <span class="k">if</span> <span class="s2">"tsa"</span> <span class="ow">in</span> <span class="n">x</span> <span class="ow">or</span> <span class="s2">"tsq"</span> <span class="ow">in</span> <span class="n">x</span>
+                    <span class="k">else</span> <span class="p">(</span>
+                        <span class="s2">"KanMX_deletion"</span>
+                        <span class="k">if</span> <span class="s2">"dma"</span> <span class="ow">in</span> <span class="n">x</span>
+                        <span class="k">else</span> <span class="p">(</span>
+                            <span class="s2">"NatMX_deletion"</span>
+                            <span class="k">if</span> <span class="s2">"sn"</span> <span class="ow">in</span> <span class="n">x</span>  <span class="c1"># or "S" in x or "A_S" in x</span>
+                            <span class="k">else</span> <span class="s2">"suppression_allele"</span>
+                            <span class="k">if</span> <span class="s2">"S"</span> <span class="ow">in</span> <span class="n">x</span>
+                            <span class="k">else</span> <span class="s2">"unknown"</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"array_perturbation_type"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"Array Strain ID"</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span>
+                <span class="s2">"damp"</span>
+                <span class="k">if</span> <span class="s2">"damp"</span> <span class="ow">in</span> <span class="n">x</span>
+                <span class="k">else</span> <span class="p">(</span>
+                    <span class="s2">"temperature_sensitive"</span>
+                    <span class="k">if</span> <span class="s2">"tsa"</span> <span class="ow">in</span> <span class="n">x</span> <span class="ow">or</span> <span class="s2">"tsq"</span> <span class="ow">in</span> <span class="n">x</span>
+                    <span class="k">else</span> <span class="p">(</span>
+                        <span class="s2">"KanMX_deletion"</span>
+                        <span class="k">if</span> <span class="s2">"dma"</span> <span class="ow">in</span> <span class="n">x</span>
+                        <span class="k">else</span> <span class="p">(</span>
+                            <span class="s2">"NatMX_deletion"</span>
+                            <span class="k">if</span> <span class="s2">"sn"</span> <span class="ow">in</span> <span class="n">x</span>  <span class="c1"># or "S" in x or "A_S" in x</span>
+                            <span class="k">else</span> <span class="s2">"suppression_allele"</span>
+                            <span class="k">if</span> <span class="s2">"S"</span> <span class="ow">in</span> <span class="n">x</span>
+                            <span class="k">else</span> <span class="s2">"unknown"</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">means</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"Temperature"</span><span class="p">)[</span>
+            <span class="s2">"Double mutant fitness standard deviation"</span>
+        <span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+        <span class="c1"># Extracting means for specific temperatures</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phenotype_reference_std_26</span> <span class="o">=</span> <span class="n">means</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">26</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phenotype_reference_std_30</span> <span class="o">=</span> <span class="n">means</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="DmfCostanzo2016Dataset.process">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.costanzo2016.DmfCostanzo2016Dataset.html#torchcell.datasets.scerevisiae.costanzo2016.DmfCostanzo2016Dataset.process">[docs]</a>
+    <span class="nd">@post_process</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Preprocess the raw SGA files and write records into LMDB in batches."""</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Initialize an empty DataFrame to hold all raw data</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
+        <span class="c1"># Read and concatenate all raw files</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Reading and Concatenating Raw Files..."</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">file_name</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_file_names</span><span class="p">):</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
+            <span class="c1"># Reading data using Pandas; limit rows for demonstration</span>
+            <span class="n">df_temp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
+            <span class="c1"># Concatenating data frames</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df</span><span class="p">,</span> <span class="n">df_temp</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Functions for data filtering... duplicates selection,</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_raw</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+        <span class="c1"># Subset</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset_n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">subset_n</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Save preprocssed df - mainly for quick stats</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Processing DMF Files..."</span><span class="p">)</span>
+
+        <span class="c1"># Initialize LMDB environment</span>
+        <span class="n">env</span><span class="p">,</span> <span class="n">interned_env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_write_lmdb</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">))</span>
+
+        <span class="c1"># Create a ThreadPoolExecutor for parallel processing</span>
+        <span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">io_workers</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+            <span class="n">futures</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">batch_start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">):</span>
+                <span class="n">batch_end</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">batch_start</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">batch_df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">batch_start</span><span class="p">:</span><span class="n">batch_end</span><span class="p">]</span>
+                <span class="n">future</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_process_batch</span><span class="p">,</span> <span class="n">batch_df</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">interned_env</span>
+                <span class="p">)</span>
+                <span class="n">futures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
+
+            <span class="c1"># Wait for all futures to complete</span>
+            <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">futures</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">futures</span><span class="p">)):</span>
+                <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">interned_env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_process_batch</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">batch_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">env</span><span class="p">:</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">Environment</span><span class="p">,</span> <span class="n">interned_env</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">,</span> <span class="n">interned_env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">batch_df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">row</span><span class="p">,</span>
+                    <span class="n">phenotype_reference_std_26</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phenotype_reference_std_26</span><span class="p">,</span>
+                    <span class="n">phenotype_reference_std_30</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phenotype_reference_std_30</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_intern_record</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span><span class="p">,</span> <span class="n">itxn</span><span class="p">),</span>
+                <span class="p">)</span>
+
+<div class="viewcode-block" id="DmfCostanzo2016Dataset.create_experiment">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.costanzo2016.DmfCostanzo2016Dataset.html#torchcell.datasets.scerevisiae.costanzo2016.DmfCostanzo2016Dataset.create_experiment">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span>  <span class="c1"># type: ignore[override]  # dataset-specific signature</span>
+        <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">row</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span>
+        <span class="n">phenotype_reference_std_26</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">phenotype_reference_std_30</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">FitnessExperiment</span><span class="p">,</span> <span class="n">FitnessExperimentReference</span><span class="p">,</span> <span class="n">Publication</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Build DMF experiment, reference, and publication objects for a row."""</span>
+        <span class="c1"># Common attributes for both temperatures</span>
+        <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"S288C"</span>
+        <span class="p">)</span>
+        <span class="c1"># genotype</span>
+        <span class="n">perturbations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">GenePerturbationType</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># Query</span>
+        <span class="k">if</span> <span class="s2">"temperature_sensitive"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"query_perturbation_type"</span><span class="p">]:</span>
+            <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SgaTsAllelePerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query Systematic Name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query allele name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query Strain ID"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">"damp"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"query_perturbation_type"</span><span class="p">]:</span>
+            <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SgaDampPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query Systematic Name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query allele name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query Strain ID"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">"KanMX_deletion"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"query_perturbation_type"</span><span class="p">]:</span>
+            <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query Systematic Name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query allele name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query Strain ID"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">elif</span> <span class="s2">"NatMX_deletion"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"query_perturbation_type"</span><span class="p">]:</span>
+            <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SgaNatMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query Systematic Name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query allele name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query Strain ID"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">"suppression_allele"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"query_perturbation_type"</span><span class="p">]:</span>
+            <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SgaSuppressorAllelePerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query Systematic Name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query allele name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query Strain ID"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Array</span>
+        <span class="k">if</span> <span class="s2">"temperature_sensitive"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"array_perturbation_type"</span><span class="p">]:</span>
+            <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SgaTsAllelePerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array Systematic Name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array allele name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array Strain ID"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">"damp"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"array_perturbation_type"</span><span class="p">]:</span>
+            <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SgaDampPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array Systematic Name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array allele name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array Strain ID"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">"KanMX_deletion"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"array_perturbation_type"</span><span class="p">]:</span>
+            <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array Systematic Name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array allele name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array Strain ID"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">elif</span> <span class="s2">"NatMX_deletion"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"array_perturbation_type"</span><span class="p">]:</span>
+            <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SgaNatMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array Systematic Name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array allele name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array Strain ID"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">elif</span> <span class="s2">"suppression_allele"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"array_perturbation_type"</span><span class="p">]:</span>
+            <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SgaSuppressorAllelePerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array Systematic Name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array allele name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array Strain ID"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="n">perturbations</span><span class="p">)</span>
+        <span class="c1"># genotype</span>
+        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
+            <span class="n">media</span><span class="o">=</span><span class="n">SGA_DM_SELECTION</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Temperature"</span><span class="p">])</span>
+        <span class="p">)</span>
+        <span class="n">environment_reference</span> <span class="o">=</span> <span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">()</span>
+        <span class="c1"># Phenotype based on temperature</span>
+        <span class="n">dmf_key</span> <span class="o">=</span> <span class="s2">"Double mutant fitness"</span>
+        <span class="n">dmf_std_key</span> <span class="o">=</span> <span class="s2">"Double mutant fitness standard deviation"</span>
+
+        <span class="c1"># DMF stddev is a SAMPLE SD over the 4 colony replicates of one screen</span>
+        <span class="c1"># (SOM Data File S1 "Double mutant fitness standard deviation"), NOT a</span>
+        <span class="c1"># bootstrap SE -&gt; SE = SD/sqrt(4), auto-derived from (uncertainty, type).</span>
+        <span class="n">fitness_std_val</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">dmf_std_key</span><span class="p">]</span>
+        <span class="n">dmf_unc_type</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">UncertaintyType</span><span class="o">.</span><span class="n">sample_sd</span> <span class="k">if</span> <span class="n">fitness_std_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">FitnessPhenotype</span><span class="p">(</span>
+            <span class="n">fitness</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="n">dmf_key</span><span class="p">],</span>
+            <span class="n">fitness_std</span><span class="o">=</span><span class="n">fitness_std_val</span><span class="p">,</span>
+            <span class="n">fitness_uncertainty</span><span class="o">=</span><span class="n">fitness_std_val</span><span class="p">,</span>
+            <span class="n">fitness_uncertainty_type</span><span class="o">=</span><span class="n">dmf_unc_type</span><span class="p">,</span>
+            <span class="n">n_samples</span><span class="o">=</span><span class="n">N_SAMPLES_DOUBLE_MUTANT</span><span class="p">,</span>
+            <span class="n">sample_unit</span><span class="o">=</span><span class="n">SampleUnit</span><span class="o">.</span><span class="n">colony</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">"Temperature"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">26</span><span class="p">:</span>
+            <span class="n">phenotype_reference_std</span> <span class="o">=</span> <span class="n">phenotype_reference_std_26</span>
+        <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s2">"Temperature"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">30</span><span class="p">:</span>
+            <span class="n">phenotype_reference_std</span> <span class="o">=</span> <span class="n">phenotype_reference_std_30</span>
+
+        <span class="c1"># WT/WT reference noise is the mean DMF stddev (an average of colony sample</span>
+        <span class="c1"># SDs) -&gt; sample_sd over the 4 colonies -&gt; SE = SD/sqrt(4). (Was wrongly</span>
+        <span class="c1"># divided by sqrt(68), conflating screens with colonies.)</span>
+        <span class="n">ref_unc_type</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">UncertaintyType</span><span class="o">.</span><span class="n">sample_sd</span> <span class="k">if</span> <span class="n">phenotype_reference_std</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">FitnessPhenotype</span><span class="p">(</span>
+            <span class="n">fitness</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+            <span class="n">fitness_std</span><span class="o">=</span><span class="n">phenotype_reference_std</span><span class="p">,</span>
+            <span class="n">fitness_uncertainty</span><span class="o">=</span><span class="n">phenotype_reference_std</span><span class="p">,</span>
+            <span class="n">fitness_uncertainty_type</span><span class="o">=</span><span class="n">ref_unc_type</span><span class="p">,</span>
+            <span class="n">n_samples</span><span class="o">=</span><span class="n">N_SAMPLES_DOUBLE_MUTANT</span><span class="p">,</span>
+            <span class="n">sample_unit</span><span class="o">=</span><span class="n">SampleUnit</span><span class="o">.</span><span class="n">colony</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">reference</span> <span class="o">=</span> <span class="n">FitnessExperimentReference</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="n">genome_reference</span><span class="p">,</span>
+            <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment_reference</span><span class="p">,</span>
+            <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">phenotype_reference</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">experiment</span> <span class="o">=</span> <span class="n">FitnessExperiment</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">genotype</span><span class="o">=</span><span class="n">genotype</span><span class="p">,</span>
+            <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">phenotype</span><span class="o">=</span><span class="n">phenotype</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span>
+            <span class="n">pubmed_id</span><span class="o">=</span><span class="s2">"27708008"</span><span class="p">,</span>
+            <span class="n">pubmed_url</span><span class="o">=</span><span class="s2">"https://pubmed.ncbi.nlm.nih.gov/27708008/"</span><span class="p">,</span>
+            <span class="n">doi</span><span class="o">=</span><span class="s2">"10.1126/science.aaf1420"</span><span class="p">,</span>
+            <span class="n">doi_url</span><span class="o">=</span><span class="s2">"https://www.science.org/doi/10.1126/science.aaf1420"</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span></div>
+</div>
+
+
+
+<span class="c1"># Interactions</span>
+<div class="viewcode-block" id="DmiCostanzo2016Dataset">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.costanzo2016.DmiCostanzo2016Dataset.html#torchcell.datasets.scerevisiae.costanzo2016.DmiCostanzo2016Dataset">[docs]</a>
+<span class="nd">@register_dataset</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DmiCostanzo2016Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Double-mutant genetic interaction dataset from Costanzo et al. 2016."""</span>
+
+    <span class="n">url</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"https://thecellmap.org/costanzo2016/data_files/"</span>
+        <span class="s2">"Raw</span><span class="si">%20g</span><span class="s2">enetic</span><span class="si">%20i</span><span class="s2">nteraction</span><span class="si">%20d</span><span class="s2">atasets:%20Pair-wise</span><span class="si">%20i</span><span class="s2">nteraction</span><span class="si">%20f</span><span class="s2">ormat.zip"</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/dmi_costanzo2016"</span><span class="p">,</span>
+        <span class="n">subset_n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1e4</span><span class="p">),</span>
+        <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset with optional subsetting and batched IO."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">io_workers</span> <span class="o">=</span> <span class="n">io_workers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subset_n</span> <span class="o">=</span> <span class="n">subset_n</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DmiCostanzo2016Dataset.download">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.costanzo2016.DmiCostanzo2016Dataset.html#torchcell.datasets.scerevisiae.costanzo2016.DmiCostanzo2016Dataset.download">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Download and unpack the Costanzo archive, keeping the SGA text files."""</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">download_url</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">zip_ref</span><span class="p">:</span>
+            <span class="n">zip_ref</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="c1"># Move the contents of the subdirectory to the parent raw directory</span>
+        <span class="n">sub_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span>
+            <span class="s2">"Data File S1. Raw genetic interaction datasets: Pair-wise interaction format"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">sub_dir</span><span class="p">):</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sub_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">rmdir</span><span class="p">(</span><span class="n">sub_dir</span><span class="p">)</span>
+        <span class="c1"># remove any excess files not needed</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="s2">"strain_ids_and_single_mutant_fitness.xlsx"</span><span class="p">))</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">GeneInteractionExperiment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the GeneInteractionExperiment type for DMI data."""</span>
+        <span class="k">return</span> <span class="n">GeneInteractionExperiment</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reference_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">GeneInteractionExperimentReference</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the GeneInteractionExperimentReference type for DMI data."""</span>
+        <span class="k">return</span> <span class="n">GeneInteractionExperimentReference</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the SGA interaction text files used as raw input."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">"SGA_DAmP.txt"</span><span class="p">,</span> <span class="s2">"SGA_ExE.txt"</span><span class="p">,</span> <span class="s2">"SGA_ExN_NxE.txt"</span><span class="p">,</span> <span class="s2">"SGA_NxN.txt"</span><span class="p">]</span>
+
+<div class="viewcode-block" id="DmiCostanzo2016Dataset.preprocess_raw">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.costanzo2016.DmiCostanzo2016Dataset.html#torchcell.datasets.scerevisiae.costanzo2016.DmiCostanzo2016Dataset.preprocess_raw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Concatenate and clean the SGA files into a genetic-interaction table."""</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Preprocess on raw data..."</span><span class="p">)</span>
+
+        <span class="c1"># Function to extract gene name</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">extract_systematic_name</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"pd.Series"</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">y</span><span class="p">:</span> <span class="n">y</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"_"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]))</span>
+
+        <span class="c1"># Extract gene names</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"Query Systematic Name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">extract_systematic_name</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"Query Strain ID"</span><span class="p">])</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"Array Systematic Name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">extract_systematic_name</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"Array Strain ID"</span><span class="p">])</span>
+        <span class="n">Temperature</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"Arraytype/Temp"</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(\d+)"</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"Temperature"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Temperature</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"query_perturbation_type"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"Query Strain ID"</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span>
+                <span class="s2">"damp"</span>
+                <span class="k">if</span> <span class="s2">"damp"</span> <span class="ow">in</span> <span class="n">x</span>
+                <span class="k">else</span> <span class="p">(</span>
+                    <span class="s2">"temperature_sensitive"</span>
+                    <span class="k">if</span> <span class="s2">"tsa"</span> <span class="ow">in</span> <span class="n">x</span> <span class="ow">or</span> <span class="s2">"tsq"</span> <span class="ow">in</span> <span class="n">x</span>
+                    <span class="k">else</span> <span class="p">(</span>
+                        <span class="s2">"KanMX_deletion"</span>
+                        <span class="k">if</span> <span class="s2">"dma"</span> <span class="ow">in</span> <span class="n">x</span>
+                        <span class="k">else</span> <span class="p">(</span>
+                            <span class="s2">"NatMX_deletion"</span>
+                            <span class="k">if</span> <span class="s2">"sn"</span> <span class="ow">in</span> <span class="n">x</span>
+                            <span class="k">else</span> <span class="s2">"suppression_allele"</span>
+                            <span class="k">if</span> <span class="s2">"S"</span> <span class="ow">in</span> <span class="n">x</span>
+                            <span class="k">else</span> <span class="s2">"unknown"</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"array_perturbation_type"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"Array Strain ID"</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span>
+                <span class="s2">"damp"</span>
+                <span class="k">if</span> <span class="s2">"damp"</span> <span class="ow">in</span> <span class="n">x</span>
+                <span class="k">else</span> <span class="p">(</span>
+                    <span class="s2">"temperature_sensitive"</span>
+                    <span class="k">if</span> <span class="s2">"tsa"</span> <span class="ow">in</span> <span class="n">x</span> <span class="ow">or</span> <span class="s2">"tsq"</span> <span class="ow">in</span> <span class="n">x</span>
+                    <span class="k">else</span> <span class="p">(</span>
+                        <span class="s2">"KanMX_deletion"</span>
+                        <span class="k">if</span> <span class="s2">"dma"</span> <span class="ow">in</span> <span class="n">x</span>
+                        <span class="k">else</span> <span class="p">(</span>
+                            <span class="s2">"NatMX_deletion"</span>
+                            <span class="k">if</span> <span class="s2">"sn"</span> <span class="ow">in</span> <span class="n">x</span>
+                            <span class="k">else</span> <span class="s2">"suppression_allele"</span>
+                            <span class="k">if</span> <span class="s2">"S"</span> <span class="ow">in</span> <span class="n">x</span>
+                            <span class="k">else</span> <span class="s2">"unknown"</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="DmiCostanzo2016Dataset.process">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.costanzo2016.DmiCostanzo2016Dataset.html#torchcell.datasets.scerevisiae.costanzo2016.DmiCostanzo2016Dataset.process">[docs]</a>
+    <span class="nd">@post_process</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Preprocess the raw SGA files and write records into LMDB in batches."""</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Initialize an empty DataFrame to hold all raw data</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
+        <span class="c1"># Read and concatenate all raw files</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Reading and Concatenating Raw Files..."</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">file_name</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_file_names</span><span class="p">):</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
+            <span class="c1"># Reading data using Pandas; limit rows for demonstration</span>
+            <span class="n">df_temp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
+            <span class="c1"># Concatenating data frames</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df</span><span class="p">,</span> <span class="n">df_temp</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Functions for data filtering... duplicates selection,</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_raw</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+        <span class="c1"># Subset</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset_n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">subset_n</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Save preprocssed df - mainly for quick stats</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Processing DMI Files..."</span><span class="p">)</span>
+
+        <span class="c1"># Initialize LMDB environment</span>
+        <span class="n">env</span><span class="p">,</span> <span class="n">interned_env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_write_lmdb</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">))</span>
+
+        <span class="c1"># Create a ThreadPoolExecutor for parallel processing</span>
+        <span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">io_workers</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+            <span class="n">futures</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">batch_start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">):</span>
+                <span class="n">batch_end</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">batch_start</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">batch_df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">batch_start</span><span class="p">:</span><span class="n">batch_end</span><span class="p">]</span>
+                <span class="n">future</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_process_batch</span><span class="p">,</span> <span class="n">batch_df</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">interned_env</span>
+                <span class="p">)</span>
+                <span class="n">futures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
+
+            <span class="c1"># Wait for all futures to complete</span>
+            <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">futures</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">futures</span><span class="p">)):</span>
+                <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">interned_env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_process_batch</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">batch_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">env</span><span class="p">:</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">Environment</span><span class="p">,</span> <span class="n">interned_env</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">,</span> <span class="n">interned_env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">batch_df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">row</span>
+                <span class="p">)</span>
+
+                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_intern_record</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span><span class="p">,</span> <span class="n">itxn</span><span class="p">),</span>
+                <span class="p">)</span>
+
+<div class="viewcode-block" id="DmiCostanzo2016Dataset.create_experiment">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.costanzo2016.DmiCostanzo2016Dataset.html#torchcell.datasets.scerevisiae.costanzo2016.DmiCostanzo2016Dataset.create_experiment">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span>  <span class="c1"># type: ignore[override]  # dataset-specific signature</span>
+        <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
+        <span class="n">GeneInteractionExperiment</span><span class="p">,</span> <span class="n">GeneInteractionExperimentReference</span><span class="p">,</span> <span class="n">Publication</span>
+    <span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Build DMI interaction experiment, reference, and publication objects."""</span>
+        <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"S288C"</span>
+        <span class="p">)</span>
+
+        <span class="n">perturbations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">GenePerturbationType</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># Query</span>
+        <span class="k">if</span> <span class="s2">"temperature_sensitive"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"query_perturbation_type"</span><span class="p">]:</span>
+            <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SgaTsAllelePerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query Systematic Name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query allele name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query Strain ID"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">"damp"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"query_perturbation_type"</span><span class="p">]:</span>
+            <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SgaDampPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query Systematic Name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query allele name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query Strain ID"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">"KanMX_deletion"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"query_perturbation_type"</span><span class="p">]:</span>
+            <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query Systematic Name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query allele name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query Strain ID"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">"NatMX_deletion"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"query_perturbation_type"</span><span class="p">]:</span>
+            <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SgaNatMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query Systematic Name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query allele name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query Strain ID"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">"suppression_allele"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"query_perturbation_type"</span><span class="p">]:</span>
+            <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SgaSuppressorAllelePerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query Systematic Name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query allele name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query Strain ID"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Array</span>
+        <span class="k">if</span> <span class="s2">"temperature_sensitive"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"array_perturbation_type"</span><span class="p">]:</span>
+            <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SgaTsAllelePerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array Systematic Name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array allele name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array Strain ID"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">"damp"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"array_perturbation_type"</span><span class="p">]:</span>
+            <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SgaDampPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array Systematic Name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array allele name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array Strain ID"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">"KanMX_deletion"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"array_perturbation_type"</span><span class="p">]:</span>
+            <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array Systematic Name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array allele name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array Strain ID"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">"NatMX_deletion"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"array_perturbation_type"</span><span class="p">]:</span>
+            <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SgaNatMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array Systematic Name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array allele name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array Strain ID"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">"suppression_allele"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"array_perturbation_type"</span><span class="p">]:</span>
+            <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SgaSuppressorAllelePerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array Systematic Name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array allele name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Array Strain ID"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="n">perturbations</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">genotype</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">"Genotype must have 2 perturbations."</span>
+
+        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
+            <span class="n">media</span><span class="o">=</span><span class="n">SGA_DM_SELECTION</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Temperature"</span><span class="p">])</span>
+        <span class="p">)</span>
+        <span class="n">environment_reference</span> <span class="o">=</span> <span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">()</span>
+
+        <span class="c1"># Digenic interaction: relates two gene nodes -&gt; an edge (not a hyperedge,</span>
+        <span class="c1"># which is &gt;=3 genes). GeneInteractionPhenotype defaults to "hyperedge"</span>
+        <span class="c1"># (the trigenic case), so digenic loaders override it explicitly.</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">GeneInteractionPhenotype</span><span class="p">(</span>
+            <span class="n">gene_interaction</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Genetic interaction score (ε)"</span><span class="p">],</span>
+            <span class="n">gene_interaction_p_value</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"P-value"</span><span class="p">],</span>
+            <span class="n">graph_level</span><span class="o">=</span><span class="s2">"edge"</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># By definition, the reference interaction would be 0.</span>
+        <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">GeneInteractionPhenotype</span><span class="p">(</span>
+            <span class="n">gene_interaction</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">gene_interaction_p_value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">graph_level</span><span class="o">=</span><span class="s2">"edge"</span>
+        <span class="p">)</span>
+
+        <span class="n">reference</span> <span class="o">=</span> <span class="n">GeneInteractionExperimentReference</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="n">genome_reference</span><span class="p">,</span>
+            <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment_reference</span><span class="p">,</span>
+            <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">phenotype_reference</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">experiment</span> <span class="o">=</span> <span class="n">GeneInteractionExperiment</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">genotype</span><span class="o">=</span><span class="n">genotype</span><span class="p">,</span>
+            <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">phenotype</span><span class="o">=</span><span class="n">phenotype</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span>
+            <span class="n">pubmed_id</span><span class="o">=</span><span class="s2">"27708008"</span><span class="p">,</span>
+            <span class="n">pubmed_url</span><span class="o">=</span><span class="s2">"https://pubmed.ncbi.nlm.nih.gov/27708008/"</span><span class="p">,</span>
+            <span class="n">doi</span><span class="o">=</span><span class="s2">"10.1126/science.aaf1420"</span><span class="p">,</span>
+            <span class="n">doi_url</span><span class="o">=</span><span class="s2">"https://www.science.org/doi/10.1126/science.aaf1420"</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build and inspect the Costanzo 2016 datasets as a manual run."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">DATA_ROOT</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"DATA_ROOT"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">DATA_ROOT</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"DATA_ROOT must be set"</span>
+
+    <span class="c1"># Single mutant fitness</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">SmfCostanzo2016Dataset</span><span class="p">(</span>
+        <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/smf_costanzo2016"</span><span class="p">),</span> <span class="n">io_workers</span><span class="o">=</span><span class="mi">10</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">100</span><span class="p">])</span>
+
+    <span class="c1"># Double mutant fitness</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">DmfCostanzo2016Dataset</span><span class="p">(</span>
+        <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/dmf_costanzo2016_1e5"</span><span class="p">),</span>
+        <span class="n">io_workers</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e4</span><span class="p">),</span>
+        <span class="n">subset_n</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e5</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">DmfCostanzo2016Dataset</span><span class="p">(</span>
+        <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/dmf_costanzo2016_5e5"</span><span class="p">),</span>
+        <span class="n">io_workers</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e4</span><span class="p">),</span>
+        <span class="n">subset_n</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">5e5</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">DmfCostanzo2016Dataset</span><span class="p">(</span>
+        <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/dmf_costanzo2016"</span><span class="p">),</span>
+        <span class="n">io_workers</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e4</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="c1"># Interactions</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">DmiCostanzo2016Dataset</span><span class="p">(</span>
+        <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/dmi_costanzo2016_1e5"</span><span class="p">),</span>
+        <span class="n">io_workers</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">subset_n</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e5</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">DmiCostanzo2016Dataset</span><span class="p">(</span>
+        <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/dmi_costanzo2016_5e5"</span><span class="p">),</span>
+        <span class="n">io_workers</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">subset_n</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">5e5</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">DmiCostanzo2016Dataset</span><span class="p">(</span>
+        <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/dmi_costanzo2016"</span><span class="p">),</span> <span class="n">io_workers</span><span class="o">=</span><span class="mi">10</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

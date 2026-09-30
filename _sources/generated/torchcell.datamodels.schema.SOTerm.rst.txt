@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.SOTerm
+==================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: SOTerm
+   :show-inheritance:
+   :members:

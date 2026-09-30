@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.bloom2019.Bloom2019Dataset
+=========================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.bloom2019
+
+.. autoclass:: Bloom2019Dataset
+   :show-inheritance:
+   :members:

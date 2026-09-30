@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.vanacloig2022.EnvChemgenVanacloig2022Dataset
+===========================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.vanacloig2022
+
+.. autoclass:: EnvChemgenVanacloig2022Dataset
+   :show-inheritance:
+   :members:

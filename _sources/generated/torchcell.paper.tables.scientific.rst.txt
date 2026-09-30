@@ -1,0 +1,6 @@
+﻿torchcell.paper.tables.scientific
+=================================
+
+.. currentmodule:: torchcell.paper.tables
+
+.. autofunction:: scientific

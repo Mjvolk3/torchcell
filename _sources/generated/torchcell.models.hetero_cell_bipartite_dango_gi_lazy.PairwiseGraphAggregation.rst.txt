@@ -1,0 +1,8 @@
+﻿torchcell.models.hetero\_cell\_bipartite\_dango\_gi\_lazy.PairwiseGraphAggregation
+==================================================================================
+
+.. currentmodule:: torchcell.models.hetero_cell_bipartite_dango_gi_lazy
+
+.. autoclass:: PairwiseGraphAggregation
+   :show-inheritance:
+   :members:

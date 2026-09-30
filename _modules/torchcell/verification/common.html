@@ -1,0 +1,985 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.verification.common &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/verification/common.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.verification.common</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.verification.common</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/verification/common</span>
+<span class="c1"># [[torchcell.verification.common]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/verification/common</span>
+<span class="sd">"""Record-level rules shared by every dataset-family verifier.</span>
+
+<span class="sd">The per-family verifiers (``environment_response``, ``fitness``, ``segregant_growth``,</span>
+<span class="sd">...) each own the checks that only make sense for their readout. The rules HERE are the</span>
+<span class="sd">ones that hold for any stored experiment record, and they exist because a review of the</span>
+<span class="sd">chemogenomic block found each of them missing in a way that let an unusable dataset</span>
+<span class="sd">report PASS:</span>
+
+<span class="sd">- L1 ``provenance_gaps`` -- the census now walks EVERY gap-capable carrier in a record</span>
+<span class="sd">  (phenotype, environment, each perturbation's compound/agent/solvent, each media</span>
+<span class="sd">  component's compound), and reports, per carrier field, the ``None`` values that carry</span>
+<span class="sd">  NO gap. Reading only the phenotype and the environment is what made "fully sourced"</span>
+<span class="sd">  a false pass for a dataset whose compounds were name-only.</span>
+<span class="sd">- L1 ``canonical_gene_names`` -- a gene is one persistent entity, so one systematic name</span>
+<span class="sd">  carries one spelling of its common name; ``TOR1`` and ``Tor1`` in one release split the</span>
+<span class="sd">  perturbation identity in the graph. With a genome resolver the stored systematic name</span>
+<span class="sd">  must also BE the resolver's current name for itself, and the common name must resolve</span>
+<span class="sd">  back to it.</span>
+<span class="sd">- L2 ``uncertainty_sanity`` -- a sample-SD uncertainty of exactly 0 is a pseudocount</span>
+<span class="sd">  artifact (identical replicates after a +1), not a measurement of perfect precision.</span>
+<span class="sd">- L3 ``compound_identity`` / ``media_compound_identity`` -- a compound with no structure</span>
+<span class="sd">  identifier and no typed gap cannot be encoded or joined, so it fails the level by name</span>
+<span class="sd">  with its record count. This is what makes "drop the unencodable records" enforceable</span>
+<span class="sd">  rather than aspirational. The dataset's environment EDITS and the base medium's</span>
+<span class="sd">  components are reported separately because different layers fix them (the shared</span>
+<span class="sd">  library's own name-only components are the subject of</span>
+<span class="sd">  ``test_shared_media_compounds_are_identified_or_gapped``).</span>
+<span class="sd">- L3 ``media_membership`` -- a medium must BE a shared ``MEDIA_LIBRARY`` object or derive</span>
+<span class="sd">  from one by ``base_medium``; a free-text medium joins nothing.</span>
+<span class="sd">- L4 ``gene_containment_sgd`` + ``current_genome_genes`` -- the aggregate containment</span>
+<span class="sd">  floor stays, and a record keyed to a systematic name the current genome does not carry</span>
+<span class="sd">  fails outright (a 0.993 containment hid seven records on retired ORFs).</span>
+
+<span class="sd">Everything reads the stored MAPPINGS an LMDB yields, never the loader, so one</span>
+<span class="sd">implementation serves the eager and the streaming verifiers: each accumulator takes one</span>
+<span class="sd">record at a time (``add``) and renders its ``LevelResult`` at the end (``results``).</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Protocol</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Level</span><span class="p">,</span> <span class="n">LevelResult</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProvenanceGapCensus</span><span class="p">,</span> <span class="n">ProvenanceGapReason</span>
+
+<span class="c1"># ``schema.py`` imports this package's ``sourced`` module, so importing the datamodels at</span>
+<span class="c1"># module level here would close an import cycle. Everything schema-derived is resolved</span>
+<span class="c1"># once in ``SharedRecordRules.__init__`` (or inside the helper that needs it), which runs</span>
+<span class="c1"># long after both modules are loaded.</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"CarrierGapCensus"</span><span class="p">,</span>
+    <span class="s2">"GeneNameResolution"</span><span class="p">,</span>
+    <span class="s2">"GeneNameResolver"</span><span class="p">,</span>
+    <span class="s2">"SharedRecordRules"</span><span class="p">,</span>
+    <span class="s2">"gap_carrier_fields"</span><span class="p">,</span>
+    <span class="s2">"media_library_dumps"</span><span class="p">,</span>
+    <span class="s2">"shared_rule_results"</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">Record</span> <span class="o">=</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+
+<span class="c1"># The field name holding a model's typed absences; its presence in a stored mapping is</span>
+<span class="c1"># what identifies that mapping as a ProvenanceGapMixin carrier.</span>
+<span class="n">GAPS_FIELD</span> <span class="o">=</span> <span class="s2">"provenance_gaps"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_dispersion_types</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Uncertainty kinds that are a DISPERSION of observations.</span>
+
+<span class="sd">    Exactly 0 of one of these means every replicate came out identical, which for a</span>
+<span class="sd">    count-based readout is a pseudocount artifact rather than perfect precision. A</span>
+<span class="sd">    ``standard_error`` or ``bootstrap_se`` of 0 is a different claim and is left alone.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">UncertaintyType</span>
+
+    <span class="k">return</span> <span class="nb">frozenset</span><span class="p">({</span><span class="n">UncertaintyType</span><span class="o">.</span><span class="n">sample_sd</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">UncertaintyType</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">value</span><span class="p">})</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">GeneNameResolution</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Structural view of ``SCerevisiaeGenome.resolve_gene_name``'s return value."""</span>
+
+    <span class="n">status</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">systematic_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+
+
+<span class="c1"># A resolver maps a source gene name to the current annotation. The genome's bound</span>
+<span class="c1"># ``resolve_gene_name`` satisfies this; passing None skips the resolver-backed parts of</span>
+<span class="c1"># the canonical-name rule (the one-spelling-per-gene part still runs).</span>
+<span class="n">GeneNameResolver</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">GeneNameResolution</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_enum_value</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The stored value of an enum member, or the value itself when it is plain."""</span>
+    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">gap_carrier_fields</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""``frozenset(model fields) -&gt; class name`` for every ``ProvenanceGapMixin``.</span>
+
+<span class="sd">    Which fields are gap-capable is read from the MODELS, never from a hand list: a</span>
+<span class="sd">    ``ProvenanceGap`` must name a field of its carrier and that field must be None, so a</span>
+<span class="sd">    carrier's gap-capable fields are exactly its model fields minus ``provenance_gaps``.</span>
+<span class="sd">    A stored mapping is matched back to its class by its key set, which is also how an</span>
+<span class="sd">    unrecognized carrier (a class this build does not know) stays visible in the report.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProvenanceGapMixin</span>
+
+    <span class="n">index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">stack</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ProvenanceGapMixin</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">())</span>
+    <span class="k">while</span> <span class="n">stack</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="n">stack</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">())</span>
+        <span class="n">index</span><span class="p">[</span><span class="nb">frozenset</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">model_fields</span><span class="p">)]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="vm">__name__</span>
+    <span class="k">return</span> <span class="n">index</span>
+
+
+<div class="viewcode-block" id="CarrierGapCensus">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.CarrierGapCensus.html#torchcell.verification.CarrierGapCensus">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CarrierGapCensus</span><span class="p">(</span><span class="n">ProvenanceGapCensus</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The gap census, extended to every carrier and to undeclared ``None`` values.</span>
+
+<span class="sd">    ``ProvenanceGapCensus`` counts the gaps a build DECLARES. A field that is simply</span>
+<span class="sd">    ``None`` with no gap declares nothing, and is indistinguishable in a report from a</span>
+<span class="sd">    field that was never applicable, so it is counted here separately, keyed by</span>
+<span class="sd">    ``Class.field``, alongside how many carrier objects of each class were seen.</span>
+<span class="sd">    """</span>
+
+    <span class="n">n_carriers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">n_silent_none</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">silent_none_by_field</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">carriers_by_class</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">unrecognized_carriers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_IdentityMemo</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Cache of a derived verdict, keyed by the identity of the mapping it came from.</span>
+
+<span class="sd">    A built LMDB interns its constant sub-objects, so the SAME environment mapping is</span>
+<span class="sd">    yielded for every record of a condition; deriving its verdict once turns a per-record</span>
+<span class="sd">    cost into a per-condition one. The key object is held alongside its value, which is</span>
+<span class="sd">    what makes ``id()`` a safe key (a live object's id cannot be reused).</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">compute</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">entry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">entry</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">compute</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">obj</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">media_library_dumps</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">"""``(library key, model_dump)`` for every shared medium, for equality matching."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">MEDIA_LIBRARY</span>
+
+    <span class="k">return</span> <span class="p">[(</span><span class="n">key</span><span class="p">,</span> <span class="n">media</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">media</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">MEDIA_LIBRARY</span><span class="o">.</span><span class="n">items</span><span class="p">())]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_compounds_in</span><span class="p">(</span>
+    <span class="n">environment</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">defined</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">"""``(context, compound mapping)`` for every compound an environment names.</span>
+
+<span class="sd">    The three places a compound is an identity key: a small molecule dosed as an edit, the</span>
+<span class="sd">    agent that realizes a physical factor, and a DEFINED component of the base medium. A</span>
+<span class="sd">    ``composition_deferred`` or ``intrinsically_undefined`` component is a mixture (YNB,</span>
+<span class="sd">    peptone), so no structure identifier exists to demand of it. The vehicle a compound was</span>
+<span class="sd">    delivered in is included when it carries a typed identity.</span>
+<span class="sd">    """</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">media</span> <span class="o">=</span> <span class="n">environment</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"media"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">media_context</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"media.component[</span><span class="si">{</span><span class="n">media</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'name'</span><span class="p">)</span><span class="si">}</span><span class="s2">]"</span>
+    <span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">media</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"components"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]:</span>
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">_enum_value</span><span class="p">(</span><span class="n">component</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"definition"</span><span class="p">)))</span> <span class="o">!=</span> <span class="n">defined</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">compound</span> <span class="o">=</span> <span class="n">component</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"compound"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">compound</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">media_context</span><span class="p">,</span> <span class="n">compound</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">environment</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbations"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]:</span>
+        <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">context</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="p">(</span><span class="s2">"compound"</span><span class="p">,</span> <span class="s2">"perturbation.compound"</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"agent"</span><span class="p">,</span> <span class="s2">"perturbation.agent"</span><span class="p">),</span>
+        <span class="p">):</span>
+            <span class="n">compound</span> <span class="o">=</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">compound</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">context</span><span class="p">,</span> <span class="n">compound</span><span class="p">))</span>
+        <span class="n">solvent</span> <span class="o">=</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"solvent"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">solvent</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">solvent</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"compound"</span><span class="p">),</span> <span class="n">Mapping</span>
+        <span class="p">):</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">"perturbation.solvent.compound"</span><span class="p">,</span> <span class="n">solvent</span><span class="p">[</span><span class="s2">"compound"</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_compound_verdict</span><span class="p">(</span>
+    <span class="n">compound</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">identity_fields</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``identified`` | ``gapped`` | ``name_only`` for one stored compound.</span>
+
+<span class="sd">    Mirrors ``ontology_checks.compound_has_identity`` /</span>
+<span class="sd">    ``compound_has_identity_gap`` on the stored MAPPING (those read the model), so the</span>
+<span class="sd">    definition of "identified" is the ontology's own ``IDENTITY_FIELDS``.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">compound</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">identity_fields</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">"identified"</span>
+    <span class="n">gaps</span> <span class="o">=</span> <span class="n">compound</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">GAPS_FIELD</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">gap</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"field"</span><span class="p">))</span> <span class="ow">in</span> <span class="n">identity_fields</span> <span class="k">for</span> <span class="n">gap</span> <span class="ow">in</span> <span class="n">gaps</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">"gapped"</span>
+    <span class="k">return</span> <span class="s2">"name_only"</span>
+
+
+<span class="n">ALLELE_BEARING_PERTURBATION_TYPES</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"allele"</span><span class="p">,</span>
+        <span class="s2">"damp"</span><span class="p">,</span>
+        <span class="s2">"suppressor_allele"</span><span class="p">,</span>
+        <span class="s2">"temperature_sensitive_allele"</span><span class="p">,</span>
+        <span class="s2">"sequence_variant"</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+<span class="sd">"""Perturbation types whose perturbed_gene_name carries an allele designation."""</span>
+
+
+<div class="viewcode-block" id="SharedRecordRules">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.SharedRecordRules.html#torchcell.verification.SharedRecordRules">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SharedRecordRules</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Accumulate the family-agnostic rules over a dataset's records.</span>
+
+<span class="sd">    One instance consumes the records of ONE dataset (``add`` per record, ``results`` at</span>
+<span class="sd">    the end), so the eager and streaming verifiers run identical rules with identical</span>
+<span class="sd">    messages. ``sgd_genes`` is optional: when it is given the L4 gene rules are emitted</span>
+<span class="sd">    here; when it is not, the caller owns L4 (the segregant verifier derives its gene set</span>
+<span class="sd">    from the genome, not from perturbations).</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">background_genes</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(),</span>
+        <span class="n">resolve_gene_name</span><span class="p">:</span> <span class="n">GeneNameResolver</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sgd_genes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">min_containment</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.90</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Start an empty accumulation for one dataset."""</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">MEDIA_LIBRARY</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.ontology_checks</span><span class="w"> </span><span class="kn">import</span> <span class="n">IDENTITY_FIELDS</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComponentDefinition</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">background_genes</span> <span class="o">=</span> <span class="n">background_genes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolve_gene_name</span> <span class="o">=</span> <span class="n">resolve_gene_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sgd_genes</span> <span class="o">=</span> <span class="n">sgd_genes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_containment</span> <span class="o">=</span> <span class="n">min_containment</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_census</span> <span class="o">=</span> <span class="n">CarrierGapCensus</span><span class="p">(</span><span class="n">n_records</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_records_with_gaps</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_gaps</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_carrier_index</span> <span class="o">=</span> <span class="n">gap_carrier_fields</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gap_by_reason</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gap_by_field</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_silent_by_field</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_carriers_by_class</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_worklist</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name_records</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_n_uncertainty_checked</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_n_zero_dispersion</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_zero_dispersion_examples</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_n_unreported_uncertainty</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compound_records</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_media_records</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gene_records</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_n_records_off_genome</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_env_memo</span> <span class="o">=</span> <span class="n">_IdentityMemo</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_media_memo</span> <span class="o">=</span> <span class="n">_IdentityMemo</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_media_dumps</span> <span class="o">=</span> <span class="n">media_library_dumps</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_media_keys</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">MEDIA_LIBRARY</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_identity_fields</span> <span class="o">=</span> <span class="n">IDENTITY_FIELDS</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_defined</span> <span class="o">=</span> <span class="n">ComponentDefinition</span><span class="o">.</span><span class="n">defined</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dispersion_types</span> <span class="o">=</span> <span class="n">_dispersion_types</span><span class="p">()</span>
+
+    <span class="c1"># ---- ingestion ------------------------------------------------------- #</span>
+<div class="viewcode-block" id="SharedRecordRules.add">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.SharedRecordRules.html#torchcell.verification.SharedRecordRules.add">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Record</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Fold one stored ``{"experiment": ..., "reference": ...}`` record in."""</span>
+        <span class="n">experiment</span> <span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_gaps</span><span class="p">(</span><span class="n">experiment</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_gene_names</span><span class="p">(</span><span class="n">experiment</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_uncertainty</span><span class="p">(</span><span class="n">experiment</span><span class="p">[</span><span class="s2">"phenotype"</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_environment</span><span class="p">(</span><span class="n">experiment</span><span class="p">[</span><span class="s2">"environment"</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="SharedRecordRules.add_all">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.SharedRecordRules.html#torchcell.verification.SharedRecordRules.add_all">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">records</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Record</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Fold a sequence of records in (the eager verifiers' entrypoint)."""</span>
+        <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">record</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_add_gaps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiment</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Walk the record and census every gap carrier it contains.</span>
+
+<span class="sd">        The walk is structural: any mapping carrying ``provenance_gaps`` IS a carrier, so</span>
+<span class="sd">        a carrier added to the ontology later is reached without editing this code. The</span>
+<span class="sd">        carrier's class is recovered from its key set (the models' own field sets), which</span>
+<span class="sd">        is what lets the census report ``Compound.inchikey`` rather than a path.</span>
+<span class="sd">        """</span>
+        <span class="n">n_gaps_before</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_census</span><span class="o">.</span><span class="n">n_gaps</span>
+        <span class="k">for</span> <span class="n">carrier</span> <span class="ow">in</span> <span class="n">_walk_carriers</span><span class="p">(</span><span class="n">experiment</span><span class="p">):</span>
+            <span class="n">keys</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">carrier</span><span class="p">)</span>
+            <span class="n">class_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_carrier_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">class_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_census</span><span class="o">.</span><span class="n">unrecognized_carriers</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">class_name</span> <span class="o">=</span> <span class="s2">"unknown"</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_carriers_by_class</span><span class="p">[</span><span class="n">class_name</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_census</span><span class="o">.</span><span class="n">n_carriers</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">gapped</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">gap</span> <span class="ow">in</span> <span class="n">carrier</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">GAPS_FIELD</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]:</span>
+                <span class="n">field</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">gap</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"field"</span><span class="p">))</span>
+                <span class="n">reason</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">_enum_value</span><span class="p">(</span><span class="n">gap</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"reason"</span><span class="p">)))</span>
+                <span class="n">gapped</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_census</span><span class="o">.</span><span class="n">n_gaps</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_gap_by_reason</span><span class="p">[</span><span class="n">reason</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_gap_by_field</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">reason</span> <span class="o">==</span> <span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">deferred_pending_source_review</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_worklist</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">carrier</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">field</span> <span class="o">==</span> <span class="n">GAPS_FIELD</span> <span class="ow">or</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">gapped</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_census</span><span class="o">.</span><span class="n">n_silent_none</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_silent_by_field</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_census</span><span class="o">.</span><span class="n">n_records</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_census</span><span class="o">.</span><span class="n">n_gaps</span> <span class="o">&gt;</span> <span class="n">n_gaps_before</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_census</span><span class="o">.</span><span class="n">n_records_with_gaps</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_add_gene_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiment</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"genotype"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">genotype</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbations"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]:</span>
+            <span class="n">systematic</span> <span class="o">=</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">systematic</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">systematic</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">background_genes</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="c1"># An allele-bearing perturbation (act1-101, cys3_damp, lte1-supp1) keeps</span>
+            <span class="c1"># its allele designation in perturbed_gene_name by convention (the SGA</span>
+            <span class="c1"># strain is keyed on it), so the one-spelling and round-trip checks do</span>
+            <span class="c1"># not apply; the systematic name is still checked for currency.</span>
+            <span class="n">common</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="kc">None</span>
+                <span class="k">if</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbation_type"</span><span class="p">)</span>
+                <span class="ow">in</span> <span class="n">ALLELE_BEARING_PERTURBATION_TYPES</span>
+                <span class="k">else</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbed_gene_name"</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_name_records</span><span class="p">[(</span><span class="n">systematic</span><span class="p">,</span> <span class="n">common</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_gene_records</span><span class="p">[</span><span class="n">systematic</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sgd_genes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">genes</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">genotype</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbations"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]</span>
+                <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">background_genes</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">gene</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sgd_genes</span> <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">genes</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_n_records_off_genome</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_add_uncertainty</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phenotype</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Check the reported dispersion of ONE phenotype against its replicate design.</span>
+
+<span class="sd">        The field names follow the phenotype envelope (``label_name`` names the value,</span>
+<span class="sd">        ``label_statistic_name`` the SE), so this reads a fitness phenotype and an</span>
+<span class="sd">        environment-response phenotype with the same code.</span>
+<span class="sd">        """</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"label_name"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="n">se_field</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"label_statistic_name"</span><span class="p">)</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">_se"</span>
+        <span class="n">se</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">se_field</span><span class="p">)</span>
+        <span class="n">uncertainty</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">_uncertainty"</span><span class="p">)</span>
+        <span class="n">kind</span> <span class="o">=</span> <span class="n">_enum_value</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">_uncertainty_type"</span><span class="p">))</span>
+        <span class="n">n_samples</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"n_samples"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_n_uncertainty_checked</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dispersion_types</span> <span class="ow">and</span> <span class="p">(</span>
+                <span class="n">se</span> <span class="o">==</span> <span class="mf">0.0</span> <span class="ow">or</span> <span class="n">uncertainty</span> <span class="o">==</span> <span class="mf">0.0</span>
+            <span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_n_zero_dispersion</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_zero_dispersion_examples</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">20</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_zero_dispersion_examples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="p">{</span>
+                            <span class="s2">"uncertainty_type"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">kind</span><span class="p">),</span>
+                            <span class="s2">"uncertainty"</span><span class="p">:</span> <span class="n">uncertainty</span><span class="p">,</span>
+                            <span class="n">se_field</span><span class="p">:</span> <span class="n">se</span><span class="p">,</span>
+                            <span class="s2">"n_samples"</span><span class="p">:</span> <span class="n">n_samples</span><span class="p">,</span>
+                        <span class="p">}</span>
+                    <span class="p">)</span>
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">n_samples</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">n_samples</span> <span class="o">&gt;=</span> <span class="mi">2</span>
+            <span class="ow">and</span> <span class="n">se</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">uncertainty</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_n_unreported_uncertainty</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_add_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environment</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">context</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">verdict</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_env_memo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="n">environment</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment_compounds</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compound_records</span><span class="p">[(</span><span class="n">context</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">verdict</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">media</span> <span class="o">=</span> <span class="n">environment</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"media"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">name</span><span class="p">,</span> <span class="n">verdict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_media_memo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">media</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_media_verdict</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_media_records</span><span class="p">[(</span><span class="n">name</span><span class="p">,</span> <span class="n">verdict</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">media</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"base_medium"</span><span class="p">)))]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_environment_compounds</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">environment</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="p">(</span>
+                <span class="n">context</span><span class="p">,</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">compound</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)),</span>
+                <span class="n">_compound_verdict</span><span class="p">(</span><span class="n">compound</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_identity_fields</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">context</span><span class="p">,</span> <span class="n">compound</span> <span class="ow">in</span> <span class="n">_compounds_in</span><span class="p">(</span><span class="n">environment</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_defined</span><span class="p">)</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_media_verdict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">media</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""``(name, verdict)``: is this medium a shared object, or derived from one?</span>
+
+<span class="sd">        Model equality against a ``MEDIA_LIBRARY`` member is the strong form (the same</span>
+<span class="sd">        components, concentrations and provenance); ``base_medium`` naming a library key is</span>
+<span class="sd">        the derived form (a dataset-specific variant that still joins at its base). Anything</span>
+<span class="sd">        else is free text and joins nothing.</span>
+<span class="sd">        """</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">media</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">dump</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_media_dumps</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">media</span> <span class="o">==</span> <span class="n">dump</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">name</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"library:</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="n">media</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"base_medium"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">base</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_media_keys</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">name</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"derived:</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">return</span> <span class="n">name</span><span class="p">,</span> <span class="s2">"free_text"</span>
+
+    <span class="c1"># ---- rendering ------------------------------------------------------- #</span>
+<div class="viewcode-block" id="SharedRecordRules.results">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.SharedRecordRules.html#torchcell.verification.SharedRecordRules.results">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">results</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">LevelResult</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Every shared level result, in level order."""</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_gap_result</span><span class="p">(),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_gene_name_result</span><span class="p">(),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_uncertainty_result</span><span class="p">(),</span>
+            <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_compound_identity_results</span><span class="p">(),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_media_result</span><span class="p">(),</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sgd_genes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_gene_containment_results</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sgd_genes</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+
+<div class="viewcode-block" id="SharedRecordRules.census">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.SharedRecordRules.html#torchcell.verification.SharedRecordRules.census">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">census</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CarrierGapCensus</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The finished gap + silent-None census."""</span>
+        <span class="n">census</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_census</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">census</span><span class="o">.</span><span class="n">by_reason</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_gap_by_reason</span><span class="p">)</span>
+        <span class="n">census</span><span class="o">.</span><span class="n">by_field</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_gap_by_field</span><span class="p">)</span>
+        <span class="n">census</span><span class="o">.</span><span class="n">worklist_fields</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_worklist</span><span class="p">)</span>
+        <span class="n">census</span><span class="o">.</span><span class="n">silent_none_by_field</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_silent_by_field</span><span class="p">)</span>
+        <span class="n">census</span><span class="o">.</span><span class="n">carriers_by_class</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_carriers_by_class</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">census</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_gap_result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""L1: the gap + silent-None census over every carrier. Informational.</span>
+
+<span class="sd">        A DOCUMENTED gap is honest, so it never fails a build; an undeclared ``None`` is</span>
+<span class="sd">        not a defect of the record either (a field can be genuinely inapplicable). What the</span>
+<span class="sd">        census buys is that "fully sourced" is now a statement about every carrier in the</span>
+<span class="sd">        record rather than about two of them.</span>
+<span class="sd">        """</span>
+        <span class="n">census</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">census</span><span class="p">()</span>
+        <span class="n">top_silent</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> x</span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2">"</span>
+            <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_silent_by_field</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">kv</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="n">kv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">kv</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">census</span><span class="o">.</span><span class="n">n_gaps</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">census</span><span class="o">.</span><span class="n">n_silent_none</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"no provenance gaps and no undeclared None values across "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">census</span><span class="o">.</span><span class="n">n_records</span><span class="si">}</span><span class="s2"> records (</span><span class="si">{</span><span class="n">census</span><span class="o">.</span><span class="n">n_carriers</span><span class="si">}</span><span class="s2"> gap-capable carriers; "</span>
+                <span class="s2">"fully sourced)"</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">census</span><span class="o">.</span><span class="n">n_gaps</span><span class="si">}</span><span class="s2"> documented provenance gaps over "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">census</span><span class="o">.</span><span class="n">n_records_with_gaps</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">census</span><span class="o">.</span><span class="n">n_records</span><span class="si">}</span><span class="s2"> records; "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">census</span><span class="o">.</span><span class="n">worklist_fields</span><span class="p">)</span><span class="si">}</span><span class="s2"> deferred field(s): "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">census</span><span class="o">.</span><span class="n">worklist_fields</span><span class="si">}</span><span class="s2">; </span><span class="si">{</span><span class="n">census</span><span class="o">.</span><span class="n">n_silent_none</span><span class="si">}</span><span class="s2"> undeclared None "</span>
+                <span class="sa">f</span><span class="s2">"values over </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_silent_by_field</span><span class="p">)</span><span class="si">}</span><span class="s2"> carrier fields"</span>
+                <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">" (top: </span><span class="si">{</span><span class="n">top_silent</span><span class="si">}</span><span class="s2">)"</span> <span class="k">if</span> <span class="n">top_silent</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+            <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L1</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"provenance_gaps"</span><span class="p">,</span>
+            <span class="n">passed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="n">message</span><span class="p">,</span>
+            <span class="n">details</span><span class="o">=</span><span class="n">census</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_gene_name_result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""L1: one systematic name, one canonical spelling, and both resolve to each other.</span>
+
+<span class="sd">        Two spellings of one systematic name are a defect when they differ only by case</span>
+<span class="sd">        (``TOR1``/``Tor1``: one strain stored under two labels), or when one of them</span>
+<span class="sd">        does not resolve back to that gene. Two DISTINCT source names that both resolve</span>
+<span class="sd">        to the systematic name are a fact about the source (SGD merged two ORFs the</span>
+<span class="sd">        array screened as separate strains, ``YPR089W``/``YPR090W``) and are reported,</span>
+<span class="sd">        not failed. The ``None`` sentinel of an allele-bearing perturbation is never a</span>
+<span class="sd">        spelling. A common name the resolver cannot place at all is reported as</span>
+<span class="sd">        unresolved; only a name that resolves to ANOTHER gene fails.</span>
+<span class="sd">        """</span>
+        <span class="n">spellings</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">systematic</span><span class="p">,</span> <span class="n">common</span><span class="p">),</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_records</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">spellings</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">systematic</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">common</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">spellings</span><span class="p">[</span><span class="n">systematic</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">common</span><span class="p">))</span>
+        <span class="n">case_split</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">merged_aliases</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">split</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">systematic</span><span class="p">,</span> <span class="n">names</span> <span class="ow">in</span> <span class="n">spellings</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">by_case</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+                <span class="n">by_case</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">casefold</span><span class="p">(),</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">group</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">by_case</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+                <span class="n">case_split</span><span class="p">[</span><span class="n">systematic</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">names</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">by_case</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_gene_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">split</span><span class="p">[</span><span class="n">systematic</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">names</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">all</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">resolve_gene_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">systematic_name</span> <span class="o">==</span> <span class="n">systematic</span>
+                <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span><span class="n">_enum_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolve_gene_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">status</span><span class="p">))</span>
+                <span class="ow">in</span> <span class="p">{</span><span class="s2">"current"</span><span class="p">,</span> <span class="s2">"renamed"</span><span class="p">}</span>
+                <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span>
+            <span class="p">):</span>
+                <span class="n">merged_aliases</span><span class="p">[</span><span class="n">systematic</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">names</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">split</span><span class="p">[</span><span class="n">systematic</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">names</span><span class="p">)</span>
+        <span class="n">split</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">case_split</span><span class="p">)</span>
+        <span class="n">split_records</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="n">count</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">systematic</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span> <span class="n">count</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_records</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">systematic</span> <span class="ow">in</span> <span class="n">split</span>
+        <span class="p">)</span>
+        <span class="n">not_current</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">mismatched</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">unresolved</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_gene_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">systematic</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">spellings</span><span class="p">):</span>
+                <span class="n">resolution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_gene_name</span><span class="p">(</span><span class="n">systematic</span><span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="nb">str</span><span class="p">(</span><span class="n">_enum_value</span><span class="p">(</span><span class="n">resolution</span><span class="o">.</span><span class="n">status</span><span class="p">))</span> <span class="o">!=</span> <span class="s2">"current"</span>
+                    <span class="ow">or</span> <span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span> <span class="o">!=</span> <span class="n">systematic</span>
+                <span class="p">):</span>
+                    <span class="n">not_current</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">systematic</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">_enum_value</span><span class="p">(</span><span class="n">resolution</span><span class="o">.</span><span class="n">status</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+                        <span class="sa">f</span><span class="s2">" -&gt; </span><span class="si">{</span><span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span><span class="si">}</span><span class="s2">)"</span>
+                    <span class="p">)</span>
+            <span class="k">for</span> <span class="n">systematic</span><span class="p">,</span> <span class="n">common</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_records</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="p">):</span>
+                <span class="n">resolution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_gene_name</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">common</span><span class="p">))</span>
+                <span class="n">resolved</span> <span class="o">=</span> <span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">_enum_value</span><span class="p">(</span><span class="n">resolution</span><span class="o">.</span><span class="n">status</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">resolved</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"current"</span><span class="p">,</span> <span class="s2">"renamed"</span><span class="p">}:</span>
+                    <span class="n">unresolved</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">common</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2">; stored </span><span class="si">{</span><span class="n">systematic</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">resolved</span> <span class="o">!=</span> <span class="n">systematic</span><span class="p">:</span>
+                    <span class="n">mismatched</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">common</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">resolved</span><span class="si">}</span><span class="s2"> (stored </span><span class="si">{</span><span class="n">systematic</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+        <span class="n">passed</span> <span class="o">=</span> <span class="ow">not</span> <span class="p">(</span><span class="n">split</span> <span class="ow">or</span> <span class="n">not_current</span> <span class="ow">or</span> <span class="n">mismatched</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_records</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s2">"no gene perturbations to check"</span>
+        <span class="k">elif</span> <span class="n">passed</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">spellings</span><span class="p">)</span><span class="si">}</span><span class="s2"> systematic names, one canonical spelling each"</span>
+                <span class="o">+</span> <span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">merged_aliases</span><span class="p">)</span><span class="si">}</span><span class="s2"> merged-ORF aliases)"</span>
+                    <span class="k">if</span> <span class="n">merged_aliases</span>
+                    <span class="k">else</span> <span class="s2">""</span>
+                <span class="p">)</span>
+                <span class="o">+</span> <span class="p">(</span>
+                    <span class="s2">", each current in the genome"</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_gene_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="k">else</span> <span class="s2">" (no resolver supplied: spelling checked, annotation not)"</span>
+                <span class="p">)</span>
+                <span class="o">+</span> <span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">unresolved</span><span class="p">)</span><span class="si">}</span><span class="s2"> common names the resolver cannot place"</span>
+                    <span class="k">if</span> <span class="n">unresolved</span>
+                    <span class="k">else</span> <span class="s2">""</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">split</span><span class="p">)</span><span class="si">}</span><span class="s2"> genes carry conflicting common-name spellings "</span>
+                <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">split_records</span><span class="si">}</span><span class="s2"> records; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">case_split</span><span class="p">)</span><span class="si">}</span><span class="s2"> case-only); "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">not_current</span><span class="p">)</span><span class="si">}</span><span class="s2"> systematic names are not the genome's current "</span>
+                <span class="sa">f</span><span class="s2">"name; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">mismatched</span><span class="p">)</span><span class="si">}</span><span class="s2"> common names resolve to another gene"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+            <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L1</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"canonical_gene_names"</span><span class="p">,</span>
+            <span class="n">passed</span><span class="o">=</span><span class="n">passed</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="n">message</span><span class="p">,</span>
+            <span class="n">details</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"n_genes"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">spellings</span><span class="p">),</span>
+                <span class="s2">"resolver"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_gene_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">"split_spellings"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">split</span><span class="o">.</span><span class="n">items</span><span class="p">())[:</span><span class="mi">20</span><span class="p">]),</span>
+                <span class="s2">"n_records_with_split_spelling"</span><span class="p">:</span> <span class="n">split_records</span><span class="p">,</span>
+                <span class="s2">"merged_orf_aliases"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">merged_aliases</span><span class="o">.</span><span class="n">items</span><span class="p">())[:</span><span class="mi">20</span><span class="p">]),</span>
+                <span class="s2">"not_current"</span><span class="p">:</span> <span class="n">not_current</span><span class="p">[:</span><span class="mi">20</span><span class="p">],</span>
+                <span class="s2">"common_name_mismatch"</span><span class="p">:</span> <span class="n">mismatched</span><span class="p">[:</span><span class="mi">20</span><span class="p">],</span>
+                <span class="s2">"unresolved_common_names"</span><span class="p">:</span> <span class="n">unresolved</span><span class="p">[:</span><span class="mi">20</span><span class="p">],</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_uncertainty_result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""L2: a labelled dispersion is never exactly 0; unreported ones are counted."""</span>
+        <span class="n">passed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_zero_dispersion</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+            <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L2</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"uncertainty_sanity"</span><span class="p">,</span>
+            <span class="n">passed</span><span class="o">=</span><span class="n">passed</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_uncertainty_checked</span><span class="si">}</span><span class="s2"> labelled uncertainties, none a zero "</span>
+                <span class="sa">f</span><span class="s2">"dispersion; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_unreported_uncertainty</span><span class="si">}</span><span class="s2"> records report "</span>
+                <span class="s2">"n_samples &gt;= 2 with no uncertainty"</span>
+                <span class="k">if</span> <span class="n">passed</span>
+                <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_zero_dispersion</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_uncertainty_checked</span><span class="si">}</span><span class="s2"> labelled "</span>
+                <span class="s2">"uncertainties are a sample dispersion of exactly 0 (a pseudocount "</span>
+                <span class="s2">"artifact, not perfect precision)"</span>
+            <span class="p">),</span>
+            <span class="n">details</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"n_checked"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_uncertainty_checked</span><span class="p">,</span>
+                <span class="s2">"n_zero_dispersion"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_zero_dispersion</span><span class="p">,</span>
+                <span class="s2">"n_no_uncertainty_with_replicates"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_unreported_uncertainty</span><span class="p">,</span>
+                <span class="s2">"examples"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_zero_dispersion_examples</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compound_identity_results</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">LevelResult</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""L3: every compound is identified, or its absence is typed. Two results.</span>
+
+<span class="sd">        The rule is one rule, but a dataset owns the compounds it DOSES and the shared</span>
+<span class="sd">        library owns the components of the medium, so an unencodable compound is reported</span>
+<span class="sd">        under the layer that has to fix it: ``compound_identity`` for the environment edits,</span>
+<span class="sd">        ``media_compound_identity`` for the base medium's defined components. Both fail on a</span>
+<span class="sd">        name-only compound; splitting them is what keeps one shared-library gap from hiding</span>
+<span class="sd">        a chemogenomic set's own 1,700 name-only compounds in the same line.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_identity_result</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">media</span><span class="o">=</span><span class="n">is_media</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">is_media</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="p">(</span><span class="s2">"compound_identity"</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+                <span class="p">(</span><span class="s2">"media_compound_identity"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_identity_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">media</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+        <span class="n">by_verdict</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+        <span class="n">name_only</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+        <span class="n">gapped</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">compound</span><span class="p">,</span> <span class="n">verdict</span><span class="p">),</span> <span class="n">count</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compound_records</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"media.component"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">media</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">by_verdict</span><span class="p">[</span><span class="n">verdict</span><span class="p">]</span> <span class="o">+=</span> <span class="n">count</span>
+            <span class="k">if</span> <span class="n">verdict</span> <span class="o">==</span> <span class="s2">"name_only"</span><span class="p">:</span>
+                <span class="n">name_only</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">compound</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">context</span><span class="si">}</span><span class="s2">)"</span><span class="p">]</span> <span class="o">+=</span> <span class="n">count</span>
+            <span class="k">elif</span> <span class="n">verdict</span> <span class="o">==</span> <span class="s2">"gapped"</span><span class="p">:</span>
+                <span class="n">gapped</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">compound</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">context</span><span class="si">}</span><span class="s2">)"</span><span class="p">]</span> <span class="o">+=</span> <span class="n">count</span>
+        <span class="n">scope</span> <span class="o">=</span> <span class="s2">"medium components"</span> <span class="k">if</span> <span class="n">media</span> <span class="k">else</span> <span class="s2">"environment edits"</span>
+        <span class="n">passed</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">name_only</span>
+        <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+            <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L3</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">passed</span><span class="o">=</span><span class="n">passed</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">scope</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">by_verdict</span><span class="p">[</span><span class="s1">'identified'</span><span class="p">]</span><span class="si">}</span><span class="s2"> compound references carry a "</span>
+                <span class="sa">f</span><span class="s2">"structure identifier; </span><span class="si">{</span><span class="n">by_verdict</span><span class="p">[</span><span class="s1">'gapped'</span><span class="p">]</span><span class="si">}</span><span class="s2"> declare a typed gap "</span>
+                <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">gapped</span><span class="p">)</span><span class="si">}</span><span class="s2"> distinct compounds, unencodable)"</span>
+                <span class="k">if</span> <span class="n">passed</span>
+                <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">scope</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">name_only</span><span class="p">)</span><span class="si">}</span><span class="s2"> compounds are name-only (no identifier, "</span>
+                <span class="sa">f</span><span class="s2">"no gap) over </span><span class="si">{</span><span class="n">by_verdict</span><span class="p">[</span><span class="s1">'name_only'</span><span class="p">]</span><span class="si">}</span><span class="s2"> references: "</span>
+                <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">compound</span><span class="si">}</span><span class="s2"> x</span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="k">for</span> <span class="n">compound</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">name_only</span><span class="o">.</span><span class="n">most_common</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">details</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"scope"</span><span class="p">:</span> <span class="n">scope</span><span class="p">,</span>
+                <span class="s2">"n_identified"</span><span class="p">:</span> <span class="n">by_verdict</span><span class="p">[</span><span class="s2">"identified"</span><span class="p">],</span>
+                <span class="s2">"n_gapped"</span><span class="p">:</span> <span class="n">by_verdict</span><span class="p">[</span><span class="s2">"gapped"</span><span class="p">],</span>
+                <span class="s2">"n_name_only"</span><span class="p">:</span> <span class="n">by_verdict</span><span class="p">[</span><span class="s2">"name_only"</span><span class="p">],</span>
+                <span class="s2">"name_only_records"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">name_only</span><span class="o">.</span><span class="n">most_common</span><span class="p">(</span><span class="mi">50</span><span class="p">)),</span>
+                <span class="s2">"gapped_records"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">gapped</span><span class="o">.</span><span class="n">most_common</span><span class="p">(</span><span class="mi">50</span><span class="p">)),</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_media_result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""L3: every medium is a shared library object or derives from one."""</span>
+        <span class="n">free_text</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+        <span class="n">matched</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">n_library</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">n_derived</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">verdict</span><span class="p">,</span> <span class="n">base</span><span class="p">),</span> <span class="n">count</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_media_records</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">verdict</span> <span class="o">==</span> <span class="s2">"free_text"</span><span class="p">:</span>
+                <span class="n">free_text</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> (base_medium=</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">)"</span><span class="p">]</span> <span class="o">+=</span> <span class="n">count</span>
+            <span class="k">elif</span> <span class="n">verdict</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"library:"</span><span class="p">):</span>
+                <span class="n">n_library</span> <span class="o">+=</span> <span class="n">count</span>
+                <span class="n">matched</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">verdict</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">n_derived</span> <span class="o">+=</span> <span class="n">count</span>
+                <span class="n">matched</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">verdict</span>
+        <span class="n">passed</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">free_text</span>
+        <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+            <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L3</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"media_membership"</span><span class="p">,</span>
+            <span class="n">passed</span><span class="o">=</span><span class="n">passed</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_library</span><span class="si">}</span><span class="s2"> records on a shared MEDIA_LIBRARY medium, </span><span class="si">{</span><span class="n">n_derived</span><span class="si">}</span><span class="s2"> on a "</span>
+                <span class="sa">f</span><span class="s2">"medium deriving from one (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">matched</span><span class="p">)</span><span class="si">}</span><span class="s2"> distinct media)"</span>
+                <span class="k">if</span> <span class="n">passed</span>
+                <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">free_text</span><span class="p">)</span><span class="si">}</span><span class="s2"> free-text media over </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">free_text</span><span class="o">.</span><span class="n">values</span><span class="p">())</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="s2">"records join nothing: "</span>
+                <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> x</span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">free_text</span><span class="o">.</span><span class="n">most_common</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">details</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"n_library_records"</span><span class="p">:</span> <span class="n">n_library</span><span class="p">,</span>
+                <span class="s2">"n_derived_records"</span><span class="p">:</span> <span class="n">n_derived</span><span class="p">,</span>
+                <span class="s2">"matched_media"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">matched</span><span class="o">.</span><span class="n">items</span><span class="p">())),</span>
+                <span class="s2">"free_text_records"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">free_text</span><span class="o">.</span><span class="n">most_common</span><span class="p">(</span><span class="mi">50</span><span class="p">)),</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_gene_containment_results</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sgd_genes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">LevelResult</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""L4: the aggregate containment floor, plus the per-record genome membership."""</span>
+        <span class="n">measured</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_gene_records</span><span class="p">)</span>
+        <span class="n">missing</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">measured</span> <span class="o">-</span> <span class="n">sgd_genes</span><span class="p">)</span>
+        <span class="n">overlap</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">measured</span> <span class="o">&amp;</span> <span class="n">sgd_genes</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">measured</span><span class="p">)</span> <span class="k">if</span> <span class="n">measured</span> <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="n">containment</span> <span class="o">=</span> <span class="n">LevelResult</span><span class="p">(</span>
+            <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L4</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"gene_containment_sgd"</span><span class="p">,</span>
+            <span class="n">passed</span><span class="o">=</span><span class="n">overlap</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_containment</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">overlap</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">measured</span><span class="p">)</span><span class="si">}</span><span class="s2"> measured genes are S288C reference "</span>
+                <span class="sa">f</span><span class="s2">"genes (&gt;= </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">min_containment</span><span class="si">}</span><span class="s2">)"</span>
+            <span class="p">),</span>
+            <span class="n">details</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"n_measured"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">measured</span><span class="p">),</span>
+                <span class="s2">"n_in_sgd"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">measured</span> <span class="o">&amp;</span> <span class="n">sgd_genes</span><span class="p">),</span>
+                <span class="s2">"overlap"</span><span class="p">:</span> <span class="n">overlap</span><span class="p">,</span>
+                <span class="s2">"missing_examples"</span><span class="p">:</span> <span class="n">missing</span><span class="p">[:</span><span class="mi">20</span><span class="p">],</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+        <span class="n">off_genome</span> <span class="o">=</span> <span class="n">LevelResult</span><span class="p">(</span>
+            <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L4</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"current_genome_genes"</span><span class="p">,</span>
+            <span class="n">passed</span><span class="o">=</span><span class="ow">not</span> <span class="n">missing</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"every one of the </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">measured</span><span class="p">)</span><span class="si">}</span><span class="s2"> measured systematic names is a gene of "</span>
+                <span class="s2">"the current genome"</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">missing</span>
+                <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span><span class="si">}</span><span class="s2"> systematic names are absent from the current genome "</span>
+                <span class="sa">f</span><span class="s2">"over </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_records_off_genome</span><span class="si">}</span><span class="s2"> records: "</span>
+                <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">gene</span><span class="si">}</span><span class="s2"> x</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_gene_records</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">missing</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">details</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"n_missing_genes"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing</span><span class="p">),</span>
+                <span class="s2">"n_records"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_records_off_genome</span><span class="p">,</span>
+                <span class="s2">"missing_records"</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="n">gene</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gene_records</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">missing</span><span class="p">[:</span><span class="mi">50</span><span class="p">]</span>
+                <span class="p">},</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">containment</span><span class="p">,</span> <span class="n">off_genome</span><span class="p">]</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_walk_carriers</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Every gap-capable carrier mapping reachable inside a stored record.</span>
+
+<span class="sd">    A carrier is any mapping that carries ``provenance_gaps`` -- that field is exactly what</span>
+<span class="sd">    ``ProvenanceGapMixin`` adds, so the walk finds the phenotype, the environment, each</span>
+<span class="sd">    compound in the medium and in each perturbation, and anything a later model gains the</span>
+<span class="sd">    mixin for, without a traversal list to keep in sync.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">GAPS_FIELD</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">node</span>
+        <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">yield from</span> <span class="n">_walk_carriers</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
+            <span class="k">yield from</span> <span class="n">_walk_carriers</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="shared_rule_results">
+<a class="viewcode-back" href="../../../generated/torchcell.verification.shared_rule_results.html#torchcell.verification.shared_rule_results">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">shared_rule_results</span><span class="p">(</span>
+    <span class="n">records</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Record</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">background_genes</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(),</span>
+    <span class="n">resolve_gene_name</span><span class="p">:</span> <span class="n">GeneNameResolver</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sgd_genes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">min_containment</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.90</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">LevelResult</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Run every shared rule over a materialized record sequence."""</span>
+    <span class="n">rules</span> <span class="o">=</span> <span class="n">SharedRecordRules</span><span class="p">(</span>
+        <span class="n">background_genes</span><span class="o">=</span><span class="n">background_genes</span><span class="p">,</span>
+        <span class="n">resolve_gene_name</span><span class="o">=</span><span class="n">resolve_gene_name</span><span class="p">,</span>
+        <span class="n">sgd_genes</span><span class="o">=</span><span class="n">sgd_genes</span><span class="p">,</span>
+        <span class="n">min_containment</span><span class="o">=</span><span class="n">min_containment</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">rules</span><span class="o">.</span><span class="n">add_all</span><span class="p">(</span><span class="n">records</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">rules</span><span class="o">.</span><span class="n">results</span><span class="p">()</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,8 @@
+﻿torchcell.data.Aggregator
+=========================
+
+.. currentmodule:: torchcell.data
+
+.. autoclass:: Aggregator
+   :show-inheritance:
+   :members:

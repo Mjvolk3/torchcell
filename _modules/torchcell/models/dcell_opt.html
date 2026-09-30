@@ -1,0 +1,1309 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.models.dcell_opt &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/models/dcell_opt.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.models.dcell_opt</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.models.dcell_opt</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/models/dcell_opt</span>
+<span class="c1"># [[torchcell.models.dcell_opt]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/dcell_opt</span>
+<span class="c1"># Test file: tests/torchcell/models/test_dcell_opt.py</span>
+
+<span class="sd">"""Optimized DCell model for torch.compile compatibility.</span>
+
+<span class="sd">Reduces graph breaks by using ModuleList instead of ModuleDict and tensorized operations.</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hydra</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">DictConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">HeteroData</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.timestamp</span><span class="w"> </span><span class="kn">import</span> <span class="n">timestamp</span>
+
+
+<div class="viewcode-block" id="DCellOpt">
+<a class="viewcode-back" href="../../../generated/torchcell.models.dcell_opt.DCellOpt.html#torchcell.models.dcell_opt.DCellOpt">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DCellOpt</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Optimized DCell with tensorized operations for torch.compile."""</span>
+
+    <span class="c1"># Registered buffers (declared so mypy sees them as Tensor, not Tensor | Module)</span>
+    <span class="n">has_subsystem</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">children_indices</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">num_children</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">stratum_masks</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">term_output_dims_tensor</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">term_row_indices_tensor</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="n">term_num_genes_tensor</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">hetero_data</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">,</span>
+        <span class="n">min_subsystem_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+        <span class="n">subsystem_ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">,</span>
+        <span class="n">output_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Build the tensorized subsystem hierarchy from the GO-annotated graph.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            hetero_data: Graph carrying the GO ontology and gene annotations.</span>
+<span class="sd">            min_subsystem_size: Minimum number of genes for a subsystem.</span>
+<span class="sd">            subsystem_ratio: Fraction setting each subsystem's hidden width.</span>
+<span class="sd">            output_size: Dimension of the per-subsystem output.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="c1"># Store parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_subsystem_size</span> <span class="o">=</span> <span class="n">min_subsystem_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subsystem_ratio</span> <span class="o">=</span> <span class="n">subsystem_ratio</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_size</span> <span class="o">=</span> <span class="n">output_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hetero_data</span> <span class="o">=</span> <span class="n">hetero_data</span>
+
+        <span class="c1"># Extract GO ontology information</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_genes</span> <span class="o">=</span> <span class="n">hetero_data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span> <span class="o">=</span> <span class="n">hetero_data</span><span class="p">[</span><span class="s2">"gene_ontology"</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">strata</span> <span class="o">=</span> <span class="n">hetero_data</span><span class="p">[</span><span class="s2">"gene_ontology"</span><span class="p">]</span><span class="o">.</span><span class="n">strata</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stratum_to_terms</span> <span class="o">=</span> <span class="n">hetero_data</span><span class="p">[</span><span class="s2">"gene_ontology"</span><span class="p">]</span><span class="o">.</span><span class="n">stratum_to_terms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">term_gene_counts</span> <span class="o">=</span> <span class="n">hetero_data</span><span class="p">[</span><span class="s2">"gene_ontology"</span><span class="p">]</span><span class="o">.</span><span class="n">term_gene_counts</span>
+
+        <span class="c1"># Build hierarchy and gene mappings (still use dicts for initialization)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">child_to_parents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_hierarchy</span><span class="p">(</span><span class="n">hetero_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent_to_children</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_parent_to_children</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">term_to_genes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_term_gene_mapping</span><span class="p">(</span><span class="n">hetero_data</span><span class="p">)</span>
+
+        <span class="c1"># Pre-compute input/output dimensions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">term_input_dims</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">term_output_dims</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># OPTIMIZATION: Use ModuleList instead of ModuleDict</span>
+        <span class="c1"># None placeholders are filled in later via _build_term_module; cast so</span>
+        <span class="c1"># mypy accepts the placeholder list while runtime behavior is unchanged.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subsystems</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">(</span>
+            <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">],</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">linear_heads</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">(</span>
+            <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">],</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Track which indices have modules</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
+            <span class="s2">"has_subsystem"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Get strata order</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_stratum</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stratum_to_terms</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">strata_order</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stratum_to_terms</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># OPTIMIZATION: Build tensorized hierarchy representations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build_tensorized_hierarchy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build_stratum_masks</span><span class="p">()</span>
+
+        <span class="c1"># Build modules for each GO term</span>
+        <span class="k">for</span> <span class="n">term_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_build_term_module</span><span class="p">(</span><span class="n">term_idx</span><span class="p">)</span>
+
+        <span class="c1"># Pre-compute gene state extraction indices</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_precompute_gene_indices</span><span class="p">(</span><span class="n">hetero_data</span><span class="p">)</span>
+
+        <span class="c1"># Pre-compute max output dimension for pre-allocation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_output_dim</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">term_output_dims</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">term_output_dims</span> <span class="k">else</span> <span class="mi">256</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Create tensor version of term_output_dims for compile-friendly access</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
+            <span class="s2">"term_output_dims_tensor"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">term_idx</span><span class="p">,</span> <span class="n">output_dim</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">term_output_dims</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">term_output_dims_tensor</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">output_dim</span>
+
+        <span class="c1"># Analyze stratum sizes for parallel processing</span>
+        <span class="n">stratum_sizes</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">stratum</span><span class="p">,</span> <span class="n">terms</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stratum_to_terms</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">active_terms</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">terms</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_subsystem</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+            <span class="n">stratum_sizes</span><span class="p">[</span><span class="n">stratum</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">terms</span><span class="p">),</span> <span class="n">active_terms</span><span class="p">)</span>
+
+        <span class="n">max_parallel_terms</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">max</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">stratum_sizes</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="k">if</span> <span class="n">stratum_sizes</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"DCellOpt model initialized with PARALLEL processing:"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  GO terms: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Genes: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_genes</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Strata: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strata_order</span><span class="p">)</span><span class="si">}</span><span class="s2"> (max: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">max_stratum</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Active subsystems: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">has_subsystem</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Max output dim: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">max_output_dim</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Max parallel terms in single stratum: </span><span class="si">{</span><span class="n">max_parallel_terms</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  CUDA streams available: </span><span class="si">{</span><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="c1"># Initialize profiling mode (disabled by default)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_profile_mode</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="DCellOpt.enable_profiling">
+<a class="viewcode-back" href="../../../generated/torchcell.models.dcell_opt.DCellOpt.html#torchcell.models.dcell_opt.DCellOpt.enable_profiling">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">enable_profiling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">enable</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Enable or disable performance profiling during forward pass."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_profile_mode</span> <span class="o">=</span> <span class="n">enable</span>
+        <span class="k">if</span> <span class="n">enable</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"DCellOpt profiling enabled - will log stratum processing times"</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"DCellOpt profiling disabled"</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_tensorized_hierarchy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Convert parent-child relationships to tensor representations."""</span>
+        <span class="c1"># Find max children for any term</span>
+        <span class="n">max_children</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">children</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_to_children</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">max_children</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_children</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">children</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_children</span> <span class="o">=</span> <span class="n">max_children</span>
+
+        <span class="c1"># Create padded children tensor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
+            <span class="s2">"children_indices"</span><span class="p">,</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="p">,</span> <span class="n">max_children</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
+            <span class="s2">"num_children"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Fill children indices</span>
+        <span class="k">for</span> <span class="n">parent</span><span class="p">,</span> <span class="n">children</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_to_children</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">num_children</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">children</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">num_children</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">children_indices</span><span class="p">[</span><span class="n">parent</span><span class="p">,</span> <span class="p">:</span><span class="n">num_children</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+                    <span class="n">children</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">num_children</span><span class="p">[</span><span class="n">parent</span><span class="p">]</span> <span class="o">=</span> <span class="n">num_children</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_stratum_masks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build binary masks for each stratum."""</span>
+        <span class="c1"># Create stratum masks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
+            <span class="s2">"stratum_masks"</span><span class="p">,</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_stratum</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">stratum</span><span class="p">,</span> <span class="n">terms</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stratum_to_terms</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">terms</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">stratum_masks</span><span class="p">[</span><span class="n">stratum</span><span class="p">,</span> <span class="n">term</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># Pre-compute term lists per stratum for efficient iteration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stratum_term_lists</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">stratum</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_stratum</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">terms</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stratum_masks</span><span class="p">[</span><span class="n">stratum</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stratum_term_lists</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">terms</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">num_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Count parameters in different parts of the model."""</span>
+        <span class="n">subsystem_params</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subsystems</span>
+            <span class="k">if</span> <span class="n">module</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">linear_head_params</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear_heads</span>
+            <span class="k">if</span> <span class="n">module</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">total_params</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"subsystems"</span><span class="p">:</span> <span class="n">subsystem_params</span><span class="p">,</span>
+            <span class="s2">"dcell_linear"</span><span class="p">:</span> <span class="n">linear_head_params</span><span class="p">,</span>
+            <span class="s2">"dcell"</span><span class="p">:</span> <span class="n">subsystem_params</span> <span class="o">+</span> <span class="n">linear_head_params</span><span class="p">,</span>
+            <span class="s2">"total"</span><span class="p">:</span> <span class="n">total_params</span><span class="p">,</span>
+            <span class="s2">"num_go_terms"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="p">,</span>
+            <span class="s2">"num_subsystems"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_subsystem</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_hierarchy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hetero_data</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Build child -&gt; parents mapping from edge_index."""</span>
+        <span class="n">child_to_parents</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="s2">"gene_ontology"</span><span class="p">,</span> <span class="s2">"is_child_of"</span><span class="p">,</span> <span class="s2">"gene_ontology"</span><span class="p">)</span> <span class="ow">in</span> <span class="n">hetero_data</span><span class="o">.</span><span class="n">edge_types</span><span class="p">:</span>
+            <span class="n">edge_index</span> <span class="o">=</span> <span class="n">hetero_data</span><span class="p">[</span>
+                <span class="s2">"gene_ontology"</span><span class="p">,</span> <span class="s2">"is_child_of"</span><span class="p">,</span> <span class="s2">"gene_ontology"</span>
+            <span class="p">]</span><span class="o">.</span><span class="n">edge_index</span>
+
+            <span class="k">for</span> <span class="n">child</span><span class="p">,</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">edge_index</span><span class="o">.</span><span class="n">t</span><span class="p">():</span>
+                <span class="n">child_idx</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                <span class="n">parent_idx</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+                <span class="k">if</span> <span class="n">child_idx</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">child_to_parents</span><span class="p">:</span>
+                    <span class="n">child_to_parents</span><span class="p">[</span><span class="n">child_idx</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">child_to_parents</span><span class="p">[</span><span class="n">child_idx</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">parent_idx</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">child_to_parents</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_parent_to_children</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Build parent -&gt; children mapping from child_to_parents."""</span>
+        <span class="n">parent_to_children</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">child</span><span class="p">,</span> <span class="n">parents</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">child_to_parents</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">parents</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">parent</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">parent_to_children</span><span class="p">:</span>
+                    <span class="n">parent_to_children</span><span class="p">[</span><span class="n">parent</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">parent_to_children</span><span class="p">[</span><span class="n">parent</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">parent_to_children</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_term_gene_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hetero_data</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Build term -&gt; genes mapping from go_gene_strata_state."""</span>
+        <span class="n">term_to_genes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">go_gene_state</span> <span class="o">=</span> <span class="n">hetero_data</span><span class="p">[</span><span class="s2">"gene_ontology"</span><span class="p">]</span><span class="o">.</span><span class="n">go_gene_strata_state</span>
+        <span class="c1"># Columns: [go_idx, gene_idx, stratum, state]</span>
+
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">go_gene_state</span><span class="p">:</span>
+            <span class="n">go_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="n">gene_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+
+            <span class="k">if</span> <span class="n">go_idx</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">term_to_genes</span><span class="p">:</span>
+                <span class="n">term_to_genes</span><span class="p">[</span><span class="n">go_idx</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">term_to_genes</span><span class="p">[</span><span class="n">go_idx</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gene_idx</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">term_to_genes</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_input_dim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">term_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Calculate input dimension for a GO term."""</span>
+        <span class="n">input_dim</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># Add dimensions from child subsystems</span>
+        <span class="n">children</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_to_children</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">term_idx</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">for</span> <span class="n">child_idx</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
+            <span class="n">input_dim</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_output_dim</span><span class="p">(</span><span class="n">child_idx</span><span class="p">)</span>
+
+        <span class="c1"># Add dimension for gene perturbation states</span>
+        <span class="n">go_gene_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hetero_data</span><span class="p">[</span><span class="s2">"gene_ontology"</span><span class="p">]</span><span class="o">.</span><span class="n">go_gene_strata_state</span>
+        <span class="n">term_mask</span> <span class="o">=</span> <span class="n">go_gene_state</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">term_idx</span>
+        <span class="n">num_genes_for_term</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">term_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+
+        <span class="n">gene_dim</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">num_genes_for_term</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">input_dim</span> <span class="o">+=</span> <span class="n">gene_dim</span>
+
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_output_dim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">term_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Calculate output dimension for a GO term based on DCell paper formula."""</span>
+        <span class="n">num_genes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">term_gene_counts</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min_subsystem_size</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subsystem_ratio</span> <span class="o">*</span> <span class="n">num_genes</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_term_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">term_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build subsystem and linear head for a specific GO term."""</span>
+        <span class="n">input_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_input_dim</span><span class="p">(</span><span class="n">term_idx</span><span class="p">)</span>
+        <span class="n">output_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_output_dim</span><span class="p">(</span><span class="n">term_idx</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">term_input_dims</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">term_output_dims</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">output_dim</span>
+
+        <span class="c1"># Create subsystem module - use ModuleList indexing</span>
+        <span class="n">subsystem</span> <span class="o">=</span> <span class="n">DCellSubsystem</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subsystems</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">subsystem</span>
+
+        <span class="c1"># Create linear head for auxiliary supervision</span>
+        <span class="n">linear_head</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">output_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">linear_heads</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">linear_head</span>
+
+        <span class="c1"># Mark as having subsystem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">has_subsystem</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_precompute_gene_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hetero_data</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Pre-compute indices for efficient gene state extraction."""</span>
+        <span class="n">go_gene_state</span> <span class="o">=</span> <span class="n">hetero_data</span><span class="p">[</span><span class="s2">"gene_ontology"</span><span class="p">]</span><span class="o">.</span><span class="n">go_gene_strata_state</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">rows_per_sample</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">go_gene_state</span><span class="p">)</span>
+
+        <span class="c1"># Still use dictionaries for initialization</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">term_row_indices</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">term_num_genes</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Pre-computing gene indices for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="si">}</span><span class="s2"> GO terms..."</span><span class="p">)</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="c1"># Find max number of genes for any term for padding</span>
+        <span class="n">max_genes_per_term</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">for</span> <span class="n">term_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="p">):</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">go_gene_state</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">term_idx</span>
+            <span class="n">row_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">term_row_indices</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">row_indices</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">term_num_genes</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">row_indices</span><span class="p">)</span>
+            <span class="n">max_genes_per_term</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_genes_per_term</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">row_indices</span><span class="p">))</span>
+
+        <span class="c1"># OPTIMIZATION: Create tensorized versions for compile-friendly access</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
+            <span class="s2">"term_row_indices_tensor"</span><span class="p">,</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="p">,</span> <span class="n">max_genes_per_term</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
+            <span class="s2">"term_num_genes_tensor"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Fill the tensors</span>
+        <span class="k">for</span> <span class="n">term_idx</span><span class="p">,</span> <span class="n">indices</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">term_row_indices</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">num_genes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">num_genes</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">term_row_indices_tensor</span><span class="p">[</span><span class="n">term_idx</span><span class="p">,</span> <span class="p">:</span><span class="n">num_genes</span><span class="p">]</span> <span class="o">=</span> <span class="n">indices</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">term_num_genes_tensor</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">num_genes</span>
+
+        <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Pre-computed indices in </span><span class="si">{</span><span class="n">elapsed</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Total rows per sample: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">rows_per_sample</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Max genes per term: </span><span class="si">{</span><span class="n">max_genes_per_term</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"  Average genes per GO term: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">term_num_genes</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_gene_states_for_term</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">term_idx</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">HeteroData</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Extract gene states for a specific GO term using pre-computed indices."""</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">batch</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">device</span>
+
+        <span class="c1"># OPTIMIZATION: Use tensor indexing instead of dictionary lookup</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">term_idx</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+            <span class="n">term_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">term_idx</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">term_idx</span> <span class="o">=</span> <span class="n">term_idx</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Ensure scalar tensor for indexing</span>
+        <span class="k">if</span> <span class="n">term_idx</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">term_idx</span> <span class="o">=</span> <span class="n">term_idx</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+
+        <span class="c1"># Use tensor indexing</span>
+        <span class="n">num_genes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">term_num_genes_tensor</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">num_genes</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Get row indices using tensor indexing</span>
+        <span class="n">row_indices_padded</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">term_row_indices_tensor</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">row_indices</span> <span class="o">=</span> <span class="n">row_indices_padded</span><span class="p">[:</span><span class="n">num_genes</span><span class="p">]</span>  <span class="c1"># Only take valid indices</span>
+
+        <span class="n">go_gene_state</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene_ontology"</span><span class="p">]</span><span class="o">.</span><span class="n">go_gene_strata_state</span>
+
+        <span class="c1"># Use reshape instead of view to handle dynamic shapes better</span>
+        <span class="n">go_gene_state_batched</span> <span class="o">=</span> <span class="n">go_gene_state</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+
+        <span class="c1"># Vectorized extraction</span>
+        <span class="n">gene_states_batch</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">batch_size</span><span class="p">):</span>
+            <span class="n">sample_data</span> <span class="o">=</span> <span class="n">go_gene_state_batched</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">term_rows</span> <span class="o">=</span> <span class="n">sample_data</span><span class="p">[</span><span class="n">row_indices</span><span class="p">]</span>
+            <span class="n">gene_states</span> <span class="o">=</span> <span class="n">term_rows</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+            <span class="n">gene_states_batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gene_states</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">gene_states_batch</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_gene_states_parallel</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">term_indices</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">HeteroData</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Extract gene states for multiple GO terms in parallel.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            term_indices: Tensor of shape (num_terms,) with GO term indices</span>
+<span class="sd">            batch: HeteroData batch</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tensor of shape (batch_size, num_terms, max_genes) with gene states</span>
+<span class="sd">        """</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">batch</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">device</span>
+        <span class="n">num_terms</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">term_indices</span><span class="p">)</span>
+
+        <span class="c1"># Ensure term_indices is on the right device</span>
+        <span class="n">term_indices</span> <span class="o">=</span> <span class="n">term_indices</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">term_num_genes_tensor</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Get number of genes for each term</span>
+        <span class="n">num_genes_per_term</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">term_num_genes_tensor</span><span class="p">[</span><span class="n">term_indices</span><span class="p">]</span>
+        <span class="n">max_genes</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="n">num_genes_per_term</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">num_genes_per_term</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="k">else</span> <span class="mi">1</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Pre-allocate output tensor</span>
+        <span class="n">gene_states_all</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">num_terms</span><span class="p">,</span> <span class="n">max_genes</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Extract row indices for all terms at once</span>
+        <span class="n">row_indices_all</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">term_row_indices_tensor</span><span class="p">[</span><span class="n">term_indices</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Process batch</span>
+        <span class="n">go_gene_state</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene_ontology"</span><span class="p">]</span><span class="o">.</span><span class="n">go_gene_strata_state</span>
+        <span class="n">go_gene_state_batched</span> <span class="o">=</span> <span class="n">go_gene_state</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+
+        <span class="c1"># Extract states for each term</span>
+        <span class="k">for</span> <span class="n">term_idx</span><span class="p">,</span> <span class="p">(</span><span class="n">global_term_idx</span><span class="p">,</span> <span class="n">num_genes</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+            <span class="nb">zip</span><span class="p">(</span><span class="n">term_indices</span><span class="p">,</span> <span class="n">num_genes_per_term</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="n">num_genes</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">row_indices</span> <span class="o">=</span> <span class="n">row_indices_all</span><span class="p">[</span><span class="n">term_idx</span><span class="p">,</span> <span class="p">:</span><span class="n">num_genes</span><span class="p">]</span>
+
+                <span class="c1"># Extract for all samples in batch</span>
+                <span class="k">for</span> <span class="n">batch_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">batch_size</span><span class="p">):</span>
+                    <span class="n">sample_data</span> <span class="o">=</span> <span class="n">go_gene_state_batched</span><span class="p">[</span><span class="n">batch_idx</span><span class="p">]</span>
+                    <span class="n">term_rows</span> <span class="o">=</span> <span class="n">sample_data</span><span class="p">[</span><span class="n">row_indices</span><span class="p">]</span>
+                    <span class="n">gene_states</span> <span class="o">=</span> <span class="n">term_rows</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+                    <span class="n">gene_states_all</span><span class="p">[</span><span class="n">batch_idx</span><span class="p">,</span> <span class="n">term_idx</span><span class="p">,</span> <span class="p">:</span><span class="n">num_genes</span><span class="p">]</span> <span class="o">=</span> <span class="n">gene_states</span>
+
+        <span class="k">return</span> <span class="n">gene_states_all</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_group_terms_by_dimensions</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">term_indices</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Group GO terms by their input/output dimensions for efficient batching.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            term_indices: Tensor of GO term indices to group</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of tensors, each containing indices with same dimensions</span>
+<span class="sd">        """</span>
+        <span class="n">dim_groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">term_idx</span> <span class="ow">in</span> <span class="n">term_indices</span><span class="p">:</span>
+            <span class="n">term_idx_int</span> <span class="o">=</span> <span class="n">term_idx</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+            <span class="c1"># Skip if no subsystem</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_subsystem</span><span class="p">[</span><span class="n">term_idx_int</span><span class="p">]:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Get dimensions for this term</span>
+            <span class="n">input_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">term_input_dims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">term_idx_int</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">output_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">term_output_dims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">term_idx_int</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+            <span class="c1"># Create dimension key</span>
+            <span class="n">dim_key</span> <span class="o">=</span> <span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">dim_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dim_groups</span><span class="p">:</span>
+                <span class="n">dim_groups</span><span class="p">[</span><span class="n">dim_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">dim_groups</span><span class="p">[</span><span class="n">dim_key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">term_idx_int</span><span class="p">)</span>
+
+        <span class="c1"># Convert to list of tensors</span>
+        <span class="n">grouped_indices</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">dim_key</span><span class="p">,</span> <span class="n">indices</span> <span class="ow">in</span> <span class="n">dim_groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">indices</span><span class="p">:</span>  <span class="c1"># Only add non-empty groups</span>
+                <span class="n">grouped_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">grouped_indices</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_process_stratum_parallel</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">stratum_terms</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">batch</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">,</span>
+        <span class="n">all_activations</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">activation_mask</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">linear_outputs_tensor</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Process all terms in a stratum in parallel.</span>
+
+<span class="sd">        This method processes multiple GO terms simultaneously while respecting</span>
+<span class="sd">        their hierarchical dependencies. Terms within the same stratum are independent</span>
+<span class="sd">        and can be processed in parallel.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            stratum_terms: Tensor of GO term indices in this stratum</span>
+<span class="sd">            batch: HeteroData batch</span>
+<span class="sd">            all_activations: Pre-allocated tensor for all term activations</span>
+<span class="sd">            activation_mask: Mask indicating which terms have been processed</span>
+<span class="sd">            linear_outputs_tensor: Pre-allocated tensor for linear outputs</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">stratum_terms</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">device</span> <span class="o">=</span> <span class="n">all_activations</span><span class="o">.</span><span class="n">device</span>
+
+        <span class="c1"># Prepare all inputs first (memory coalescing)</span>
+        <span class="n">term_inputs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">valid_terms</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># First pass: Prepare all inputs</span>
+        <span class="k">for</span> <span class="n">term_idx</span> <span class="ow">in</span> <span class="n">stratum_terms</span><span class="p">:</span>
+            <span class="n">term_idx_scalar</span> <span class="o">=</span> <span class="n">term_idx</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">term_idx</span><span class="p">,</span> <span class="s2">"item"</span><span class="p">)</span> <span class="k">else</span> <span class="n">term_idx</span>
+
+            <span class="c1"># Skip if no subsystem</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_subsystem</span><span class="p">[</span><span class="n">term_idx_scalar</span><span class="p">]:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Prepare input for this term</span>
+            <span class="n">term_input</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_term_input_optimized</span><span class="p">(</span>
+                <span class="n">term_idx</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">all_activations</span><span class="p">,</span> <span class="n">activation_mask</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">term_input</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">term_input</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">term_inputs</span><span class="p">[</span><span class="n">term_idx_scalar</span><span class="p">]</span> <span class="o">=</span> <span class="n">term_input</span>
+                <span class="n">valid_terms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">term_idx_scalar</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">valid_terms</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Second pass: Process all terms</span>
+        <span class="c1"># This allows CUDA to better schedule operations</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Process in batches to improve GPU utilization</span>
+        <span class="c1"># Use torch.cuda.Stream for true parallel execution if available</span>
+        <span class="k">if</span> <span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"cuda"</span> <span class="ow">and</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+            <span class="c1"># Create streams for parallel processing</span>
+            <span class="n">num_streams</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">valid_terms</span><span class="p">))</span>  <span class="c1"># Use up to 4 CUDA streams</span>
+            <span class="n">streams</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">Stream</span><span class="p">()</span>  <span class="c1"># type: ignore[no-untyped-call]  # torch.cuda.Stream is untyped</span>
+                <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_streams</span><span class="p">)</span>
+            <span class="p">]</span>
+
+            <span class="c1"># Distribute terms across streams</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">term_idx</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">valid_terms</span><span class="p">):</span>
+                <span class="n">stream_idx</span> <span class="o">=</span> <span class="n">idx</span> <span class="o">%</span> <span class="n">num_streams</span>
+
+                <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">streams</span><span class="p">[</span><span class="n">stream_idx</span><span class="p">]):</span>
+                    <span class="c1"># Get this term's specific subsystem and linear head</span>
+                    <span class="n">subsystem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subsystems</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span>
+                    <span class="n">linear_head</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear_heads</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span>
+
+                    <span class="c1"># Forward through subsystem</span>
+                    <span class="n">term_output</span> <span class="o">=</span> <span class="n">subsystem</span><span class="p">(</span><span class="n">term_inputs</span><span class="p">[</span><span class="n">term_idx</span><span class="p">])</span>
+
+                    <span class="c1"># Store results temporarily</span>
+                    <span class="n">outputs</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="s2">"activation"</span><span class="p">:</span> <span class="n">term_output</span><span class="p">,</span>
+                        <span class="s2">"linear"</span><span class="p">:</span> <span class="n">linear_head</span><span class="p">(</span><span class="n">term_output</span><span class="p">),</span>
+                    <span class="p">}</span>
+
+            <span class="c1"># Synchronize all streams</span>
+            <span class="k">for</span> <span class="n">stream</span> <span class="ow">in</span> <span class="n">streams</span><span class="p">:</span>
+                <span class="n">stream</span><span class="o">.</span><span class="n">synchronize</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># CPU or fallback: Process sequentially but with prepared inputs</span>
+            <span class="k">for</span> <span class="n">term_idx</span> <span class="ow">in</span> <span class="n">valid_terms</span><span class="p">:</span>
+                <span class="n">subsystem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subsystems</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span>
+                <span class="n">linear_head</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear_heads</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span>
+
+                <span class="n">term_output</span> <span class="o">=</span> <span class="n">subsystem</span><span class="p">(</span><span class="n">term_inputs</span><span class="p">[</span><span class="n">term_idx</span><span class="p">])</span>
+                <span class="n">outputs</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">"activation"</span><span class="p">:</span> <span class="n">term_output</span><span class="p">,</span>
+                    <span class="s2">"linear"</span><span class="p">:</span> <span class="n">linear_head</span><span class="p">(</span><span class="n">term_output</span><span class="p">),</span>
+                <span class="p">}</span>
+
+        <span class="c1"># Third pass: Store all results (memory coalescing)</span>
+        <span class="k">for</span> <span class="n">term_idx</span> <span class="ow">in</span> <span class="n">valid_terms</span><span class="p">:</span>
+            <span class="n">output_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">term_output_dims</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span>
+
+            <span class="c1"># Store activation</span>
+            <span class="n">all_activations</span><span class="p">[:,</span> <span class="n">term_idx</span><span class="p">,</span> <span class="p">:</span><span class="n">output_dim</span><span class="p">]</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="n">term_idx</span><span class="p">][</span><span class="s2">"activation"</span><span class="p">]</span>
+            <span class="n">activation_mask</span><span class="p">[:,</span> <span class="n">term_idx</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="c1"># Store linear output</span>
+            <span class="n">linear_outputs_tensor</span><span class="p">[:,</span> <span class="n">term_idx</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="n">term_idx</span><span class="p">][</span><span class="s2">"linear"</span><span class="p">]</span>
+
+<div class="viewcode-block" id="DCellOpt.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.models.dcell_opt.DCellOpt.html#torchcell.models.dcell_opt.DCellOpt.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">cell_graph</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">HeteroData</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Forward pass through DCell hierarchy with parallel stratum processing."""</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">batch</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">device</span>
+
+        <span class="c1"># OPTIMIZATION: Pre-allocate ALL term activations</span>
+        <span class="n">all_activations</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_output_dim</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span>
+        <span class="p">)</span>
+        <span class="n">activation_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Pre-allocate linear outputs</span>
+        <span class="n">linear_outputs_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_size</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Track timing for performance monitoring (optional)</span>
+        <span class="n">stratum_times</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Process each stratum in descending order (leaves to root)</span>
+        <span class="k">for</span> <span class="n">stratum_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_stratum</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="c1"># Get all terms in this stratum using pre-computed tensor</span>
+            <span class="n">stratum_terms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stratum_term_lists</span><span class="p">[</span><span class="n">stratum_idx</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">stratum_terms</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Time stratum processing (only in debug/profile mode)</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_profile_mode"</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_profile_mode</span><span class="p">:</span>
+                <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+            <span class="c1"># PARALLEL PROCESSING: Process all terms in stratum simultaneously</span>
+            <span class="c1"># This maintains hierarchical dependencies while maximizing parallelism</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_process_stratum_parallel</span><span class="p">(</span>
+                <span class="n">stratum_terms</span><span class="p">,</span>
+                <span class="n">batch</span><span class="p">,</span>
+                <span class="n">all_activations</span><span class="p">,</span>
+                <span class="n">activation_mask</span><span class="p">,</span>
+                <span class="n">linear_outputs_tensor</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_profile_mode"</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_profile_mode</span><span class="p">:</span>
+                <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+                <span class="n">num_terms</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="n">t</span>
+                        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">stratum_terms</span>
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_subsystem</span><span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="s2">"item"</span><span class="p">)</span> <span class="k">else</span> <span class="n">t</span><span class="p">]</span>
+                    <span class="p">]</span>
+                <span class="p">)</span>
+                <span class="n">stratum_times</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">stratum_idx</span><span class="p">,</span> <span class="n">num_terms</span><span class="p">,</span> <span class="n">elapsed</span><span class="p">))</span>
+
+        <span class="c1"># Log profiling info if enabled</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_profile_mode"</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_profile_mode</span> <span class="ow">and</span> <span class="n">stratum_times</span><span class="p">:</span>
+            <span class="n">total_time</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">stratum_times</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Stratum processing times (PARALLEL):"</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">stratum_idx</span><span class="p">,</span> <span class="n">num_terms</span><span class="p">,</span> <span class="n">elapsed</span> <span class="ow">in</span> <span class="n">stratum_times</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">num_terms</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"  Stratum </span><span class="si">{</span><span class="n">stratum_idx</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">num_terms</span><span class="si">}</span><span class="s2"> terms in </span><span class="si">{</span><span class="n">elapsed</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">s (</span><span class="si">{</span><span class="n">elapsed</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">num_terms</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">s per term)"</span>
+                    <span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Total: </span><span class="si">{</span><span class="n">total_time</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">s"</span><span class="p">)</span>
+
+        <span class="c1"># Extract root prediction (stratum 0)</span>
+        <span class="n">root_terms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stratum_term_lists</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">root_terms</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No root terms found in stratum 0"</span><span class="p">)</span>
+
+        <span class="c1"># OPTIMIZATION: Use tensor indexing directly - no .item() needed</span>
+        <span class="n">root_term_idx</span> <span class="o">=</span> <span class="n">root_terms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Already a tensor</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="n">linear_outputs_tensor</span><span class="p">[:,</span> <span class="n">root_term_idx</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Convert tensors back to dictionary for compatibility</span>
+        <span class="c1"># This happens AFTER all computation, minimizing graph breaks</span>
+        <span class="n">linear_outputs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">term_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">activation_mask</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">term_idx</span><span class="p">]:</span>  <span class="c1"># Check if term was processed</span>
+                <span class="n">linear_outputs</span><span class="p">[</span><span class="sa">f</span><span class="s2">"GO:</span><span class="si">{</span><span class="n">term_idx</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">linear_outputs_tensor</span><span class="p">[</span>
+                    <span class="p">:,</span> <span class="n">term_idx</span><span class="p">,</span> <span class="p">:</span>
+                <span class="p">]</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">linear_outputs</span><span class="p">[</span><span class="s2">"GO:ROOT"</span><span class="p">]</span> <span class="o">=</span> <span class="n">predictions</span>
+
+        <span class="c1"># Also create term_activations dict for compatibility</span>
+        <span class="n">term_activations</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">term_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_go_terms</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">activation_mask</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">term_idx</span><span class="p">]:</span>
+                <span class="c1"># Get actual output dim for this term</span>
+                <span class="n">output_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">term_output_dims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">term_idx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_output_dim</span><span class="p">)</span>
+                <span class="n">term_activations</span><span class="p">[</span><span class="n">term_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">all_activations</span><span class="p">[:,</span> <span class="n">term_idx</span><span class="p">,</span> <span class="p">:</span><span class="n">output_dim</span><span class="p">]</span>
+
+        <span class="n">outputs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"linear_outputs"</span><span class="p">:</span> <span class="n">linear_outputs</span><span class="p">,</span>
+            <span class="s2">"term_activations"</span><span class="p">:</span> <span class="n">term_activations</span><span class="p">,</span>
+            <span class="s2">"all_activations_tensor"</span><span class="p">:</span> <span class="n">all_activations</span><span class="p">,</span>  <span class="c1"># Keep tensor version</span>
+            <span class="s2">"activation_mask"</span><span class="p">:</span> <span class="n">activation_mask</span><span class="p">,</span>
+            <span class="s2">"stratum_outputs"</span><span class="p">:</span> <span class="p">{},</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">outputs</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_term_input_optimized</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">term_idx</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>  <span class="c1"># Now accepts tensor instead of int</span>
+        <span class="n">batch</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">,</span>
+        <span class="n">all_activations</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">activation_mask</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Prepare input for a term using pre-allocated tensors."""</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">all_activations</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">all_activations</span><span class="o">.</span><span class="n">device</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Get children using pre-computed indices - use torch.index_select for compile</span>
+        <span class="c1"># Ensure term_idx is a tensor on the right device</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">term_idx</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+            <span class="n">term_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+                <span class="n">term_idx</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_children</span><span class="o">.</span><span class="n">device</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Ensure it's on the right device</span>
+            <span class="n">term_idx</span> <span class="o">=</span> <span class="n">term_idx</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_children</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">term_idx</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">term_idx</span> <span class="o">=</span> <span class="n">term_idx</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">num_children</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_children</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">term_idx</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+
+        <span class="c1"># Use tensor comparison instead of .item()</span>
+        <span class="k">if</span> <span class="n">num_children</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Use index_select for compile-friendly indexing</span>
+            <span class="n">children_row</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">children_indices</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">term_idx</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">children_indices</span> <span class="o">=</span> <span class="n">children_row</span><span class="p">[:</span><span class="n">num_children</span><span class="p">]</span>
+
+            <span class="c1"># Extract child activations from pre-allocated tensor</span>
+            <span class="k">for</span> <span class="n">child_idx</span> <span class="ow">in</span> <span class="n">children_indices</span><span class="p">:</span>
+                <span class="c1"># OPTIMIZATION: Keep as tensor - no .item()</span>
+                <span class="k">if</span> <span class="n">activation_mask</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">child_idx</span><span class="p">]:</span>  <span class="c1"># Check if child was processed</span>
+                    <span class="c1"># Get actual output dim for this child using tensor indexing</span>
+                    <span class="c1"># Use the pre-computed tensor for compile-friendly access</span>
+                    <span class="n">child_output_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">term_output_dims_tensor</span><span class="p">[</span><span class="n">child_idx</span><span class="p">]</span>
+                    <span class="n">child_act</span> <span class="o">=</span> <span class="n">all_activations</span><span class="p">[:,</span> <span class="n">child_idx</span><span class="p">,</span> <span class="p">:</span><span class="n">child_output_dim</span><span class="p">]</span>
+                    <span class="n">inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child_act</span><span class="p">)</span>
+
+        <span class="c1"># Add gene perturbation states</span>
+        <span class="n">gene_states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_gene_states_for_term</span><span class="p">(</span><span class="n">term_idx</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">gene_states</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">gene_states</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gene_states</span><span class="p">)</span>
+
+        <span class="c1"># Concatenate all inputs</span>
+        <span class="k">if</span> <span class="n">inputs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Shouldn't happen with well-formed GO hierarchy</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="DCellSubsystem">
+<a class="viewcode-back" href="../../../generated/torchcell.models.dcell_opt.DCellSubsystem.html#torchcell.models.dcell_opt.DCellSubsystem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DCellSubsystem</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Individual subsystem module as described in DCell paper."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Build a linear-batchnorm-tanh block with DCell weight initialization."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">linear</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_norm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm1d</span><span class="p">(</span><span class="n">output_dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Tanh</span><span class="p">()</span>
+
+        <span class="c1"># DCell paper weight initialization: uniform random between -0.001 and 0.001</span>
+        <span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">uniform_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">linear</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.001</span><span class="p">)</span>
+        <span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">uniform_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">linear</span><span class="o">.</span><span class="n">bias</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.001</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DCellSubsystem.forward">
+<a class="viewcode-back" href="../../../generated/torchcell.models.dcell_opt.DCellSubsystem.html#torchcell.models.dcell_opt.DCellSubsystem.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Apply linear, batch norm, and tanh activation to the input."""</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_norm</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span></div>
+</div>
+
+
+
+<span class="c1"># DCellOpt is a separate implementation optimized for torch.compile</span>
+<span class="c1"># Import DCell from dcell.py if you need the original implementation</span>
+
+
+<span class="nd">@hydra</span><span class="o">.</span><span class="n">main</span><span class="p">(</span>
+    <span class="n">version_base</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">config_path</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s2">"experiments/006-kuzmin-tmi/conf"</span><span class="p">),</span>
+    <span class="n">config_name</span><span class="o">=</span><span class="s2">"dcell_kuzmin2018_tmi"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">DictConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">"""Train and evaluate the optimized DCell model on a sample batch."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">torch.optim</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">optim</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.losses.dcell</span><span class="w"> </span><span class="kn">import</span> <span class="n">DCellLoss</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.scratch.load_batch_005</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sample_data_batch</span>
+
+    <span class="n">load_dotenv</span><span class="p">()</span>
+
+    <span class="c1"># Set device based on config</span>
+    <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span>
+        <span class="s2">"cuda"</span>
+        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="ow">and</span> <span class="n">cfg</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">accelerator</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">"cpu"</span>
+        <span class="k">else</span> <span class="s2">"cpu"</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Using device: </span><span class="si">{</span><span class="n">device</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># Setup directories for plots</span>
+    <span class="n">ASSET_IMAGES_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"ASSET_IMAGES_DIR"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ASSET_IMAGES_DIR</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ASSET_IMAGES_DIR</span> <span class="o">=</span> <span class="s2">"assets/images"</span>
+
+    <span class="n">plot_dir</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ASSET_IMAGES_DIR</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"dcell_opt_training_</span><span class="si">{</span><span class="n">timestamp</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">plot_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_intermediate_plot</span><span class="p">(</span>
+        <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">all_losses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">primary_losses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">auxiliary_losses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">weighted_auxiliary_losses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">learning_rates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
+        <span class="n">batch</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Save intermediate training plot every print interval."""</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+
+        <span class="c1"># Loss curves</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epoch</span> <span class="o">+</span> <span class="mi">2</span><span class="p">),</span> <span class="n">all_losses</span><span class="p">,</span> <span class="s2">"b-"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Total Loss"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Epoch"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Loss Value"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Training Loss Curve"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">yscale</span><span class="p">(</span><span class="s2">"log"</span><span class="p">)</span>
+
+        <span class="c1"># Loss components</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epoch</span> <span class="o">+</span> <span class="mi">2</span><span class="p">),</span> <span class="n">primary_losses</span><span class="p">,</span> <span class="s2">"r-"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Primary Loss"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epoch</span> <span class="o">+</span> <span class="mi">2</span><span class="p">),</span> <span class="n">auxiliary_losses</span><span class="p">,</span> <span class="s2">"g-"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Auxiliary Loss"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epoch</span> <span class="o">+</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="n">weighted_auxiliary_losses</span><span class="p">,</span>
+            <span class="s2">"orange"</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">"Weighted Auxiliary Loss"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Epoch"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Loss Value"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Loss Components"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">yscale</span><span class="p">(</span><span class="s2">"log"</span><span class="p">)</span>
+
+        <span class="c1"># Get current model predictions for correlation plot</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">current_predictions</span><span class="p">,</span> <span class="n">current_outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+            <span class="n">true_scores</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_values</span>
+
+            <span class="c1"># Convert to numpy for plotting</span>
+            <span class="n">true_np</span> <span class="o">=</span> <span class="n">true_scores</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+            <span class="n">pred_np</span> <span class="o">=</span> <span class="n">current_predictions</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+            <span class="c1"># Calculate correlation</span>
+            <span class="n">correlation</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">true_np</span><span class="p">,</span> <span class="n">pred_np</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">true_np</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mf">0.0</span>
+            <span class="p">)</span>
+            <span class="n">mse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">pred_np</span> <span class="o">-</span> <span class="n">true_np</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>  <span class="c1"># Back to training mode</span>
+
+        <span class="c1"># Correlation</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">true_np</span><span class="p">,</span> <span class="n">pred_np</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+        <span class="n">min_val</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">true_np</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">pred_np</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+        <span class="n">max_val</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">true_np</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">pred_np</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">],</span> <span class="p">[</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">],</span> <span class="s2">"r--"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"True Phenotype Values"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Predicted Values"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Correlation (r=</span><span class="si">{</span><span class="n">correlation</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Error distribution</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="n">pred_np</span> <span class="o">-</span> <span class="n">true_np</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">errors</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Prediction Error"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Frequency"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error Distribution (MSE=</span><span class="si">{</span><span class="n">mse</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Learning rate evolution</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epoch</span> <span class="o">+</span> <span class="mi">2</span><span class="p">),</span> <span class="n">learning_rates</span><span class="p">,</span> <span class="s2">"purple"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Epoch"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Learning Rate"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Learning Rate Schedule"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">yscale</span><span class="p">(</span><span class="s2">"log"</span><span class="p">)</span>
+
+        <span class="c1"># Subsystem analysis</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+        <span class="n">linear_outputs</span> <span class="o">=</span> <span class="n">current_outputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"linear_outputs"</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">subsystem_activities</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">linear_outputs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">"GO:ROOT"</span><span class="p">:</span>
+                <span class="n">subsystem_activities</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">subsystem_activities</span><span class="p">:</span>
+            <span class="n">subsystem_activations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">subsystem_activities</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span>
+                <span class="n">subsystem_activations</span><span class="p">,</span>
+                <span class="n">bins</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">subsystem_activations</span><span class="p">)),</span>
+                <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Mean Absolute Activation"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Number of Subsystems"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Subsystem Activation Distribution"</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">plot_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"dcell_opt_epoch_</span><span class="si">{</span><span class="n">epoch</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">:</span><span class="s2">04d</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">timestamp</span><span class="p">()</span><span class="si">}</span><span class="s2">.png"</span><span class="p">),</span>
+            <span class="n">dpi</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span>
+            <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">"tight"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="c1"># Load sample data</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Loading sample data with GO ontology..."</span><span class="p">)</span>
+
+    <span class="n">dataset</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">input_channels</span><span class="p">,</span> <span class="n">max_num_nodes</span> <span class="o">=</span> <span class="n">load_sample_data_batch</span><span class="p">(</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">data_module</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
+        <span class="n">num_workers</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">data_module</span><span class="o">.</span><span class="n">num_workers</span><span class="p">,</span>
+        <span class="n">config</span><span class="o">=</span><span class="s2">"dcell"</span><span class="p">,</span>
+        <span class="n">is_dense</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Move data to device</span>
+    <span class="n">cell_graph</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">cell_graph</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="c1"># Print batch information</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Batch size: </span><span class="si">{</span><span class="n">batch</span><span class="o">.</span><span class="n">num_graphs</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Gene nodes: </span><span class="si">{</span><span class="n">batch</span><span class="p">[</span><span class="s1">'gene'</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"GO nodes: </span><span class="si">{</span><span class="n">batch</span><span class="p">[</span><span class="s1">'gene_ontology'</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Perturbation indices shape: </span><span class="si">{</span><span class="n">batch</span><span class="p">[</span><span class="s1">'gene'</span><span class="p">]</span><span class="o">.</span><span class="n">perturbation_indices</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"GO gene strata state shape: </span><span class="si">{</span><span class="n">batch</span><span class="p">[</span><span class="s1">'gene_ontology'</span><span class="p">]</span><span class="o">.</span><span class="n">go_gene_strata_state</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Phenotype values shape: </span><span class="si">{</span><span class="n">batch</span><span class="p">[</span><span class="s1">'gene'</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_values</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># Initialize optimized DCell model</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Initializing Optimized DCell model..."</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">DCellOpt</span><span class="p">(</span>
+        <span class="n">cell_graph</span><span class="p">,</span>
+        <span class="n">min_subsystem_size</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">subsystem_output_min</span><span class="p">,</span>
+        <span class="n">subsystem_ratio</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">subsystem_output_max_mult</span><span class="p">,</span>
+        <span class="n">output_size</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">output_size</span><span class="p">,</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="n">param_counts</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">num_parameters</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Parameter counts:"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Subsystems: </span><span class="si">{</span><span class="n">param_counts</span><span class="p">[</span><span class="s1">'subsystems'</span><span class="p">]</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Linear heads: </span><span class="si">{</span><span class="n">param_counts</span><span class="p">[</span><span class="s1">'dcell_linear'</span><span class="p">]</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Total: </span><span class="si">{</span><span class="n">param_counts</span><span class="p">[</span><span class="s1">'total'</span><span class="p">]</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># Test torch.compile if requested</span>
+    <span class="n">compile_mode</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"compile_mode"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">compile_mode</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Attempting torch.compile with mode='</span><span class="si">{</span><span class="n">compile_mode</span><span class="si">}</span><span class="s2">'..."</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># torch.compile returns an OptimizedModule callable, not DCellOpt.</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>  <span class="c1"># type: ignore[assignment]  # compiled module replaces DCellOpt</span>
+                <span class="n">model</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">compile_mode</span><span class="p">,</span> <span class="n">dynamic</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"✓ Successfully compiled model"</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"⚠️ torch.compile failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Continuing without compilation"</span><span class="p">)</span>
+
+    <span class="c1"># Initialize DCellLoss</span>
+    <span class="n">loss_func</span> <span class="o">=</span> <span class="n">DCellLoss</span><span class="p">(</span>
+        <span class="n">alpha</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">dcell_loss</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span>
+        <span class="n">use_auxiliary_losses</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">dcell_loss</span><span class="o">.</span><span class="n">use_auxiliary_losses</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Create optimizer</span>
+    <span class="n">optimizer</span><span class="p">:</span> <span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span>
+    <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"AdamW"</span><span class="p">:</span>
+        <span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">AdamW</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+            <span class="n">lr</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">lr</span><span class="p">,</span>
+            <span class="n">weight_decay</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">weight_decay</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+            <span class="n">lr</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">lr</span><span class="p">,</span>
+            <span class="n">weight_decay</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">weight_decay</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Setup learning rate scheduler if specified</span>
+    <span class="n">scheduler</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">lr_scheduler</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"ReduceLROnPlateau"</span><span class="p">:</span>
+        <span class="n">scheduler</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">lr_scheduler</span><span class="o">.</span><span class="n">ReduceLROnPlateau</span><span class="p">(</span>
+            <span class="n">optimizer</span><span class="p">,</span>
+            <span class="n">mode</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">lr_scheduler</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span>
+            <span class="n">factor</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">lr_scheduler</span><span class="o">.</span><span class="n">factor</span><span class="p">,</span>
+            <span class="n">patience</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">lr_scheduler</span><span class="o">.</span><span class="n">patience</span><span class="p">,</span>
+            <span class="n">threshold</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">lr_scheduler</span><span class="o">.</span><span class="n">threshold</span><span class="p">,</span>
+            <span class="n">min_lr</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">lr_scheduler</span><span class="o">.</span><span class="n">min_lr</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Training parameters - reduce epochs for testing</span>
+    <span class="n">epochs</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">max_epochs</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>  <span class="c1"># Limit to 100 for testing</span>
+    <span class="n">plot_interval</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">plot_every_n_epochs</span>
+
+    <span class="c1"># Lists to track metrics</span>
+    <span class="n">all_losses</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">primary_losses</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">auxiliary_losses</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">weighted_auxiliary_losses</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">learning_rates</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Training loop</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Training Optimized DCell for </span><span class="si">{</span><span class="n">epochs</span><span class="si">}</span><span class="s2"> epochs..."</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">)):</span>
+        <span class="n">epoch_start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+
+        <span class="c1"># Forward pass</span>
+        <span class="n">predictions</span><span class="p">,</span> <span class="n">outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+
+        <span class="c1"># Get targets</span>
+        <span class="n">targets</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_values</span>
+
+        <span class="c1"># Compute loss using DCellLoss</span>
+        <span class="n">total_loss</span><span class="p">,</span> <span class="n">loss_components</span> <span class="o">=</span> <span class="n">loss_func</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+
+        <span class="c1"># Extract individual loss components</span>
+        <span class="n">primary_loss</span> <span class="o">=</span> <span class="n">loss_components</span><span class="p">[</span><span class="s2">"primary_loss"</span><span class="p">]</span>
+        <span class="n">auxiliary_loss</span> <span class="o">=</span> <span class="n">loss_components</span><span class="p">[</span><span class="s2">"auxiliary_loss"</span><span class="p">]</span>
+        <span class="n">weighted_auxiliary_loss</span> <span class="o">=</span> <span class="n">loss_components</span><span class="p">[</span><span class="s2">"weighted_auxiliary_loss"</span><span class="p">]</span>
+
+        <span class="c1"># Record losses</span>
+        <span class="n">all_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">total_loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="n">primary_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">primary_loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="n">auxiliary_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">auxiliary_loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="n">weighted_auxiliary_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">weighted_auxiliary_loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="n">learning_rates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">optimizer</span><span class="o">.</span><span class="n">param_groups</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"lr"</span><span class="p">])</span>
+
+        <span class="c1"># Backward pass and optimization</span>
+        <span class="n">total_loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+
+        <span class="c1"># Gradient clipping if specified</span>
+        <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">clip_grad_norm</span><span class="p">:</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">cfg</span><span class="o">.</span><span class="n">regression_task</span><span class="o">.</span><span class="n">clip_grad_norm_max_norm</span>
+            <span class="p">)</span>
+
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+        <span class="c1"># Update learning rate scheduler</span>
+        <span class="k">if</span> <span class="n">scheduler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">total_loss</span><span class="p">)</span>
+
+        <span class="c1"># Calculate epoch time</span>
+        <span class="n">epoch_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">epoch_start_time</span>
+
+        <span class="c1"># Get GPU memory stats if using CUDA</span>
+        <span class="n">gpu_memory_str</span> <span class="o">=</span> <span class="s2">""</span>
+        <span class="k">if</span> <span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"cuda"</span><span class="p">:</span>
+            <span class="n">allocated_gb</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">memory_allocated</span><span class="p">(</span><span class="n">device</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1024</span><span class="o">**</span><span class="mi">3</span>
+            <span class="n">reserved_gb</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">memory_reserved</span><span class="p">(</span><span class="n">device</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1024</span><span class="o">**</span><span class="mi">3</span>
+            <span class="n">gpu_memory_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">", GPU: </span><span class="si">{</span><span class="n">allocated_gb</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">reserved_gb</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">GB"</span>
+
+        <span class="c1"># Print stats every epoch</span>
+        <span class="n">current_batch_size</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">batch</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Epoch </span><span class="si">{</span><span class="n">epoch</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">epochs</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"Total Loss: </span><span class="si">{</span><span class="n">total_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"Primary Loss: </span><span class="si">{</span><span class="n">primary_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"Aux Loss: </span><span class="si">{</span><span class="n">auxiliary_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"Weighted Aux Loss: </span><span class="si">{</span><span class="n">weighted_auxiliary_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"LR: </span><span class="si">{</span><span class="n">optimizer</span><span class="o">.</span><span class="n">param_groups</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">'lr'</span><span class="p">]</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"Time: </span><span class="si">{</span><span class="n">epoch_time</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">s, "</span>
+            <span class="sa">f</span><span class="s2">"Time/instance: </span><span class="si">{</span><span class="n">epoch_time</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">current_batch_size</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">s"</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">gpu_memory_str</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Save intermediate plot at intervals</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">epoch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">plot_interval</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">epoch</span> <span class="o">==</span> <span class="n">epochs</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">save_intermediate_plot</span><span class="p">(</span>
+                <span class="n">epoch</span><span class="p">,</span>
+                <span class="n">all_losses</span><span class="p">,</span>
+                <span class="n">primary_losses</span><span class="p">,</span>
+                <span class="n">auxiliary_losses</span><span class="p">,</span>
+                <span class="n">weighted_auxiliary_losses</span><span class="p">,</span>
+                <span class="n">learning_rates</span><span class="p">,</span>
+                <span class="n">model</span><span class="p">,</span>
+                <span class="n">batch</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="c1"># Final evaluation</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="n">final_predictions</span><span class="p">,</span> <span class="n">final_outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Final Optimized DCell training results:"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">final_predictions</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">true_scores</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_values</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"True Phenotype Values:"</span><span class="p">,</span> <span class="n">true_scores</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()[:</span><span class="mi">5</span><span class="p">])</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Predicted Values:"</span><span class="p">,</span> <span class="n">final_predictions</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()[:</span><span class="mi">5</span><span class="p">])</span>
+
+            <span class="c1"># Calculate final metrics</span>
+            <span class="n">mse</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">mse_loss</span><span class="p">(</span><span class="n">final_predictions</span><span class="p">,</span> <span class="n">true_scores</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="n">mae</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">l1_loss</span><span class="p">(</span><span class="n">final_predictions</span><span class="p">,</span> <span class="n">true_scores</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+            <span class="c1"># Calculate correlation coefficient</span>
+            <span class="n">true_np</span> <span class="o">=</span> <span class="n">true_scores</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+            <span class="n">pred_np</span> <span class="o">=</span> <span class="n">final_predictions</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+            <span class="n">correlation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">true_np</span><span class="p">,</span> <span class="n">pred_np</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">true_np</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Final Mean Squared Error: </span><span class="si">{</span><span class="n">mse</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Final Mean Absolute Error: </span><span class="si">{</span><span class="n">mae</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Correlation Coefficient: </span><span class="si">{</span><span class="n">correlation</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Results plot saved to '</span><span class="si">{</span><span class="n">plot_dir</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"No predictions were generated. Check model and data setup."</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Optimized DCell training demonstration complete!"</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="p">(</span><span class="n">final_predictions</span><span class="p">,</span> <span class="n">final_outputs</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">multiprocessing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mp</span>
+
+    <span class="n">mp</span><span class="o">.</span><span class="n">set_start_method</span><span class="p">(</span><span class="s2">"spawn"</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

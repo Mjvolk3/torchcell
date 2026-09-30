@@ -1,0 +1,8 @@
+﻿torchcell.models.cell\_sagpool\_inception.MLP
+=============================================
+
+.. currentmodule:: torchcell.models.cell_sagpool_inception
+
+.. autoclass:: MLP
+   :show-inheritance:
+   :members:

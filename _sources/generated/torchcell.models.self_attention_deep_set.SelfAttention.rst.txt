@@ -1,0 +1,8 @@
+﻿torchcell.models.self\_attention\_deep\_set.SelfAttention
+=========================================================
+
+.. currentmodule:: torchcell.models.self_attention_deep_set
+
+.. autoclass:: SelfAttention
+   :show-inheritance:
+   :members:

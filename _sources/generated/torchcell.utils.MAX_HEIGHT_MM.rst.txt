@@ -1,0 +1,6 @@
+﻿torchcell.utils.MAX\_HEIGHT\_MM
+===============================
+
+.. currentmodule:: torchcell.utils
+
+.. autodata:: MAX_HEIGHT_MM

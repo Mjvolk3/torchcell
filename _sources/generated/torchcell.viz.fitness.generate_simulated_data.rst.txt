@@ -1,0 +1,6 @@
+﻿torchcell.viz.fitness.generate\_simulated\_data
+===============================================
+
+.. currentmodule:: torchcell.viz.fitness
+
+.. autofunction:: generate_simulated_data

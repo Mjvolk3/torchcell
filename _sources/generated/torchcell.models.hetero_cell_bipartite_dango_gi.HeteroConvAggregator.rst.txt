@@ -1,0 +1,8 @@
+﻿torchcell.models.hetero\_cell\_bipartite\_dango\_gi.HeteroConvAggregator
+========================================================================
+
+.. currentmodule:: torchcell.models.hetero_cell_bipartite_dango_gi
+
+.. autoclass:: HeteroConvAggregator
+   :show-inheritance:
+   :members:

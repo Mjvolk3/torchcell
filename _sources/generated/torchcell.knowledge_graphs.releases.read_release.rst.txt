@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.releases.read\_release
+==================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.releases
+
+.. autofunction:: read_release

@@ -1,0 +1,850 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Datasets &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/guide/datasets.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Knowledge graph" href="knowledge-graph.html" />
+    <link rel="prev" title="Data model" href="data-model.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User Guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-model.html">Data model</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knowledge-graph.html">Knowledge graph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html">Contributing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">User Guide</a></li>
+      <li class="breadcrumb-item active">Datasets</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/guide/datasets.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="datasets">
+<h1>Datasets<a class="headerlink" href="#datasets" title="Link to this heading"></a></h1>
+<p>A <strong>dataset</strong> in torchcell is one loader class that turns the files released with one
+publication (or one database) into validated experiment records. Loaders live under
+<code class="docutils literal notranslate"><span class="pre">torchcell/datasets/scerevisiae/</span></code>, and each registers itself in
+<code class="docutils literal notranslate"><span class="pre">torchcell.datasets.dataset_registry.dataset_registry</span></code> with the <code class="docutils literal notranslate"><span class="pre">&#64;register_dataset</span></code>
+decorator, which is how build tools look a loader up by class name.</p>
+<section id="how-a-dataset-is-built">
+<h2>How a dataset is built<a class="headerlink" href="#how-a-dataset-is-built" title="Link to this heading"></a></h2>
+<p>Every loader subclasses <code class="docutils literal notranslate"><span class="pre">ExperimentDataset</span></code> (<code class="docutils literal notranslate"><span class="pre">torchcell/data/experiment_dataset.py</span></code>),
+itself a PyTorch Geometric <code class="docutils literal notranslate"><span class="pre">Dataset</span></code>. A subclass declares <code class="docutils literal notranslate"><span class="pre">experiment_class</span></code>,
+<code class="docutils literal notranslate"><span class="pre">reference_class</span></code>, <code class="docutils literal notranslate"><span class="pre">raw_file_names</span></code>, <code class="docutils literal notranslate"><span class="pre">download()</span></code>, <code class="docutils literal notranslate"><span class="pre">preprocess_raw()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">create_experiment()</span></code> and a <code class="docutils literal notranslate"><span class="pre">process()</span></code> decorated with <code class="docutils literal notranslate"><span class="pre">&#64;post_process</span></code>. The on-disk
+layout under the dataset’s <code class="docutils literal notranslate"><span class="pre">root</span></code> is:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&lt;root&gt;/
+  raw/                           files as released by the publisher (or copied from the raw mirror)
+  preprocess/
+    data.csv                     the cleaned table the records are built from (when the loader writes one)
+    gene_set.json                every systematic gene name perturbed in the dataset
+    experiment_reference_index.json   records grouped by the reference they share
+    build_manifest.json          the schema contract the LMDB was built against
+  processed/
+    lmdb/                        one pickled record per key "0", "1", ...
+    interned/                    constant sub-objects stored once, referenced by "$ref"
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">&#64;post_process</span></code> runs after <code class="docutils literal notranslate"><span class="pre">process()</span></code> finishes. It computes and writes the gene set and
+the reference index, asserts that every record is covered by a reference, and
+writes <code class="docutils literal notranslate"><span class="pre">build_manifest.json</span></code> through
+<code class="docutils literal notranslate"><span class="pre">torchcell.provenance.build_manifest.write_build_manifest</span></code>.</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">build_manifest.json</span></code></strong> is a <code class="docutils literal notranslate"><span class="pre">BuildManifest</span></code> pydantic record: the loader class and
+module, the build time and host, the torchcell commit (recorded for provenance only), and
+<code class="docutils literal notranslate"><span class="pre">closure</span></code>, the contract fingerprint of every schema symbol the loader depends on. A
+fingerprint changes only when a symbol in the loader’s closure changes, so a schema edit
+elsewhere leaves the dataset fresh. To list which built datasets are stale against the
+local schema:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>torchcell.provenance.build_manifest<span class="w">   </span><span class="c1"># reads $DATA_ROOT; exit status 1 if any dataset is stale</span>
+</pre></div>
+</div>
+<p>A loader skips <code class="docutils literal notranslate"><span class="pre">process()</span></code> whenever <code class="docutils literal notranslate"><span class="pre">processed/</span></code> already exists, so a stale LMDB is
+reused silently unless it is retired first. The build CLI refuses instead:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>torchcell.database.build_dataset_lmdb<span class="w"> </span>--dataset<span class="w"> </span>SmfCostanzo2016Dataset
+</pre></div>
+</div>
+<p>It resolves the class from the registry, builds under
+<code class="docutils literal notranslate"><span class="pre">$DATA_ROOT/&lt;loader</span> <span class="pre">default</span> <span class="pre">root&gt;</span></code> (for example <code class="docutils literal notranslate"><span class="pre">data/torchcell/smf_costanzo2016</span></code>),
+passes the shared genome and gene graph to loaders whose constructors take them, and
+exits with an error when <code class="docutils literal notranslate"><span class="pre">processed/lmdb</span></code> already exists, pointing at
+<code class="docutils literal notranslate"><span class="pre">scripts/deprecate.sh</span></code> to move the old build aside.</p>
+<section id="two-build-trees">
+<h3>Two build trees<a class="headerlink" href="#two-build-trees" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">$DATA_ROOT/data/torchcell/&lt;dataset&gt;/</span></code> is the development tree: what loaders write by
+default and what the command above builds. <code class="docutils literal notranslate"><span class="pre">$DATA_ROOT/database/data/torchcell/&lt;dataset&gt;/</span></code>
+is the knowledge-graph build tree, owned by the graph-build user and populated by the
+graph build, not by a loader run. Rebuilding a loader in the development tree does not
+change what the served graph holds; see <a class="reference internal" href="knowledge-graph.html"><span class="std std-doc">Knowledge graph</span></a>.</p>
+</section>
+</section>
+<section id="raw-files-and-their-provenance">
+<h2>Raw files and their provenance<a class="headerlink" href="#raw-files-and-their-provenance" title="Link to this heading"></a></h2>
+<p>The stored file and its sha256 are the record of what a dataset was built from; the URL
+it was fetched from is retrieval metadata. Loaders that follow the raw-mirror convention
+read their inputs from <code class="docutils literal notranslate"><span class="pre">$DATA_ROOT/torchcell-raw/&lt;citation_key&gt;/</span></code>, where each file is
+pinned by sha256 in a manifest together with its source URL and the command that
+retrieved it. The Mota 2024 loader (<code class="docutils literal notranslate"><span class="pre">torchcell/datasets/scerevisiae/mota2024.py</span></code>), for
+example, reads its three supplementary spreadsheets from the mirror and uses the network
+only when the mirror is absent. The mirror keeps exactly
+the files the loader consumed for its first successful build. Older loaders, such as
+<code class="docutils literal notranslate"><span class="pre">SmfCostanzo2016Dataset</span></code>, still fetch their raw files from the publisher’s URL in
+<code class="docutils literal notranslate"><span class="pre">download()</span></code>.</p>
+<p>Values a loader cannot read from a data column, such as a replicate count or the kind
+of an uncertainty, are recorded as <code class="docutils literal notranslate"><span class="pre">SourcedValue</span></code> objects that carry a verbatim quote
+from the paper and the sha256 of the file quoted (see <a class="reference internal" href="data-model.html"><span class="std std-doc">Data model</span></a>).</p>
+</section>
+<section id="supported-datasets">
+<h2>Supported datasets<a class="headerlink" href="#supported-datasets" title="Link to this heading"></a></h2>
+<p>The tables below are copied verbatim from <code class="docutils literal notranslate"><span class="pre">notes/paper.supported-datasets-and-databases.md</span></code>
+as committed on 2026-09-21 (commit <code class="docutils literal notranslate"><span class="pre">fd805a8fc</span></code>). That note is rendered by
+<code class="docutils literal notranslate"><span class="pre">experiments/database/scripts/render_supported_datasets_table.py</span></code> from the JSON that
+<code class="docutils literal notranslate"><span class="pre">experiments/database/scripts/build_supported_datasets_table.py</span></code> writes after scanning
+every built LMDB under <code class="docutils literal notranslate"><span class="pre">$DATA_ROOT</span></code>. The generator needs the built LMDBs and writes into
+<code class="docutils literal notranslate"><span class="pre">experiments/database/results/</span></code>, so it was not rerun for this page. Genotypes, Env and
+Phenotype are curated in the generator; Instances, Shape, Graph role and Signal are read
+from the built LMDBs.</p>
+<p><strong>Columns.</strong> <em>Genotypes</em>: distinct perturbed strains or isolates. <em>Env</em>: number of
+environments. <em>Instances</em>: records in the dataset (genotype x environment). <em>Shape</em>: shape
+of one phenotype instance. <em>Graph role</em>: where the label sits on the cell graph.
+<em>Signal (gzip, bits)</em>: gzip size, in bits, of the concatenated stored instances, a
+relative measure of information content that includes phenotype metadata.</p>
+<section id="fitness-genetic-interaction">
+<h3>Fitness + genetic interaction<a class="headerlink" href="#fitness-genetic-interaction" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>Dataset</p></th>
+<th class="head text-right"><p>Genotypes</p></th>
+<th class="head text-right"><p>Env</p></th>
+<th class="head text-right"><p>Instances</p></th>
+<th class="head text-left"><p>Phenotype</p></th>
+<th class="head text-left"><p>Shape</p></th>
+<th class="head text-left"><p>Graph role</p></th>
+<th class="head text-right"><p>Signal (gzip, bits)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p>Costanzo 2016 (smf)</p></td>
+<td class="text-right"><p>20,484</p></td>
+<td class="text-right"><p>2</p></td>
+<td class="text-right"><p>20,484</p></td>
+<td class="text-left"><p>single-mutant fitness</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>5.5×10⁶</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>Costanzo 2016 (dmf)</p></td>
+<td class="text-right"><p>20.7M</p></td>
+<td class="text-right"><p>2</p></td>
+<td class="text-right"><p>20,705,612</p></td>
+<td class="text-left"><p>double-mutant fitness</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>7.1×10⁹</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>Costanzo 2016 (dmi)</p></td>
+<td class="text-right"><p>20.7M</p></td>
+<td class="text-right"><p>2</p></td>
+<td class="text-right"><p>20,705,612</p></td>
+<td class="text-left"><p>digenic interaction</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>edge</p></td>
+<td class="text-right"><p>5.8×10⁹</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>Kuzmin 2018 (smf)</p></td>
+<td class="text-right"><p>1,539</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>1,539</p></td>
+<td class="text-left"><p>single-mutant fitness</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>3.5×10⁵</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>Kuzmin 2018 (dmf)</p></td>
+<td class="text-right"><p>410,399</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>410,571</p></td>
+<td class="text-left"><p>double-mutant fitness</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>1.5×10⁸</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>Kuzmin 2018 (tmf)</p></td>
+<td class="text-right"><p>91,111</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>91,111</p></td>
+<td class="text-left"><p>triple-mutant fitness</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>3.9×10⁷</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>Kuzmin 2018 (dmi)</p></td>
+<td class="text-right"><p>410,399</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>410,399</p></td>
+<td class="text-left"><p>digenic interaction</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>edge</p></td>
+<td class="text-right"><p>1.3×10⁸</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>Kuzmin 2018 (tmi)</p></td>
+<td class="text-right"><p>91,111</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>91,111</p></td>
+<td class="text-left"><p>trigenic interaction</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>hyperedge</p></td>
+<td class="text-right"><p>3.2×10⁷</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>Kuzmin 2020 (smf)</p></td>
+<td class="text-right"><p>472</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>472</p></td>
+<td class="text-left"><p>single-mutant fitness</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>9.2×10⁴</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>Kuzmin 2020 (dmf)</p></td>
+<td class="text-right"><p>632,797</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>632,998</p></td>
+<td class="text-left"><p>double-mutant fitness</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>2.3×10⁸</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>Kuzmin 2020 (tmf)</p></td>
+<td class="text-right"><p>301,798</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>301,798</p></td>
+<td class="text-left"><p>triple-mutant fitness</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>1.1×10⁸</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>Kuzmin 2020 (dmi)</p></td>
+<td class="text-right"><p>632,797</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>632,797</p></td>
+<td class="text-left"><p>digenic interaction</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>edge</p></td>
+<td class="text-right"><p>2.0×10⁸</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>Kuzmin 2020 (tmi)</p></td>
+<td class="text-right"><p>301,798</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>301,798</p></td>
+<td class="text-left"><p>trigenic interaction</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>hyperedge</p></td>
+<td class="text-right"><p>1.1×10⁸</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>Baryshnikova 2010 (smf)</p></td>
+<td class="text-right"><p>5,993</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>5,993</p></td>
+<td class="text-left"><p>single-mutant fitness</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>1.7×10⁶</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>O’Duibhir 2014 (smf)</p></td>
+<td class="text-right"><p>1,312</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>1,312</p></td>
+<td class="text-left"><p>single-mutant fitness</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>2.0×10⁶</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="environmental-chemogenomic">
+<h3>Environmental / chemogenomic<a class="headerlink" href="#environmental-chemogenomic" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>Dataset</p></th>
+<th class="head text-right"><p>Genotypes</p></th>
+<th class="head text-right"><p>Env</p></th>
+<th class="head text-right"><p>Instances</p></th>
+<th class="head text-left"><p>Phenotype</p></th>
+<th class="head text-left"><p>Shape</p></th>
+<th class="head text-left"><p>Graph role</p></th>
+<th class="head text-right"><p>Signal (gzip, bits)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p>Auesukaree 2009 (stress screen)</p></td>
+<td class="text-right"><p>333</p></td>
+<td class="text-right"><p>6</p></td>
+<td class="text-right"><p>525</p></td>
+<td class="text-left"><p>stress sensitivity (categorical: sensitive/no_change)</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>2.5×10⁵</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>Mota 2024 (weak-acid screen)</p></td>
+<td class="text-right"><p>601</p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>1,270</p></td>
+<td class="text-left"><p>weak-acid susceptibility (ordinal: 0/1/2 grades)</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>6.2×10⁵</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>Vanacloig-Pedros 2022 (chemogenomic fitness)</p></td>
+<td class="text-right"><p>3,647</p></td>
+<td class="text-right"><p>41</p></td>
+<td class="text-right"><p>143,218</p></td>
+<td class="text-left"><p>chemogenomic fitness (log2-ratio)</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>8.7×10⁷</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>Costanzo 2021 (condition-SGA)</p></td>
+<td class="text-right"><p>4,399</p></td>
+<td class="text-right"><p>14</p></td>
+<td class="text-right"><p>61,430</p></td>
+<td class="text-left"><p>differential mutant fitness</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>1.0×10⁸</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>Hillenmeyer 2008 (FitDb HIP, het)</p></td>
+<td class="text-right"><p>5,814</p></td>
+<td class="text-right"><p>514</p></td>
+<td class="text-right"><p>2,698,797</p></td>
+<td class="text-left"><p>HIP fitness-defect log2-ratio</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>1.4×10⁹</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>Hillenmeyer 2008 (FitDb HOP, hom)</p></td>
+<td class="text-right"><p>4,667</p></td>
+<td class="text-right"><p>279</p></td>
+<td class="text-right"><p>1,088,620</p></td>
+<td class="text-left"><p>HOP fitness-defect z-score</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>5.9×10⁸</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>Wildenhain 2015 (drug tolerance)</p></td>
+<td class="text-right"><p>256</p></td>
+<td class="text-right"><p>5,168</p></td>
+<td class="text-right"><p>428,206</p></td>
+<td class="text-left"><p>growth-inhibition z-score</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>2.0×10⁸</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>Hoepfner 2014 (HIP/HOP atlas)</p></td>
+<td class="text-right"><p>10,779</p></td>
+<td class="text-right"><p>563</p></td>
+<td class="text-right"><p>3,124,319</p></td>
+<td class="text-left"><p>HIP/HOP sensitivity score</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>1.8×10⁹</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>Smith 2006 (chemogenomic)</p></td>
+<td class="text-right"><p>4,721</p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>12,747</p></td>
+<td class="text-left"><p>chemogenomic sensitivity (clear-zone ordinal)</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>1.4×10⁶</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>Lian 2019 (MAGIC CRISPR-AID)</p></td>
+<td class="text-right"><p>266,415</p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>266,304</p></td>
+<td class="text-left"><p>furfural tolerance fitness (log2-ratio)</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>1.3×10⁸</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>Mormino 2022 (CRISPRi acetic-acid)</p></td>
+<td class="text-right"><p>12</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>12</p></td>
+<td class="text-left"><p>acetic-acid sensitivity (categorical)</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>1.2×10⁴</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>Smith 2016 (CRISPRi chem-genetic)</p></td>
+<td class="text-right"><p>1,035</p></td>
+<td class="text-right"><p>8</p></td>
+<td class="text-right"><p>7,053</p></td>
+<td class="text-left"><p>chemogenomic fitness (log2-ratio)</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>2.1×10⁶</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>Bloom 2019 (16-cross segregant panel)</p></td>
+<td class="text-right"><p>13,950</p></td>
+<td class="text-right"><p>38</p></td>
+<td class="text-right"><p>530,100</p></td>
+<td class="text-left"><p>colony size residual / absolute</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>2.5×10⁸</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="viability">
+<h3>Viability<a class="headerlink" href="#viability" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>Dataset</p></th>
+<th class="head text-right"><p>Genotypes</p></th>
+<th class="head text-right"><p>Env</p></th>
+<th class="head text-right"><p>Instances</p></th>
+<th class="head text-left"><p>Phenotype</p></th>
+<th class="head text-left"><p>Shape</p></th>
+<th class="head text-left"><p>Graph role</p></th>
+<th class="head text-right"><p>Signal (gzip, bits)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p>SGD (essentiality)</p></td>
+<td class="text-right"><p>1,329</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>1,329</p></td>
+<td class="text-left"><p>gene essentiality</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>node</p></td>
+<td class="text-right"><p>1.4×10⁵</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>SynLethDB (lethal)</p></td>
+<td class="text-right"><p>14,000</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>14,000</p></td>
+<td class="text-left"><p>synthetic lethality</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>edge</p></td>
+<td class="text-right"><p>2.2×10⁶</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>SynLethDB (rescue)</p></td>
+<td class="text-right"><p>6,948</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>6,948</p></td>
+<td class="text-left"><p>synthetic rescue</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>edge</p></td>
+<td class="text-right"><p>1.1×10⁶</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="morphology">
+<h3>Morphology<a class="headerlink" href="#morphology" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>Dataset</p></th>
+<th class="head text-right"><p>Genotypes</p></th>
+<th class="head text-right"><p>Env</p></th>
+<th class="head text-right"><p>Instances</p></th>
+<th class="head text-left"><p>Phenotype</p></th>
+<th class="head text-left"><p>Shape</p></th>
+<th class="head text-left"><p>Graph role</p></th>
+<th class="head text-right"><p>Signal (gzip, bits)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p>Ohya 2005 (SCMD CalMorph)</p></td>
+<td class="text-right"><p>4,718</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>4,718</p></td>
+<td class="text-left"><p>cell morphology (CalMorph)</p></td>
+<td class="text-left"><p>vector (281)</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>1.5×10⁸</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>Ohnuki 2018 (SCMD CalMorph)</p></td>
+<td class="text-right"><p>1,112</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>1,112</p></td>
+<td class="text-left"><p>cell morphology (CalMorph)</p></td>
+<td class="text-left"><p>vector (281)</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>4.8×10⁷</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>Ohnuki 2022 (SCMD CalMorph)</p></td>
+<td class="text-right"><p>1,979</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>1,979</p></td>
+<td class="text-left"><p>cell morphology (CalMorph)</p></td>
+<td class="text-left"><p>vector (281)</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>8.8×10⁷</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="expression-microarray">
+<h3>Expression (microarray)<a class="headerlink" href="#expression-microarray" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>Dataset</p></th>
+<th class="head text-right"><p>Genotypes</p></th>
+<th class="head text-right"><p>Env</p></th>
+<th class="head text-right"><p>Instances</p></th>
+<th class="head text-left"><p>Phenotype</p></th>
+<th class="head text-left"><p>Shape</p></th>
+<th class="head text-left"><p>Graph role</p></th>
+<th class="head text-right"><p>Signal (gzip, bits)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p>Kemmeren 2014 (deletion compendium)</p></td>
+<td class="text-right"><p>1,484</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>1,484</p></td>
+<td class="text-left"><p>mRNA log2(mut/wt)</p></td>
+<td class="text-left"><p>vector (6169)</p></td>
+<td class="text-left"><p>node</p></td>
+<td class="text-right"><p>3.2×10⁹</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>Sameith 2015 (sm)</p></td>
+<td class="text-right"><p>82</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>82</p></td>
+<td class="text-left"><p>mRNA log2(mut/ref)</p></td>
+<td class="text-left"><p>vector (6169)</p></td>
+<td class="text-left"><p>node</p></td>
+<td class="text-right"><p>1.8×10⁸</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>Sameith 2015 (dm)</p></td>
+<td class="text-right"><p>72</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>72</p></td>
+<td class="text-left"><p>mRNA log2(mut/ref)</p></td>
+<td class="text-left"><p>vector (6169)</p></td>
+<td class="text-left"><p>node</p></td>
+<td class="text-right"><p>1.7×10⁸</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="expression-rna-seq">
+<h3>Expression (RNA-seq)<a class="headerlink" href="#expression-rna-seq" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>Dataset</p></th>
+<th class="head text-right"><p>Genotypes</p></th>
+<th class="head text-right"><p>Env</p></th>
+<th class="head text-right"><p>Instances</p></th>
+<th class="head text-left"><p>Phenotype</p></th>
+<th class="head text-left"><p>Shape</p></th>
+<th class="head text-left"><p>Graph role</p></th>
+<th class="head text-right"><p>Signal (gzip, bits)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p>Caudal 2024 (pan-transcriptome)</p></td>
+<td class="text-right"><p>943</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>943</p></td>
+<td class="text-left"><p>mRNA abundance (RNA-seq)</p></td>
+<td class="text-left"><p>vector (6000)</p></td>
+<td class="text-left"><p>node</p></td>
+<td class="text-right"><p>1.5×10⁹</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>Nadal-Ribelles 2025 (Perturb-seq)</p></td>
+<td class="text-right"><p>3,150</p></td>
+<td class="text-right"><p>2</p></td>
+<td class="text-right"><p>6,188</p></td>
+<td class="text-left"><p>mRNA logFC (Perturb-seq)</p></td>
+<td class="text-left"><p>vector (5639)</p></td>
+<td class="text-left"><p>node</p></td>
+<td class="text-right"><p>2.2×10⁹</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="metabolite">
+<h3>Metabolite<a class="headerlink" href="#metabolite" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>Dataset</p></th>
+<th class="head text-right"><p>Genotypes</p></th>
+<th class="head text-right"><p>Env</p></th>
+<th class="head text-right"><p>Instances</p></th>
+<th class="head text-left"><p>Phenotype</p></th>
+<th class="head text-left"><p>Shape</p></th>
+<th class="head text-left"><p>Graph role</p></th>
+<th class="head text-right"><p>Signal (gzip, bits)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p>Cachera 2023 (CRI-SPA betaxanthin)</p></td>
+<td class="text-right"><p>4,735</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>4,719</p></td>
+<td class="text-left"><p>betaxanthin (product proxy)</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>bipartite node</p></td>
+<td class="text-right"><p>2.2×10⁶</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>Mülleder 2016 (amino-acid metabolome)</p></td>
+<td class="text-right"><p>4,678</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>4,678</p></td>
+<td class="text-left"><p>amino-acid concentrations</p></td>
+<td class="text-left"><p>vector (19)</p></td>
+<td class="text-left"><p>bipartite node</p></td>
+<td class="text-right"><p>8.1×10⁶</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>Cooper 2010 (CE-LIF amino-acid metabolome)</p></td>
+<td class="text-right"><p>4,313</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>4,313</p></td>
+<td class="text-left"><p>amino-acid peak ratios to plate mean</p></td>
+<td class="text-left"><p>vector (16)</p></td>
+<td class="text-left"><p>bipartite node</p></td>
+<td class="text-right"><p>5.1×10⁶</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>Zelezniak 2018 (metabolome)</p></td>
+<td class="text-right"><p>95</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>95</p></td>
+<td class="text-left"><p>metabolite levels</p></td>
+<td class="text-left"><p>vector (25)</p></td>
+<td class="text-left"><p>bipartite node</p></td>
+<td class="text-right"><p>3.1×10⁵</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>Ozaydin 2013 (β-carotene screen)</p></td>
+<td class="text-right"><p>4,474</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>4,474</p></td>
+<td class="text-left"><p>β-carotene (colony-color visual score)</p></td>
+<td class="text-left"><p>scalar</p></td>
+<td class="text-left"><p>global</p></td>
+<td class="text-right"><p>1.0×10⁶</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>da Silveira 2014 (lipidomics)</p></td>
+<td class="text-right"><p>127</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>127</p></td>
+<td class="text-left"><p>lipid-species relative abundance</p></td>
+<td class="text-left"><p>vector (135)</p></td>
+<td class="text-left"><p>bipartite node</p></td>
+<td class="text-right"><p>1.0×10⁶</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>Yoshida 2012 (organic acids)</p></td>
+<td class="text-right"><p>17</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>17</p></td>
+<td class="text-left"><p>organic-acid titer</p></td>
+<td class="text-left"><p>vector (6)</p></td>
+<td class="text-left"><p>bipartite node</p></td>
+<td class="text-right"><p>1.4×10⁴</p></td>
+</tr>
+</tbody>
+</table>
+<p>Datasets marked private in the generator’s output are omitted from this public page; the Total row below still counts them (51 datasets), as the generator wrote it.</p>
+</section>
+<section id="protein-abundance">
+<h3>Protein abundance<a class="headerlink" href="#protein-abundance" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>Dataset</p></th>
+<th class="head text-right"><p>Genotypes</p></th>
+<th class="head text-right"><p>Env</p></th>
+<th class="head text-right"><p>Instances</p></th>
+<th class="head text-left"><p>Phenotype</p></th>
+<th class="head text-left"><p>Shape</p></th>
+<th class="head text-left"><p>Graph role</p></th>
+<th class="head text-right"><p>Signal (gzip, bits)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p>Zelezniak 2018 (SWATH proteome)</p></td>
+<td class="text-right"><p>97</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>97</p></td>
+<td class="text-left"><p>protein abundance</p></td>
+<td class="text-left"><p>vector (726)</p></td>
+<td class="text-left"><p>node</p></td>
+<td class="text-right"><p>1.7×10⁷</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>Messner 2023 (proteome)</p></td>
+<td class="text-right"><p>4,699</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>4,699</p></td>
+<td class="text-left"><p>protein abundance</p></td>
+<td class="text-left"><p>vector (1830)</p></td>
+<td class="text-left"><p>node</p></td>
+<td class="text-right"><p>1.1×10⁹</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="total">
+<h3>Total<a class="headerlink" href="#total" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>Dataset</p></th>
+<th class="head text-right"><p>Genotypes</p></th>
+<th class="head text-right"><p>Env</p></th>
+<th class="head text-right"><p>Instances</p></th>
+<th class="head text-left"><p>Phenotype</p></th>
+<th class="head text-left"><p>Shape</p></th>
+<th class="head text-left"><p>Graph role</p></th>
+<th class="head text-right"><p>Signal (gzip, bits)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p><strong>Total (51 datasets)</strong></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p><strong>52,743,236</strong></p></td>
+<td class="text-left"><p></p></td>
+<td class="text-left"><p></p></td>
+<td class="text-left"><p></p></td>
+<td class="text-right"><p><strong>2.7×10¹⁰</strong></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="data-model.html" class="btn btn-neutral float-left" title="Data model" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="knowledge-graph.html" class="btn btn-neutral float-right" title="Knowledge graph" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,6 @@
+﻿torchcell.models.cell\_latent\_perturbation\_tform.load\_sample\_data\_batch
+============================================================================
+
+.. currentmodule:: torchcell.models.cell_latent_perturbation_tform
+
+.. autofunction:: load_sample_data_batch

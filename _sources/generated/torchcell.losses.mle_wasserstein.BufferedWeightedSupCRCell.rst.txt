@@ -1,0 +1,8 @@
+﻿torchcell.losses.mle\_wasserstein.BufferedWeightedSupCRCell
+===========================================================
+
+.. currentmodule:: torchcell.losses.mle_wasserstein
+
+.. autoclass:: BufferedWeightedSupCRCell
+   :show-inheritance:
+   :members:

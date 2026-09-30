@@ -1,0 +1,8 @@
+﻿torchcell.models.nsa\_hetero\_cell.StoichiometricMAB
+====================================================
+
+.. currentmodule:: torchcell.models.nsa_hetero_cell
+
+.. autoclass:: StoichiometricMAB
+   :show-inheritance:
+   :members:

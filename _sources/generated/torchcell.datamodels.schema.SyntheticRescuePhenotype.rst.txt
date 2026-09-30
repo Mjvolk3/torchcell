@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.SyntheticRescuePhenotype
+====================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: SyntheticRescuePhenotype
+   :show-inheritance:
+   :members:

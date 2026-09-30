@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.gene\_essentiality\_to\_fitness\_conversion.gene\_essentiality\_to\_fitness\_reference
+===========================================================================================================
+
+.. currentmodule:: torchcell.datamodels.gene_essentiality_to_fitness_conversion
+
+.. autofunction:: gene_essentiality_to_fitness_reference

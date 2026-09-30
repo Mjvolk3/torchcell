@@ -1,0 +1,8 @@
+﻿torchcell.knowledge\_graphs.build\_time\_projection.SubsetConfig
+================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.build_time_projection
+
+.. autoclass:: SubsetConfig
+   :show-inheritance:
+   :members:

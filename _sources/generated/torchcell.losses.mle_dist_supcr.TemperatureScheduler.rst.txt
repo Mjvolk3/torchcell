@@ -1,0 +1,8 @@
+﻿torchcell.losses.mle\_dist\_supcr.TemperatureScheduler
+======================================================
+
+.. currentmodule:: torchcell.losses.mle_dist_supcr
+
+.. autoclass:: TemperatureScheduler
+   :show-inheritance:
+   :members:

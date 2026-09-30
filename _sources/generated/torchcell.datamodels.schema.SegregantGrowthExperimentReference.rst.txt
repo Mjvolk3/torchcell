@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.SegregantGrowthExperimentReference
+==============================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: SegregantGrowthExperimentReference
+   :show-inheritance:
+   :members:

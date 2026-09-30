@@ -1,0 +1,237 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.literature.citation_keys &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/literature/citation_keys.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.literature.citation_keys</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.literature.citation_keys</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/literature/citation_keys.py</span>
+<span class="c1"># [[torchcell.literature.citation_keys]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/literature/citation_keys.py</span>
+<span class="c1"># Test file: tests/torchcell/literature/test_citation_keys.py</span>
+
+<span class="sd">"""Citation-key generation and normalization helpers."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">unidecode</span><span class="w"> </span><span class="kn">import</span> <span class="n">unidecode</span>
+
+<span class="c1"># Better BibTeX default skipwords (the leading articles/conjunctions/prepositions</span>
+<span class="c1"># dropped from the title segment of a citation key).</span>
+<span class="n">_SKIP_WORDS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"a"</span><span class="p">,</span>
+    <span class="s2">"an"</span><span class="p">,</span>
+    <span class="s2">"the"</span><span class="p">,</span>
+    <span class="s2">"and"</span><span class="p">,</span>
+    <span class="s2">"or"</span><span class="p">,</span>
+    <span class="s2">"but"</span><span class="p">,</span>
+    <span class="s2">"nor"</span><span class="p">,</span>
+    <span class="s2">"for"</span><span class="p">,</span>
+    <span class="s2">"on"</span><span class="p">,</span>
+    <span class="s2">"at"</span><span class="p">,</span>
+    <span class="s2">"to"</span><span class="p">,</span>
+    <span class="s2">"from"</span><span class="p">,</span>
+    <span class="s2">"by"</span><span class="p">,</span>
+    <span class="s2">"of"</span><span class="p">,</span>
+    <span class="s2">"in"</span><span class="p">,</span>
+    <span class="s2">"into"</span><span class="p">,</span>
+    <span class="s2">"with"</span><span class="p">,</span>
+    <span class="s2">"as"</span><span class="p">,</span>
+    <span class="s2">"is"</span><span class="p">,</span>
+    <span class="s2">"be"</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="generate_citation_key">
+<a class="viewcode-back" href="../../../generated/torchcell.literature.generate_citation_key.html#torchcell.literature.generate_citation_key">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_citation_key</span><span class="p">(</span><span class="n">creators</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">published</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Generate a Better BibTeX-style citation key from paper metadata.</span>
+
+<span class="sd">    Format: ``{firstauthorlastname}{TitleWord}{TitleWord}...{YYYY}`` matching the</span>
+<span class="sd">    Better BibTeX default</span>
+<span class="sd">    ``[auth:lower][Title:skipwords:nopunct:fold:condense=''][year]``.</span>
+
+<span class="sd">    The key is a pure function of the metadata the Zotero web API returns</span>
+<span class="sd">    (``creators``, ``date``, ``title``), so it reproduces identically on every</span>
+<span class="sd">    run and host -- the property the literature mirror relies on to key each</span>
+<span class="sd">    paper's artifact directory deterministically.</span>
+
+<span class="sd">    Non-ASCII author surnames and title words are transliterated to ASCII via</span>
+<span class="sd">    :func:`unidecode` before stripping, so ``Müller`` yields ``muller`` rather</span>
+<span class="sd">    than the lossy ``mller``. Output is restricted to ``[A-Za-z0-9]`` and always</span>
+<span class="sd">    begins with a letter (the ``unknown`` fallback guarantees it).</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        ``["John Smith"], "2022", "Biodegradation of PET"`` -&gt;</span>
+<span class="sd">        ``smithBiodegradationPET2022``</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        creators: Author display names (e.g. ``["John Smith", "Jane Doe"]``).</span>
+<span class="sd">        published: Publication date string containing a 4-digit year.</span>
+<span class="sd">        title: Paper title.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Citation key string (e.g. ``"costanzoGlobalGeneticInteraction2016"``).</span>
+<span class="sd">    """</span>
+    <span class="c1"># First-author last name: transliterate to ASCII, take the last whitespace</span>
+    <span class="c1"># token, keep letters only, lowercase. Falls back to "unknown" (also the</span>
+    <span class="c1"># leading-letter guard -- the key can never start with a digit or be empty).</span>
+    <span class="k">if</span> <span class="n">creators</span><span class="p">:</span>
+        <span class="n">first_author</span> <span class="o">=</span> <span class="n">unidecode</span><span class="p">(</span><span class="n">creators</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">last_name</span> <span class="o">=</span> <span class="n">first_author</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">" "</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">last_name</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[^a-zA-Z]"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="n">last_name</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">"unknown"</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">last_name</span> <span class="o">=</span> <span class="s2">"unknown"</span>
+
+    <span class="c1"># Year: first 4-digit run, else "XXXX".</span>
+    <span class="n">year_match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\d</span><span class="si">{4}</span><span class="s2">"</span><span class="p">,</span> <span class="n">published</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="n">year</span> <span class="o">=</span> <span class="n">year_match</span><span class="o">.</span><span class="n">group</span><span class="p">()</span> <span class="k">if</span> <span class="n">year_match</span> <span class="k">else</span> <span class="s2">"XXXX"</span>
+
+    <span class="c1"># Title: transliterate, then up to 5 significant words, each with its leading</span>
+    <span class="c1"># character upper-cased (acronym casing preserved in the remainder).</span>
+    <span class="n">words</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[a-zA-Z0-9]+"</span><span class="p">,</span> <span class="n">unidecode</span><span class="p">(</span><span class="n">title</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">))</span>
+    <span class="n">title_parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">words</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">word</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">_SKIP_WORDS</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">title_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">word</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">+</span> <span class="n">word</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">title_parts</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="k">break</span>
+    <span class="n">title_str</span> <span class="o">=</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">title_parts</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">last_name</span><span class="si">}{</span><span class="n">title_str</span><span class="si">}{</span><span class="n">year</span><span class="si">}</span><span class="s2">"</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

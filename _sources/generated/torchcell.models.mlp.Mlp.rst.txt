@@ -1,0 +1,8 @@
+﻿torchcell.models.mlp.Mlp
+========================
+
+.. currentmodule:: torchcell.models.mlp
+
+.. autoclass:: Mlp
+   :show-inheritance:
+   :members:

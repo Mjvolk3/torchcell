@@ -1,0 +1,6 @@
+﻿torchcell.paper.ontology\_graph.build\_ontology\_graph
+======================================================
+
+.. currentmodule:: torchcell.paper.ontology_graph
+
+.. autofunction:: build_ontology_graph

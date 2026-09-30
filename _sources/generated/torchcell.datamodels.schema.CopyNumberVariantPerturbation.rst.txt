@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.CopyNumberVariantPerturbation
+=========================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: CopyNumberVariantPerturbation
+   :show-inheritance:
+   :members:

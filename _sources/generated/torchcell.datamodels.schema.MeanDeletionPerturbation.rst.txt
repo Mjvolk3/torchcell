@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.MeanDeletionPerturbation
+====================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: MeanDeletionPerturbation
+   :show-inheritance:
+   :members:

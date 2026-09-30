@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.compound\_identity\_curate.PubChemProperty
+===============================================================
+
+.. currentmodule:: torchcell.datamodels.compound_identity_curate
+
+.. autoclass:: PubChemProperty
+   :show-inheritance:
+   :members:

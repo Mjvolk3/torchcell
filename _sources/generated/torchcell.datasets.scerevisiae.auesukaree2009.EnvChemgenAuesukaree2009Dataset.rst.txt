@@ -1,0 +1,8 @@
+﻿torchcell.datasets.scerevisiae.auesukaree2009.EnvChemgenAuesukaree2009Dataset
+=============================================================================
+
+.. currentmodule:: torchcell.datasets.scerevisiae.auesukaree2009
+
+.. autoclass:: EnvChemgenAuesukaree2009Dataset
+   :show-inheritance:
+   :members:

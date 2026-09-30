@@ -1,0 +1,6 @@
+﻿torchcell.paper.ontology\_svg.build\_layout
+===========================================
+
+.. currentmodule:: torchcell.paper.ontology_svg
+
+.. autofunction:: build_layout

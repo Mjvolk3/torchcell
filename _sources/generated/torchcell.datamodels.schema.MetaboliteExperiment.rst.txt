@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.MetaboliteExperiment
+================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: MetaboliteExperiment
+   :show-inheritance:
+   :members:

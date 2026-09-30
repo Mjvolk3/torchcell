@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.schema.derive\_se
+======================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autofunction:: derive_se

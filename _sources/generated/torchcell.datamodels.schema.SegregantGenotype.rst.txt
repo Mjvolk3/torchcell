@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.SegregantGenotype
+=============================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: SegregantGenotype
+   :show-inheritance:
+   :members:

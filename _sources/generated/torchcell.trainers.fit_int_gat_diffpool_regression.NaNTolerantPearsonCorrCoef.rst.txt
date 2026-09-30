@@ -1,0 +1,8 @@
+﻿torchcell.trainers.fit\_int\_gat\_diffpool\_regression.NaNTolerantPearsonCorrCoef
+=================================================================================
+
+.. currentmodule:: torchcell.trainers.fit_int_gat_diffpool_regression
+
+.. autoclass:: NaNTolerantPearsonCorrCoef
+   :show-inheritance:
+   :members:

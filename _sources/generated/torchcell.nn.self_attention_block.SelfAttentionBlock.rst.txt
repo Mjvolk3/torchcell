@@ -1,0 +1,8 @@
+﻿torchcell.nn.self\_attention\_block.SelfAttentionBlock
+======================================================
+
+.. currentmodule:: torchcell.nn.self_attention_block
+
+.. autoclass:: SelfAttentionBlock
+   :show-inheritance:
+   :members:

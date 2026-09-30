@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.NatMxDeletionPerturbation
+=====================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: NatMxDeletionPerturbation
+   :show-inheritance:
+   :members:

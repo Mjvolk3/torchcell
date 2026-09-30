@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.subset.subset\_dataset
+==================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.subset
+
+.. autofunction:: subset_dataset

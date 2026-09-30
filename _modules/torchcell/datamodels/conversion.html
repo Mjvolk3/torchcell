@@ -1,0 +1,477 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datamodels.conversion &mdash; TorchCell 1.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/datamodels/conversion.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9172181d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.datamodels.conversion</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.datamodels.conversion</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Convert raw Neo4j experiment records into typed experiments stored in LMDB."""</span>
+
+<span class="c1"># torchcell/datamodels/conversion</span>
+<span class="c1"># [[torchcell.datamodels.conversion]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/conversion</span>
+<span class="c1"># Test file: tests/torchcell/datamodels/test_conversion.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="c1"># Import from sibling submodules directly, not the package __init__, so this</span>
+<span class="c1"># module does not depend on __init__ import order (avoids a circular import that</span>
+<span class="c1"># surfaces once imports are alphabetically sorted).</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.pydant</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelStrict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EXPERIMENT_REFERENCE_TYPE_MAP</span><span class="p">,</span>
+    <span class="n">EXPERIMENT_TYPE_MAP</span><span class="p">,</span>
+    <span class="n">ExperimentReferenceType</span><span class="p">,</span>
+    <span class="n">ExperimentType</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.neo4j_query_raw</span><span class="w"> </span><span class="kn">import</span> <span class="n">Neo4jQueryRaw</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ConversionEntry">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.conversion.ConversionEntry.html#torchcell.datamodels.conversion.ConversionEntry">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConversionEntry</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One input/output type pair plus its conversion functions."""</span>
+
+    <span class="n">experiment_input_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">ExperimentType</span><span class="p">]</span>
+    <span class="n">experiment_conversion_function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">ExperimentType</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">experiment_output_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">ExperimentType</span><span class="p">]</span>
+    <span class="n">experiment_reference_input_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">ExperimentReferenceType</span><span class="p">]</span>
+    <span class="n">experiment_reference_conversion_function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">ExperimentReferenceType</span><span class="p">]</span>
+    <span class="n">experiment_reference_output_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">ExperimentReferenceType</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="ConversionMap">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.conversion.ConversionMap.html#torchcell.datamodels.conversion.ConversionMap">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConversionMap</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Collection of conversion entries defining how to map experiment types."""</span>
+
+    <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ConversionEntry</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="Converter">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.conversion.Converter.html#torchcell.datamodels.conversion.Converter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Converter</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Abstract base that converts queried records and caches them in LMDB."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="s2">"Neo4jQueryRaw"</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Store the root path and query, and set up the LMDB directory path."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="n">root</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">query</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmdb_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="s2">"conversion"</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">:</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">Environment</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">conversion_map</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ConversionMap</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the ConversionMap defining type-to-type conversions."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_init_lmdb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">readonly</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize the LMDB environment."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">close_lmdb</span><span class="p">()</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lmdb_dir</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">readonly</span> <span class="ow">or</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lmdb_dir</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">lmdb_dir</span><span class="p">,</span>
+                <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e12</span><span class="p">),</span>
+                <span class="n">readonly</span><span class="o">=</span><span class="n">readonly</span><span class="p">,</span>
+                <span class="n">create</span><span class="o">=</span><span class="ow">not</span> <span class="n">readonly</span><span class="p">,</span>
+                <span class="n">lock</span><span class="o">=</span><span class="ow">not</span> <span class="n">readonly</span><span class="p">,</span>
+                <span class="n">readahead</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">meminit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="Converter.close_lmdb">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.conversion.Converter.html#torchcell.datamodels.conversion.Converter.close_lmdb">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">close_lmdb</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Close the LMDB environment if it is open."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="Converter.convert">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.conversion.Converter.html#torchcell.datamodels.conversion.Converter.convert">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ExperimentType</span> <span class="o">|</span> <span class="n">ExperimentReferenceType</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ExperimentType</span> <span class="o">|</span> <span class="n">ExperimentReferenceType</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Convert one experiment/reference pair using the conversion map."""</span>
+        <span class="k">if</span> <span class="s2">"experiment"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span> <span class="ow">or</span> <span class="s2">"experiment_reference"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"Input data must contain both 'experiment' and "</span>
+                <span class="s2">"'experiment_reference' keys"</span>
+            <span class="p">)</span>
+
+        <span class="n">converted_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ExperimentType</span> <span class="o">|</span> <span class="n">ExperimentReferenceType</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"experiment"</span><span class="p">,</span> <span class="s2">"experiment_reference"</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">conversion_map</span><span class="o">.</span><span class="n">entries</span><span class="p">:</span>
+                <span class="n">input_type</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">entry</span><span class="o">.</span><span class="n">experiment_input_type</span>
+                    <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">"experiment"</span>
+                    <span class="k">else</span> <span class="n">entry</span><span class="o">.</span><span class="n">experiment_reference_input_type</span>
+                <span class="p">)</span>
+                <span class="n">conversion_function</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">entry</span><span class="o">.</span><span class="n">experiment_conversion_function</span>
+                    <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">"experiment"</span>
+                    <span class="k">else</span> <span class="n">entry</span><span class="o">.</span><span class="n">experiment_reference_conversion_function</span>
+                <span class="p">)</span>
+                <span class="n">output_type</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">entry</span><span class="o">.</span><span class="n">experiment_output_type</span>
+                    <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">"experiment"</span>
+                    <span class="k">else</span> <span class="n">entry</span><span class="o">.</span><span class="n">experiment_reference_output_type</span>
+                <span class="p">)</span>
+
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">input_type</span><span class="p">):</span>
+                    <span class="n">converted_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">conversion_function</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">converted_data</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">output_type</span><span class="p">):</span>
+                        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">"Conversion function did not return expected type for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span>
+                        <span class="p">)</span>
+                    <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># If no conversion was found, keep the original data</span>
+                <span class="n">converted_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+        <span class="c1"># Include any other keys from the original data that weren't converted</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"experiment"</span><span class="p">,</span> <span class="s2">"experiment_reference"</span><span class="p">]:</span>
+                <span class="n">converted_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+        <span class="k">return</span> <span class="n">converted_data</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_hash</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Compute a SHA256 hash of the input data."""</span>
+        <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Converter.process">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.conversion.Converter.html#torchcell.datamodels.conversion.Converter.process">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Convert every record from the input LMDB and write results to output."""</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">output_path</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_lmdb</span><span class="p">(</span><span class="n">readonly</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># Initialize LMDB for writing</span>
+
+        <span class="n">env_input</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">converted_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">total_count</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">with</span> <span class="p">(</span>
+            <span class="n">env_input</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn_input</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span>  <span class="c1"># type: ignore[union-attr]  # _init_lmdb(readonly=False) above always opens self.env</span>
+                <span class="n">write</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span> <span class="k">as</span> <span class="n">txn_output</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="n">cursor</span> <span class="o">=</span> <span class="n">txn_input</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+                <span class="n">tqdm</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"Converting and writing to LMDB"</span><span class="p">)</span>
+            <span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">data_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span>
+
+                    <span class="c1"># Reconstruct Pydantic objects</span>
+                    <span class="n">experiment_class</span> <span class="o">=</span> <span class="n">EXPERIMENT_TYPE_MAP</span><span class="p">[</span>
+                        <span class="n">data_dict</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"experiment_type"</span><span class="p">]</span>
+                    <span class="p">]</span>
+                    <span class="n">experiment_reference_class</span> <span class="o">=</span> <span class="n">EXPERIMENT_REFERENCE_TYPE_MAP</span><span class="p">[</span>
+                        <span class="n">data_dict</span><span class="p">[</span><span class="s2">"experiment_reference"</span><span class="p">][</span><span class="s2">"experiment_reference_type"</span><span class="p">]</span>
+                    <span class="p">]</span>
+
+                    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment_class</span><span class="p">(</span><span class="o">**</span><span class="n">data_dict</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]),</span>
+                        <span class="s2">"experiment_reference"</span><span class="p">:</span> <span class="n">experiment_reference_class</span><span class="p">(</span>
+                            <span class="o">**</span><span class="n">data_dict</span><span class="p">[</span><span class="s2">"experiment_reference"</span><span class="p">]</span>
+                        <span class="p">),</span>
+                    <span class="p">}</span>
+
+                    <span class="n">original_hash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_hash</span><span class="p">(</span><span class="n">data_dict</span><span class="p">)</span>
+
+                    <span class="n">converted_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                    <span class="c1"># convert() never yields None values; the Optional in its</span>
+                    <span class="c1"># return type is conservative, so model_dump() is safe here.</span>
+                    <span class="n">converted_hash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_hash</span><span class="p">(</span>
+                        <span class="p">{</span>
+                            <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">converted_data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>  <span class="c1"># type: ignore[union-attr]</span>
+                            <span class="s2">"experiment_reference"</span><span class="p">:</span> <span class="n">converted_data</span><span class="p">[</span>
+                                <span class="s2">"experiment_reference"</span>
+                            <span class="p">]</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>  <span class="c1"># type: ignore[union-attr]</span>
+                        <span class="p">}</span>
+                    <span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">original_hash</span> <span class="o">!=</span> <span class="n">converted_hash</span><span class="p">:</span>
+                        <span class="n">converted_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                    <span class="n">txn_output</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+                        <span class="n">key</span><span class="p">,</span>
+                        <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                            <span class="p">{</span>
+                                <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">converted_data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>  <span class="c1"># type: ignore[union-attr]</span>
+                                <span class="s2">"experiment_reference"</span><span class="p">:</span> <span class="n">converted_data</span><span class="p">[</span>
+                                    <span class="s2">"experiment_reference"</span>
+                                <span class="p">]</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>  <span class="c1"># type: ignore[union-attr]</span>
+                            <span class="p">}</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+                    <span class="p">)</span>
+                    <span class="n">total_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">:</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"Error decoding JSON for entry </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">. Skipping this entry."</span>
+                    <span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"Error processing entry </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">. Skipping this entry."</span>
+                    <span class="p">)</span>
+
+        <span class="n">env_input</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close_lmdb</span><span class="p">()</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Conversion complete. LMDB database written to </span><span class="si">{</span><span class="n">output_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Number of instances converted: </span><span class="si">{</span><span class="n">converted_count</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total number of instances processed: </span><span class="si">{</span><span class="n">total_count</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">slice</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="p">(</span>
+        <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ExperimentType</span> <span class="o">|</span> <span class="n">ExperimentReferenceType</span><span class="p">]</span>
+        <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ExperimentType</span> <span class="o">|</span> <span class="n">ExperimentReferenceType</span><span class="p">]]</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Return converted record(s) by integer index, slice, or list of indices."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_lmdb</span><span class="p">(</span><span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># Initialize LMDB for reading</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_record_by_index</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_records_by_slice</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_record_by_index</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">index</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid index type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_record_by_index</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ExperimentType</span> <span class="o">|</span> <span class="n">ExperimentReferenceType</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"LMDB environment is not initialized."</span><span class="p">)</span>
+        <span class="n">data_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"data_</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="n">data_json</span> <span class="o">=</span> <span class="n">txn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">data_key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">data_json</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Record not found at index: </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">data_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">data_json</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span>
+
+            <span class="c1"># Reconstruct Pydantic objects</span>
+            <span class="n">experiment_class</span> <span class="o">=</span> <span class="n">EXPERIMENT_TYPE_MAP</span><span class="p">[</span>
+                <span class="n">data_dict</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"experiment_type"</span><span class="p">]</span>
+            <span class="p">]</span>
+            <span class="n">experiment_reference_class</span> <span class="o">=</span> <span class="n">EXPERIMENT_REFERENCE_TYPE_MAP</span><span class="p">[</span>
+                <span class="n">data_dict</span><span class="p">[</span><span class="s2">"experiment_reference"</span><span class="p">][</span><span class="s2">"experiment_reference_type"</span><span class="p">]</span>
+            <span class="p">]</span>
+
+            <span class="n">reconstructed_data</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment_class</span><span class="p">(</span><span class="o">**</span><span class="n">data_dict</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]),</span>
+                <span class="s2">"experiment_reference"</span><span class="p">:</span> <span class="n">experiment_reference_class</span><span class="p">(</span>
+                    <span class="o">**</span><span class="n">data_dict</span><span class="p">[</span><span class="s2">"experiment_reference"</span><span class="p">]</span>
+                <span class="p">),</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="n">reconstructed_data</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_records_by_slice</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">slice_obj</span><span class="p">:</span> <span class="nb">slice</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ExperimentType</span> <span class="o">|</span> <span class="n">ExperimentReferenceType</span><span class="p">]]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"LMDB environment is not initialized."</span><span class="p">)</span>
+        <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">step</span> <span class="o">=</span> <span class="n">slice_obj</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+        <span class="n">data_keys</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"data_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">step</span><span class="p">)]</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">data_keys</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">txn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">data_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span>
+                    <span class="n">experiment_class</span> <span class="o">=</span> <span class="n">EXPERIMENT_TYPE_MAP</span><span class="p">[</span>
+                        <span class="n">data_dict</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"experiment_type"</span><span class="p">]</span>
+                    <span class="p">]</span>
+                    <span class="n">experiment_reference_class</span> <span class="o">=</span> <span class="n">EXPERIMENT_REFERENCE_TYPE_MAP</span><span class="p">[</span>
+                        <span class="n">data_dict</span><span class="p">[</span><span class="s2">"experiment_reference"</span><span class="p">][</span><span class="s2">"experiment_reference_type"</span><span class="p">]</span>
+                    <span class="p">]</span>
+                    <span class="n">reconstructed_data</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment_class</span><span class="p">(</span><span class="o">**</span><span class="n">data_dict</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]),</span>
+                        <span class="s2">"experiment_reference"</span><span class="p">:</span> <span class="n">experiment_reference_class</span><span class="p">(</span>
+                            <span class="o">**</span><span class="n">data_dict</span><span class="p">[</span><span class="s2">"experiment_reference"</span><span class="p">]</span>
+                        <span class="p">),</span>
+                    <span class="p">}</span>
+                    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">reconstructed_data</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">results</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the number of converted records stored in LMDB."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_lmdb</span><span class="p">(</span><span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>  <span class="c1"># Return 0 if the LMDB doesn't exist yet</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">txn</span><span class="o">.</span><span class="n">stat</span><span class="p">()[</span><span class="s2">"entries"</span><span class="p">])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return True if the LMDB directory exists."""</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lmdb_dir</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a string representation showing the root path."""</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"Converter(root=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="si">}</span><span class="s2">)"</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="k">pass</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

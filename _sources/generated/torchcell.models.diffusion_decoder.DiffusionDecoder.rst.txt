@@ -1,0 +1,8 @@
+﻿torchcell.models.diffusion\_decoder.DiffusionDecoder
+====================================================
+
+.. currentmodule:: torchcell.models.diffusion_decoder
+
+.. autoclass:: DiffusionDecoder
+   :show-inheritance:
+   :members:

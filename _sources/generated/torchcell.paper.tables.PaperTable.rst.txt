@@ -1,0 +1,8 @@
+﻿torchcell.paper.tables.PaperTable
+=================================
+
+.. currentmodule:: torchcell.paper.tables
+
+.. autoclass:: PaperTable
+   :show-inheritance:
+   :members:

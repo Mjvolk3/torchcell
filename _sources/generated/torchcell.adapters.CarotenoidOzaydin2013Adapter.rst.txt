@@ -1,0 +1,8 @@
+﻿torchcell.adapters.CarotenoidOzaydin2013Adapter
+===============================================
+
+.. currentmodule:: torchcell.adapters
+
+.. autoclass:: CarotenoidOzaydin2013Adapter
+   :show-inheritance:
+   :members:

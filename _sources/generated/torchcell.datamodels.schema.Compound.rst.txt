@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.Compound
+====================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: Compound
+   :show-inheritance:
+   :members:

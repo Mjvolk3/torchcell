@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.ontology\_checks.phenotype\_label\_map
+===========================================================
+
+.. currentmodule:: torchcell.datamodels.ontology_checks
+
+.. autofunction:: phenotype_label_map

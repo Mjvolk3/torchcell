@@ -1,0 +1,8 @@
+﻿torchcell.models.llm.NucleotideModel
+====================================
+
+.. currentmodule:: torchcell.models.llm
+
+.. autoclass:: NucleotideModel
+   :show-inheritance:
+   :members:

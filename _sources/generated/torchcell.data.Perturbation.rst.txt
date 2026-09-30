@@ -1,0 +1,8 @@
+﻿torchcell.data.Perturbation
+===========================
+
+.. currentmodule:: torchcell.data
+
+.. autoclass:: Perturbation
+   :show-inheritance:
+   :members:

@@ -1,0 +1,6 @@
+﻿torchcell.verification.visual\_score\_gene\_set
+===============================================
+
+.. currentmodule:: torchcell.verification
+
+.. autofunction:: visual_score_gene_set

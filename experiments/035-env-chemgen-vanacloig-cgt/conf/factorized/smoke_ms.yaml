@@ -1,1 +1,1 @@
-- {name: smoke_ms, aux_sources: [wildenhain, hoepfner_hip], steps: 60, eval_every: 30, seeds: [0], folds: [0]}
+- {name: smoke_ms, aux_sources: [wildenhain, hoepfner_hip], steps: 60, eval_every: 30, seeds: [0], folds: [0], pca_dim: null}

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./notes/assets/drawio/torchcell-logo.drawio.png" />
+  <img src="https://raw.githubusercontent.com/Mjvolk3/torchcell/main/notes/assets/drawio/torchcell-logo.drawio.png" />
 </p>
 
 <p align="center">

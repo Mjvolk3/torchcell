@@ -16,6 +16,10 @@ on Vanacloig and the chosen other sources at once:
 ``A_s``   a per-source linear map (initialized to the identity), ``b_s`` a per-source
           gene bias and ``a_s`` a per-source compound offset.
 
+``graph_smooth`` adds a Laplacian penalty on the gene table over the union of the nine gene
+networks, so genes measured only in some sources (Wildenhain covers 242) can inform their
+network neighbors (hypothesis under test).
+
 A step takes the Vanacloig training block (every gene, the fold's training compounds)
 and, from each other source, a random batch of its compounds with every gene. Each
 source's loss is a masked MSE on its standardized values, the other sources weighted by
@@ -88,6 +92,9 @@ class MultiSourceConfig(BaseModel):
     n_folds: int = 5
     n_val: int = 4
     folds: list[int] | None = None
+    # Laplacian smoothness of the shared gene table over the union of the nine gene
+    # networks of ``conf/default.yaml``: penalty * mean over edges of ||z_i - z_j||^2
+    graph_smooth: float = 0.0
 
 
 class Source(BaseModel):
@@ -130,6 +137,27 @@ def library_features(
         blocks.append(x)
     assert keys is not None
     return keys, np.concatenate(blocks, axis=1)
+
+
+def network_edges(all_genes: list[str]) -> torch.Tensor:
+    """[2, E] undirected, deduplicated edges of the nine networks over ``all_genes``."""
+    from train_vanacloig_cgt import build_cell_graph
+
+    raw = yaml.safe_load(open(osp.join(EXPERIMENT, "conf", "default.yaml")))
+    graph = build_cell_graph(list(raw["cell_dataset"]["graphs"]))
+    position = {g: i for i, g in enumerate(all_genes)}
+    node_ids = list(graph["gene"].node_ids)
+    lookup = torch.tensor([position.get(g, -1) for g in node_ids], dtype=torch.long)
+    parts = []
+    for edge_type in graph.edge_types:
+        if edge_type[0] != "gene" or edge_type[2] != "gene":
+            continue
+        e = lookup[graph[edge_type].edge_index]
+        keep = (e[0] >= 0) & (e[1] >= 0) & (e[0] != e[1])
+        parts.append(e[:, keep])
+    edges = torch.cat(parts, dim=1)
+    edges = torch.sort(edges, dim=0).values
+    return torch.unique(edges, dim=1)
 
 
 class MultiSource(nn.Module):
@@ -177,6 +205,7 @@ def train_seed(
     fold: Fold,
     seed: int,
     device: torch.device,
+    edges: torch.Tensor | None = None,
 ) -> tuple[NDArray, pd.DataFrame]:
     torch.manual_seed(seed)
     rng = np.random.default_rng(seed)
@@ -237,6 +266,15 @@ def train_seed(
                 ((p - target[:, pick]) ** 2) * m
             ).sum() / m.sum().clamp(min=1)
         loss = loss_v + cfg.aux_weight * loss_aux / max(len(aux_t), 1)
+        if edges is not None:
+            # a random 200,000 of the edges per step; the mean is unbiased
+            pick = torch.randint(
+                edges.shape[1], (min(200_000, edges.shape[1]),), device=device
+            )
+            e = edges[:, pick]
+            z = model.table.weight
+            smooth = ((z[e[0]] - z[e[1]]) ** 2).sum(1).mean()
+            loss = loss + cfg.graph_smooth * smooth
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
         nn.utils.clip_grad_norm_(model.parameters(), 10.0)
@@ -308,6 +346,10 @@ def run(cfg: MultiSourceConfig, sweep: str, device: torch.device) -> pd.DataFram
         dir=osp.join(DATA_ROOT, "wandb-experiments", "035-env-chemgen-vanacloig-cgt"),
         reinit=True,
     )
+    edges = None
+    if cfg.graph_smooth > 0:
+        edges = network_edges(all_genes).to(device)
+        print(f"graph smoothness over {edges.shape[1]:,} edges", flush=True)
     frames, histories = [], []
     for fold in make_folds(len(cells.compounds), cfg.n_folds, cfg.n_val, cfg.fold_seed):
         if cfg.folds is not None and fold.fold not in cfg.folds:

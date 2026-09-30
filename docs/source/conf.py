@@ -43,7 +43,7 @@ myst_enable_extensions = ["colon_fence", "deflist", "dollarmath"]
 source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
 
 templates_path = ["_templates"]
-exclude_patterns: list[str] = []
+exclude_patterns: list[str] = ["showcase/_generated"]
 
 html_theme = "torchcell_sphinx_theme"
 html_logo = "_static/torchcell-logo.png"

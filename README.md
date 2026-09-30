@@ -21,3 +21,7 @@ Documentation: <https://mjvolk3.github.io/torchcell/>
 Database: <https://torchcell-database.ncsa.illinois.edu:7473/browser/> (Neo4j Browser over the served TorchCell knowledge graph)
 
 Database releases and compatibility: <https://mjvolk3.github.io/torchcell/database/compatibility.html>
+
+Showcase datasets: <https://mjvolk3.github.io/torchcell/showcase/index.html>
+
+Dataset downloads (the tc-data API): <https://mjvolk3.github.io/torchcell/guide/downloads.html>

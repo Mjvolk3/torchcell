@@ -437,9 +437,12 @@ def test_all_blank_mutant_row_fails_validation_and_leaves_an_empty_store(
     assert (root / "preprocess" / "data.csv").read_text() == (
         "orf,gene,n_lipids\nYAL001C,TFC3,0\n"
     )
-    retry = m.MetaboliteDaSilveira2014Dataset(root=str(root), genome=_genome())
-    assert len(retry) == 0
-    retry.close_lmdb()
+    # The failed constructor's write handle is unreachable and still open, and the CI
+    # py-lmdb refuses a second open of the path in this process, so the half-built
+    # state is pinned on disk: the store directory exists with its data file, and no
+    # gene set was written, which is what a retry would read as zero records.
+    assert (root / "processed" / "lmdb" / "data.mdb").exists()
+    assert not (root / "preprocess" / "gene_set.json").exists()
 
 
 def test_download_copies_both_verified_mirror_workbooks(

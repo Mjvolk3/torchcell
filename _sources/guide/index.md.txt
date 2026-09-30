@@ -16,6 +16,7 @@ data-model
 datasets
 knowledge-graph
 contributing
+downloads
 ```
 
 Released versions of the served knowledge graph, and which torchcell versions they

@@ -90,3 +90,14 @@ Steps 1 to 3 of the recipe ran on 2026-09-30; the endpoint is live on the databa
 - **Port.** 8724 answers on the host but not from outside (`curl` from GilaHyper: no route); Radiant has no `firewalld` and no `openstack` CLI, so the port is opened in the OpenStack security group of the VM, by hand, as 7473 and 7687 were. Until then the collaborator path is the ssh tunnel of step 4, which the downloads guide now documents.
 
 Verified on the host: `/health` reports 3 artifacts and 19 raw keys, `/docs` 200, `/datasets` 401 without a key and the three rows with it, `/raw` lists 19 keys. From GilaHyper through the tunnel, `DatasetClient.from_env()` downloaded, verified and unpacked all three archives (LMDB entries 4,313, 4,678, 4,719). Group 1 (`gene_essentiality_sgd`, `smf_costanzo2016`) is still unpackaged.
+
+## 2026.09.30 - Group 1 packaged: essentiality and SMF
+
+Same packager, same release flags, into `/bulk/tc-data` and rsynced to the Taiga store (`sha256sum -c SHA256SUMS`: five OK):
+
+| slug | archive | archive sha256 | bytes | content sha256 |
+|---|---|---|---:|---|
+| `gene_essentiality_sgd` | `gene_essentiality_sgd-1.5.0-b31114d6.tar.xz` | `b31114d648903a2a...` | 44,080 | `88ff6788bfc364f2...` |
+| `smf_costanzo2016` | `smf_costanzo2016-1.5.0-d8a0f06c.tar.xz` | `d8a0f06cb534f868...` | 1,053,744 | `634eaf5ebe3e94c5...` |
+
+The live endpoint reports 5 artifacts, all `supported`. Through the tunnel, `DatasetClient` downloaded, verified and unpacked both; the unpacked `processed/lmdb` holds 1,329 and 20,484 entries, the dev-store record counts (the 1,329 SGD records collapse to 1,140 graph nodes by content hash, as the essentiality-smf page states). Every dataset with a page is now downloadable.

@@ -105,7 +105,7 @@ A metabolite label is a dictionary, so `Neo4jCellDataset.label_df` leaves it mis
 
 ## Getting the data
 
-Each dataset's built store is packaged as an archive for the `tc-data` download endpoint ({doc}`../../guide/downloads`). The public endpoint is not yet deployed (its deployment on Radiant is pending), so today every loader below builds its store from the source files instead, and the commands in this section apply once an endpoint URL and key are issued.
+Each dataset's built store is packaged as an archive for the `tc-data` download endpoint ({doc}`../../guide/downloads`). The endpoint runs on the database host and its store holds all three archives (see the downloads guide for the tunnel and the key); with the variables unset, every loader below builds its store from the source files instead.
 
 | dataset | loader | store slug |
 |---|---|---|

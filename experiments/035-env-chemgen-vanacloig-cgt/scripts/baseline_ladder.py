@@ -85,6 +85,12 @@ EMBEDDING_DIR = (
     "031-env-chemgen-vanacloig-hillenmeyer/experiments/"
     "031-env-chemgen-inhibitor-tolerance/results/embeddings"
 )
+EMBEDDING_DIR_035 = osp.join(
+    os.environ["DATA_ROOT"],
+    "experiments",
+    "035-env-chemgen-vanacloig-cgt",
+    "embeddings",
+)
 EMBEDDINGS = (
     "fcfp4_count",
     "ecfp4_count",
@@ -138,9 +144,15 @@ class Candidate(BaseModel):
         )
 
 
+def embedding_path(name: str) -> str:
+    """A 031 embedding, or a 035 one (``pheno_*``) written by ``phenotypic_embeddings.py``."""
+    directory = EMBEDDING_DIR_035 if name.startswith("pheno_") else EMBEDDING_DIR
+    return osp.join(directory, f"{name}.npz")
+
+
 def load_features(cells: VanacloigCells, name: str) -> NDArray[np.float64] | None:
     """[41, d] features in ``cells.compounds`` order; None if a compound has none."""
-    data = np.load(osp.join(EMBEDDING_DIR, f"{name}.npz"), allow_pickle=True)
+    data = np.load(embedding_path(name), allow_pickle=True)
     row = {key: i for i, key in enumerate(data["inchikey"])}
     if not all(key in row for key in cells.inchikeys):
         return None

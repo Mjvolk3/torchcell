@@ -683,3 +683,34 @@ and makes the ladder a faithful instrument; (2) fewer pool rebuilds (a larger gr
 or forkserver) are worth about 20 s per rebuild at the full build's parent size; (3)
 the group-size deaths need a run with telemetry that survives the failure before
 group size can go in the specs.
+
+### Slim task payloads, and the group-size death measured (jobs 3066, 3067)
+
+Commit 4f399ff4: `CellAdapter.__getstate__` ships the store without the subset's
+index list (the chunk view itself pickled to 0.02 MB; the bound method carried the
+whole 2M-record subset dataset, 10 MB per task), verified on a 1,000-record
+SmfKuzmin2018 subset (pool and in-process paths emit the same 9,007 nodes and 9,004
+edges); and `gh_bench_generate.slurm` now keeps a failed arm's telemetry.
+
+| job | arm (24 CPUs / 96 GB) | wall | peak GB | rows |
+|--:|---|--:|--:|--:|
+| 2958 | r9 pointer ladder | 861 s | 65.7 | 29,736,985 |
+| 2994 | completion order | 752 s | 67.8 | 29,736,985 |
+| 3066 | completion order, slim payloads | 644 s | 62.0 | 29,736,985 |
+| 3067 | completion order, slim, chunks_per_worker 8 | OOM at 89 s | 96.0 (the cap) | |
+
+<https://wandb.ai/zhao-group/tcdb/runs/lf06tqhu>
+
+Job 3067's surviving telemetry: container memory rose from 5.9 GB at 33 s to 96.0 GB
+at 89 s, about 9 GB per 5 s, with 40 processes and 18 to 19 cores, until the cgroup
+limit killed a worker. Job 3066 (same box, chunks_per_worker 2) shows the same ramp
+as a sawtooth: 8.5 to 57 GB over each 25 to 30 s group, then back to about 10 GB at
+the pool teardown, and 5 to 7 cores for about 10 s of every cycle. So live workers
+retain about 1 GB per chunk they have handled (22 workers, 2 chunks: about 47 GB
+released at teardown), and only the teardown releases it. The single-worker
+emulation of `worker_heap_ratchet.py` did not reproduce this on the full dataset, so
+what is retained, and why the emulation missed it, is the open question
+(`scripts/pool_worker_retention.py`, in progress). Hypothesis (untested): a pool
+group's memory is `workers x chunks_per_worker x about 1 GB` on top of the parent,
+which puts 22 x 8 at about 180 GB against 96, and 64 x 2 near the 211 GB the full
+build peaked at.

@@ -230,15 +230,6 @@
     <span class="p">]</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">MixedStrainScoresError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""An ORF with numeric color scores on more than one background strain.</span>
-
-<span class="sd">    One record carries one reference genome, so scores from two backgrounds cannot be</span>
-<span class="sd">    aggregated into it. The pinned SI has none: its one ORF listed on two strains</span>
-<span class="sd">    (YML086C) has a numeric score only on BY4730 (the BY4741 row reads ``pet``).</span>
-<span class="sd">    """</span>
-
-
 <span class="c1"># Valid S. cerevisiae systematic ORF name (optional trailing -A/-B for sub-features).</span>
 <span class="n">_SYSTEMATIC_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?$"</span><span class="p">)</span>
 
@@ -378,14 +369,12 @@
                     <span class="s2">"orf"</span><span class="p">:</span> <span class="n">orf</span><span class="p">,</span>
                     <span class="s2">"strain"</span><span class="p">:</span> <span class="n">strain</span><span class="p">,</span>
                     <span class="s2">"numeric_scores"</span><span class="p">:</span> <span class="p">[],</span>
-                    <span class="s2">"numeric_strains"</span><span class="p">:</span> <span class="nb">set</span><span class="p">(),</span>
                     <span class="s2">"texts"</span><span class="p">:</span> <span class="nb">set</span><span class="p">(),</span>
                     <span class="s2">"flags"</span><span class="p">:</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">_FLAG_PATTERNS</span><span class="p">},</span>
                 <span class="p">},</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">num</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">rec</span><span class="p">[</span><span class="s2">"numeric_scores"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">num</span><span class="p">)</span>
-                <span class="n">rec</span><span class="p">[</span><span class="s2">"numeric_strains"</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">strain</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">text</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">rec</span><span class="p">[</span><span class="s2">"texts"</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">flags</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -394,19 +383,11 @@
         <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">orf</span><span class="p">,</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">scores</span> <span class="o">=</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"numeric_scores"</span><span class="p">]</span>
-            <span class="n">numeric_strains</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">rec</span><span class="p">[</span><span class="s2">"numeric_strains"</span><span class="p">])</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">numeric_strains</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">MixedStrainScoresError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Ozaydin: </span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2"> has numeric color scores on strains "</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">numeric_strains</span><span class="si">}</span><span class="s2">; one record carries one reference genome"</span>
-                <span class="p">)</span>
             <span class="n">meta</span> <span class="o">=</span> <span class="n">top200_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="p">{})</span>
             <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">{</span>
                     <span class="s2">"orf"</span><span class="p">:</span> <span class="n">orf</span><span class="p">,</span>
-                    <span class="c1"># The strain of the scored rows; an ORF with no numeric score keeps</span>
-                    <span class="c1"># its first row's strain and is excluded from the records anyway.</span>
-                    <span class="s2">"strain"</span><span class="p">:</span> <span class="n">numeric_strains</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">numeric_strains</span> <span class="k">else</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">],</span>
+                    <span class="s2">"strain"</span><span class="p">:</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">],</span>
                     <span class="s2">"visual_score"</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span> <span class="k">if</span> <span class="n">scores</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
                     <span class="s2">"visual_score_min"</span><span class="p">:</span> <span class="nb">min</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
                     <span class="s2">"n_replicates"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">scores</span><span class="p">),</span>

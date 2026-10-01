@@ -215,35 +215,6 @@
 <span class="n">N_SAMPLES_TEMP_26C</span> <span class="o">=</span> <span class="mi">4</span>  <span class="c1"># For TS alleles at semipermissive temperature</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">UnsupportedTemperatureError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""A Costanzo 2016 fitness row at a temperature with no reference noise.</span>
-
-<span class="sd">    The SMF spreadsheet and the DMF reference noise exist only at 26 and 30 C; the</span>
-<span class="sd">    released Data File S1 has no other temperature (0 of 20,705,612 SGA rows, 0 of</span>
-<span class="sd">    20,484 SMF records), so a row elsewhere is refused rather than given a reference.</span>
-<span class="sd">    """</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">BlankDoubleMutantFitnessError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""A Costanzo 2016 DMF row with a blank fitness or a blank standard deviation.</span>
-
-<span class="sd">    The released Data File S1 has neither (0 of 20,705,612 rows), so a blank cell is</span>
-<span class="sd">    refused by name rather than stored as NaN or failing inside the phenotype model.</span>
-<span class="sd">    """</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_reference_std_at</span><span class="p">(</span><span class="n">temperature</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">std_26</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">std_30</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Return the reference noise for ``temperature``, refusing any but 26 and 30 C."""</span>
-    <span class="k">if</span> <span class="n">temperature</span> <span class="o">==</span> <span class="mi">26</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">std_26</span>
-    <span class="k">if</span> <span class="n">temperature</span> <span class="o">==</span> <span class="mi">30</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">std_30</span>
-    <span class="k">raise</span> <span class="n">UnsupportedTemperatureError</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">"Costanzo 2016 strain </span><span class="si">{</span><span class="n">strain</span><span class="si">}</span><span class="s2"> at </span><span class="si">{</span><span class="n">temperature</span><span class="si">}</span><span class="s2"> C: reference noise is "</span>
-        <span class="s2">"defined only at 26 and 30 C"</span>
-    <span class="p">)</span>
-
-
 <span class="c1"># ============================================================================</span>
 <span class="c1"># Fitness</span>
 <div class="viewcode-block" id="SmfCostanzo2016Dataset">
@@ -535,12 +506,10 @@
             <span class="n">sample_unit</span><span class="o">=</span><span class="n">SampleUnit</span><span class="o">.</span><span class="n">screen</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="n">phenotype_reference_std</span> <span class="o">=</span> <span class="n">_reference_std_at</span><span class="p">(</span>
-            <span class="n">row</span><span class="p">[</span><span class="s2">"Temperature"</span><span class="p">],</span>
-            <span class="n">phenotype_reference_std_26</span><span class="p">,</span>
-            <span class="n">phenotype_reference_std_30</span><span class="p">,</span>
-            <span class="n">row</span><span class="p">[</span><span class="s2">"Strain ID"</span><span class="p">],</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">"Temperature"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">26</span><span class="p">:</span>
+            <span class="n">phenotype_reference_std</span> <span class="o">=</span> <span class="n">phenotype_reference_std_26</span>
+        <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s2">"Temperature"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">30</span><span class="p">:</span>
+            <span class="n">phenotype_reference_std</span> <span class="o">=</span> <span class="n">phenotype_reference_std_30</span>
 
         <span class="c1"># WT reference noise is the mean SMF stddev (an average of bootstrap SEs),</span>
         <span class="c1"># so it is likewise a bootstrap SE -&gt; used as-is (no sqrt(n) division).</span>
@@ -653,25 +622,8 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Concatenate and clean the SGA files into a double-mutant fitness table.</span>
-
-<span class="sd">        A blank ``Double mutant fitness`` or ``Double mutant fitness standard</span>
-<span class="sd">        deviation`` raises ``BlankDoubleMutantFitnessError`` before any record or</span>
-<span class="sd">        reference noise is computed.</span>
-<span class="sd">        """</span>
+<span class="w">        </span><span class="sd">"""Concatenate and clean the SGA files into a double-mutant fitness table."""</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Preprocess on raw data..."</span><span class="p">)</span>
-        <span class="n">blank</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">df</span><span class="p">[</span><span class="s2">"Double mutant fitness"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span>
-            <span class="o">|</span> <span class="n">df</span><span class="p">[</span><span class="s2">"Double mutant fitness standard deviation"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="n">blank</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-            <span class="n">first</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">blank</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="k">raise</span> <span class="n">BlankDoubleMutantFitnessError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">blank</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2"> Costanzo 2016 DMF row(s) have a blank fitness "</span>
-                <span class="s2">"or standard deviation (first: "</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">first</span><span class="p">[</span><span class="s1">'Query Strain ID'</span><span class="p">]</span><span class="si">}</span><span class="s2"> x </span><span class="si">{</span><span class="n">first</span><span class="p">[</span><span class="s1">'Array Strain ID'</span><span class="p">]</span><span class="si">}</span><span class="s2"> at "</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">first</span><span class="p">[</span><span class="s1">'Arraytype/Temp'</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
-            <span class="p">)</span>
 
         <span class="c1"># Function to extract gene name</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">extract_systematic_name</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
@@ -934,12 +886,10 @@
             <span class="n">sample_unit</span><span class="o">=</span><span class="n">SampleUnit</span><span class="o">.</span><span class="n">colony</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="n">phenotype_reference_std</span> <span class="o">=</span> <span class="n">_reference_std_at</span><span class="p">(</span>
-            <span class="n">row</span><span class="p">[</span><span class="s2">"Temperature"</span><span class="p">],</span>
-            <span class="n">phenotype_reference_std_26</span><span class="p">,</span>
-            <span class="n">phenotype_reference_std_30</span><span class="p">,</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">'Query Strain ID'</span><span class="p">]</span><span class="si">}</span><span class="s2"> x </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">'Array Strain ID'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">"Temperature"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">26</span><span class="p">:</span>
+            <span class="n">phenotype_reference_std</span> <span class="o">=</span> <span class="n">phenotype_reference_std_26</span>
+        <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s2">"Temperature"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">30</span><span class="p">:</span>
+            <span class="n">phenotype_reference_std</span> <span class="o">=</span> <span class="n">phenotype_reference_std_30</span>
 
         <span class="c1"># WT/WT reference noise is the mean DMF stddev (an average of colony sample</span>
         <span class="c1"># SDs) -&gt; sample_sd over the 4 colonies -&gt; SE = SD/sqrt(4). (Was wrongly</span>

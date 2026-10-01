@@ -146,8 +146,6 @@
 <span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">numbers</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
@@ -219,25 +217,6 @@
     <span class="s2">"tryptophan"</span><span class="p">,</span>
     <span class="s2">"tyrosine"</span><span class="p">,</span>
 <span class="p">]</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">InvalidConcentrationError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""A Table S3 concentration cell that is blank or not a finite number.</span>
-
-<span class="sd">    The pinned ``intracellular_concentration_mM`` sheet has none (0 of 4,678 x 19</span>
-<span class="sd">    cells), so such a cell is refused by name rather than served as NaN or failing in</span>
-<span class="sd">    Python's ``float()``.</span>
-<span class="sd">    """</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_concentration</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">amino_acid</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Return one concentration cell as a float, refusing a blank or non-numeric cell."""</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">numbers</span><span class="o">.</span><span class="n">Real</span><span class="p">)</span> <span class="ow">and</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-    <span class="k">raise</span> <span class="n">InvalidConcentrationError</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">"Mulleder Table S3: </span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">amino_acid</span><span class="si">}</span><span class="s2"> concentration </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2"> is not a "</span>
-        <span class="s2">"finite number"</span>
-    <span class="p">)</span>
 
 
 <div class="viewcode-block" id="AminoAcidMulleder2016Dataset">
@@ -314,7 +293,6 @@
 
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">n_bad_orf</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">n_collision_rows</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="n">collisions</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -324,22 +302,15 @@
                 <span class="n">n_bad_orf</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="k">continue</span>
             <span class="k">if</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
-                <span class="n">n_collision_rows</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="n">collisions</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span>
                 <span class="k">continue</span>
             <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span>
-            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="p">{</span>
-                    <span class="s2">"orf"</span><span class="p">:</span> <span class="n">orf</span><span class="p">,</span>
-                    <span class="o">**</span><span class="p">{</span><span class="n">aa</span><span class="p">:</span> <span class="n">_concentration</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">aa</span><span class="p">],</span> <span class="n">orf</span><span class="p">,</span> <span class="n">aa</span><span class="p">)</span> <span class="k">for</span> <span class="n">aa</span> <span class="ow">in</span> <span class="n">AMINO_ACIDS</span><span class="p">},</span>
-                <span class="p">}</span>
-            <span class="p">)</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"orf"</span><span class="p">:</span> <span class="n">orf</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="n">aa</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">aa</span><span class="p">])</span> <span class="k">for</span> <span class="n">aa</span> <span class="ow">in</span> <span class="n">AMINO_ACIDS</span><span class="p">}})</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">"Mulleder: </span><span class="si">%d</span><span class="s2"> usable ORFs, </span><span class="si">%d</span><span class="s2"> non-systematic ORF names skipped, "</span>
-            <span class="s2">"</span><span class="si">%d</span><span class="s2"> repeated-ORF rows dropped (</span><span class="si">%d</span><span class="s2"> ORFs kept at their first row)"</span><span class="p">,</span>
+            <span class="s2">"</span><span class="si">%d</span><span class="s2"> ORF collisions deduped"</span><span class="p">,</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
             <span class="n">n_bad_orf</span><span class="p">,</span>
-            <span class="n">n_collision_rows</span><span class="p">,</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">collisions</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>

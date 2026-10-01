@@ -13,3 +13,7 @@ Twenty-five tests on the LightningModule with a scripted stand-in model with fix
 ## 2026.09.30 - Plateau scheduler no longer refused at the training epoch end
 
 `test_train_epoch_end_logs_resets_and_steps_the_scheduler` no longer expects `AssertionError` for a ReduceLROnPlateau scheduler (issue #534). It now asserts the plateau scheduler is left unstepped at the training epoch end (`last_epoch == 0`, rate unchanged), since it is stepped on its monitor in `on_validation_epoch_end`, and that with two schedulers the first in Lightning's list is the one stepped.
+
+## 2026.10.01 - Batches carry num_graphs (issue #567)
+
+`_batch` sets `num_graphs = 2`, as a collated PyG batch does, because `_get_batch_size` now reads it. No assertion changed.

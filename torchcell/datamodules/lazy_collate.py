@@ -21,7 +21,9 @@ from torch_geometric.data.datapipes import DatasetAdapter
 from torch_geometric.loader.dataloader import Collater
 
 
-def lazy_collate_hetero(data_list: list[HeteroData]) -> HeteroData:
+def lazy_collate_hetero(
+    data_list: list[HeteroData], follow_batch: Sequence[str] = ()
+) -> HeteroData:
     """Custom collate function for batching HeteroData with LazySubgraphRepresentation.
 
     **The Problem**: LazySubgraphRepresentation returns the SAME edge_index tensor
@@ -37,8 +39,19 @@ def lazy_collate_hetero(data_list: list[HeteroData]) -> HeteroData:
     - Batching copies added: ~100 batches × 144k edges = Negligible overhead ✓
     - Net result: 3.65x speedup maintained
 
+    **Batch bookkeeping, as PyG's ``Collater`` writes it** (issue #572): every node
+    type gets ``batch`` (graph index per node) and ``ptr`` (node offsets, length
+    ``num_graphs + 1``); every ``follow_batch`` key that a node type carries gets
+    ``<key>_batch`` and ``<key>_ptr`` over its rows; and the batch carries
+    ``num_graphs``. A one-sample list is collated the same way, so the output always has
+    this structure. The 006 lazy model reads ``gene.ptr`` and
+    ``perturbation_indices_ptr`` (or ``perturbation_indices_batch``).
+
     Args:
         data_list: List of HeteroData samples from LazySubgraphRepresentation
+        follow_batch: Node attribute names to build ``<key>_batch`` / ``<key>_ptr``
+            for, as in PyG's ``Collater``. A name no node type carries is skipped, as
+            PyG does.
 
     Returns:
         Batched HeteroData with properly offset edge indices and concatenated masks
@@ -53,11 +66,8 @@ def lazy_collate_hetero(data_list: list[HeteroData]) -> HeteroData:
     if len(data_list) == 0:
         raise ValueError("Cannot collate empty data_list")
 
-    if len(data_list) == 1:
-        # No batching needed, return as-is
-        return data_list[0]
-
     batch = HeteroData()
+    batch.num_graphs = len(data_list)
 
     # Track node offsets for each graph in the batch
     # node_offsets[node_type][i] = cumulative number of nodes before graph i
@@ -180,13 +190,29 @@ def lazy_collate_hetero(data_list: list[HeteroData]) -> HeteroData:
                     batch[node_type][key] = torch.cat(batch[node_type][key], dim=0)
                 # else: keep as list for non-tensors (e.g., node_ids, phenotype_types)
 
-        # Add batch vector
+        # Add batch vector and node offsets
         batch[node_type].batch = torch.cat(batch_vectors, dim=0)
+        batch[node_type].ptr = _ptr(num_nodes_list)
 
         # Store num_nodes for compatibility
         batch[node_type].num_nodes = sum(num_nodes_list)
 
+        # follow_batch: graph index and offsets over the rows of each followed key
+        for key in follow_batch:
+            if key not in data_list[0][node_type]:
+                continue
+            sizes = [int(data[node_type][key].size(0)) for data in data_list]
+            batch[node_type][f"{key}_batch"] = torch.repeat_interleave(
+                torch.arange(len(data_list)), torch.tensor(sizes)
+            )
+            batch[node_type][f"{key}_ptr"] = _ptr(sizes)
+
     return batch
+
+
+def _ptr(sizes: list[int]) -> torch.Tensor:
+    """Offsets ``[0, s0, s0 + s1, ...]`` of consecutive blocks of the given sizes."""
+    return torch.cumsum(torch.tensor([0, *sizes]), dim=0)
 
 
 def verify_batch_structure(batch: HeteroData, expected_graphs: int = 2) -> bool:
@@ -328,8 +354,8 @@ class LazyCollater(Collater):  # type: ignore[misc]  # PyG Collater is untyped (
                     break
 
             if is_lazy:
-                # Use our custom lazy collate
-                return lazy_collate_hetero(batch)
+                # Use our custom lazy collate, applying this collater's follow_batch
+                return lazy_collate_hetero(batch, self.follow_batch or ())
             # else: fall through to default PyG batching
 
         # For all other cases, use PyG's default Collater

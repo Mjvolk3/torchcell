@@ -309,14 +309,18 @@ def main(cfg: DictConfig) -> None:
         )
     print(f"Dataset Length: {len(dataset)}")
 
-    # CRITICAL: Initialize LazyCollater for batching
-    lazy_collater = LazyCollater(dataset)
+    # CRITICAL: Initialize LazyCollater for batching. follow_batch goes to the COLLATER
+    # (issue #572): both datamodules hand a custom collate_fn to a plain torch DataLoader
+    # and do not apply their own follow_batch. The lazy model reads
+    # `perturbation_indices_ptr` to assign perturbed genes to genotypes for the local
+    # predictor (without it batch_assign is None and the local term is all zeros), and
+    # `gene.ptr`, which the collater always builds. Before PRs #549/#571 the datamodules
+    # discarded this collater and PyG's Collater applied this same list.
+    follow_batch_list = ["x", "x_pert", "perturbation_indices"]
+    lazy_collater = LazyCollater(dataset, follow_batch=follow_batch_list)
     print("LazyCollater initialized for zero-copy batching")
 
     seed = 42
-
-    # CRITICAL: For GPU masking, need to track perturbation_indices to create perturbation_ptr
-    follow_batch_list = ["x", "x_pert", "perturbation_indices"]
 
     data_module = CellDataModule(
         dataset=dataset,
@@ -330,7 +334,6 @@ def main(cfg: DictConfig) -> None:
         prefetch_factor=wandb.config.data_module["prefetch_factor"],
         persistent_workers=wandb.config.data_module["persistent_workers"],
         collate_fn=lazy_collater,  # CRITICAL: Use LazyCollater
-        follow_batch=follow_batch_list,  # CRITICAL: Track perturbation_indices for GPU masking
         val_batch_size=wandb.config.data_module.get("val_batch_size"),
     )
     data_module.setup()
@@ -348,7 +351,6 @@ def main(cfg: DictConfig) -> None:
             persistent_workers=wandb.config.data_module["persistent_workers"],
             gene_subsets={"metabolism": yeast_gem.gene_set},
             collate_fn=lazy_collater,  # CRITICAL: Use LazyCollater
-            follow_batch=follow_batch_list,  # CRITICAL: Track perturbation_indices for GPU masking
             val_batch_size=wandb.config.data_module.get("val_batch_size"),
         )
         data_module.setup()

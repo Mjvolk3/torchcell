@@ -946,7 +946,14 @@ class MultitaskCGTTask(L.LightningModule):
         )
 
     def _batch_size(self, batch: HeteroData) -> int:
-        return int(batch["gene"].perturbation_indices_batch.max().item() + 1)
+        """The number of genotypes in the batch: the collated batch's ``num_graphs``.
+
+        The model sizes every output by ``batch.num_graphs`` (PR #560), so the decoded
+        targets have ``num_graphs`` rows. Reading ``max(perturbation_indices_batch) + 1``
+        instead would drop a trailing genotype with no perturbed gene and size
+        ``row_mask`` one row short of ``target`` (issue #567).
+        """
+        return int(batch.num_graphs)
 
     def _gather_predictions(
         self, head_outputs: dict[str, torch.Tensor]
@@ -1129,9 +1136,13 @@ class MultitaskCGTTask(L.LightningModule):
     # unbiased estimator of the same k-averaged objective at 1x cost. Validation sweeps
     # every k because that is where pearson@k is reported and it is paid once per epoch.
     #
-    # WHAT IS COMPARABLE TO PRIOR ARMS. At k=0 the observed set is EMPTY, every encoded
-    # feature is zero, and the forward pass is identical to the unconditioned model -- so
-    # `val/.../pearson_per_feature@k0` is directly comparable to every previous round. The
+    # WHAT k=0 COMPUTES (issue #566). At k=0 the observed set is EMPTY and every encoded
+    # feature is [0, 0], but the call still passes `observed_values`/`observed_mask`, so
+    # the observed-label encoder runs and adds `gate * proj([0, 0])`, one constant offset,
+    # to every gene token before the Perceiver and the cross-gene mixing. The k=0 pass is
+    # therefore the unconditioned model PLUS that per-token offset, not the unconditioned
+    # model itself (only `observed_values=None` skips the encoder), and
+    # `val/.../pearson_per_feature@k0` is not the same forward as a non-masked arm. The
     # k>0 numbers are an imputation capability, not a better genotype->expression score;
     # conditioning_gain_after_genotype.json measured the gene-gene signal to be ORTHOGONAL
     # to genotype (97.5-100.6% retained after removing a genotype predictor).
@@ -1244,12 +1255,14 @@ class MultitaskCGTTask(L.LightningModule):
                 self._cache_masked_metric(
                     head, head_outputs, targets, masks, hidden, k, stage
                 )
-                # k=0 reveals nothing, so this pass IS the unconditioned model. Cache it
-                # under the STANDARD namespace as well, so `val/mean/pearson_per_feature`
-                # exists with exactly its usual meaning: the scorer reads that key, the
-                # best-metric ModelCheckpoint monitors it, and without it a v9 run cannot
-                # be compared to any v8 arm. (Its absence is what crashed job 1439 --
-                # fast_dev_run disables checkpointing, so the smoke test never hit it.)
+                # k=0 reveals nothing, but the encoder still adds `proj([0, 0])` to every
+                # token, so this pass is the unconditioned model plus that constant offset
+                # (issue #566). Cache it under the STANDARD namespace as well, so
+                # `val/mean/pearson_per_feature` exists: the scorer reads that key and the
+                # best-metric ModelCheckpoint monitors it. A v9 masked run's value there
+                # is its k=0 pass, not a forward identical to a v8 arm. (Its absence is
+                # what crashed job 1439 -- fast_dev_run disables checkpointing, so the
+                # smoke test never hit it.)
                 if n_reveal == 0:
                     self._cache_epoch_metric(stage, head_outputs, targets, masks)
 
@@ -1403,12 +1416,14 @@ class MultitaskCGTTask(L.LightningModule):
         """Cache (pred, target) in BOTH spaces for the epoch Pearson + calibration metrics.
 
         Factored out so the masked-label path can publish the SAME canonical metrics at
-        k=0. At k=0 nothing is revealed, so the forward pass is identical to the
-        unconditioned model and `val/mean/pearson_per_feature` is directly comparable to
-        every non-masked arm -- which is what the scorer reads and what the best-metric
-        checkpoint monitors. Duplicating the logic instead of sharing it would let the two
-        drift, and a metric that silently means something different per config is worse
-        than no metric.
+        k=0, which is what the scorer reads and what the best-metric checkpoint monitors.
+        At k=0 nothing is revealed, but the forward still runs the observed-label encoder
+        on an all-masked input, which adds the constant ``proj([0, 0])`` to every gene
+        token (issue #566): a masked arm's `val/mean/pearson_per_feature` is the
+        unconditioned model plus that offset, not the same forward as a non-masked arm.
+        Duplicating the logic instead of sharing it would let the two drift, and a
+        metric that silently means something different per config is worse than no
+        metric.
         """
         for name, pred in head_outputs.items():
             if name not in targets:

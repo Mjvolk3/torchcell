@@ -395,3 +395,7 @@ Tests: `test_trailing_wildtype_genotype_gets_the_zero_context_row`, `test_assign
 ## 2026.09.30 - Review: two 010 scorers built dict batches
 
 `experiments/010-kuzmin-tmi/scripts/score_010_checkpoints_directly.py` and `rescore_wetlab_plate.py` passed a plain dict `{"gene": <namespace>}` as the batch, which has no `num_graphs`. Both now build a `HeteroData` with `num_graphs = n` (the genotypes in the chunk). Checked on a seed-0 toy model: the dict batch on the pre-fix code and the `HeteroData` batch on the fixed code give bit-identical predictions, so the scored values behind the 010 and 025 additive-baselines documents are unchanged. The `HyperSAGNN` class in this module has no consumer (the live one is in `cell_graph_transformer.py`).
+
+## 2026.10.01 - ObservedLabelEncoder docstring corrected (issue #566, comment only)
+
+The class docstring still said a 100%-masked validation forward "is identical to the unconditioned model" and "directly comparable to every other arm". It is not: the encoder adds `gate * proj([0, 0])` to every gene token, and only `observed_values=None` skips it. The docstring now says so. No computation changed; whether the 019 k = 0 arm should skip the encoder is left to the owner (issue #566 stays open).

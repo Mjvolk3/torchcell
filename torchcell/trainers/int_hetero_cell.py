@@ -148,9 +148,11 @@ class RegressionTask(L.LightningModule):
         if hasattr(batch["gene"], "x"):
             return int(batch["gene"].x.size(0))
         elif hasattr(batch["gene"], "perturbation_indices"):
-            # For Perturbation processor, count unique batch indices
+            # For Perturbation processor, a collated batch: the genotype count is its
+            # num_graphs. max(batch) + 1 would drop a trailing genotype with no
+            # perturbed gene (issue #567).
             if hasattr(batch["gene"], "perturbation_indices_batch"):
-                return int(batch["gene"].perturbation_indices_batch.max().item()) + 1
+                return int(batch.num_graphs)
             else:
                 # Fallback: assume batch size from perturbation_indices
                 return int(batch["gene"].perturbation_indices.size(0))
@@ -1019,9 +1021,11 @@ class DiffusionRegressionTask(L.LightningModule):
         if hasattr(batch["gene"], "x"):
             return int(batch["gene"].x.size(0))
         elif hasattr(batch["gene"], "perturbation_indices"):
-            # For Perturbation processor, count unique batch indices
+            # For Perturbation processor, a collated batch: the genotype count is its
+            # num_graphs. max(batch) + 1 would drop a trailing genotype with no
+            # perturbed gene (issue #567).
             if hasattr(batch["gene"], "perturbation_indices_batch"):
-                return int(batch["gene"].perturbation_indices_batch.max().item()) + 1
+                return int(batch.num_graphs)
             else:
                 # Fallback: assume batch size from perturbation_indices
                 return int(batch["gene"].perturbation_indices.size(0))

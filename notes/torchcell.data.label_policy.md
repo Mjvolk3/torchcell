@@ -55,3 +55,14 @@ Until the Kuzmin query-strain fitness records reach the served graph, that rule 
 the pair's digenic screen, which is the 0.52 the 029 closure recompute reaches on the Kuzmin 2018
 screen. That is expected rather than a defect: the records exist in the loaders only as of
 4c4a4f950 and are not in any build yet.
+
+## 2026.10.01 - Four read-time defects fixed (issue #527)
+
+Previous behavior and the fix, each measured on the real builds first (scripts and outputs kept in the session scratchpad, read-only against `/db/experiments/029-*` and `/db/experiments/030-*` and the closure entry caches under `$DATA_ROOT/data/torchcell/experiments/{029,030}-*/closure/`):
+
+- `source_key` formatted `int(temperature)`, so a Costanzo temperature of 29.9 keyed as an unranked `costanzo2016@29`. It now refuses a temperature that is not a whole degree (`"<dataset> temperature 29.9 is not a whole degree"`). The Costanzo loader writes the temperature as an integer (`.astype(int)` on the `Arraytype/Temp` digits, or the literals 26 and 30), and every Costanzo entry in the 029 and 030 caches (3.7M and 4.8M entries) and in a seeded 45k-record LMDB sample of each build is 26.0 or 30.0. Labels changed: 0.
+- `select_double` combined every strain-matched entry as replicates even across sources. It now ranks the matches by the policy's precedence, combines only the best-ranked source's matches, and falls to the pair's own entries when no match comes from a listed source. The only caller is `closure_recompute_030.py` on the unlanded branch `feat/030-solid-growth-multi`; on the 030 cache, 0 of 91,111 Kuzmin 2018 and 0 of 299,094 Kuzmin 2020 triples have matches from more than one source. Labels changed: 0.
+- `entries_from_records` read any experiment type without "interaction" in its name as fitness. The new `label_of_experiment_type` maps the two stored schema types, "fitness" and "gene interaction", and refuses any other (`"no label for experiment type 'calmorph'"`); `label_table.entries_of_record` uses it too. The 029 build's `experiment_types.json` lists exactly those two types and the 034 showcase build lists only "fitness". Labels changed: 0.
+- `r.get("temp", r.get("temperature"))` let `temp=None` hide a filled `temperature`; `p` and `p_value` had the same defect. A short key holding None now reads the long key, and two different values under both spellings are refused (`"row carries temp=26 and temperature=30"`). `entries_from_records` has no caller outside the tests on any branch. Labels changed: 0.
+
+Tests: `test_source_key_refuses_a_fractional_costanzo_temperature`, `test_strain_matched_doubles_are_ranked_by_source_not_averaged_across_it`, `test_a_strain_match_from_no_listed_source_falls_to_the_pairs_own_entries`, `test_only_fitness_and_gene_interaction_types_fill_a_label`, `test_entries_from_records_reads_the_long_key_when_the_short_one_is_none` in [[tests.torchcell.data.test_label_policy]].

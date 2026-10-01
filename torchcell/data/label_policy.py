@@ -53,7 +53,10 @@ __all__ = [
     "CONVERTED_ZERO",
     "LabelChoice",
     "LabelEntry",
+    "LABEL_OF_EXPERIMENT_TYPE",
     "LabelPolicy",
+    "entries_from_records",
+    "label_of_experiment_type",
     "source_key",
     "strain_token",
 ]
@@ -87,7 +90,9 @@ def source_key(dataset_name: str, temperature: float | None) -> str:
 
     Costanzo is split by temperature because its 26 and 30 degree screens are separate
     experiments; Kuzmin is not, because it screened at one temperature. A converted 0
-    collapses to one key whatever produced it.
+    collapses to one key whatever produced it. A Costanzo temperature that is not a whole
+    degree is refused rather than truncated: the loader writes the screen temperature as
+    an integer, so a fractional one is not a screen the key can name.
     """
     if any(tag in dataset_name for tag in _CONVERTED_ZERO_DATASETS):
         return CONVERTED_ZERO
@@ -98,6 +103,10 @@ def source_key(dataset_name: str, temperature: float | None) -> str:
     if "Costanzo2016" in dataset_name:
         if temperature is None:
             raise ValueError(f"{dataset_name} entry carries no temperature")
+        if not float(temperature).is_integer():
+            raise ValueError(
+                f"{dataset_name} temperature {temperature!r} is not a whole degree"
+            )
         return f"costanzo2016@{int(temperature)}"
     raise ValueError(f"no source key for dataset {dataset_name!r}")
 
@@ -368,6 +377,11 @@ class LabelPolicy(BaseModel):
         screen: on Kuzmin 2018 the two agree at r 0.777 with a median absolute difference
         of 0.045, which is more than half the 0.08 calling threshold. So a strain match is
         preferred whenever the record carries one.
+
+        Strain-matched entries from different sources are different screens, not
+        replicates, so they are ranked by this policy's precedence like any other entries
+        and only the best-ranked source's matches are combined. When no matched entry
+        comes from a listed source, the pair's own entries are selected as without a match.
         """
         if self.prefer_strain_matched_double and query_strain_id is not None:
             token = strain_token(query_strain_id)
@@ -380,8 +394,9 @@ class LabelPolicy(BaseModel):
                     or (token is not None and strain_token(e.strain_id) == token)
                 )
             ]
-            if matched:
-                return self._combine(matched, len(matched))
+            choice = self.select(matched, label)
+            if choice is not None:
+                return choice
         return self.select(entries, label)
 
     def promoted_for_year(self, year_source: str | None) -> LabelPolicy:
@@ -432,25 +447,56 @@ class LabelPolicy(BaseModel):
         return float(base - eps_ik * f_query_single_j - eps_jk * f_query_single_i)
 
 
+# The stored ``experiment_type`` of each schema class a policy ranks, and the label it
+# fills. Any other type (calmorph, gene essentiality, an expression type, ...) is not a
+# fitness or an interaction measurement and is refused rather than read as one.
+LABEL_OF_EXPERIMENT_TYPE = {
+    "fitness": "fitness",
+    "gene interaction": "gene_interaction",
+}
+
+
+def label_of_experiment_type(experiment_type: str) -> str:
+    """The label a stored experiment type fills, refusing a type no policy ranks."""
+    if experiment_type not in LABEL_OF_EXPERIMENT_TYPE:
+        raise ValueError(f"no label for experiment type {experiment_type!r}")
+    return LABEL_OF_EXPERIMENT_TYPE[experiment_type]
+
+
+def _short_or_long(row: dict[str, Any], short: str, long: str) -> Any:
+    """The value under ``short``, or under ``long`` when ``short`` is absent or None.
+
+    A row carrying both spellings with different values is refused, since either choice
+    would silently discard a stored value.
+    """
+    a = row.get(short)
+    b = row.get(long)
+    if a is not None and b is not None and a != b:
+        raise ValueError(f"row carries {short}={a!r} and {long}={b!r}")
+    return b if a is None else a
+
+
 def entries_from_records(rows: list[dict[str, Any]]) -> list[LabelEntry]:
     """Normalize a record's stored entries into ``LabelEntry`` objects.
 
     ``rows`` are the per-entry dicts a no-merge build stores under one genotype, each
     carrying at least ``dataset``/``dataset_name``, ``exp_type``/``experiment_type``,
-    ``value`` and ``temp``/``temperature``.
+    ``value`` and ``temp``/``temperature``. A short key holding None counts as absent,
+    so the long key is read; both keys set to different values is refused.
     """
     out: list[LabelEntry] = []
     for r in rows:
-        dataset = r.get("dataset") or r["dataset_name"]
-        raw_type = r.get("exp_type") or r["experiment_type"]
-        label = "gene_interaction" if "interaction" in raw_type else "fitness"
-        temp = r.get("temp", r.get("temperature"))
+        dataset = _short_or_long(r, "dataset", "dataset_name")
+        label = label_of_experiment_type(
+            _short_or_long(r, "exp_type", "experiment_type")
+        )
+        temp = _short_or_long(r, "temp", "temperature")
         value = r["value"]
         if value is None or not math.isfinite(float(value)):
             continue
         sd = r.get("sd")
         n = r.get("n_samples")
-        p = r.get("p", r.get("p_value"))
+        p = _short_or_long(r, "p", "p_value")
         out.append(
             LabelEntry(
                 source=source_key(str(dataset), None if temp is None else float(temp)),

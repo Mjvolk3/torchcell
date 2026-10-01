@@ -11,9 +11,13 @@ one SD-less replicate drops the group to the plain mean with se sqrt(0.01^2) / 2
 Stouffer on two-sided p = 0.02 gives 2 sf(sqrt(2) isf(0.01)) = 0.0010020 at equal weight,
 0.0101986 at weights 1 and 9 and 0.0398580 when the weight-1 screen disagrees; the
 published trigenic identity 0.9497 - 0.5128 * 0.9875 + 0.0331 - 0.0220 = 0.45441 and
-the measured one 0.455171. Findings pinned: truncating temperature keys, cross-source
-combination of strain-matched doubles, every non-interaction type read as fitness, and
-a ``temp=None`` key hiding ``temperature``.
+the measured one 0.455171.
+
+2026.10.01 (issue #527): the four findings pinned here are fixed. A fractional Costanzo
+temperature is refused instead of truncated; strain-matched doubles are ranked by source
+precedence instead of averaged across screens; an experiment type other than fitness or
+gene interaction is refused instead of read as fitness; a short key holding None no
+longer hides the long key, and two different values under both spellings are refused.
 """
 
 from __future__ import annotations
@@ -32,6 +36,7 @@ from torchcell.data.label_policy import (
     LabelEntry,
     LabelPolicy,
     entries_from_records,
+    label_of_experiment_type,
     source_key,
     strain_token,
 )
@@ -337,15 +342,25 @@ def test_source_key_names_kuzmin2020_and_refuses_what_it_cannot_rank() -> None:
         source_key("SmfOhya2005Dataset", 30.0)
 
 
-def test_source_key_truncates_a_fractional_costanzo_temperature() -> None:
-    """Finding: ``int(temperature)`` truncates, so 29.9 lands in the 29 bin, not 30.
+def test_source_key_refuses_a_fractional_costanzo_temperature() -> None:
+    """A Costanzo key names a whole-degree screen; a fractional temperature is refused.
 
-    ``source_key`` (label_policy.py:101) formats ``int(temperature)``; a temperature
-    stored as 29.9 would silently become an unranked ``costanzo2016@29`` that no default
-    precedence lists. Pinned until the key rounds or refuses non-integral temperatures.
+    Truncating 29.9 used to key it as an unranked ``costanzo2016@29``. The loader writes
+    the screen temperature as an integer (26 or 30), so a fractional or non-finite one is
+    not a screen and raises; a whole degree stored as a float keys exactly as an int.
     """
-    assert source_key("DmfCostanzo2016Dataset", 29.9) == "costanzo2016@29"
     assert source_key("DmfCostanzo2016Dataset", 30.0) == "costanzo2016@30"
+    assert source_key("SmfCostanzo2016Dataset", 26) == "costanzo2016@26"
+    with pytest.raises(
+        ValueError,
+        match=r"^DmfCostanzo2016Dataset temperature 29\.9 is not a whole degree$",
+    ):
+        source_key("DmfCostanzo2016Dataset", 29.9)
+    with pytest.raises(
+        ValueError,
+        match=r"^DmiCostanzo2016Dataset temperature nan is not a whole degree$",
+    ):
+        source_key("DmiCostanzo2016Dataset", math.nan)
 
 
 def test_standard_error_is_sd_over_root_n_with_each_fallback() -> None:
@@ -525,25 +540,51 @@ def test_stouffer_skips_unusable_p_values_and_passes_a_lone_survivor() -> None:
     assert none_usable.p_value is None
 
 
-def test_a_strain_matched_double_combines_every_match_and_counts_only_them() -> None:
-    """Finding: strain-matched entries are combined as replicates across sources.
+def test_strain_matched_doubles_are_ranked_by_source_not_averaged_across_it() -> None:
+    """Matches from different screens are ranked by precedence, not combined.
 
-    ``select_double`` (label_policy.py:374-384) passes every strain-matched entry to
-    ``_combine``, whose docstring says it combines "entries that share a source". Two
-    matches from kuzmin2018 and kuzmin2020 average to (0.50 + 0.70) / 2 = 0.60 under
-    the source of the first, and ``n_entries_available`` counts the 2 matches, not the
-    3 fitness entries on the record. Pinned until mixed-source matches are ranked.
+    Two matches from kuzmin2018 (0.50) and kuzmin2020 (0.70) used to average to 0.60
+    under the first one's source. Now the best-ranked matched source supplies the value:
+    kuzmin2018 under the default order, kuzmin2020 once that year is promoted. Matches
+    of ONE source are still replicates (0.50 and 0.60 average to 0.55 with no SD), and
+    ``n_entries_available`` counts the matches, not the record's 4 fitness entries.
     """
+    strain = "YAL015C+YOL043C_tm1501"
     entries = [
-        _fit("kuzmin2018", 0.50, strain_id="YAL015C+YOL043C_tm1501"),
+        _fit("kuzmin2018", 0.50, strain_id=strain),
         _fit("kuzmin2020", 0.70, strain_id="YDR003W_tm1501"),
         _fit("costanzo2016@30", 0.93, strain_id="YAL015C_dma12"),
     ]
-    chosen = _pick_double(KUZMIN_FIRST, entries, "YAL015C+YOL043C_tm1501")
-    assert chosen.value == pytest.approx(0.60, abs=1e-12)
-    assert chosen.source == "kuzmin2018"
-    assert chosen.n_entries_combined == 2
-    assert chosen.n_entries_available == 2
+    chosen = _pick_double(KUZMIN_FIRST, entries, strain)
+    assert (chosen.value, chosen.source) == (0.50, "kuzmin2018")
+    assert (chosen.n_entries_combined, chosen.n_entries_available) == (1, 2)
+    promoted = _pick_double(
+        KUZMIN_FIRST.promoted_for_year("kuzmin2020"), entries, strain
+    )
+    assert (promoted.value, promoted.source) == (0.70, "kuzmin2020")
+    replicates = [*entries, _fit("kuzmin2018", 0.60, strain_id=strain)]
+    both = _pick_double(KUZMIN_FIRST, replicates, strain)
+    assert both.value == pytest.approx(0.55, abs=1e-12)
+    assert both.source == "kuzmin2018"
+    assert (both.n_entries_combined, both.n_entries_available) == (2, 3)
+
+
+def test_a_strain_match_from_no_listed_source_falls_to_the_pairs_own_entries() -> None:
+    """A match whose source the policy does not list is never chosen; the pair's own
+    entries are then selected as if there were no match, here kuzmin2020's 0.81 over
+    the unlisted costanzo2016@26 match and the lower-ranked costanzo2016@30 entry.
+    """
+    policy = LabelPolicy(
+        name="no-26", fitness_precedence=["kuzmin2020", "costanzo2016@30"]
+    )
+    entries = [
+        _fit("costanzo2016@26", 0.40, strain_id="YAL015C+YOL043C_tm1501"),
+        _fit("costanzo2016@30", 0.93),
+        _fit("kuzmin2020", 0.81),
+    ]
+    chosen = _pick_double(policy, entries, "YAL015C+YOL043C_tm1501")
+    assert (chosen.value, chosen.source) == (0.81, "kuzmin2020")
+    assert chosen.n_entries_available == 3
 
 
 def test_select_double_without_a_query_strain_is_plain_selection() -> None:
@@ -598,7 +639,7 @@ def test_entries_from_records_normalizes_both_key_spellings() -> None:
         },
         {
             "dataset_name": "DmfCostanzo2016Dataset",
-            "experiment_type": "gene_interaction",
+            "experiment_type": "gene interaction",
             "value": -0.1,
             "temperature": 26,
             "sd": math.nan,
@@ -631,28 +672,33 @@ def test_entries_from_records_normalizes_both_key_spellings() -> None:
     ]
 
 
-def test_entries_from_records_reads_any_non_interaction_type_as_fitness() -> None:
-    """Finding: every experiment type without "interaction" in it becomes fitness.
-
-    ``label = "gene_interaction" if "interaction" in raw_type else "fitness"``
-    (label_policy.py:446), so a morphology entry is ranked as a fitness value. Pinned
-    until the parser refuses an unknown experiment type.
+def test_only_fitness_and_gene_interaction_types_fill_a_label() -> None:
+    """The stored schema types "fitness" and "gene interaction" map to their labels;
+    any other type is refused rather than ranked as fitness (a calmorph value used to be
+    read as one), including the label spelling "gene_interaction", which no schema class
+    stores, and "gene essentiality", which reaches a build only after conversion.
     """
+    assert label_of_experiment_type("fitness") == "fitness"
+    assert label_of_experiment_type("gene interaction") == "gene_interaction"
+    for raw_type in ("calmorph", "gene_interaction", "gene essentiality"):
+        with pytest.raises(
+            ValueError, match=rf"^no label for experiment type '{raw_type}'$"
+        ):
+            label_of_experiment_type(raw_type)
     rows: list[dict[str, Any]] = [
-        {"dataset": "SmfKuzmin2018Dataset", "exp_type": "morphology", "value": 2.5}
+        {"dataset": "SmfKuzmin2018Dataset", "exp_type": "calmorph", "value": 2.5}
     ]
-    assert entries_from_records(rows) == [
-        LabelEntry(source="kuzmin2018", label="fitness", value=2.5)
-    ]
+    with pytest.raises(ValueError, match=r"^no label for experiment type 'calmorph'$"):
+        entries_from_records(rows)
 
 
-def test_entries_from_records_short_key_present_as_none_hides_the_long_key() -> None:
-    """Finding: a ``temp`` key holding None hides a populated ``temperature``.
+def test_entries_from_records_reads_the_long_key_when_the_short_one_is_none() -> None:
+    """A short key holding None counts as absent, so the long key is read.
 
-    ``r.get("temp", r.get("temperature"))`` (label_policy.py:447) falls back only
-    when ``temp`` is ABSENT, so a Costanzo row carrying ``temp=None`` and
-    ``temperature=30`` is refused as having no temperature. Pinned until the lookup
-    treats None as absent.
+    A Costanzo row with ``temp=None, temperature=30`` used to be refused as carrying no
+    temperature; it now keys as costanzo2016@30, and ``p=None`` beside ``p_value=0.01``
+    reads 0.01. Both spellings set to different values are refused, since either choice
+    would discard a stored value; both set to the same value read it once.
     """
     rows: list[dict[str, Any]] = [
         {
@@ -661,12 +707,33 @@ def test_entries_from_records_short_key_present_as_none_hides_the_long_key() -> 
             "value": 0.9,
             "temp": None,
             "temperature": 30,
+            "p": None,
+            "p_value": 0.01,
+        },
+        {
+            "dataset": "DmfCostanzo2016Dataset",
+            "dataset_name": "DmfCostanzo2016Dataset",
+            "exp_type": "fitness",
+            "value": 0.8,
+            "temp": 26,
+            "temperature": 26,
+        },
+    ]
+    assert entries_from_records(rows) == [
+        LabelEntry(source="costanzo2016@30", label="fitness", value=0.9, p_value=0.01),
+        LabelEntry(source="costanzo2016@26", label="fitness", value=0.8),
+    ]
+    conflict: list[dict[str, Any]] = [
+        {
+            "dataset": "DmfCostanzo2016Dataset",
+            "exp_type": "fitness",
+            "value": 0.9,
+            "temp": 26,
+            "temperature": 30,
         }
     ]
-    with pytest.raises(
-        ValueError, match=r"^DmfCostanzo2016Dataset entry carries no temperature$"
-    ):
-        entries_from_records(rows)
+    with pytest.raises(ValueError, match=r"^row carries temp=26 and temperature=30$"):
+        entries_from_records(conflict)
 
 
 # ------------------------------------------------------------------ integration

@@ -372,6 +372,16 @@ def test_entries_of_record_skips_a_missing_value_and_refuses_an_unknown_dataset(
         entries_of_record(_serialize([unknown]))
 
 
+def test_entries_of_record_refuses_an_experiment_type_no_policy_ranks() -> None:
+    """A stored type other than fitness or gene interaction is refused (issue #527),
+    where it used to be read as fitness because "interaction" was not in its name.
+    """
+    items = json.loads(_serialize(RECORD_0))
+    items[0]["experiment"]["experiment_type"] = "calmorph"
+    with pytest.raises(ValueError, match=r"^no label for experiment type 'calmorph'$"):
+        entries_of_record(json.dumps(items).encode())
+
+
 # ------------------------------------------------------------------ the table
 def test_rows_reads_the_requested_indices_and_skips_absent_keys(
     build_root: str,

@@ -3,7 +3,8 @@ defaults:
   - default
   - _self_
 
-# Seeds torch, numpy and random in main (L.seed_everything).
+# Read only by the diagnostics main in torchcell/models/hetero_cell_bipartite_dango_gi.py;
+# the slurm script scripts/hetero_cell_bipartite_dango_gi.py ignores it (hardcodes 42).
 seed: 42
 
 wandb:

@@ -1,0 +1,49 @@
+name: Website (build check)
+
+# Builds the Docusaurus site under website/ and type-checks it. It does NOT deploy:
+# where the site is hosted (a GitHub Pages subpath beside the Sphinx docs, or the reverse
+# proxy on the database host) is undecided, and the Sphinx deploy in docs.yaml owns the
+# gh-pages branch today. See notes/plan.website-benchmark-platform.2026.10.01.md.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "website/**"
+      - ".github/workflows/website.yaml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "website/**"
+      - ".github/workflows/website.yaml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.label || github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  website-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Build (broken links fail the build)
+        run: npm run build

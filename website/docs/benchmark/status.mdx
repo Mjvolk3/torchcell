@@ -1,0 +1,38 @@
+---
+title: Provisional and verified
+sidebar_label: Provisional and verified
+description: The states a submission can be in and what each one means.
+---
+
+Every submission is in exactly one state.
+
+| State | Meaning | On the board |
+| :-- | :-- | :-- |
+| <StatusBadge status="rejected" /> | The file or metadata failed validation. No score exists. | No |
+| <StatusBadge status="provisional" /> | Graded by the server. Not yet reproduced. | Yes |
+| <StatusBadge status="verified" /> | Reproduced from the submitter's code. | Yes |
+| <StatusBadge status="withdrawn" /> | Withdrawn after grading. | No |
+
+## Provisional
+
+A score is provisional the moment the grader has computed it. Provisional means the
+arithmetic is right for the uploaded file. It says nothing about how the predictions
+were produced.
+
+## Verified
+
+A score is verified once the uploaded predictions have been reproduced from the
+submitter's code. That needs code others can run, which is what the `code_url` field
+of the metadata is for.
+
+A submitter requests verification by opening a
+[Benchmark verification request](https://github.com/Mjvolk3/torchcell/issues/new?template=benchmark-verification.yml)
+issue, which collects the submission id, the repository and commit, the environment,
+the exact command, the hardware, and the seed. A maintainer reproduces the predictions
+and marks the submission verified. Automating that reproduction is planned.
+
+## Filtering
+
+The [leaderboard](./leaderboard.mdx) has a **verified only** toggle. With it on, the
+table and both charts show verified submissions only. In the charts the two states
+also differ by marker shape: a circle for provisional, a diamond for verified.

@@ -1,0 +1,40 @@
+[
+  {
+    "slug": "mock-single-target",
+    "title": "[mock] Single-target dataset",
+    "description": "Mock fixture with one target. Not a real dataset.",
+    "loader_class": "MockSingleTargetDataset",
+    "citation_key": "mock0000",
+    "version": "mock",
+    "task": "regression",
+    "targets": [
+      "mock_target"
+    ],
+    "n_train": 80,
+    "n_val": 10,
+    "n_test": 10,
+    "primary_metric": "pearson",
+    "docs_url": null,
+    "tc_data_slug": null
+  },
+  {
+    "slug": "mock-multi-target",
+    "title": "[mock] Multi-target dataset",
+    "description": "Mock fixture with three targets. Not a real dataset.",
+    "loader_class": "MockMultiTargetDataset",
+    "citation_key": "mock0001",
+    "version": "mock",
+    "task": "regression",
+    "targets": [
+      "mock_target_1",
+      "mock_target_2",
+      "mock_target_3"
+    ],
+    "n_train": 80,
+    "n_val": 10,
+    "n_test": 10,
+    "primary_metric": "pearson",
+    "docs_url": null,
+    "tc_data_slug": null
+  }
+]

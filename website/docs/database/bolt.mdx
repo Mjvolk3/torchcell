@@ -1,0 +1,31 @@
+---
+title: Bolt URI
+sidebar_label: Bolt URI
+description: The Bolt endpoint of the served TorchCell knowledge graph.
+---
+
+Bolt is the binary protocol that Neo4j drivers and clients use. The served knowledge
+graph answers on:
+
+```text
+neo4j+s://torchcell-database.ncsa.illinois.edu:7687
+```
+
+The `neo4j+s` scheme means the connection is encrypted and the server certificate is
+verified. Neo4j Browser asks for this same URI in its connection form.
+
+Credentials: <Todo>owner: state how read access is granted</Todo>
+
+## From Python
+
+The example uses the official `neo4j` Python driver with placeholder credentials. It
+has not been run as part of building this site.
+
+```python
+from neo4j import GraphDatabase
+
+URI = "neo4j+s://torchcell-database.ncsa.illinois.edu:7687"
+
+with GraphDatabase.driver(URI, auth=("<user>", "<password>")) as driver:
+    records, summary, keys = driver.execute_query("MATCH (r:KgRelease) RETURN r")
+```

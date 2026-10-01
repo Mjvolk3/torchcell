@@ -1,0 +1,36 @@
+---
+title: Neo4j Browser
+sidebar_label: Neo4j Browser
+description: Open the Neo4j Browser over the served TorchCell knowledge graph.
+---
+
+Neo4j Browser is the web client that ships with Neo4j. It runs Cypher queries and
+draws the result as a graph or a table.
+
+<LinkGrid>
+  <LinkCard
+    title="Open Neo4j Browser"
+    href="https://torchcell-database.ncsa.illinois.edu:7473/browser/">
+    torchcell-database.ncsa.illinois.edu:7473
+  </LinkCard>
+</LinkGrid>
+
+Credentials: <Todo>owner: state how read access is granted</Todo>
+
+## First queries
+
+The release a database holds is recorded in the graph itself. This query returns it:
+
+```cypher
+MATCH (r:KgRelease) RETURN r
+```
+
+Two built-in Neo4j procedures list what the graph contains without scanning it:
+
+```cypher
+CALL db.labels();
+CALL db.schema.visualization();
+```
+
+The [knowledge graph page of the guide](https://mjvolk3.github.io/torchcell/guide/knowledge-graph.html)
+describes the node and relationship types.

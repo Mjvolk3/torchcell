@@ -1,0 +1,51 @@
+---
+title: Education
+sidebar_label: Education
+description: One standard card per dataset, written in a shared notation.
+---
+
+A **dataset card** is a one-screen description of what one dataset's experiment did.
+Every card has the same parts in the same order, so a reader who has seen one card
+can read any other. The cards are a common language for communicating data to people,
+mirroring the common language the database uses for the records themselves.
+
+A card is as short as it can be while still letting someone in the field recognize
+the experiment.
+
+## Parts of a card
+
+| Part | Content |
+| :-- | :-- |
+| Header | What was measured, the source publication, the dataset slug, the loader class, the record count |
+| Diagram | A draw.io schematic of the experiment, exported as SVG |
+| Blurb | One short paragraph: what was perturbed, what was measured, how many records |
+| Notation | A few lines of LaTeX in the [unified notation](./notation.mdx) |
+| Experimental details | Strain, medium, replicates, units, each sourced from the publication |
+
+## Seed cards
+
+- [Single-mutant fitness, Costanzo 2016](./cards/smf-costanzo2016.mdx)
+- [Amino acid levels, Mulleder 2016](./cards/amino-acid-mulleder2016.mdx)
+- [Betaxanthin production, Cachera 2023](./cards/betaxanthin-cachera2023.mdx)
+
+The three seed cards carry the header, a blurb, and the notation. Their diagrams are
+planned, and their experimental details are marked <Todo /> until each value has been
+sourced from the publication or its supplementary information (SI). A card never
+states an experimental detail that has not been sourced.
+
+## Adding a card
+
+1. Copy `docs/education/cards/_template.mdx` to `docs/education/cards/<slug>.mdx`,
+   where `<slug>` is the dataset slug.
+2. Fill the `DatasetCard` properties, the blurb, and the notation. Use only symbols
+   defined on the [notation page](./notation.mdx); add a symbol there first if one is
+   missing.
+3. Export the draw.io diagram as SVG to `static/img/education/<slug>.svg` and set
+   `diagramSrc` and `diagramAlt`.
+4. Replace each <Todo /> with the sourced value.
+5. Add the card to the `education` sidebar in `sidebars.ts`.
+
+## Relation to the ontology
+
+The symbols of the notation name the top-level parts of the typed experiment, so a
+card can be read against the [ontology](/ontology/) term by term.

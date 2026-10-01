@@ -1,0 +1,19 @@
+---
+title: Submissions through GitHub
+sidebar_label: GitHub ingestion
+description: Planned ingestion of submissions filed as GitHub issues.
+---
+
+<StatusBadge status="planned" />
+
+Planned: a second way to submit, in which a submission is filed as a GitHub issue. The
+ingestion of such an issue is LLM-assisted and automated through GitHub, and the
+result goes through the same grader as an upload from the [submit page](./submit.mdx).
+
+None of this is built, and the design is not decided. Until it exists, the
+[submit page](./submit.mdx) and `POST /submissions` are the only ways to submit.
+
+One GitHub form exists today, for a different step: the
+[Benchmark verification request](https://github.com/Mjvolk3/torchcell/issues/new?template=benchmark-verification.yml)
+issue asks for an already graded submission to be reproduced and marked
+[verified](./status.mdx).

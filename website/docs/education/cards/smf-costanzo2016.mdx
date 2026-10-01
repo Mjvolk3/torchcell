@@ -1,0 +1,53 @@
+---
+title: Single-mutant fitness, Costanzo 2016
+sidebar_label: Costanzo 2016 fitness
+description: Dataset card for smf-costanzo2016.
+---
+
+<DatasetCard
+  title="Single-mutant fitness"
+  slug="smf-costanzo2016"
+  citation="Costanzo 2016"
+  loaderClass="SmfCostanzo2016Dataset"
+  nRecords={20484}
+  docsUrl="https://mjvolk3.github.io/torchcell/datasets/scerevisiae/essentiality-smf.html"
+>
+
+<CardBlurb>
+
+Each record is one yeast strain in which a single gene is perturbed, with the fitness
+measured for that strain. The dataset holds 20,484 records.
+
+</CardBlurb>
+
+<CardNotation>
+
+$$
+g = \{p_i\}, \quad i \in \mathcal{G}
+\qquad\qquad
+(g, e) \mapsto y = f_i \in \mathbb{R}
+$$
+
+The genotype holds one perturbation $p_i$ of one gene $i$. The phenotype is the
+fitness $f_i$ of that single mutant, one number per record, so $T = 1$. The definition
+of $f_i$ and the reference it is measured against: <Todo />
+
+</CardNotation>
+
+<CardDetails>
+
+| Detail | Value |
+| :-- | :-- |
+| Reference strain | <Todo /> |
+| Perturbation types | <Todo /> |
+| Medium | <Todo /> |
+| Temperature | <Todo /> |
+| Replicates | <Todo /> |
+| Unit of $y$ | <Todo /> |
+| Uncertainty reported | <Todo /> |
+
+</CardDetails>
+
+</DatasetCard>
+
+This dataset is one of the three provisional [benchmark datasets](/benchmark/datasets).

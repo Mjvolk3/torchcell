@@ -1,0 +1,22 @@
+---
+title: Submission limits
+sidebar_label: Limits
+description: Account requirement and rate limits for benchmark submissions.
+---
+
+| Rule | Value |
+| :-- | :-- |
+| Account | Required, with a confirmed email address |
+| Submissions per account | At most 3 in any rolling 24 hours |
+| Gap between two submissions | At least 1 hour |
+| Rejected attempts | Count toward both limits |
+| Predictions file | At most 16 MiB |
+
+The limits apply per account, over all datasets together. A request refused with
+`429` is not an attempt and does not count. The [submit page](./submit.mdx)
+shows the current quota: how many submissions were used in the window, how many
+remain, and the earliest time the next one is allowed. A submission sent before that
+time is refused with HTTP status `429`.
+
+The limits bound how often one account can observe a test score, and every scored
+submission stays in the account's public history.

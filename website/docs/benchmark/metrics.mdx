@@ -1,0 +1,37 @@
+---
+title: Metrics
+sidebar_label: Metrics
+description: The five regression metrics and how multi-target datasets are averaged.
+---
+
+All seed datasets are regression tasks. The grader computes five metrics on the
+validation split and on the test split. The table gives the standard definition of
+each; the grader's implementation is the reference. With true values $y_i$, predictions
+$\hat{y}_i$, their means $\bar{y}$ and $\bar{\hat{y}}$, and $n$ records:
+
+| Metric | Definition | Better |
+| :-- | :-- | :-- |
+| Pearson | $r = \dfrac{\sum_i (y_i - \bar{y})(\hat{y}_i - \bar{\hat{y}})}{\sqrt{\sum_i (y_i - \bar{y})^2}\,\sqrt{\sum_i (\hat{y}_i - \bar{\hat{y}})^2}}$ | higher |
+| Spearman | Pearson correlation of the ranks of $y$ and $\hat{y}$, tied values sharing their mean rank | higher |
+| MSE | $\dfrac{1}{n}\sum_i (y_i - \hat{y}_i)^2$ | lower |
+| MAE | $\dfrac{1}{n}\sum_i \lvert y_i - \hat{y}_i \rvert$ | lower |
+| R2 | $1 - \dfrac{\sum_i (y_i - \hat{y}_i)^2}{\sum_i (y_i - \bar{y})^2}$ | higher |
+
+## Multi-target datasets
+
+For a dataset with several targets, each metric is computed per target and the board
+shows the **macro average**: the unweighted mean of the per-target values,
+
+$$
+m_{\text{macro}} = \frac{1}{T} \sum_{t=1}^{T} m_t ,
+$$
+
+where $T$ is the number of targets and $m_t$ is the metric on target $t$. The
+per-target values stay available: the [leaderboard](./leaderboard.mdx) has a target
+selector for multi-target datasets, and the result of a submission lists every target.
+
+## Ranking
+
+A board ranks by the selected metric on the test split, best first: highest for
+Pearson, Spearman, and R2, lowest for MSE and MAE. Pearson is the default selection.
+The validation value is always shown beside the test value.

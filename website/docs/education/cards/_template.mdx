@@ -1,0 +1,64 @@
+---
+title: "<What was measured>, <Author Year>"
+sidebar_label: "<Author Year> <short name>"
+description: "Dataset card for <slug>."
+---
+
+{/*
+  Template for a dataset card. Copy this file to <slug>.mdx in this folder (files whose
+  names start with an underscore are not built), fill it in, and add the new page to
+  the education sidebar in sidebars.ts.
+
+  Rules:
+  - State only what has been sourced from the publication or its supplementary
+    information. Leave every other detail as <Todo />, which renders
+    TODO(source from SI).
+  - Use only the symbols defined in docs/education/notation.mdx.
+  - Keep the blurb to one short paragraph.
+  - diagramSrc is a site path such as /img/education/<slug>.svg. Leave it out until
+    the draw.io diagram has been exported; the card then shows an empty diagram slot.
+*/}
+
+<DatasetCard
+  title="<What was measured>"
+  slug="<slug>"
+  citation="<Author Year>"
+  loaderClass="<LoaderClassName>"
+  nRecords={0}
+  docsUrl="https://mjvolk3.github.io/torchcell/datasets/index.html"
+>
+
+<CardBlurb>
+
+One short paragraph: what was perturbed, what was measured, and how many records the
+dataset holds.
+
+</CardBlurb>
+
+<CardNotation>
+
+$$
+g = \{p_i\}, \quad i \in \mathcal{G}
+\qquad\qquad
+(g, e) \mapsto y \in \mathbb{R}
+$$
+
+One sentence per symbol that needs it: what $g$ contains and what $y$ is.
+
+</CardNotation>
+
+<CardDetails>
+
+| Detail | Value |
+| :-- | :-- |
+| Reference strain | <Todo /> |
+| Perturbation type | <Todo /> |
+| Medium | <Todo /> |
+| Temperature | <Todo /> |
+| Replicates | <Todo /> |
+| Unit of $y$ | <Todo /> |
+| Uncertainty reported | <Todo /> |
+
+</CardDetails>
+
+</DatasetCard>

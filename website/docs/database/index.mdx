@@ -1,0 +1,27 @@
+---
+title: The TorchCell database
+sidebar_label: Database
+description: The served Neo4j knowledge graph and how to reach it.
+---
+
+The TorchCell database is a Neo4j knowledge graph that stores the typed experiments of
+every dataset. At release 2026.09.21 the served graph holds 51 datasets and
+52.7 million experiments.
+
+<LinkGrid>
+  <LinkCard title="Neo4j Browser" href="/database/browser">
+    Run Cypher queries against the served graph from a web page.
+  </LinkCard>
+  <LinkCard title="Bolt URI" href="/database/bolt">
+    Connect a Neo4j driver or client.
+  </LinkCard>
+  <LinkCard title="Releases and compatibility" href="/database/releases">
+    Release ids, versions, and the compatibility check.
+  </LinkCard>
+  <LinkCard title="Dataset downloads" href="https://mjvolk3.github.io/torchcell/guide/downloads.html">
+    Built datasets as versioned archives, without querying the graph.
+  </LinkCard>
+</LinkGrid>
+
+Simplified query modes (by chemical similarity, gene similarity, and homologs) are
+planned and described under the [Query tab](/query/).

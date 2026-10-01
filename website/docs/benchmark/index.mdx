@@ -1,0 +1,50 @@
+---
+title: Benchmark
+sidebar_label: Benchmark
+description: How the TorchCell benchmark works, from splits to scored boards.
+---
+
+The TorchCell benchmark gives every dataset a fixed train, validation, and test split,
+a set of standard baselines, and a public board. A **board** is the ranked table of
+scored submissions for one dataset.
+
+<LinkGrid>
+  <LinkCard title="Leaderboard" href="/benchmark/leaderboard">
+    Boards and charts, one dataset at a time.
+  </LinkCard>
+  <LinkCard title="Submit" href="/benchmark/submit">
+    Upload a predictions file and get scores back.
+  </LinkCard>
+  <LinkCard title="Account" href="/benchmark/account">
+    Sign up, log in, and see your own submissions.
+  </LinkCard>
+</LinkGrid>
+
+## How it works
+
+1. **Download the split.** Each dataset publishes a split file that assigns every
+   record id to the train, validation, or test split. See [Datasets](./datasets.mdx).
+2. **Train on train, select on validation.** Follow the
+   [training protocol](./training-protocol.mdx): choose every hyperparameter on the
+   validation split and predict the test split once.
+3. **Upload predictions, not scores.** A submission is a CSV of predictions for every
+   validation and test record, plus a metadata record. See
+   [Submission format](./submission-format.mdx).
+4. **The server grades.** A grader validates the file, rejects it with explicit reasons
+   if the format is wrong, and otherwise computes the [metrics](./metrics.mdx). The board
+   updates immediately.
+5. **Scores start provisional.** A score is **provisional** once graded and becomes
+   **verified** after it has been reproduced from the submitter's code. See
+   [Provisional and verified](./status.mdx).
+
+## What is always shown
+
+Validation and test scores appear together for every submission, on every board. The
+test labels of published datasets are not secret, so the benchmark does not rely on
+hiding them. [Integrity](./integrity.mdx) describes what it relies on instead.
+
+## Scope
+
+Every dataset gets a board, and the same [baseline procedure](./baselines.mdx) is run
+over each one. The first boards cover three seed datasets, and that choice is
+provisional; see [Datasets](./datasets.mdx).

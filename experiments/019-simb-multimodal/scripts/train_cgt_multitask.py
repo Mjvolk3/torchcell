@@ -1851,6 +1851,8 @@ def _synthetic_batch(gene_num: int, batch_size: int) -> HeteroData:
         bidx.append(torch.full((per,), b, dtype=torch.long))
     batch["gene"].perturbation_indices = torch.cat(idx)
     batch["gene"].perturbation_indices_batch = torch.cat(bidx)
+    # A collated Batch carries num_graphs; the model reads it as the genotype count.
+    batch.num_graphs = batch_size
     return batch
 
 

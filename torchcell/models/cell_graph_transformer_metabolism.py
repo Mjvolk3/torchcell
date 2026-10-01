@@ -572,14 +572,19 @@ class CellGraphTransformerMetabolism(CellGraphTransformer):
 
     @property
     def num_parameters(self) -> dict[str, int]:
-        """Parameter counts, with one entry per metabolism head."""
+        """Parameter counts, with one entry per metabolism head and the flux layer.
+
+        The parent's ``total`` already counts every parameter of this module (it is
+        ``sum(p.numel() for p in self.parameters())``), so the heads and the flux layer
+        get their own entries here and are not added to it again.
+        """
         counts = super().num_parameters
         total = counts.pop("total")
         for name in self.metabolism_head_names:
             head = cast(nn.Module, getattr(self, f"{name}_head"))
-            n = sum(p.numel() for p in head.parameters() if p.requires_grad)
-            counts[f"{name}_head"] = n
-            total += n
+            counts[f"{name}_head"] = sum(p.numel() for p in head.parameters())
+        if self.flux_layer is not None:
+            counts["flux_layer"] = sum(p.numel() for p in self.flux_layer.parameters())
         counts["total"] = total
         return counts
 

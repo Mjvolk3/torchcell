@@ -233,16 +233,20 @@ class HyperSAGNN(nn.Module):
 
         Args:
             embeddings: Tensor of shape [total_pert_genes, hidden_channels]
-            batch_indices: Tensor of shape [total_pert_genes] indicating set membership
+            batch_indices: Tensor of shape [total_pert_genes] indicating set membership.
+                Any integer ids; they need not be contiguous or start at 0.
 
         Returns:
-            Perturbation representations with shape [num_batches, hidden_channels]
+            Perturbation representations with shape [num_batches, hidden_channels],
+            one row per DISTINCT set id, in ascending id order.
         """
         device = embeddings.device
         total_nodes = embeddings.size(0)
 
-        # Get unique batches
-        unique_batches = torch.unique(batch_indices)
+        # Renumber the set ids to 0..num_batches-1 (ascending id order). The output has
+        # one row per distinct id, so scattering by the raw id VALUE would index past the
+        # end for non-contiguous ids such as {0, 2}.
+        unique_batches, set_index = torch.unique(batch_indices, return_inverse=True)
         num_batches = len(unique_batches)
 
         # Compute static embeddings for all perturbed genes
@@ -284,7 +288,7 @@ class HyperSAGNN(nn.Module):
         from torch_scatter import scatter_mean
 
         set_representations = scatter_mean(
-            squared_diff, batch_indices, dim=0, dim_size=num_batches
+            squared_diff, set_index, dim=0, dim_size=num_batches
         )
 
         return cast(torch.Tensor, set_representations)  # [num_batches, hidden_channels]
@@ -649,6 +653,7 @@ class EquivariantPerturbationTransform(nn.Module):
         H_genes: torch.Tensor,
         perturbation_indices: torch.Tensor,
         batch_assignment: torch.Tensor,
+        batch_size: int,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Apply equivariant perturbation transformation.
 
@@ -656,6 +661,11 @@ class EquivariantPerturbationTransform(nn.Module):
             H_genes: [N, d] - wildtype gene embeddings
             perturbation_indices: [total_pert_genes] - indices of perturbed genes
             batch_assignment: [total_pert_genes] - batch index for each perturbed gene
+            batch_size: Number of genotypes in the batch. Passed explicitly (the model
+                reads ``batch.num_graphs``) because a genotype with no perturbed gene
+                has no entry in ``batch_assignment``: ``max + 1`` would drop a trailing
+                one. A genotype with no entry gets a zero context at every layer, so its
+                row is the layer stack applied with ``attended = 0``.
 
         Returns:
             A tuple ``(H_genes_pert, context)``:
@@ -665,7 +675,11 @@ class EquivariantPerturbationTransform(nn.Module):
               separately so downstream heads can condition on it directly (the
               concat/bilinear/FiLM arms all need c_b, not only h_i + c_b).
         """
-        batch_size = int(batch_assignment.max().item()) + 1
+        if batch_assignment.numel() > 0 and int(batch_assignment.max()) >= batch_size:
+            raise ValueError(
+                f"batch_assignment holds genotype index {int(batch_assignment.max())} "
+                f"but batch_size is {batch_size}"
+            )
         N, d = H_genes.shape
 
         H_genes_pert_list = []
@@ -975,9 +989,11 @@ class ObservedLabelEncoder(nn.Module):
             dropout: Dropout probability.
             gate_mode: ``on`` (fixed 1.0, the default) or ``rezero`` (learned scalar,
                 init 0). Defaults to forced-on because the whole point is to push
-                gradient through the conditioning pathway; with everything masked the
-                encoded features are zero anyway, so a 100%-masked (validation) forward
-                is still an identity.
+                gradient through the conditioning pathway. With everything masked the
+                features are [0, 0], but the forced-on gate still adds
+                ``proj([0, 0]) = W2 relu(b1) + b2``, the same offset on every token, so
+                a 100%-masked (validation) forward is NOT an identity; ``rezero`` is the
+                identity at init.
         """
         super().__init__()
         self.proj = nn.Sequential(
@@ -987,8 +1003,8 @@ class ObservedLabelEncoder(nn.Module):
             nn.Linear(hidden_dim, hidden_dim),
         )
         # Defaults to FORCED ON: the whole point is to push gradient through the
-        # conditioning pathway. With everything masked the encoded features are all zero
-        # anyway, so a 100%-masked (validation) forward is still identity.
+        # conditioning pathway. With everything masked the features are [0, 0] and the
+        # forward adds the constant offset proj([0, 0]) to every token (not an identity).
         self.gate_mode = gate_mode
         self.gate: nn.Parameter | torch.Tensor
         if gate_mode == "on":
@@ -1941,7 +1957,9 @@ class CellGraphTransformer(nn.Module):
                 so it does NOT transfer to an organism without an interactome.
             observed_label_config: Optional masked-prediction conditioning, letting the
                 decoder see a fraction of the measured labels and predict the rest. Inert
-                without cross-gene mixing, and identity at validation (100% masked).
+                without cross-gene mixing. A 100%-masked forward is NOT an identity under
+                the default forced-on gate: it adds the constant ``proj([0, 0])`` to every
+                token. Only ``observed_values=None`` skips the encoder.
             post_perturbation_mixing_config: Optional Perceiver-style mixing BETWEEN gene
                 tokens after the perturbation is applied -- the channel that makes
                 ``observed_label_config`` able to do anything.
@@ -2657,9 +2675,9 @@ class CellGraphTransformer(nn.Module):
                 prediction, or None. Only consumed when the model was built with an
                 ``observed_label_config``.
             observed_mask: [batch, N] boolean companion to ``observed_values``, True where
-                a value is observed. At validation everything is masked, so the forward
-                pass is identical to the unconditioned model and the metric stays
-                comparable across arms.
+                a value is observed. Passing an all-False mask is NOT the unconditioned
+                model: the forced-on encoder still adds ``proj([0, 0])`` to every token.
+                Pass ``observed_values=None`` to skip the encoder.
 
         Returns:
             predictions: [batch_size, 1] gene interaction predictions
@@ -2808,10 +2826,14 @@ class CellGraphTransformer(nn.Module):
         H_genes = H_squeezed[1:]  # [N, d]
 
         # 5. Apply EQUIVARIANT perturbation transformation (Type I Virtual Instrument)
+        # The genotype count comes from the batch object, not from the assignment
+        # vector: a genotype with no perturbed gene (wildtype) has no entry there, so
+        # ``max + 1`` silently dropped a trailing one and every head returned a row short.
         H_genes_pert, pert_context = self.perturbation_transform(
             H_genes,
             batch["gene"].perturbation_indices,
             batch["gene"].perturbation_indices_batch,
+            int(batch.num_graphs),
         )  # [batch, N, d] each - EQUIVARIANT!
 
         # 5b. Pair-(p, i) routing. Without this the ONLY strain-dependent quantity is a
@@ -2950,10 +2972,18 @@ class CellGraphTransformer(nn.Module):
 
     @property
     def num_parameters(self) -> dict[str, int]:
-        """Count parameters in each component."""
+        """Count parameters in each component.
+
+        Every entry is that block's own ``parameters()`` size (trainable or not), and
+        ``total`` is ``sum(p.numel() for p in self.parameters())``, so a size table read
+        from ``total`` is the module's real size. ``gene_embedding`` and
+        ``embedding_preprocessor`` are always present (0 when disabled); every other
+        optional block appears only when it is built. On this class the block entries sum
+        to ``total``; a subclass that registers more modules adds its own entries.
+        """
 
         def count_params(module: nn.Module) -> int:
-            return sum(p.numel() for p in module.parameters() if p.requires_grad)
+            return sum(p.numel() for p in module.parameters())
 
         counts = {
             # None when learnable embeddings are disabled (content features only).
@@ -2975,13 +3005,21 @@ class CellGraphTransformer(nn.Module):
             "perturbation_transform": count_params(self.perturbation_transform),
             "perturbation_head": count_params(self.perturbation_head),
         }
-        if self.global_head is not None:
-            counts["global_head"] = count_params(self.global_head)
-        if self.per_gene_head is not None:
-            counts["per_gene_head"] = count_params(self.per_gene_head)
-        if self.per_metabolite_head is not None:
-            counts["per_metabolite_head"] = count_params(self.per_metabolite_head)
-        counts["total"] = sum(counts.values())
+        optional: dict[str, nn.Module | None] = {
+            "perturbation_propagation": self.perturbation_propagation,
+            "observed_label_encoder": self.observed_label_encoder,
+            "cross_gene_mixing": self.cross_gene_mixing,
+            "post_perturbation_mixing": self.post_perturbation_mixing,
+            "global_head": self.global_head,
+            "per_gene_head": self.per_gene_head,
+            "bilinear": self.bilinear,
+            "response_basis": self.response_basis,
+            "per_metabolite_head": self.per_metabolite_head,
+        }
+        for name, module in optional.items():
+            if module is not None:
+                counts[name] = count_params(module)
+        counts["total"] = sum(p.numel() for p in self.parameters())
         return counts
 
 

@@ -145,10 +145,10 @@ def test_perturbation_transform_is_equivariant_to_a_gene_permutation() -> None:
     module = EquivariantPerturbationTransform(D, num_heads=HEADS, dropout=0.0).eval()
     h = _h_genes()
     with torch.no_grad():
-        out, context = module(h, PERT_IDX, PERT_BATCH)
+        out, context = module(h, PERT_IDX, PERT_BATCH, B)
         perm = torch.tensor([7, 3, 5, 0, 1, 6, 2, 4])
         inverse = torch.argsort(perm)
-        out_p, context_p = module(h[perm], inverse[PERT_IDX], PERT_BATCH)
+        out_p, context_p = module(h[perm], inverse[PERT_IDX], PERT_BATCH, B)
     assert out.shape == (B, N, D) and context.shape == (B, N, D)
     torch.testing.assert_close(out_p, out[:, perm], atol=1e-5, rtol=1e-5)
     torch.testing.assert_close(context_p, context[:, perm], atol=1e-5, rtol=1e-5)
@@ -162,11 +162,11 @@ def test_perturbation_transform_backward_and_rezero_variant() -> None:
     """
     torch.manual_seed(0)
     postln = EquivariantPerturbationTransform(D, num_heads=HEADS)
-    out, _ = postln(_h_genes(), PERT_IDX, PERT_BATCH)
+    out, _ = postln(_h_genes(), PERT_IDX, PERT_BATCH, B)
     _all_params_get_grads(postln, out)
 
     rezero = EquivariantPerturbationTransform(D, num_heads=HEADS, residual="rezero")
-    out, _ = rezero(_h_genes(), PERT_IDX, PERT_BATCH)
+    out, _ = rezero(_h_genes(), PERT_IDX, PERT_BATCH, B)
     out.sum().backward()
     untrained = sorted(n for n, p in rezero.named_parameters() if p.grad is None)
     assert untrained == [

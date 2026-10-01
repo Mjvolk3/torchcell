@@ -611,11 +611,11 @@ def test_hadamard_add_is_the_additive_operator_at_init() -> None:
     ]
     assert unexpected == []
     with torch.no_grad():
-        expected, _ = off(h, idx, assign)
-        got, _ = add.eval()(h, idx, assign)
+        expected, _ = off(h, idx, assign, B)
+        got, _ = add.eval()(h, idx, assign, B)
         replaced, context = EquivariantPerturbationTransform(
             D, num_heads=HEADS, dropout=0.0, hadamard="replace"
-        ).eval()(h, idx, assign)
+        ).eval()(h, idx, assign, B)
     torch.testing.assert_close(got, expected, atol=0.0, rtol=0.0)
     assert torch.equal(replaced[0], replaced[1]) and torch.equal(
         replaced[1], replaced[2]
@@ -656,13 +656,15 @@ def test_null_sink_scale_and_inert_sham() -> None:
     assert not sham.null_bias.requires_grad and sham.null_scale == 1.0
     with torch.no_grad():
         torch.testing.assert_close(
-            sham(h, idx, assign)[0], ref(h, idx, assign)[0], atol=1e-6, rtol=1e-6
+            sham(h, idx, assign, B)[0], ref(h, idx, assign, B)[0], atol=1e-6, rtol=1e-6
         )
         open_sink = EquivariantPerturbationTransform(
             D, num_heads=HEADS, dropout=0.0, null_sink=True, null_sink_bias_init=0.0
         ).eval()
         open_sink.load_state_dict(ref.state_dict(), strict=False)
-        assert not torch.allclose(open_sink(h, idx, assign)[0], ref(h, idx, assign)[0])
+        assert not torch.allclose(
+            open_sink(h, idx, assign, B)[0], ref(h, idx, assign, B)[0]
+        )
 
         # matching rescales the attended context and nothing else: same weights, same
         # bias, the matched context is the unmatched one times 1 / sigmoid(4)
@@ -671,8 +673,8 @@ def test_null_sink_scale_and_inert_sham() -> None:
         ).eval()
         matched.load_state_dict(unmatched.state_dict())
         torch.testing.assert_close(
-            matched.eval()(h, idx, assign)[1],
-            unmatched(h, idx, assign)[1] * matched.null_scale,
+            matched.eval()(h, idx, assign, B)[1],
+            unmatched(h, idx, assign, B)[1] * matched.null_scale,
         )
 
 
@@ -684,7 +686,7 @@ def test_a_genotype_with_no_perturbation_gets_a_zero_context() -> None:
     h = torch.randn(N, D)
     module = EquivariantPerturbationTransform(D, num_heads=HEADS, dropout=0.0).eval()
     with torch.no_grad():
-        out, context = module(h, torch.tensor([1, 2, 3]), torch.tensor([0, 0, 2]))
+        out, context = module(h, torch.tensor([1, 2, 3]), torch.tensor([0, 0, 2]), 3)
         expected = module._apply_residual(h, torch.zeros(N, D), 0)
     assert out.shape == (3, N, D)
     assert torch.equal(context[1], torch.zeros(N, D))
@@ -708,7 +710,7 @@ def test_attention_only_extra_layers_and_the_rezero_identity() -> None:
     assert postln.ffn_mults == [4, 0]
     assert isinstance(postln.ffn_layers[1], nn.Identity)
     with torch.no_grad():
-        out_postln, _ = postln.eval()(h, idx, assign)
+        out_postln, _ = postln.eval()(h, idx, assign, B)
         # genotype 1 perturbs {3} alone: layer 0 is the full post-LN block, layer 1 is
         # norm1(x + attention) with no FFN term
         key0 = h[[3]].unsqueeze(0)
@@ -726,7 +728,7 @@ def test_attention_only_extra_layers_and_the_rezero_identity() -> None:
         num_layers=2,
         extra_layer_ffn_mult=0,
     )
-    out, _ = rezero(h, idx, assign)
+    out, _ = rezero(h, idx, assign, B)
     assert torch.equal(out, h.unsqueeze(0).expand(B, -1, -1))
 
 

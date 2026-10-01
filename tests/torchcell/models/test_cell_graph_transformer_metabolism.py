@@ -88,6 +88,7 @@ def _make_batch() -> HeteroData:
     batch["gene"].perturbation_indices_batch = torch.tensor(
         [0, 0, 1, 2, 2, 2], dtype=torch.long
     )
+    batch.num_graphs = 3  # a collated Batch carries it; the model reads it
     return batch
 
 
@@ -504,26 +505,26 @@ def test_flux_heads_read_the_flux_layer_turnover() -> None:
     assert [n for n, p in model.named_parameters() if p.grad is None] == []
 
 
-def test_num_parameters_leaves_out_the_flux_layer() -> None:
-    """Finding: ``num_parameters`` (cell_graph_transformer_metabolism.py:574-584) adds
-    each head to the parent's tally but never the flux layer, whose 386 parameters train.
+def test_num_parameters_counts_the_flux_layer() -> None:
+    """``num_parameters`` lists each head and the flux layer and its ``total`` is every
+    parameter of the module (issue #523 made the parent's total
+    ``sum(self.parameters())``; this override used to add the heads to a parent tally
+    and never the flux layer, reporting 8063).
 
     Heads: aa is scale + bias [2, 1] = 4; bx is Linear(3, 1) + Linear(4, 1) = 4 + 5 = 9;
-    pooled is Linear(48, 16) + Linear(16, 1) = 784 + 17 = 801. Parent: 128 + 16 + 3280 +
-    3280 + 545 = 7249. Reported total 7249 + 4 + 9 + 801 = 8063; the module holds
-    8063 + 386 = 8449. The flux layer's 386, every one trainable: reaction_embedding
-    4 x 4 = 16, flux_mlp Linear(20, 16) = 320 + 16, Linear(16, 1) = 16 + 1, availability
-    Linear(16, 1) = 16 + 1, so 16 + 320 + 16 + 16 + 1 + 16 + 1 = 386.
+    pooled is Linear(48, 16) + Linear(16, 1) = 784 + 17 = 801. Parent blocks: 128 + 16 +
+    3280 + 3280 + 545 = 7249. The flux layer's 386: reaction_embedding 4 x 4 = 16,
+    flux_mlp Linear(20, 16) = 320 + 16, Linear(16, 1) = 16 + 1, availability
+    Linear(16, 1) = 16 + 1. Total 7249 + 4 + 9 + 801 + 386 = 8449.
     """
     model = _flux_model()
     counts = model.num_parameters
     assert (counts["aa_head"], counts["bx_head"], counts["pooled_head"]) == (4, 9, 801)
-    assert counts["total"] == 8063
-    assert "flux_layer" not in counts
+    assert counts["flux_layer"] == 386
+    assert counts["total"] == 8449
+    assert sum(v for k, v in counts.items() if k != "total") == 8449
     layer = model.flux_layer
     assert isinstance(layer, FluxLayer)
-    flux = sum(p.numel() for p in layer.parameters() if p.requires_grad)
-    assert flux == 386
     assert [p.numel() for p in layer.parameters()] == [16, 320, 16, 16, 1, 16, 1]
     assert sum(p.numel() for p in model.parameters()) == 8449
 
@@ -533,6 +534,7 @@ def _track_a_outputs(
     model: CellGraphTransformerMetabolism, indices: list[int], owners: list[int]
 ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
     batch = HeteroData()
+    batch.num_graphs = 3  # every call below scores three samples
     batch["gene"].perturbation_indices = torch.tensor(indices, dtype=torch.long)
     batch["gene"].perturbation_indices_batch = torch.tensor(owners, dtype=torch.long)
     with torch.no_grad():
@@ -576,6 +578,7 @@ def test_a_sample_without_perturbations_reads_the_zero_pool() -> None:
     """
     model = _build(CellGraphTransformerMetabolism, _metabolism_heads_config()).eval()
     batch = HeteroData()
+    batch.num_graphs = 3
     batch["gene"].perturbation_indices = torch.tensor([1, 2, 5])
     batch["gene"].perturbation_indices_batch = torch.tensor([0, 0, 2])
     with torch.no_grad():

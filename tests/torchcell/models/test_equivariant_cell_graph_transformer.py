@@ -28,10 +28,10 @@ or with dropout 0 so a forward is a pure function. Identities and their derivati
 * Parameter arithmetic: a Linear(i, o) has i*o + o parameters, a LayerNorm(d) 2d, a
   MultiheadAttention(16) 816 + 272 = 1088.
 * Permuting the genotypes of a batch permutes every per-genotype output.
-* Findings (pinned, not fixed): HyperSAGNN sizes its output by the number of distinct set
-  ids, so ids {0, 2} index past the end; the batch size is ``max(assignment) + 1``, so a
-  trailing genotype with no perturbation gets no row; ``num_parameters["total"]`` omits
-  six optional modules.
+* Fixed in issue #523 (formerly pinned findings): HyperSAGNN renumbers its set ids, so
+  ids {0, 2} give the {0, 1} output; the batch size is ``batch.num_graphs``, so a
+  trailing genotype with no perturbation gets its wildtype row; ``num_parameters``
+  lists every block and its ``total`` is every parameter of the module.
 """
 
 import math
@@ -232,9 +232,12 @@ def _eval_model(
     return CellGraphTransformer(**config).eval()
 
 
-def _perturbation_batch(indices: list[int], assignment: list[int]) -> HeteroData:
-    """A batch carrying only the two index tensors the model reads."""
+def _perturbation_batch(
+    indices: list[int], assignment: list[int], num_graphs: int
+) -> HeteroData:
+    """A batch carrying the two index tensors and the genotype count the model reads."""
     batch = HeteroData()
+    batch.num_graphs = num_graphs
     batch["gene"].perturbation_indices = torch.tensor(indices, dtype=torch.long)
     batch["gene"].perturbation_indices_batch = torch.tensor(
         assignment, dtype=torch.long
@@ -285,17 +288,23 @@ def test_hypersagnn_open_gates_singleton_closed_form_and_set_isolation() -> None
     assert not torch.equal(out_shifted[1], out[1])
 
 
-def test_hypersagnn_non_contiguous_set_ids_index_past_the_output() -> None:
-    """Finding: the output is sized by the number of DISTINCT set ids (line 246,
-    ``num_batches = len(unique_batches)``) but ``scatter_mean`` indexes by the id VALUE,
-    so ids {0, 2} allocate 2 rows and id 2 falls off the end. Pinned until the size is
-    ``max(id) + 1`` or the ids are renumbered.
+def test_hypersagnn_renumbers_non_contiguous_set_ids_in_ascending_order() -> None:
+    """The output has one row per DISTINCT set id, in ascending id order (issue #523:
+    it used to scatter by the id VALUE, so ids {0, 2} indexed past a 2-row output).
+    Same members, ids {0, 2, 2} give exactly the {0, 1, 1} output; ids {5, 2, 2} put the
+    pair (id 2) first and the singleton (id 5) second, i.e. the {0, 1, 1} rows swapped.
     """
+    torch.manual_seed(0)
     module = HyperSAGNN(HIDDEN, num_heads=NUM_HEADS)
-    with pytest.raises(
-        RuntimeError, match="index 2 is out of bounds for dimension 0 with size 2"
-    ):
-        module(torch.randn(3, HIDDEN), torch.tensor([0, 2, 2]))
+    x = torch.randn(3, HIDDEN)
+    with torch.no_grad():
+        contiguous = module(x, torch.tensor([0, 1, 1]))
+        gapped = module(x, torch.tensor([0, 2, 2]))
+        reversed_ids = module(x, torch.tensor([5, 2, 2]))
+    assert contiguous.shape == (2, HIDDEN)
+    assert torch.equal(gapped, contiguous)
+    assert torch.equal(reversed_ids, contiguous[[1, 0]])
+    assert not torch.equal(contiguous[0], contiguous[1])
 
 
 # Perturbation transform ------------------------------------------------------------ #
@@ -314,7 +323,7 @@ def test_single_deletion_context_is_query_independent_and_starves_q_and_k() -> N
     q_and_k, v = slice(0, 2 * HIDDEN), slice(2 * HIDDEN, 3 * HIDDEN)
 
     plain = EquivariantPerturbationTransform(HIDDEN, num_heads=NUM_HEADS, dropout=0.0)
-    _, context = plain(h, *singles)
+    _, context = plain(h, *singles, 2)
     assert torch.equal(context, context[:, :1].expand(-1, GENE_NUM, -1))
     (context**2).sum().backward()
     grad_w = _in_proj_weight_grad(plain)
@@ -328,7 +337,7 @@ def test_single_deletion_context_is_query_independent_and_starves_q_and_k() -> N
 
     pair = EquivariantPerturbationTransform(HIDDEN, num_heads=NUM_HEADS, dropout=0.0)
     pair.load_state_dict(plain.state_dict())
-    _, context_pair = pair(h, torch.tensor([1, 3]), torch.tensor([0, 0]))
+    _, context_pair = pair(h, torch.tensor([1, 3]), torch.tensor([0, 0]), 1)
     (context_pair**2).sum().backward()
     assert _in_proj_weight_grad(pair)[q_and_k].abs().sum().item() > 0.0
 
@@ -342,33 +351,67 @@ def test_single_deletion_context_is_query_independent_and_starves_q_and_k() -> N
     assert sink.load_state_dict(plain.state_dict(), strict=False).missing_keys == [
         "null_bias"
     ]
-    _, context_sink = sink(h, *singles)
+    _, context_sink = sink(h, *singles, 2)
     assert not torch.allclose(context_sink[0, 0], context_sink[0, 1])
     (context_sink**2).sum().backward()
     assert _in_proj_weight_grad(sink)[q_and_k].abs().sum().item() > 0.0
     assert sink.null_bias.grad is not None and sink.null_bias.grad.item() != 0.0
 
 
-def test_trailing_genotype_without_perturbation_gets_no_row(
-    cell_graph: HeteroData, batch: HeteroData
+def test_trailing_wildtype_genotype_gets_the_zero_context_row(
+    cell_graph: HeteroData,
 ) -> None:
-    """Finding: the batch size is ``int(max(assignment)) + 1`` (line 668) and the heads
-    size from the transform's output (line 1323), so a batch whose LAST genotype is the
-    wildtype (no entry in ``perturbation_indices_batch``) returns one row too few: here
-    {1, 2}, {3}, wildtype gives 2 rows. The two rows it does return equal rows 0 and 1 of
-    the fixture batch, which has the same first two genotypes. A wildtype in the middle
-    keeps its row (sibling test). Pinned until the batch size is passed explicitly.
+    """Every genotype in ``batch.num_graphs`` gets a row (issue #523: the batch size was
+    ``max(assignment) + 1``, so a trailing wildtype was silently dropped).
+
+    Batch {1, 2}, {3}, wildtype. The wildtype has no entry in the assignment, so the
+    transform attends to nothing (``attended = 0``) and its tokens are
+    ``_apply_residual(H_genes, 0, 0)``; the interaction head pools no gene, so its input
+    is ``[h_CLS, 0]``; the per-gene head reads those tokens. That row is rebuilt here
+    from the model's own modules, and equals the row of a batch holding only the
+    wildtype (an EMPTY assignment). Structural identity (Decision 12): rows 0 and 1 equal
+    the rows of the batch {1, 2}, {3} without the wildtype.
     """
     model = _eval_model(cell_graph, heads_config={"per_gene": {}})
+    assert model.per_gene_head is not None
     with torch.no_grad():
-        pred, reps = model(cell_graph, _perturbation_batch([1, 2, 3], [0, 0, 1]))
-        full_pred, full_reps = model(cell_graph, batch)
-    assert pred.shape == (2, 1)
-    assert reps["head_outputs"]["per_gene"].shape == (2, GENE_NUM)
-    torch.testing.assert_close(pred, full_pred[:2])
-    torch.testing.assert_close(
-        reps["head_outputs"]["per_gene"], full_reps["head_outputs"]["per_gene"][:2]
-    )
+        pred, reps = model(cell_graph, _perturbation_batch([1, 2, 3], [0, 0, 1], 3))
+        pred_two, reps_two = model(
+            cell_graph, _perturbation_batch([1, 2, 3], [0, 0, 1], 2)
+        )
+        pred_wt, reps_wt = model(cell_graph, _perturbation_batch([], [], 1))
+        h_genes, h_cls = reps["H_genes"], reps["h_CLS"]
+        wt_tokens = model.perturbation_transform._apply_residual(
+            h_genes, torch.zeros(GENE_NUM, HIDDEN), 0
+        )
+        wt_pred = model.perturbation_head.mlp(torch.cat([h_cls, torch.zeros(HIDDEN)]))
+        wt_per_gene = model.per_gene_head(wt_tokens.unsqueeze(0), film_cond=None)[0]
+    per_gene = reps["head_outputs"]["per_gene"]
+    assert pred.shape == (3, 1)
+    assert per_gene.shape == (3, GENE_NUM)
+    assert reps["H_genes_pert"].shape == (3, GENE_NUM, HIDDEN)
+    torch.testing.assert_close(reps["H_genes_pert"][2], wt_tokens)
+    torch.testing.assert_close(pred[2], wt_pred)
+    torch.testing.assert_close(per_gene[2], wt_per_gene)
+    torch.testing.assert_close(pred_wt, pred[2:])
+    torch.testing.assert_close(reps_wt["head_outputs"]["per_gene"], per_gene[2:])
+    torch.testing.assert_close(pred[:2], pred_two)
+    torch.testing.assert_close(per_gene[:2], reps_two["head_outputs"]["per_gene"])
+    assert not torch.allclose(pred[2], pred[1])
+
+
+def test_assignment_past_the_batch_size_raises() -> None:
+    """An assignment index at or past ``batch_size`` names a genotype that has no row;
+    the transform raises instead of dropping those genes.
+    """
+    module = EquivariantPerturbationTransform(HIDDEN, num_heads=NUM_HEADS, dropout=0.0)
+    with pytest.raises(
+        ValueError,
+        match=r"^batch_assignment holds genotype index 2 but batch_size is 2$",
+    ):
+        module(
+            torch.zeros(GENE_NUM, HIDDEN), torch.tensor([1, 3]), torch.tensor([0, 2]), 2
+        )
 
 
 # Propagation ----------------------------------------------------------------------- #
@@ -443,12 +486,12 @@ def test_propagation_features_have_the_closed_form_log1p_reach() -> None:
 
 # Observed labels ------------------------------------------------------------------- #
 def test_observed_label_all_masked_offset_is_the_projection_of_zero_features() -> None:
-    """Finding (the exact form of the one the components file pins): lines 980 and 991
-    say a 100%-masked forward "is still an identity", but with every label masked the
-    features are [0, 0] and the forced-on gate adds ``proj([0, 0]) = W2 relu(b1) + b2``,
-    the same nonzero vector on every token. Pinned until the gate or the bias path
-    changes. ``gate_mode="rezero"`` is a trainable zero-initialized parameter in the
-    state dict and makes the encoder the exact identity even with a label observed.
+    """With every label masked the features are [0, 0] and the forced-on gate adds
+    ``proj([0, 0]) = W2 relu(b1) + b2``, the same nonzero vector on every token, so a
+    100%-masked forward is NOT an identity; the docstrings now say so (issue #523: they
+    claimed an identity). ``gate_mode="rezero"`` is a trainable zero-initialized
+    parameter in the state dict and makes the encoder the exact identity even with a
+    label observed.
     """
     torch.manual_seed(0)
     h = torch.randn(BATCH_SIZE, GENE_NUM, HIDDEN)
@@ -551,10 +594,10 @@ def test_per_gene_input_is_h_pert_h_i_context_pert_set_then_bilinear(
     assert isinstance(first, nn.Linear) and first.in_features == 82
     idx, assign = [1, 2, 0, 4, 5], [0, 0, 2, 2, 2]
     with torch.no_grad():
-        _, reps = model(cell_graph, _perturbation_batch(idx, assign))
+        _, reps = model(cell_graph, _perturbation_batch(idx, assign, BATCH_SIZE))
         h_genes, h_pert, h_cls = reps["H_genes"], reps["H_genes_pert"], reps["h_CLS"]
         _, context = model.perturbation_transform(
-            h_genes, torch.tensor(idx), torch.tensor(assign)
+            h_genes, torch.tensor(idx), torch.tensor(assign), BATCH_SIZE
         )
         z_s = torch.zeros(BATCH_SIZE, HIDDEN)
         z_s[0] = h_pert[0, [1, 2]].sum(0)
@@ -612,6 +655,7 @@ def test_observed_labels_enter_before_cross_gene_then_perceiver_mixing(
             reps["H_genes"],
             batch["gene"].perturbation_indices,
             batch["gene"].perturbation_indices_batch,
+            BATCH_SIZE,
         )
         expected = mix(cross(observe(base, values, mask)))
         other_order = observe(mix(cross(base)), values, mask)
@@ -705,25 +749,25 @@ def test_every_parameter_of_the_default_multitask_model_receives_a_gradient(
     assert starved == []
 
 
-def test_num_parameters_total_omits_the_optional_modules(
+def test_num_parameters_lists_every_block_and_totals_every_parameter(
     cell_graph: HeteroData,
 ) -> None:
-    """Finding: ``num_parameters`` (lines 2952-2985) tallies the embeddings, encoder,
-    transform, interaction head and the three named heads, so its ``total`` (logged by
-    ``main`` at line 3382) leaves out every optional module. 2 layers, hidden 16:
+    """``total`` is ``sum(p.numel() for p in model.parameters())`` and every block has an
+    entry equal to its own ``parameters()`` size, so the entries sum to the total (issue
+    #523: the six optional blocks were missing and ``total`` read 10850). 2 layers,
+    hidden 16:
 
-    * counted: gene_embedding 128, cls 16, encoder 2 * 3280 = 6560, transform 3280,
-      interaction head 545, per-gene head Linear(16 + 2, 16) + Linear(16, 1) = 304 + 17
-      = 321 (bilinear rank 2 widens its input); total 10850;
-    * omitted: propagation (1 graph x 2 hops + 1 = 3 features) Linear(3, 16) 64 +
+    * always present: gene_embedding 128, cls 16, encoder 2 * 3280 = 6560, transform
+      3280, interaction head 545, per-gene head Linear(16 + 2, 16) + Linear(16, 1) = 304
+      + 17 = 321 (bilinear rank 2 widens its input); 10850;
+    * optional: propagation (1 graph x 2 hops + 1 = 3 features) Linear(3, 16) 64 +
       Linear(16, 16) 272 + gate 1 = 337; cross-gene rank 4: Linear(16, 4) 68 +
       Linear(20, 16) 336 + Linear(16, 16) 272 = 676; Perceiver, 4 latents: 64 + two
       MultiheadAttention 2176 + two LayerNorms 64 + Linear(16, 32) 544 + Linear(32, 16)
       528 + gate 1 = 3377; observed-label Linear(2, 16) 48 + Linear(16, 16) 272 = 320
       (its forced-on gate is a buffer); bilinear 2 * 16 * 2 = 64; response basis rank 3:
-      16 * 3 = 48 + Linear(32, 16) 528 + Linear(16, 3) 51 = 627; sum 5401;
-    * so the module has 10850 + 5401 = 16251 trainable parameters. Pinned until the tally
-      includes them.
+      16 * 3 = 48 + Linear(32, 16) 528 + Linear(16, 3) 51 = 627; 5401;
+    * total 10850 + 5401 = 16251.
     """
     model = _eval_model(
         cell_graph,
@@ -733,7 +777,8 @@ def test_num_parameters_total_omits_the_optional_modules(
         observed_label_config={"enabled": True},
         heads_config={"per_gene": {"bilinear_rank": 2, "response_basis_rank": 3}},
     )
-    assert model.num_parameters == {
+    counts = model.num_parameters
+    assert counts == {
         "gene_embedding": 128,
         "embedding_preprocessor": 0,
         "cls_token": 16,
@@ -741,29 +786,88 @@ def test_num_parameters_total_omits_the_optional_modules(
         "perturbation_transform": 3280,
         "perturbation_head": 545,
         "per_gene_head": 321,
-        "total": 10850,
-    }
-    omitted = {
-        name: sum(p.numel() for p in module.parameters())
-        for name, module in [
-            ("perturbation_propagation", model.perturbation_propagation),
-            ("cross_gene_mixing", model.cross_gene_mixing),
-            ("post_perturbation_mixing", model.post_perturbation_mixing),
-            ("observed_label_encoder", model.observed_label_encoder),
-            ("bilinear", model.bilinear),
-            ("response_basis", model.response_basis),
-        ]
-        if module is not None
-    }
-    assert omitted == {
         "perturbation_propagation": 337,
         "cross_gene_mixing": 676,
         "post_perturbation_mixing": 3377,
         "observed_label_encoder": 320,
         "bilinear": 64,
         "response_basis": 627,
+        "total": 16251,
     }
-    assert sum(p.numel() for p in model.parameters() if p.requires_grad) == 16251
+    assert sum(v for k, v in counts.items() if k != "total") == 16251
+    assert sum(p.numel() for p in model.parameters()) == 16251
+
+
+def test_seeded_model_output_is_unchanged_by_the_batch_size_fix(
+    cell_graph: HeteroData, batch: HeteroData
+) -> None:
+    """Checkpoint compatibility for issue #523: on the fixture, where every genotype has
+    a perturbation, a seed-0 model with the per-gene and per-metabolite heads returns
+    exactly the tensors the pre-fix code returned. These values were printed from the
+    code before the change and are compared bit for bit, so any change to the
+    initialization order, the forward math or the parameter layout fails here.
+    """
+    torch.manual_seed(0)
+    model = CellGraphTransformer(
+        gene_num=GENE_NUM,
+        hidden_channels=HIDDEN,
+        num_transformer_layers=NUM_LAYERS,
+        num_attention_heads=NUM_HEADS,
+        cell_graph=cell_graph,
+        heads_config={
+            "per_gene": {"output_dim": 1},
+            "per_metabolite": {"output_dim": 1},
+        },
+    ).eval()
+    with torch.no_grad():
+        pred, reps = model(cell_graph, batch)
+    expected_pred = torch.tensor(
+        [[-0.756462812423706], [-0.42957568168640137], [-1.0405769348144531]]
+    )
+    expected_per_gene = torch.tensor(
+        [
+            [
+                0.5704988837242126,
+                0.5660132169723511,
+                0.551470160484314,
+                0.5524171590805054,
+                0.5568419694900513,
+                0.560968279838562,
+                0.544155478477478,
+                0.5531234741210938,
+            ],
+            [
+                0.5690473318099976,
+                0.5642122030258179,
+                0.5498759150505066,
+                0.5508856773376465,
+                0.5548442602157593,
+                0.5592929124832153,
+                0.5418753623962402,
+                0.5514991879463196,
+            ],
+            [
+                0.5701532363891602,
+                0.5656993389129639,
+                0.5512444376945496,
+                0.5521451234817505,
+                0.5566357374191284,
+                0.5605693459510803,
+                0.5438082814216614,
+                0.5527852773666382,
+            ],
+        ]
+    )
+    expected_per_metabolite = torch.tensor(
+        [
+            [0.23954978585243225, 0.2164001762866974, 0.2543337643146515],
+            [0.24321982264518738, 0.21959862112998962, 0.258135586977005],
+            [0.24313274025917053, 0.21999821066856384, 0.25784581899642944],
+        ]
+    )
+    assert torch.equal(pred, expected_pred)
+    assert torch.equal(reps["head_outputs"]["per_gene"], expected_per_gene)
+    assert torch.equal(reps["head_outputs"]["per_metabolite"], expected_per_metabolite)
 
 
 # Constructor and graph-regularization branches the siblings leave open ------------- #

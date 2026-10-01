@@ -105,11 +105,13 @@ def min_max_normalize_embedding(embedding: torch.Tensor) -> torch.Tensor:
 def min_max_normalize_dataset(dataset: BaseEmbeddingDataset) -> None:
     """Normalizes embeddings across the entire dataset to range [0,1] using min-max scaling per feature.
 
-    Most embedding datasets store their collated tensor as ``[n_genes, D]`` (per item
-    ``[1, D]``), but ``esm2_*`` stores it FLAT as ``[n_genes * D]`` (per item ``[D]``).
-    Both hold identical data; only the layout differs. Normalization is per FEATURE, so the
-    flat case is viewed as ``[n_genes, D]`` for the computation and written back flat --
-    reshaping in place keeps PyG's ``slices`` offsets valid, so no rebuild is needed.
+    Embedding datasets store their collated tensor as ``[n_genes, D]`` (per item
+    ``[1, D]``). ``esm2_*`` stores built before PR #552 hold it FLAT as ``[n_genes * D]``
+    (per item ``[D]``); stores built since are ``[n_genes, D]`` like the rest. Both
+    layouts hold identical data; only the shape differs, and both are handled here.
+    Normalization is per FEATURE, so the flat case is viewed as ``[n_genes, D]`` for the
+    computation and written back flat -- reshaping in place keeps PyG's ``slices``
+    offsets valid, so no rebuild is needed.
     """
     first_key = list(dataset._data.embeddings.keys())[0]
     embeddings = dataset._data.embeddings[first_key]
@@ -1451,7 +1453,9 @@ def main_transform_standardization() -> None:
 
     # Print statistics of original data using dataset.label_df
     for label in labels:
-        values = cast(np.ndarray, dataset.label_df[label].dropna().values)
+        values = cast(
+            "np.ndarray[Any, Any]", dataset.label_df[label].dropna().values
+        )  # pragma: no cover - demo main, needs a built dataset
         print(f"\n{label} statistics (original):")
         print(f"  Count: {len(values)}")
         print(f"  Min: {values.min():.4f}")

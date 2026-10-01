@@ -30,8 +30,11 @@ the full canonical id and NEVER strips ``SACE_`` -- stripping it is exactly the 
 
 Storage (embedding-dataset convention, one dir per isolate):
   ``$DATA_ROOT/data/scerevisiae/caudal2024_isolate_embeddings/<isolate>/esm2_<model>.pt``
-each a ``(data, slices)`` collated tuple (gene id -> embedding), loadable exactly like an
-``Esm2Dataset`` processed file.
+each a ``(data, slices)`` collated tuple (gene id -> ``[1, hidden]`` embedding row,
+collated ``[n_genes, hidden]``), loadable exactly like an ``Esm2Dataset`` processed file.
+Stores written before 2026-09-30 squeezed each row to ``[hidden]`` (collated FLAT
+``[n_genes * hidden]``) and carry no ``dna_windows``; they still load by integer index but
+not by gene id.
 """
 
 from __future__ import annotations
@@ -198,22 +201,21 @@ def _load_esm2(model_name: str) -> Esm2:
 
 
 def compute_isolate_esm2(
-    isolate_id: str,
-    proteins: dict[str, str],
-    esm2_model_name: str,
-    output_root: str,
+    isolate_id: str, proteins: dict[str, str], esm2_model_name: str, output_root: str
 ) -> str:
     """Embed each isolate protein with ESM2 (mean-pooled) and save the collated dataset.
 
-    Output mirrors ``Esm2Dataset``: a ``(data, slices)`` tuple of PyG ``Data`` objects each
-    carrying ``id=<gene>`` and ``embeddings={<key>: tensor}``.
+    Output mirrors ``Esm2Dataset.process``: a ``(data, slices)`` tuple of PyG ``Data``
+    objects each carrying ``id=<gene>``, ``dna_windows={<key>: protein}`` and
+    ``embeddings={<key>: [1, hidden] tensor}``, so the collate is ``[n_genes, hidden]``
+    and ``BaseEmbeddingDataset`` lookup by gene id returns that gene's row.
     """
     model = _load_esm2(esm2_model_name)
     key = f"esm2_{esm2_model_name}"
     data_list: list[Data] = []
     for gene_id, protein in tqdm(proteins.items(), desc=f"esm2 {isolate_id}"):
-        emb = model.embed([protein], mean_embedding=True).cpu().squeeze()
-        data = Data(id=gene_id)
+        emb = model.embed([protein], mean_embedding=True).cpu().reshape(1, -1)
+        data = Data(id=gene_id, dna_windows={key: protein})
         data.embeddings = {key: emb}
         data_list.append(data)
     out_dir = osp.join(output_root, isolate_id)
@@ -424,11 +426,16 @@ def locate_cds_in_assembly(
         proc = subprocess.run(
             [
                 blastn,
-                "-query", query,
-                "-db", db_path,
-                "-outfmt", "6 qseqid sseqid pident length qlen sstart send sstrand bitscore",
-                "-max_target_seqs", "5",
-                "-evalue", "1e-10",
+                "-query",
+                query,
+                "-db",
+                db_path,
+                "-outfmt",
+                "6 qseqid sseqid pident length qlen sstart send sstrand bitscore",
+                "-max_target_seqs",
+                "5",
+                "-evalue",
+                "1e-10",
             ],
             check=True,
             capture_output=True,
@@ -484,17 +491,17 @@ def slice_fudt_windows(
     cds_end0 = hi  # 0-based exclusive end of CDS
     if hit.strand == "plus":
         f_s, f_e = cds_start0 - five_up, cds_start0 + 3
-        five = contig_seq[max(0, f_s):f_e]
+        five = contig_seq[max(0, f_s) : f_e]
         five_full = f_s >= 0
         t_s, t_e = cds_end0 - 3, cds_end0 + three_down
-        three = contig_seq[t_s:min(n, t_e)]
+        three = contig_seq[t_s : min(n, t_e)]
         three_full = t_e <= n
     else:  # minus strand: gene reads high->low on the contig
         f_s, f_e = cds_end0 - 3, cds_end0 + five_up
-        five = _revcomp(contig_seq[f_s:min(n, f_e)])
+        five = _revcomp(contig_seq[f_s : min(n, f_e)])
         five_full = f_e <= n
         t_s, t_e = cds_start0 - three_down, cds_start0 + 3
-        three = _revcomp(contig_seq[max(0, t_s):t_e])
+        three = _revcomp(contig_seq[max(0, t_s) : t_e])
         three_full = t_s >= 0
     return FudtWindowSlice(
         gene=hit.gene,
@@ -558,7 +565,9 @@ def compute_isolate_fudt(
     out_paths: dict[str, str] = {}
     for model_name in FUDT_MODEL_NAMES:
         transformer = _load_fudt(model_name)
-        window_attr = "five_prime" if model_name == "species_upstream" else "three_prime"
+        window_attr = (
+            "five_prime" if model_name == "species_upstream" else "three_prime"
+        )
         data_list: list[Data] = []
         for gene, sl in tqdm(slices.items(), desc=f"fudt {model_name} {isolate_id}"):
             seq = getattr(sl, window_attr)
@@ -570,8 +579,10 @@ def compute_isolate_fudt(
                 source = "reference_fallback"
                 if seq is None:
                     continue
-            emb = transformer.embed([seq], mean_embedding=True).cpu().squeeze()
-            data = Data(id=gene)
+            # One window per call: keep the [1, hidden] row, as
+            # ``FungalUpDownTransformerDataset`` does, so genes collate as rows.
+            emb = transformer.embed([seq], mean_embedding=True).cpu().reshape(1, -1)
+            data = Data(id=gene, dna_windows={model_name: seq})
             data.embeddings = {model_name: emb}
             data.fudt_source = source
             data_list.append(data)
@@ -631,11 +642,15 @@ def run(
     )
     if dry_run:
         sample = next(iter(proteins.items()))
-        print(f"  dry-run: sample {sample[0]} -> {len(sample[1])} aa: {sample[1][:30]}...")
+        print(
+            f"  dry-run: sample {sample[0]} -> {len(sample[1])} aa: {sample[1][:30]}..."
+        )
         print("  dry-run: skipping model load / embedding.")
         return
     if not skip_esm2:
-        esm2_path = compute_isolate_esm2(isolate_id, proteins, esm2_model_name, output_root)
+        esm2_path = compute_isolate_esm2(
+            isolate_id, proteins, esm2_model_name, output_root
+        )
         print(f"  wrote ESM2 embeddings -> {esm2_path}")
     if with_fudt:
         data_root = _data_root()

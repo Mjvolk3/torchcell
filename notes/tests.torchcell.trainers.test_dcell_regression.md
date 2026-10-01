@@ -17,3 +17,7 @@ Findings, pinned as the code behaves:
 - The RMSE/MSE/MAE collection is updated with both the subsystem mean and the root (lines 161-162), so it pools six predictions: MSE 158/216.
 - Validation logs root correlations as `val_pearson`/`val_spearman` while train and test carry a `_root` suffix (lines 224, 230).
 - An unknown target raises `UnboundLocalError` on `fig` (lines 251-254); sanity-check predictions leak into the first box plot (line 246 returns early without clearing).
+
+## 2026.09.30 - Findings retired by the issue #516 fix
+
+All six findings of this file are retired. The tests now run with the `DCellLoss` the task constructs (no deprecated loss is installed) and assert: loss 1.225 (and 0.75 with auxiliary losses off, which pins the root as `predictions`); root-only RMSE/MSE/MAE (0.8660254, 0.75, 5/6); `val_pearson_root`/`val_spearman_root`; no `tracemalloc` tracing after construction; `ValueError` with the exact message for `target="growth_rate"`; a box plot of y against the root, and after one Adam step against the post-step root [0.001, -0.997001, 0.999001] with no sanity-pass values; one artifact per epoch holding that epoch's checkpoint; no artifact and no error with checkpointing disabled.

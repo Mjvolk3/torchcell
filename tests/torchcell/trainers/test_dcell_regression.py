@@ -9,37 +9,35 @@ samples of the three-term DCell hierarchy with knockouts {0, 1, 2, 3}, {0} and {
 ``GO:1`` = [0, 1, 2], ``GO:2`` = [0, 2, 1], ``GO:ROOT`` = ``GO:1 - GO:2`` = [0, -1, 1],
 against ``fitness`` y = [1.0, 0.0, 0.5].
 
-The trainer calls ``self.loss(y_hat, y, dcell.parameters())``, the argument order of the
-deprecated ``torchcell.losses.dcell_DEPRECATED.DCellLoss(outputs, target, weights)``.
-The loss it constructs is the current ``torchcell.losses.DCellLoss(predictions,
-outputs, target)``, so every step raises (Finding 1). The remaining tests swap in the
-deprecated loss the trainer was written against, which gives
+The trainer calls the loss it constructs, ``torchcell.losses.DCellLoss(predictions,
+outputs, target)``, with predictions = the squeezed root head and
+``outputs["linear_outputs"]`` = every squeezed head (the loss skips ``GO:ROOT``):
 
-* loss = MSE(root) + 0.3 * (MSE(GO:1) + MSE(GO:2))
-  = (1 + 1 + 0.25) / 3 + 0.3 * ((1 + 1 + 2.25) / 3 + (1 + 4 + 0.25) / 3)
-  = 0.75 + 0.3 * (4.25 + 5.25) / 3 = 0.75 + 0.95 = 1.7;
+* loss = MSE(root) + 0.3 * mean(MSE(GO:1), MSE(GO:2))
+  = (1 + 1 + 0.25) / 3 + 0.3 * ((1 + 1 + 2.25) / 3 + (1 + 4 + 0.25) / 3) / 2
+  = 0.75 + 0.3 * 9.5 / 6 = 0.75 + 0.475 = 1.225;
 * subsystem mean m = mean over the three terms = [0, 2/3, 4/3];
 * Pearson(m, y) = -0.5 and Pearson(root, y) = +0.5 (deviations [-2/3, 0, 2/3] and
   [0, -1, 1] against [0.5, -0.5, 0]: cov -1/3 over 2/3, cov 1/2 over 1); Spearman
   equals Pearson here (ranks of m are 1, 2, 3; of root 2, 1, 3; of y 3, 1, 2);
-* the RMSE/MSE/MAE collection is updated twice per step, with m and then with root, so
-  it pools six predictions (Finding 2): MSE = (1 + 4/9 + 25/36 + 1 + 1 + 1/4) / 6
-  = 158/216 = 0.7314815, MAE = (1 + 2/3 + 5/6 + 1 + 1 + 1/2) / 6 = 5/6,
-  RMSE = sqrt(158/216) = 0.8552669.
+* RMSE/MSE/MAE score the root, the prediction DCell reports (Ma et al. 2018 read the
+  root term's output as the phenotype; the subsystem mean is not a prediction of
+  anything): residual e = root - y = [-1, -1, 0.5], MSE = 2.25 / 3 = 0.75,
+  MAE = 2.5 / 3 = 5/6, RMSE = sqrt(0.75) = 0.8660254.
 
 Gradients of that loss: root head weight 1.0 and bias -1.0 (2/3 * sum e * h and
-2/3 * sum e for residual e = [-1, -1, 0.5]); GO:1 head weight 0.8 and bias 0.3; GO:2 head
-weight 0.9 and bias 0.3; ``scale`` [1.0, 0.8, 0.9] (every feature and head weight is 1).
-None is zero, so the first Adam step moves each parameter by exactly -lr * sign(grad)
-(m_hat / sqrt(v_hat) = g / |g| on step one; eps 1e-8 and weight decay 1e-5 perturb it
-below 1e-7).
+2/3 * sum e); GO:1 head weight 0.4 and bias 0.15; GO:2 head weight 0.45 and bias 0.15
+(each auxiliary head carries alpha / 2 = 0.15 of its MSE gradient); ``scale``
+[1.0, 0.4, 0.45] (every feature and head weight is 1). None is zero, so the first Adam
+step moves each parameter by exactly -lr * sign(grad) (m_hat / sqrt(v_hat) = g / |g|
+on step one; eps 1e-8 and weight decay 1e-5 perturb it below 1e-7). After that step the
+root prediction is 0.999 * 0.999 * [0, -1, 1] + 0.001 = [0.001, -0.997001, 0.999001].
 
 Metric values from torchmetrics carry float32 error of about 1e-6, hence ``abs=1e-6``.
 """
 
 import math
 import tracemalloc
-from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, cast
 
@@ -62,21 +60,12 @@ from tests.torchcell.conftest import (
     make_dcell_regression_batch,
 )
 from torchcell.losses.dcell import DCellLoss
-from torchcell.losses.dcell_DEPRECATED import DCellLoss as DeprecatedDCellLoss
 from torchcell.trainers.dcell_regression import DCellRegressionTask
 
 Y = [1.0, 0.0, 0.5]
-SUBSYSTEM_MEAN = [0.0, 2 / 3, 4 / 3]
-LOSS = 1.7
-POOLED = {"MSE": 158 / 216, "MAE": 5 / 6, "RMSE": math.sqrt(158 / 216)}
-
-
-@pytest.fixture(autouse=True)
-def _stop_tracemalloc() -> Iterator[None]:
-    """Every construction starts ``tracemalloc``; never let it leak into later tests."""
-    yield
-    if tracemalloc.is_tracing():
-        tracemalloc.stop()
+ROOT = [0.0, -1.0, 1.0]
+LOSS = 1.225
+ROOT_METRICS = {"MSE": 0.75, "MAE": 5 / 6, "RMSE": math.sqrt(0.75)}
 
 
 def _models() -> dict[str, nn.Module]:
@@ -84,9 +73,7 @@ def _models() -> dict[str, nn.Module]:
 
 
 def _task(**kwargs: Any) -> DCellRegressionTask:
-    task = DCellRegressionTask(_models(), target="fitness", **kwargs)
-    task.register_module("loss", DeprecatedDCellLoss())
-    return task
+    return DCellRegressionTask(_models(), target="fitness", **kwargs)
 
 
 def _loader() -> DataLoader[HeteroData]:
@@ -127,11 +114,9 @@ def _record_wandb(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, Any]]:
 def test_init_registers_submodels_metrics_and_the_current_dcell_loss() -> None:
     """Submodels become child modules; three prefixed metric collections; loss alpha 0.3.
 
-    Finding: ``__init__`` calls ``tracemalloc.start()`` process-wide (line 106), so
-    constructing the task turns on allocation tracing for the whole interpreter until a
-    plotting validation epoch stops it. Pinned until the HACK is removed.
+    Construction leaves process-wide allocation tracing alone: the memory HACK that
+    called ``tracemalloc.start()`` in ``__init__`` is gone (issue #516).
     """
-    tracemalloc.stop()
     assert tracemalloc.is_tracing() is False
     models = _models()
     task = DCellRegressionTask(models, target="fitness")
@@ -155,7 +140,7 @@ def test_init_registers_submodels_metrics_and_the_current_dcell_loss() -> None:
         "test_MSE",
         "test_RMSE",
     ]
-    assert tracemalloc.is_tracing() is True
+    assert tracemalloc.is_tracing() is False
 
 
 def test_configure_optimizers_is_adam_over_dcell_then_linear_parameters() -> None:
@@ -187,36 +172,30 @@ def test_forward_feeds_dcell_outputs_through_the_linear_heads() -> None:
     }
 
 
-def test_the_constructed_loss_rejects_the_trainer_argument_order(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize(("auxiliary", "expected"), [(True, LOSS), (False, 0.75)])
+def test_loss_feeds_the_root_as_prediction_and_every_head_as_auxiliary(
+    auxiliary: bool, expected: float
 ) -> None:
-    """Finding: every step raises with the loss ``__init__`` builds (lines 148, 200, 290).
+    """``_loss`` calls ``DCellLoss(predictions, outputs, target)`` in that order.
 
-    ``self.loss(y_hat, y, dcell.parameters())`` lands in ``DCellLoss.forward(predictions,
-    outputs, target)`` as predictions = the output dict and target = a parameter
-    generator, and ``nn.MSELoss`` fails reading ``target.size()``. Pinned until the
-    trainer calls the current loss signature.
+    With auxiliary losses the value is 1.225 (root MSE 0.75 plus 0.3 times the mean of
+    the GO:1 and GO:2 MSEs); without them it is the root MSE alone, 0.75, so the root
+    is what lands in ``predictions`` (issue #516: the steps used to pass the deprecated
+    ``(outputs, target, weights)`` order and raised on a parameter generator).
     """
-    logged = _record_wandb(monkeypatch)
-    task = DCellRegressionTask(_models(), target="fitness")
-    trainer = _trainer(tmp_path, fast_dev_run=True)
-    with pytest.raises(
-        AttributeError, match="^'generator' object has no attribute 'size'$"
-    ):
-        trainer.fit(task, train_dataloaders=_loader())
-    with pytest.raises(
-        AttributeError, match="^'generator' object has no attribute 'size'$"
-    ):
-        trainer.validate(task, dataloaders=_loader())
-    assert logged == []
+    task = _task()
+    task.loss.use_auxiliary_losses = auxiliary
+    batch = make_dcell_regression_batch()
+    loss = task._loss(task(batch), batch.fitness)
+    assert loss.item() == pytest.approx(expected, abs=1e-6)
 
 
 def test_one_training_step_logs_closed_form_values_and_takes_one_adam_step(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """train_loss 1.7, correlations -0.5 (subsystems) / +0.5 (root), pooled metrics.
+    """train_loss 1.225, correlations -0.5 (subsystems) / +0.5 (root), root metrics.
 
-    ``training_step`` returns the loss (seen by callbacks as ``{"loss": 1.7}``), the
+    ``training_step`` returns the loss (seen by callbacks as ``{"loss": 1.225}``), the
     parameter count logged at train start is 3 + 3 * 2 = 9, and every parameter of both
     submodels moves by exactly -1e-3 * sign(grad) (signs from the module docstring).
     """
@@ -252,9 +231,9 @@ def test_one_training_step_logs_closed_form_values_and_takes_one_adam_step(
         "train_spearman_subsystems": pytest.approx(-0.5, abs=1e-6),
         "train_pearson_root": pytest.approx(0.5, abs=1e-6),
         "train_spearman_root": pytest.approx(0.5, abs=1e-6),
-        "train_MSE": pytest.approx(POOLED["MSE"], abs=1e-6),
-        "train_MAE": pytest.approx(POOLED["MAE"], abs=1e-6),
-        "train_RMSE": pytest.approx(POOLED["RMSE"], abs=1e-6),
+        "train_MSE": pytest.approx(ROOT_METRICS["MSE"], abs=1e-6),
+        "train_MAE": pytest.approx(ROOT_METRICS["MAE"], abs=1e-6),
+        "train_RMSE": pytest.approx(ROOT_METRICS["RMSE"], abs=1e-6),
     }
     delta = {
         n: (p.detach() - before[n]).flatten().tolist()
@@ -274,18 +253,16 @@ def test_one_training_step_logs_closed_form_values_and_takes_one_adam_step(
     assert [list(payload) for payload in logged] == [["binned_values_box_plot"]]
 
 
-def test_validate_logs_root_correlations_without_the_root_suffix(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+def test_validate_logs_root_suffixed_correlations_like_train_and_test(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Validation logs ``val_pearson``/``val_spearman`` for the root, unlike train and test.
+    """Validation names the root correlations ``val_pearson_root``/``val_spearman_root``.
 
-    Finding: ``training_step`` and ``test_step`` name the root correlations
-    ``*_pearson_root``/``*_spearman_root`` but ``validation_step`` logs them as
-    ``val_pearson``/``val_spearman`` (lines 224, 230). Pinned until the names agree.
-
-    The box plot receives y and the subsystem mean m (not the root), the stored buffers
-    are emptied afterwards, the memory HACK prints its banner and stops ``tracemalloc``,
-    and every step-level log call carries batch size 3 (``batch.batch[-1] + 1``).
+    The three stages now agree on the ``_root`` suffix (issue #516; no config or
+    sweep in the repo reads the old ``val_pearson``/``val_spearman`` of this task).
+    The box plot receives y and the root prediction, the stored buffers are emptied
+    afterwards, and every step-level log call carries batch size 3
+    (``batch.batch[-1] + 1``).
     """
     logged = _record_wandb(monkeypatch)
     box_plots = _BoxPlots()
@@ -299,7 +276,6 @@ def test_validate_logs_root_correlations_without_the_root_suffix(
         original_log(name, value, **kwargs)
 
     monkeypatch.setattr(task, "log", _log)
-    capsys.readouterr()
     results = _trainer(tmp_path).validate(task, dataloaders=_loader(), verbose=False)
 
     assert results == [
@@ -307,41 +283,37 @@ def test_validate_logs_root_correlations_without_the_root_suffix(
             "val_loss": pytest.approx(LOSS, abs=1e-6),
             "val_pearson_subsystems": pytest.approx(-0.5, abs=1e-6),
             "val_spearman_subsystems": pytest.approx(-0.5, abs=1e-6),
-            "val_pearson": pytest.approx(0.5, abs=1e-6),
-            "val_spearman": pytest.approx(0.5, abs=1e-6),
-            "val_MSE": pytest.approx(POOLED["MSE"], abs=1e-6),
-            "val_MAE": pytest.approx(POOLED["MAE"], abs=1e-6),
-            "val_RMSE": pytest.approx(POOLED["RMSE"], abs=1e-6),
+            "val_pearson_root": pytest.approx(0.5, abs=1e-6),
+            "val_spearman_root": pytest.approx(0.5, abs=1e-6),
+            "val_MSE": pytest.approx(ROOT_METRICS["MSE"], abs=1e-6),
+            "val_MAE": pytest.approx(ROOT_METRICS["MAE"], abs=1e-6),
+            "val_RMSE": pytest.approx(ROOT_METRICS["RMSE"], abs=1e-6),
         }
     ]
     assert batch_sizes == {
         "val_loss": 3,
         "val_pearson_subsystems": 3,
         "val_spearman_subsystems": 3,
-        "val_pearson": 3,
-        "val_spearman": 3,
+        "val_pearson_root": 3,
+        "val_spearman_root": 3,
         # ``on_validation_epoch_end``'s ``log_dict`` passes no batch size
         "val_MSE": None,
         "val_MAE": None,
         "val_RMSE": None,
     }
-    expected_calls: list[Any] = [
-        (Y, [pytest.approx(v, abs=1e-6) for v in SUBSYSTEM_MEAN])
-    ]
-    assert box_plots.calls == expected_calls
+    assert box_plots.calls == [(Y, ROOT)]
     assert [list(payload) for payload in logged] == [["binned_values_box_plot"]]
     assert (task.true_values.tolist(), task.predictions.tolist()) == ([], [])
-    assert tracemalloc.is_tracing() is False
-    printed = capsys.readouterr().out.splitlines()
-    assert printed[0] == "======"
-    assert printed[1].startswith("Current memory usage is ")
-    assert printed[2] == "======"
 
 
 def test_test_logs_root_suffixed_correlations_and_pooled_metrics(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """``trainer.test`` returns the eight values of the module docstring, root suffixed."""
+    """``trainer.test`` returns the eight values of the module docstring, root suffixed.
+
+    RMSE/MSE/MAE score the root alone (issue #516: they used to pool the subsystem mean
+    and the root, six predictions per batch of three).
+    """
     logged = _record_wandb(monkeypatch)
     results = _trainer(tmp_path).test(_task(), dataloaders=_loader(), verbose=False)
     assert results == [
@@ -351,9 +323,9 @@ def test_test_logs_root_suffixed_correlations_and_pooled_metrics(
             "test_spearman_subsystems": pytest.approx(-0.5, abs=1e-6),
             "test_pearson_root": pytest.approx(0.5, abs=1e-6),
             "test_spearman_root": pytest.approx(0.5, abs=1e-6),
-            "test_MSE": pytest.approx(POOLED["MSE"], abs=1e-6),
-            "test_MAE": pytest.approx(POOLED["MAE"], abs=1e-6),
-            "test_RMSE": pytest.approx(POOLED["RMSE"], abs=1e-6),
+            "test_MSE": pytest.approx(ROOT_METRICS["MSE"], abs=1e-6),
+            "test_MAE": pytest.approx(ROOT_METRICS["MAE"], abs=1e-6),
+            "test_RMSE": pytest.approx(ROOT_METRICS["RMSE"], abs=1e-6),
         }
     ]
     assert logged == []
@@ -372,87 +344,112 @@ def test_genetic_interaction_target_uses_its_own_box_plot(
     monkeypatch.setattr(viz_fitness, "box_plot", fitness_plots)
     monkeypatch.setattr(viz_gi, "box_plot", gi_plots)
     task = DCellRegressionTask(_models(), target="genetic_interaction_score")
-    task.register_module("loss", DeprecatedDCellLoss())
     _trainer(tmp_path).validate(task, dataloaders=_loader(), verbose=False)
     assert fitness_plots.calls == []
-    expected_calls: list[Any] = [
-        (Y, [pytest.approx(v, abs=1e-6) for v in SUBSYSTEM_MEAN])
-    ]
-    assert gi_plots.calls == expected_calls
+    assert gi_plots.calls == [(Y, ROOT)]
     assert (task.true_values.tolist(), task.predictions.tolist()) == ([], [])
 
 
-def test_unknown_target_leaves_the_figure_unbound(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Finding: any other target reaches ``wandb.Image(fig)`` with ``fig`` unassigned.
+def test_unknown_target_is_rejected_at_construction() -> None:
+    """A target without a box plot raises ``ValueError`` naming it, in ``__init__``.
 
-    The ``if``/``elif`` on the target (lines 251 to 254) has no ``else``, so the first
-    plotting validation epoch raises ``UnboundLocalError`` instead of rejecting the
-    target at construction. Pinned until the target is validated in ``__init__``.
+    Issue #516: the ``if``/``elif`` on the target had no ``else``, so the first plotting
+    validation epoch raised ``UnboundLocalError`` on ``fig``.
     """
-    logged = _record_wandb(monkeypatch)
-    task = DCellRegressionTask(_models(), target="growth_rate")
-    task.register_module("loss", DeprecatedDCellLoss())
-    with pytest.raises(UnboundLocalError, match="'fig'"):
-        _trainer(tmp_path).validate(task, dataloaders=_loader(), verbose=False)
-    assert logged == []
+    with pytest.raises(ValueError) as excinfo:
+        DCellRegressionTask(_models(), target="growth_rate")
+    assert str(excinfo.value) == (
+        "Unknown target 'growth_rate': expected one of "
+        "('fitness', 'genetic_interaction_score')."
+    )
 
 
-def test_best_checkpoint_is_logged_once_per_global_step(
+def test_each_epoch_best_checkpoint_is_logged_once_at_its_own_step(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """A best checkpoint path produces one ``model-global_step-0`` artifact, not two.
+    """Two epochs log ``epoch=0-step=1`` as step 1 and ``epoch=1-step=2`` as step 2.
 
-    ``metadata`` is ``dict(self.hparams)``, which is empty because the task never calls
-    ``save_hyperparameters``. A second validation at the same global step is skipped by
+    ``ModelCheckpoint`` saves in ``on_train_epoch_end`` after the module hooks, so the
+    task logs from the next ``on_train_epoch_start`` and from ``on_train_end``; one
+    manual-optimization batch per epoch makes the global step 1 after epoch 0 and 2
+    after epoch 1, and val_loss falls each step, so each epoch's checkpoint is the best
+    (issue #516: the artifact used to hold the previous epoch's checkpoint).
+    ``metadata`` is ``dict(self.hparams)``, empty because the task never calls
+    ``save_hyperparameters``. A further call at the same global step is skipped by
     ``last_logged_best_step``.
     """
     _record_wandb(monkeypatch)
     monkeypatch.setattr(viz_fitness, "box_plot", _BoxPlots())
-    artifacts: list[dict[str, Any]] = []
-    logged_artifacts: list[dict[str, Any]] = []
+    records: list[dict[str, Any]] = []
 
     class _Artifact:
         def __init__(self, **kwargs: Any) -> None:
             self.record = dict(kwargs, files=[])
-            artifacts.append(self.record)
 
         def add_file(self, path: str) -> None:
-            self.record["files"].append(path)
+            self.record["files"].append(Path(path).name)
 
     monkeypatch.setattr(wandb, "Artifact", _Artifact)
-    monkeypatch.setattr(
-        wandb, "log_artifact", lambda a: logged_artifacts.append(a.record)
-    )
-    best = tmp_path / "best.ckpt"
-    best.write_bytes(b"")
-    checkpoint = ModelCheckpoint(dirpath=tmp_path)
-    checkpoint.best_model_path = str(best)
+    monkeypatch.setattr(wandb, "log_artifact", lambda a: records.append(a.record))
+    checkpoint = ModelCheckpoint(dirpath=tmp_path / "ckpt", monitor="val_loss")
     task = _task()
-    trainer = _trainer(tmp_path, callbacks=[checkpoint])
-    trainer.validate(task, dataloaders=_loader(), verbose=False)
-    trainer.validate(task, dataloaders=_loader(), verbose=False)
-    expected = {
-        "name": "model-global_step-0",
-        "type": "model",
-        "description": "Model on validation epoch end step - 0",
-        "metadata": {},
-        "files": [str(best)],
-    }
-    assert artifacts == [expected]
-    assert logged_artifacts == [expected]
-    assert task.last_logged_best_step == 0
+    trainer = _trainer(
+        tmp_path,
+        max_epochs=2,
+        limit_train_batches=1,
+        limit_val_batches=1,
+        num_sanity_val_steps=0,
+        callbacks=[checkpoint],
+    )
+    trainer.fit(task, train_dataloaders=_loader(), val_dataloaders=_loader())
+    task._log_best_checkpoint()
+    assert records == [
+        {
+            "name": f"model-global_step-{step}",
+            "type": "model",
+            "description": f"Best model checkpoint at step - {step}",
+            "metadata": {},
+            "files": [f"epoch={step - 1}-step={step}.ckpt"],
+        }
+        for step in (1, 2)
+    ]
+    assert task.last_logged_best_step == 2
 
 
-def test_sanity_check_predictions_leak_into_the_first_box_plot(
+def test_training_without_a_checkpoint_callback_logs_no_artifact(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: the sanity-check early return (line 246) skips clearing the buffers.
+    """``enable_checkpointing=False`` trains and validates cleanly with no artifact.
 
-    With one sanity batch and one real validation batch, the epoch-0 box plot receives
-    six values: the sanity pass (pre-step, so exactly m) followed by the real pass.
-    Pinned until the buffers are cleared on every return path.
+    Issue #516: the artifact branch read ``None.best_model_path`` and raised.
+    """
+    _record_wandb(monkeypatch)
+    monkeypatch.setattr(viz_fitness, "box_plot", _BoxPlots())
+    logged_artifacts: list[Any] = []
+    monkeypatch.setattr(wandb, "log_artifact", logged_artifacts.append)
+    task = _task()
+    trainer = _trainer(
+        tmp_path,
+        max_epochs=2,
+        limit_train_batches=1,
+        limit_val_batches=1,
+        num_sanity_val_steps=0,
+        enable_checkpointing=False,
+    )
+    trainer.fit(task, train_dataloaders=_loader(), val_dataloaders=_loader())
+    assert trainer.current_epoch == 2
+    assert logged_artifacts == []
+    assert task.last_logged_best_step is None
+
+
+def test_sanity_check_predictions_stay_out_of_the_first_box_plot(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The epoch-0 box plot holds only the real validation pass, after one Adam step.
+
+    Issue #516: the sanity pass used to be collected and plotted with the real one (six
+    values). Now ``validation_step`` skips collection during the sanity check, so the
+    plot sees y and the post-step root [0.001, -0.997001, 0.999001] (module docstring).
     """
     _record_wandb(monkeypatch)
     box_plots = _BoxPlots()
@@ -463,9 +460,10 @@ def test_sanity_check_predictions_leak_into_the_first_box_plot(
         limit_train_batches=1,
         limit_val_batches=1,
         num_sanity_val_steps=1,
+        enable_checkpointing=False,
     )
     trainer.fit(_task(), train_dataloaders=_loader(), val_dataloaders=_loader())
-    ((true_values, predictions),) = box_plots.calls
-    assert true_values == Y + Y
-    assert predictions[:3] == [pytest.approx(v, abs=1e-6) for v in SUBSYSTEM_MEAN]
-    assert len(predictions) == 6
+    expected_calls: list[Any] = [
+        (Y, [pytest.approx(v, abs=1e-6) for v in (0.001, -0.997001, 0.999001)])
+    ]
+    assert box_plots.calls == expected_calls

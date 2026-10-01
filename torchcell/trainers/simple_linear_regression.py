@@ -28,6 +28,8 @@ from torchcell.viz import fitness, genetic_interaction_score
 style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
 
+PLOTTED_TARGETS = ("fitness", "genetic_interaction_score")
+
 
 class SimpleLinearRegressionTask(L.LightningModule):
     """LightningModule for training models on graph-based regression datasets."""
@@ -46,8 +48,17 @@ class SimpleLinearRegressionTask(L.LightningModule):
         clip_grad_norm_max_norm: float = 0.1,
         **kwargs: Any,
     ) -> None:
-        """Set up the model, loss, optimizer config, and regression metrics."""
+        """Set up the model, loss, optimizer config, and regression metrics.
+
+        Raises:
+            ValueError: If ``target`` has no box plot (not in ``PLOTTED_TARGETS``)
+                or ``loss`` is neither ``"mse"`` nor ``"mae"``.
+        """
         super().__init__()
+        if target not in PLOTTED_TARGETS:
+            raise ValueError(
+                f"Unknown target '{target}': expected one of {PLOTTED_TARGETS}."
+            )
 
         # target for training
         self.target = target
@@ -190,11 +201,14 @@ class SimpleLinearRegressionTask(L.LightningModule):
             batch_size=batch_size,
             sync_dist=True,
         )
+        # the sanity check runs before training and is never plotted
+        if self.trainer.sanity_checking:
+            return
         self.true_values.append(y.detach())
         self.predictions.append(y_hat.detach())
 
     def on_validation_epoch_end(self) -> None:
-        """Log metrics, render box plots, and log the best model artifact."""
+        """Log metrics and, on plotting epochs, render the box plot."""
         self.log_dict(self.val_metrics.compute(), sync_dist=True)
         self.val_metrics.reset()
 
@@ -210,7 +224,7 @@ class SimpleLinearRegressionTask(L.LightningModule):
 
         if self.target == "fitness":
             fig = fitness.box_plot(true_values, predictions)
-        elif self.target == "genetic_interaction_score":
+        else:
             fig = genetic_interaction_score.box_plot(true_values, predictions)
 
         wandb.log({"binned_values_box_plot": wandb.Image(fig)})
@@ -219,21 +233,41 @@ class SimpleLinearRegressionTask(L.LightningModule):
         self.true_values = []
         self.predictions = []
 
+    def on_train_epoch_start(self) -> None:
+        """Log the checkpoint the previous epoch saved, if it is a new best."""
+        self._log_best_checkpoint()
+
+    def on_train_end(self) -> None:
+        """Log the checkpoint the final epoch saved, if it is a new best."""
+        self._log_best_checkpoint()
+
+    def _log_best_checkpoint(self) -> None:
+        """Log the best checkpoint as a W&B artifact once per global step.
+
+        With validation every epoch, ``ModelCheckpoint`` saves in ``on_train_epoch_end``
+        after every module hook of that epoch, so the first module hooks that see the
+        epoch's checkpoint are the next ``on_train_epoch_start`` and, for the last
+        epoch, ``on_train_end``; the global step there is the step it was saved at.
+        With checkpointing disabled there is nothing to log.
+        """
         current_global_step = self.global_step
-        ckpt = cast(ModelCheckpoint, self.trainer.checkpoint_callback)
-        if ckpt.best_model_path and current_global_step != self.last_logged_best_step:
-            # Save model as a W&B artifact
-            artifact = wandb.Artifact(
-                name=f"model-global_step-{current_global_step}",
-                type="model",
-                description=f"Model on validation epoch end step - {current_global_step}",
-                metadata=dict(self.hparams),
-            )
-            artifact.add_file(ckpt.best_model_path)
-            wandb.log_artifact(artifact)
-            self.last_logged_best_step = (
-                current_global_step  # update the last logged step
-            )
+        ckpt = cast(ModelCheckpoint | None, self.trainer.checkpoint_callback)
+        if (
+            ckpt is None
+            or not ckpt.best_model_path
+            or current_global_step == self.last_logged_best_step
+        ):
+            return
+        # Save model as a W&B artifact
+        artifact = wandb.Artifact(
+            name=f"model-global_step-{current_global_step}",
+            type="model",
+            description=f"Best model checkpoint at step - {current_global_step}",
+            metadata=dict(self.hparams),
+        )
+        artifact.add_file(ckpt.best_model_path)
+        wandb.log_artifact(artifact)
+        self.last_logged_best_step = current_global_step
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
         """Run a test step, logging loss, metrics, and correlations."""

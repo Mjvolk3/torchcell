@@ -5,9 +5,10 @@
 
 Fixture and loss as in ``test_dcell_regression.py``: ``make_dcell_regression_batch()``
 gives ``GO:ROOT`` = [0, -1, 1], ``GO:1`` = [0, 1, 2], ``GO:2`` = [0, 2, 1] against
-y = [1.0, 0.0, 0.5]. The slim task has the same call-order defect with the current
-``DCellLoss`` (Finding 1), so the value tests swap in the deprecated loss at alpha 0.3:
-loss = 0.75 + 0.3 * (4.25 + 5.25) / 3 = 1.7.
+y = [1.0, 0.0, 0.5]. The task calls the ``DCellLoss(predictions, outputs, target)`` it
+constructs with the root as predictions and every head as ``linear_outputs``, so at alpha
+0.3 the loss is root MSE plus alpha times the mean auxiliary MSE:
+loss = 0.75 + 0.3 * ((4.25 + 5.25) / 3) / 2 = 0.75 + 0.475 = 1.225.
 
 Unlike the full task, the slim task keeps separate collections for the subsystem mean
 m = [0, 2/3, 4/3] and for the root, each with Pearson and Spearman inside:
@@ -42,10 +43,9 @@ from tests.torchcell.conftest import (
     make_dcell_regression_batch,
 )
 from torchcell.losses.dcell import DCellLoss
-from torchcell.losses.dcell_DEPRECATED import DCellLoss as DeprecatedDCellLoss
 from torchcell.trainers.dcell_regression_slim import DCellRegressionSlimTask
 
-LOSS = 1.7
+LOSS = 1.225
 SUBSYSTEM = {
     "MSE": 77 / 108,
     "RMSE": math.sqrt(77 / 108),
@@ -70,10 +70,8 @@ def _models() -> dict[str, nn.Module]:
     return {"dcell": DCellCountSubsystems(), "dcell_linear": DCellIdentityHeads()}
 
 
-def _task() -> DCellRegressionSlimTask:
-    task = DCellRegressionSlimTask(_models(), target="fitness")
-    task.register_module("loss", DeprecatedDCellLoss(alpha=0.3))
-    return task
+def _task(**kwargs: Any) -> DCellRegressionSlimTask:
+    return DCellRegressionSlimTask(_models(), target="fitness", **kwargs)
 
 
 def _loader() -> DataLoader[HeteroData]:
@@ -139,28 +137,31 @@ def test_configure_optimizers_is_adam_over_dcell_then_linear_parameters() -> Non
     assert [id(p) for p in group["params"]] == [id(p) for p in expected]
 
 
-def test_the_constructed_loss_rejects_the_trainer_argument_order(
-    tmp_path: Path,
+@pytest.mark.parametrize(
+    ("alpha", "expected"), [(0.3, LOSS), (0.7, 0.75 + 0.7 * 19 / 12)]
+)
+def test_loss_feeds_the_root_as_prediction_and_every_head_as_auxiliary(
+    alpha: float, expected: float
 ) -> None:
-    """Finding: every step raises with the loss ``__init__`` builds (lines 158, 188, 227).
+    """``_loss`` calls ``DCellLoss(predictions, outputs, target)`` in that order.
 
-    ``self.loss(y_hat, y, dcell.parameters())`` binds a parameter generator to
-    ``DCellLoss.forward``'s ``target``. Pinned until the call matches the signature.
+    The mean auxiliary MSE is (4.25 + 5.25) / 6 = 19/12, so alpha 0.3 gives 1.225 and
+    alpha 0.7 gives 0.75 + 0.7 * 19/12 = 1.8583333; ``alpha`` reaches the loss the steps
+    call (issue #516: they passed the deprecated ``(outputs, target, weights)`` order).
     """
-    task = DCellRegressionSlimTask(_models(), target="fitness")
-    with pytest.raises(
-        AttributeError, match="^'generator' object has no attribute 'size'$"
-    ):
-        _trainer(tmp_path).test(task, dataloaders=_loader(), verbose=False)
+    task = _task(alpha=alpha)
+    batch = make_dcell_regression_batch()
+    loss = task._loss(task(batch), batch.fitness)
+    assert loss.item() == pytest.approx(expected, abs=1e-6)
 
 
 def test_one_training_step_logs_subsystem_and_root_metrics_separately(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """train_loss 1.7, ``train_*`` from m, ``train_root_*`` from the root, 9 parameters.
+    """train_loss 1.225, ``train_*`` from m, ``train_root_*`` from the root, 9 parameters.
 
-    Gradients (root head weight 1.0, bias -1.0; GO:1 head 0.8, 0.3; GO:2 head 0.9, 0.3;
-    ``scale`` [1.0, 0.8, 0.9]) are all nonzero, so the one Adam step moves every
+    Gradients (root head weight 1.0, bias -1.0; GO:1 head 0.4, 0.15; GO:2 head 0.45,
+    0.15; ``scale`` [1.0, 0.4, 0.45]) are all nonzero, so the one Adam step moves every
     parameter by exactly -1e-3 * sign(grad).
 
     The slim task never calls ``wandb.log`` (it has no box plot), and with no best
@@ -212,71 +213,97 @@ def test_validate_logs_subsystem_and_root_metrics(tmp_path: Path) -> None:
     ]
 
 
-def test_test_epoch_end_drops_the_root_metrics(tmp_path: Path) -> None:
-    """Finding: ``on_test_epoch_end`` logs and resets only ``test_metrics`` (line 240).
+def test_test_epoch_end_logs_and_resets_the_root_metrics(tmp_path: Path) -> None:
+    """``on_test_epoch_end`` logs ``test_root_*`` beside ``test_*`` and resets both.
 
-    ``test_step`` updates ``test_metrics_root`` (line 236) but nothing computes, logs or
-    resets it, so ``test_root_*`` never appear and the root state carries over into the
-    next test run. Pinned until the epoch end mirrors train and validation.
+    Issue #516: it used to log and reset only ``test_metrics``, so ``test_root_*`` never
+    appeared and the root state carried over into the next test run; after the epoch
+    end the root collection holds no updates.
     """
     task = _task()
-    results = _trainer(tmp_path).test(task, dataloaders=_loader(), verbose=False)
-    assert results == [
-        {"test_loss": pytest.approx(LOSS, abs=1e-6), **_expected("test_", SUBSYSTEM)}
+    trainer = _trainer(tmp_path)
+    expected = [
+        {
+            "test_loss": pytest.approx(LOSS, abs=1e-6),
+            **_expected("test_", SUBSYSTEM),
+            **_expected("test_root_", ROOT),
+        }
     ]
-    carried = {k: v.item() for k, v in task.test_metrics_root.compute().items()}
-    assert carried == _expected("test_root_", ROOT)
+    assert trainer.test(task, dataloaders=_loader(), verbose=False) == expected
+    assert task.test_metrics_root["MSE"].update_called is False
 
 
-def test_validation_epoch_end_requires_a_checkpoint_callback(tmp_path: Path) -> None:
-    """Finding: with checkpointing disabled the epoch end reads ``None.best_model_path``.
-
-    ``on_validation_epoch_end`` casts ``trainer.checkpoint_callback`` to
-    ``ModelCheckpoint`` (line 208) without checking it exists, so
-    ``enable_checkpointing=False`` makes every validation epoch raise. Pinned until the
-    artifact branch tolerates a missing callback.
-    """
-    trainer = _trainer(tmp_path, enable_checkpointing=False)
-    with pytest.raises(
-        AttributeError, match="^'NoneType' object has no attribute 'best_model_path'$"
-    ):
-        trainer.validate(_task(), dataloaders=_loader(), verbose=False)
-
-
-def test_best_checkpoint_is_logged_once_per_global_step(
+def test_each_epoch_best_checkpoint_is_logged_once_at_its_own_step(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """A best checkpoint path produces one ``model-global_step-0`` artifact, not two."""
-    artifacts: list[dict[str, Any]] = []
-    logged_artifacts: list[dict[str, Any]] = []
+    """Two epochs log ``epoch=0-step=1`` as step 1 and ``epoch=1-step=2`` as step 2.
+
+    ``ModelCheckpoint`` saves in ``on_train_epoch_end`` after the module hooks, so the
+    task logs from the next ``on_train_epoch_start`` and from ``on_train_end``; one
+    manual-optimization batch per epoch makes the global step 1 after epoch 0 and 2
+    after epoch 1, and val_loss falls each step, so each epoch's checkpoint is the best
+    (issue #516: the artifact used to hold the previous epoch's checkpoint).
+    ``metadata`` is ``dict(self.hparams)``, empty because the task never calls
+    ``save_hyperparameters``. A further call at the same global step is skipped by
+    ``last_logged_best_step``.
+    """
+    _record_wandb(monkeypatch)
+    records: list[dict[str, Any]] = []
 
     class _Artifact:
         def __init__(self, **kwargs: Any) -> None:
             self.record = dict(kwargs, files=[])
-            artifacts.append(self.record)
 
         def add_file(self, path: str) -> None:
-            self.record["files"].append(path)
+            self.record["files"].append(Path(path).name)
 
     monkeypatch.setattr(wandb, "Artifact", _Artifact)
-    monkeypatch.setattr(
-        wandb, "log_artifact", lambda a: logged_artifacts.append(a.record)
-    )
-    best = tmp_path / "best.ckpt"
-    best.write_bytes(b"")
-    checkpoint = ModelCheckpoint(dirpath=tmp_path)
-    checkpoint.best_model_path = str(best)
+    monkeypatch.setattr(wandb, "log_artifact", lambda a: records.append(a.record))
+    checkpoint = ModelCheckpoint(dirpath=tmp_path / "ckpt", monitor="val_loss")
     task = _task()
-    trainer = _trainer(tmp_path, callbacks=[checkpoint])
-    trainer.validate(task, dataloaders=_loader(), verbose=False)
-    trainer.validate(task, dataloaders=_loader(), verbose=False)
-    expected = {
-        "name": "model-global_step-0",
-        "type": "model",
-        "description": "Model on validation epoch end step - 0",
-        "metadata": {},
-        "files": [str(best)],
-    }
-    assert artifacts == [expected]
-    assert logged_artifacts == [expected]
-    assert task.last_logged_best_step == 0
+    trainer = _trainer(
+        tmp_path,
+        max_epochs=2,
+        limit_train_batches=1,
+        limit_val_batches=1,
+        num_sanity_val_steps=0,
+        callbacks=[checkpoint],
+    )
+    trainer.fit(task, train_dataloaders=_loader(), val_dataloaders=_loader())
+    task._log_best_checkpoint()
+    assert records == [
+        {
+            "name": f"model-global_step-{step}",
+            "type": "model",
+            "description": f"Best model checkpoint at step - {step}",
+            "metadata": {},
+            "files": [f"epoch={step - 1}-step={step}.ckpt"],
+        }
+        for step in (1, 2)
+    ]
+    assert task.last_logged_best_step == 2
+
+
+def test_training_without_a_checkpoint_callback_logs_no_artifact(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``enable_checkpointing=False`` trains and validates cleanly with no artifact.
+
+    Issue #516: the artifact branch read ``None.best_model_path`` and raised.
+    """
+    _record_wandb(monkeypatch)
+    logged_artifacts: list[Any] = []
+    monkeypatch.setattr(wandb, "log_artifact", logged_artifacts.append)
+    task = _task()
+    trainer = _trainer(
+        tmp_path,
+        max_epochs=2,
+        limit_train_batches=1,
+        limit_val_batches=1,
+        num_sanity_val_steps=0,
+        enable_checkpointing=False,
+    )
+    trainer.fit(task, train_dataloaders=_loader(), val_dataloaders=_loader())
+    assert trainer.current_epoch == 2
+    assert logged_artifacts == []
+    assert task.last_logged_best_step is None

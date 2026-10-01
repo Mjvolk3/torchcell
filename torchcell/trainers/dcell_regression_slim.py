@@ -140,6 +140,18 @@ class DCellRegressionSlimTask(L.LightningModule):
         #     dcell_linear_output = dcell_linear_output.squeeze(-1)
         return cast(dict[str, torch.Tensor], dcell_linear_output)
 
+    def _loss(self, y_hat: dict[str, torch.Tensor], y: torch.Tensor) -> torch.Tensor:
+        """Apply ``DCellLoss(predictions, outputs, target)`` to the head outputs.
+
+        The root head is the prediction; every head (the loss skips ``GO:ROOT``)
+        goes in ``outputs["linear_outputs"]`` for the auxiliary term.
+        """
+        linear_outputs = {name: out.squeeze(-1) for name, out in y_hat.items()}
+        loss, _ = self.loss(
+            linear_outputs["GO:ROOT"], {"linear_outputs": linear_outputs}, y
+        )
+        return cast(torch.Tensor, loss)
+
     def on_train_start(self) -> None:
         """Log the total model parameter count when training starts."""
         # Calculate the model size (number of parameters)
@@ -155,7 +167,7 @@ class DCellRegressionSlimTask(L.LightningModule):
         y = batch.fitness
         opt = cast(LightningOptimizer, self.optimizers())
         opt.zero_grad()
-        loss: torch.Tensor = self.loss(y_hat, y, self._submodel("dcell").parameters())
+        loss = self._loss(y_hat, y)
 
         self.manual_backward(loss)  # error on this line
         opt.step()
@@ -185,7 +197,7 @@ class DCellRegressionSlimTask(L.LightningModule):
         # Extract the batch vector
         y_hat = self(batch)
         y = batch.fitness
-        loss = self.loss(y_hat, y, self._submodel("dcell").parameters())
+        loss = self._loss(y_hat, y)
         batch_size = batch.batch[-1].item() + 1
         self.log("val_loss", loss, batch_size=batch_size, sync_dist=True)
         # Flatten
@@ -197,34 +209,53 @@ class DCellRegressionSlimTask(L.LightningModule):
         self.val_metrics_root(y_hat_root, y)
 
     def on_validation_epoch_end(self) -> None:
-        """Log validation metrics and log the best model as a wandb artifact."""
+        """Log and reset the subsystem and root validation metrics."""
         self.log_dict(self.val_metrics.compute(), sync_dist=True)
         self.log_dict(self.val_metrics_root.compute(), sync_dist=True)
         self.val_metrics.reset()
         self.val_metrics_root.reset()
 
-        # Stop tracing memory allocations
+    def on_train_epoch_start(self) -> None:
+        """Log the checkpoint the previous epoch saved, if it is a new best."""
+        self._log_best_checkpoint()
+
+    def on_train_end(self) -> None:
+        """Log the checkpoint the final epoch saved, if it is a new best."""
+        self._log_best_checkpoint()
+
+    def _log_best_checkpoint(self) -> None:
+        """Log the best checkpoint as a W&B artifact once per global step.
+
+        With validation every epoch, ``ModelCheckpoint`` saves in ``on_train_epoch_end``
+        after every module hook of that epoch, so the first module hooks that see the
+        epoch's checkpoint are the next ``on_train_epoch_start`` and, for the last
+        epoch, ``on_train_end``; the global step there is the step it was saved at.
+        With checkpointing disabled there is nothing to log.
+        """
         current_global_step = self.global_step
-        ckpt = cast(ModelCheckpoint, self.trainer.checkpoint_callback)
-        if ckpt.best_model_path and current_global_step != self.last_logged_best_step:
-            # Save model as a W&B artifact
-            artifact = wandb.Artifact(
-                name=f"model-global_step-{current_global_step}",
-                type="model",
-                description=f"Model on validation epoch end step - {current_global_step}",
-                metadata=dict(self.hparams),
-            )
-            artifact.add_file(ckpt.best_model_path)
-            wandb.log_artifact(artifact)
-            self.last_logged_best_step = (
-                current_global_step  # update the last logged step
-            )
+        ckpt = cast(ModelCheckpoint | None, self.trainer.checkpoint_callback)
+        if (
+            ckpt is None
+            or not ckpt.best_model_path
+            or current_global_step == self.last_logged_best_step
+        ):
+            return
+        # Save model as a W&B artifact
+        artifact = wandb.Artifact(
+            name=f"model-global_step-{current_global_step}",
+            type="model",
+            description=f"Best model checkpoint at step - {current_global_step}",
+            metadata=dict(self.hparams),
+        )
+        artifact.add_file(ckpt.best_model_path)
+        wandb.log_artifact(artifact)
+        self.last_logged_best_step = current_global_step
 
     def test_step(self, batch: HeteroData, batch_idx: int) -> None:
         """Run a test step and update subsystem and root metrics."""
         y_hat = self(batch)
         y = batch.fitness
-        loss = self.loss(y_hat, y, self._submodel("dcell").parameters())
+        loss = self._loss(y_hat, y)
         batch_size = batch.batch[-1].item() + 1
         # Flatten
         y_hat_root = y_hat["GO:ROOT"].squeeze(1)
@@ -236,9 +267,11 @@ class DCellRegressionSlimTask(L.LightningModule):
         self.test_metrics_root(y_hat_root, y)
 
     def on_test_epoch_end(self) -> None:
-        """Log and reset the test metrics at epoch end."""
+        """Log and reset the subsystem and root test metrics at epoch end."""
         self.log_dict(self.test_metrics.compute(), sync_dist=True)
+        self.log_dict(self.test_metrics_root.compute(), sync_dist=True)
         self.test_metrics.reset()
+        self.test_metrics_root.reset()
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
         """Return an Adam optimizer over the DCell and linear-head parameters."""

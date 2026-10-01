@@ -322,34 +322,29 @@ def test_genetic_interaction_target_reads_that_field_and_its_box_plot(
     assert gi_plots.calls == [([0.0, 1.0, -1.0], Y_HAT)]
 
 
-def test_unknown_target_leaves_the_figure_unbound(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Finding: a target other than the two plotted ones fails at the epoch end.
+def test_unknown_target_is_rejected_at_construction() -> None:
+    """A target without a box plot raises ``ValueError`` naming it, in ``__init__``.
 
-    The ``if``/``elif`` on the target (lines 211 to 214) has no ``else``, so a batch
-    field that exists but is not ``fitness``/``genetic_interaction_score`` trains and
-    validates, then ``wandb.Image(fig)`` raises ``UnboundLocalError``. Pinned until the
-    target is validated in ``__init__``.
+    Issue #516: the ``if``/``elif`` on the target had no ``else``, so a batch field that
+    exists but is not ``fitness``/``genetic_interaction_score`` trained and validated,
+    then ``wandb.Image(fig)`` raised ``UnboundLocalError``.
     """
-    logged = _record_wandb(monkeypatch)
-    batch = _batch()
-    batch.growth_rate = torch.tensor(Y)
-    task = SimpleLinearRegressionTask(_model(), target="growth_rate")
-    loader = DataLoader(cast("Dataset[Data]", [batch]), batch_size=None)
-    with pytest.raises(UnboundLocalError, match="'fig'"):
-        _trainer(tmp_path).validate(task, dataloaders=loader, verbose=False)
-    assert logged == []
+    with pytest.raises(ValueError) as excinfo:
+        SimpleLinearRegressionTask(_model(), target="growth_rate")
+    assert str(excinfo.value) == (
+        "Unknown target 'growth_rate': expected one of "
+        "('fitness', 'genetic_interaction_score')."
+    )
 
 
-def test_sanity_check_predictions_leak_into_the_first_box_plot(
+def test_sanity_check_predictions_stay_out_of_the_first_box_plot(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: the sanity-check early return (line 202) skips clearing the buffers.
+    """The epoch-0 box plot holds only the real validation pass, after one Adam step.
 
-    One sanity batch plus one real validation batch reach the epoch-0 box plot as six
-    values: the sanity pass (pre-step, so exactly y_hat) then the post-step pass.
-    Pinned until the buffers are cleared on every return path.
+    Issue #516: the sanity pass used to be collected and plotted with the real one (six
+    values). After the step w = [0.999, -0.999] and b = 0.499, so the summed features
+    [1, 1], [2, 1], [1, 2] predict [0.499, 1.498, -0.500].
     """
     _record_wandb(monkeypatch)
     box_plots = _BoxPlots()
@@ -360,28 +355,31 @@ def test_sanity_check_predictions_leak_into_the_first_box_plot(
         limit_train_batches=1,
         limit_val_batches=1,
         num_sanity_val_steps=1,
+        enable_checkpointing=False,
     )
     task = SimpleLinearRegressionTask(_model(), target="fitness")
     trainer.fit(task, train_dataloaders=_loader(), val_dataloaders=_loader())
-    ((true_values, predictions),) = box_plots.calls
-    assert true_values == Y + Y
-    assert predictions[:3] == Y_HAT
-    assert len(predictions) == 6
-    # the plotting epoch does clear them
+    expected_calls: list[Any] = [
+        (Y, [pytest.approx(v, abs=1e-6) for v in (0.499, 1.498, -0.5)])
+    ]
+    assert box_plots.calls == expected_calls
     assert (task.true_values, task.predictions) == ([], [])
 
 
-def test_artifact_of_the_previous_best_is_logged_only_on_plotting_epochs(
+def test_artifact_of_the_current_best_is_logged_on_every_epoch(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: the artifact branch sits behind the plotting early return (line 202).
+    """Each epoch logs the checkpoint ``ModelCheckpoint`` just saved, plotting or not.
 
-    ``ModelCheckpoint`` saves after the module's ``on_validation_epoch_end``, so epoch 0
-    sees no best path and epoch 1 sees epoch 0's checkpoint. With
-    ``boxplot_every_n_epochs=1`` epoch 1 logs an artifact named for the current step,
-    ``model-global_step-2``, holding the previous step's ``epoch=0-step=1.ckpt``; with ``boxplot_every_n_epochs=2`` epoch 1 is not a
-    plotting epoch and no artifact is logged at all, although a best checkpoint exists.
-    Pinned until artifact logging is independent of plotting.
+    Issue #516: the artifact branch sat behind the plotting early return in
+    ``on_validation_epoch_end``, which runs before ``ModelCheckpoint`` saves, so it
+    logged the previous epoch's checkpoint and only on plotting epochs. With
+    validation every epoch the checkpoint is saved in ``on_train_epoch_end`` after the
+    module hooks, so the task now logs from the next ``on_train_epoch_start`` and from
+    ``on_train_end``. One manual-optimization batch per epoch makes
+    the global step 1 after epoch 0 and 2 after epoch 1; val_loss falls each step, so
+    each epoch's checkpoint is the best. ``boxplot_every_n_epochs`` 1 and 2 give the
+    same artifacts.
     """
     _record_wandb(monkeypatch)
     monkeypatch.setattr(viz_fitness, "box_plot", _BoxPlots())
@@ -415,7 +413,8 @@ def test_artifact_of_the_previous_best_is_logged_only_on_plotting_epochs(
         )
         trainer.fit(task, train_dataloaders=_loader(), val_dataloaders=_loader())
         names[every] = (records, task.last_logged_best_step)
-    assert names == {
-        1: ([("model-global_step-2", ["epoch=0-step=1.ckpt"])], 2),
-        2: ([], None),
-    }
+    per_epoch = [
+        ("model-global_step-1", ["epoch=0-step=1.ckpt"]),
+        ("model-global_step-2", ["epoch=1-step=2.ckpt"]),
+    ]
+    assert names == {1: (per_epoch, 2), 2: (per_epoch, 2)}

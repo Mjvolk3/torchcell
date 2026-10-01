@@ -710,7 +710,53 @@ retain about 1 GB per chunk they have handled (22 workers, 2 chunks: about 47 GB
 released at teardown), and only the teardown releases it. The single-worker
 emulation of `worker_heap_ratchet.py` did not reproduce this on the full dataset, so
 what is retained, and why the emulation missed it, is the open question
-(`scripts/pool_worker_retention.py`, in progress). Hypothesis (untested): a pool
+(`scripts/pool_worker_retention.py`, below). Hypothesis (untested): a pool
 group's memory is `workers x chunks_per_worker x about 1 GB` on top of the parent,
 which puts 22 x 8 at about 180 GB against 96, and 64 x 2 near the 211 GB the full
 build peaked at.
+
+### What a worker retains per chunk, and round 11 (memory-driven recycling)
+
+`scripts/pool_worker_retention.py` (`results/pool_worker_retention.csv`; the real
+path: full DmfCostanzo2016 dev LMDB, 2 workers, 6,280-record chunks, io_workers 1,
+sampling every worker's `smaps_rollup`): each worker's Private_Dirty went 0.88, 1.92,
+2.81, 3.59, 4.47, 5.30, 6.17 GB over chunks 0 to 6, +0.85 GB per chunk, no plateau,
+and pymalloc's allocated bytes (+0.66 GB per chunk) plus glibc mmapped blocks
+(+0.16 GB) account for it: live objects, not allocator slack. tracemalloc attributes
++836.6 MB and +20,707,918 blocks per chunk to unpickling the task. The task pickles to
+103.5 MB: the parent runs the `experiment reference` node method before the chunked
+pass and the dataset caches `_experiment_reference_index`, one member index per
+record, 20.7M integers, shipped with every task since the bound method carries the
+adapter and its dataset. `gc.collect()` releases nothing; `gc.unfreeze()` plus
+collect releases it (the loader's per-chunk `gc.freeze` pins each task's payload);
+clearing the cache before the pass (`slim`) makes the task 0.0 MB and the worker
+flat at 0.35 to 0.38 GB at no cost per chunk. The single-worker emulation of
+`worker_heap_ratchet.py` never ran the reference method, so its cache was empty.
+
+Fix (commit below): `CellAdapter.__getstate__` ships the dataset without `_indices`
+and without `_experiment_reference_index`. Implied rule without the fix (linear
+extrapolation from the probe): a worker holds about 1.07 + 0.85 x chunks GB, so a
+group costs workers x that on top of the parent: 22 x 2 about 61 GB (job 3066
+peaked near 57), 22 x 8 about 173 GB against the 96 GB that killed job 3067.
+
+Round 11 (commit abce5802, before that fix): `adapters.pool_memory_fraction=F` stops
+a pool taking chunks once the container's cgroup memory is above F of its limit,
+checked at each submission after every worker has had one chunk, with
+`chunks_per_worker` as the upper bound.
+
+| job | arm | box | wall | peak GB | pool recycles | rows |
+|--:|---|---|--:|--:|--:|--:|
+| 3066 | order, slim, g2 | 24 / 96 | 644 s | 62.0 | fixed, every 44 chunks | 29,736,985 |
+| 3068 | order, slim, g64, memory 0.6 | 24 / 96 | 642 s | 62.9 | 10 | 29,736,985 |
+| 3069 | order, slim, g2 | 48 / 192 | 604 s | 103.8 | fixed, every 92 chunks | 29,736,985 |
+| 3070 | order, slim, g64, memory 0.6 | 48 / 192 | 582 s | 140.6 | 4 | 29,736,985 |
+
+<https://wandb.ai/zhao-group/tcdb/runs/lf06tqhu>
+
+Memory-driven recycling never OOMs (it recycled at 0.6 of the limit 10 times on the
+small box) and buys 4% at 48 CPUs; the 24 to 48 CPU step buys only 6% (644 to 604 s)
+on this ladder, so at this point the ladder is bounded by something that does not
+scale with workers (the parent's single writer, or the per-rebuild fork cost at this
+parent size, unmeasured here). With the retention fixed, worker memory no longer
+grows with the group, so the recycle frequency can fall to whatever the rebuild cost
+justifies; round 12 measures that.

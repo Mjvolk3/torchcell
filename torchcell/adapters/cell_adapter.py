@@ -630,22 +630,28 @@ class CellAdapter:
         return self._record_bytes
 
     def __getstate__(self) -> dict[str, Any]:
-        """Pickle for a pool task WITHOUT the parent's subset index list.
+        """Pickle for a pool task WITHOUT the parent's per-record indexes.
 
         Every chunk task pickles the bound chunk method, hence this adapter, hence
-        ``self.dataset``. For a subset view (a capped or prefiltered build, the
-        benchmark ladder) that dataset carries the whole index list: 2M entries, 10 MB
-        per task, and the worker's heap grew 0.08 GB per chunk unpickling it
-        (``experiments/tcdb-002-build-speed/scripts/worker_heap_ratchet.py``). The
-        worker only reads records through the chunk view it is handed, so it gets the
-        underlying store with no index list.
+        ``self.dataset``, and the worker only reads records through the chunk view it
+        is handed. Two caches on the dataset are per-record and must not travel:
+
+        - ``_indices``: a subset view (a capped or prefiltered build, the benchmark
+          ladder) carries the whole index list, 2M entries and 10 MB per task
+          (``experiments/tcdb-002-build-speed/scripts/worker_heap_ratchet.py``).
+        - ``_experiment_reference_index``: the reference node method runs in the
+          parent before the chunked pass and caches one member index per record, so
+          every Costanzo task carried 20.7M integers, 103.5 MB, which the loader's
+          per-chunk ``gc.freeze`` then pinned in the worker: 0.85 GB retained per
+          chunk per worker, released only by the pool teardown; with it dropped the
+          worker stays flat at 0.38 GB
+          (``experiments/tcdb-002-build-speed/scripts/pool_worker_retention.py``).
         """
         state = self.__dict__.copy()
-        dataset = state["dataset"]
-        if getattr(dataset, "_indices", None) is not None:
-            unindexed = copy.copy(dataset)
-            unindexed._indices = None
-            state["dataset"] = unindexed
+        shipped = copy.copy(state["dataset"])
+        shipped._indices = None
+        shipped._experiment_reference_index = None
+        state["dataset"] = shipped
         return state
 
     def _pack_chunk(self, datas: list[Any]) -> list[Any]:

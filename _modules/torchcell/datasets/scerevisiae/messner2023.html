@@ -230,6 +230,15 @@
 <span class="n">_UNIPROT_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"UniProtKB:([A-Z0-9]+)"</span><span class="p">)</span>
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">MissingWildTypeReferenceError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A KO sample measured a protein that no HIS3 (WT) sample measured.</span>
+
+<span class="sd">    The reference is the WT profile restricted to the proteins a strain measured, so</span>
+<span class="sd">    such a protein has no reference value. The pinned matrix has none (0 of 1,850</span>
+<span class="sd">    proteins are measured in a KO sample and in no WT sample).</span>
+<span class="sd">    """</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">build_uniprot_to_orf_map</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Map UniProt accession -&gt; systematic ORF from the SGD S288C GFF.</span>
 
@@ -390,6 +399,13 @@
                 <span class="k">continue</span>
             <span class="n">series</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">[</span><span class="n">filename</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>  <span class="c1"># measured proteins only (noimpute)</span>
             <span class="n">abundance</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">o</span><span class="p">):</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">series</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+            <span class="n">no_wt</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">abundance</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">[</span><span class="s2">"abundance"</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="n">no_wt</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">MissingWildTypeReferenceError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Messner: KO sample </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">deletion_orf</span><span class="si">}</span><span class="s2">) measured "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">no_wt</span><span class="p">)</span><span class="si">}</span><span class="s2"> protein(s) no WT sample measured (e.g. </span><span class="si">{</span><span class="n">no_wt</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">); "</span>
+                    <span class="s2">"the reference has no value for them"</span>
+                <span class="p">)</span>
             <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">{</span>
                     <span class="s2">"filename"</span><span class="p">:</span> <span class="n">filename</span><span class="p">,</span>

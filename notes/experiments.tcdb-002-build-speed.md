@@ -1019,6 +1019,47 @@ workers the client reaches about 15,000 records/s and the server about 25,000, s
 the raw stage of a 6.39M-record build takes about 10 min of fetch plus the parent's
 0.18 ms per record (about 20 min), against 2 h 29 min.
 
+### Query build stage 3 implemented and measured: partitioned workers (job 3103)
+
+`Neo4jQueryRaw(fetch_workers=N)` (commit fde0c212): a query carrying `{partition}`
+once per `UNION ALL` block, each block ending in `ORDER BY e.id`, is split into 16
+id-prefix partitions per block (`AND e.id STARTS WITH '<h>'`) plus a guard
+partition that raises on any id outside `[0-9a-f]`; N forked workers each stream one
+partition on their own driver and render it with the stage-1 code (own caches, own
+verified constant fetch); the parent consumes partitions in (block, prefix) order,
+assigns `data_<i>` sequentially, runs split observers (`prepare` in the worker,
+`accept` in the parent, which `RawStageGrouping` implements) and writes. Since the
+ids are lowercase hex sha256 and `0 < ... < 9 < a < ... < f` in string order, the
+partitions concatenated in prefix order are the block sorted by `e.id`, the
+single-session order. In-flight partitions are bounded at 2 x workers; a
+Hoepfner-sized block (3.1M records) wants `partition_prefix_length=2` to keep a
+partition near 180 MB (hypothesis, the 256-query cost on the server is unmeasured).
+
+Equivalence: `tests/torchcell/data/test_neo4j_query_raw_partitioned.py` (two blocks,
+ids across many prefixes, batch and prefix-length variants, the guard, the marker
+and observer errors), and `scripts/partitioned_slice_check.py` on the 21,184 real
+033 records at 0, 1, 2 and 3 workers: every LMDB value, both index files and the
+observer state identical (`results/partitioned_slice_check.csv`).
+
+On the served graph (`scripts/query_server_rate.py --fetch-workers`,
+`gh_query_fetch_workers.slurm`, 10 CPUs / 32 GB, Vanacloig block, 143,218 records;
+`results/query_server_rate_fetch_workers.csv`), each run byte-identical to the
+one-session run:
+
+| fetch_workers | records/s | seconds |
+|--:|--:|--:|
+| 0 (one session) | 1,774 | 80.7 |
+| 1 | 1,740 | 82.3 |
+| 4 | 6,222 | 23.0 |
+| 8 | 7,951 | 18.0 |
+
+At 8 workers the raw stage of the 6.39M-record 033 build projects to 13 min
+against the 2 h 29 min observed on job 2929 (11x), and the whole build, with
+stage 2's 0.5 to 0.8 h, to about 1 h against 7 h 48 min (hypothesis until a
+production query build runs it). To use it, the query's `.cql` gets `{partition}`
+after each block's dataset filter and the build passes `fetch_workers` to
+`Neo4jCellDataset`.
+
 ### Duplicate node blobs removed (2026.09.30)
 
 `serialized_data` is gone from genotype, segregant genotype, perturbation, crispr construct, environment perturbation and all 13 phenotype classes (fitness, gene interaction, gene essentiality, synthetic lethality, synthetic rescue, calmorph, microarray / rnaseq / pseudobulk expression, visual score, metabolite, protein abundance, environment response), in `torchcell/adapters/cell_adapter.py` and `biocypher/config/torchcell_schema_config.yaml`. Each is a sub-object of the experiment record, so its full copy is in the Experiment blob or the interned constant it points to; the reference-side phenotype and environment perturbation nodes are sub-objects of the experiment reference blob. Node ids are still sha256 of the sub-object's model_dump, so ids and edges do not change.

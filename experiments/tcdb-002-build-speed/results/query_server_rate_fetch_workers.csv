@@ -1,0 +1,5 @@
+fetch_workers,records,seconds,records_per_s,identical_to_one_session
+0,143218,80.7,1773.8,True
+1,143218,82.3,1740.4,True
+4,143218,23.0,6221.9,True
+8,143218,18.0,7951.1,True

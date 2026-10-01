@@ -10,12 +10,32 @@ from abc import ABC
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
+import numpy.typing as npt
 import torch
 from torch_geometric.data import Batch, HeteroData
 from torch_geometric.transforms import BaseTransform, Compose
 
 if TYPE_CHECKING:
     from torchcell.data.neo4j_cell import Neo4jCellDataset
+
+NORMALIZATION_STRATEGIES = ("minmax", "robust", "standard")
+LABEL_TYPES = ("categorical", "ordinal", "soft")
+
+
+def resolve_label_type(label: str, config: dict[str, Any]) -> str:
+    """Return the lower-cased ``label_type`` of a binning config, refusing unknown ones.
+
+    The default is ``"categorical"``. An unknown type raises ``ValueError`` naming the
+    label and the valid types, so a misspelled config never leaves a label unbinned.
+    """
+    label_type = str(config.get("label_type", "categorical")).lower()
+    if label_type not in LABEL_TYPES:
+        raise ValueError(
+            f"Unknown label_type {label_type!r} for label {label!r}; "
+            f"valid label types: {', '.join(LABEL_TYPES)}"
+        )
+    return label_type
+
 
 ### Normalize
 
@@ -49,10 +69,15 @@ class LabelNormalizationTransform(BaseTransform):  # type: ignore[misc]  # BaseT
         # Calculate statistics for each label
         df = dataset.label_df.replace([np.inf, -np.inf], np.nan)
         for label, config in label_configs.items():
+            if config["strategy"] not in NORMALIZATION_STRATEGIES:
+                raise ValueError(
+                    f"Unknown normalization strategy {config['strategy']!r} for label "
+                    f"{label!r}; valid strategies: {', '.join(NORMALIZATION_STRATEGIES)}"
+                )
             if label not in df.columns:
                 raise ValueError(f"Label {label} not found in dataset")
 
-            values = cast(np.ndarray, df[label].dropna().values)
+            values = cast(npt.NDArray[Any], df[label].dropna().values)
             stats = {
                 "mean": float(np.mean(values)),
                 "std": float(np.std(values)),
@@ -153,7 +178,7 @@ class BaseBinningStrategy(ABC):
         # form is a compatible supertype so subclass overrides do not conflict.
         def compute_bins(
             self, *args: Any, **kwargs: Any
-        ) -> tuple[np.ndarray, dict[str, Any]]:
+        ) -> tuple[npt.NDArray[Any], dict[str, Any]]:
             """Compute bin edges and metadata for the binning strategy.
 
             Returns:
@@ -195,7 +220,14 @@ class BaseBinningStrategy(ABC):
         strategy: str = "equal_width",
         sigma_scale: float = 3,
     ) -> torch.Tensor:
-        """Compute soft labels with clamping for out-of-bounds values."""
+        """Compute soft labels with clamping for out-of-bounds values.
+
+        Each row is a Gaussian on the bin centers normalized to sum to one, computed as
+        a softmax of the log-weights ``-0.5 * (distance / sigma) ** 2``. The softmax
+        subtracts the row maximum before exponentiating, so a narrow sigma whose raw
+        weights would all underflow to 0 still yields a distribution (all mass on the
+        nearest center) rather than a row of zeros.
+        """
         # Move bin_edges to the same device as values
         bin_edges = bin_edges.to(values.device)
         bin_centers = (bin_edges[1:] + bin_edges[:-1]) / 2
@@ -211,11 +243,7 @@ class BaseBinningStrategy(ABC):
             else:
                 # Use clamped value for gaussian computation
                 distances = torch.abs(clamped_values[i] - bin_centers)
-                soft_labels[i] = torch.exp(-0.5 * (distances / sigma) ** 2)
-
-                # Normalize to sum to 1
-                if torch.sum(soft_labels[i]) > 0:
-                    soft_labels[i] = soft_labels[i] / torch.sum(soft_labels[i])
+                soft_labels[i] = torch.softmax(-0.5 * (distances / sigma) ** 2, dim=0)
 
         return soft_labels
 
@@ -248,8 +276,8 @@ class EqualWidthStrategy(BaseBinningStrategy):
     """Binning strategy with bins of equal width across the value range."""
 
     def compute_bins(
-        self, values: np.ndarray, num_bins: int
-    ) -> tuple[np.ndarray, dict[str, Any]]:
+        self, values: npt.NDArray[Any], num_bins: int
+    ) -> tuple[npt.NDArray[Any], dict[str, Any]]:
         """Compute equal-width bins"""
         non_nan = values[~np.isnan(values)]
         bin_edges = np.linspace(non_nan.min(), non_nan.max(), num_bins + 1)
@@ -269,8 +297,8 @@ class EqualFrequencyStrategy(BaseBinningStrategy):
     """Binning strategy with quantile-based bins of roughly equal frequency."""
 
     def compute_bins(
-        self, values: np.ndarray, num_bins: int
-    ) -> tuple[np.ndarray, dict[str, Any]]:
+        self, values: npt.NDArray[Any], num_bins: int
+    ) -> tuple[npt.NDArray[Any], dict[str, Any]]:
         """Compute equal-frequency (quantile) bins"""
         non_nan = values[~np.isnan(values)]
         bin_edges = np.percentile(non_nan, np.linspace(0, 100, num_bins + 1))
@@ -290,8 +318,8 @@ class AutoBinStrategy(BaseBinningStrategy):
     """Binning strategy that infers the bin count from the data std and range."""
 
     def compute_bins(
-        self, values: np.ndarray, num_bins: int | None = None
-    ) -> tuple[np.ndarray, dict[str, Any]]:
+        self, values: npt.NDArray[Any], num_bins: int | None = None
+    ) -> tuple[npt.NDArray[Any], dict[str, Any]]:
         """Compute bins based on data std"""
         non_nan = values[~np.isnan(values)]
         std = np.std(non_nan)
@@ -316,6 +344,8 @@ class LabelBinningTransform(BaseTransform):  # type: ignore[misc]  # BaseTransfo
             normalizer: Optional normalization transform applied before binning
         """
         super().__init__()
+        for label, config in label_configs.items():
+            resolve_label_type(label, config)
         self.label_configs = label_configs
         self.normalizer = normalizer
         self.strategies = {
@@ -373,6 +403,7 @@ class LabelBinningTransform(BaseTransform):  # type: ignore[misc]  # BaseTransfo
 
         for label, config in self.label_configs.items():
             if label in data["gene"]:
+                label_type = resolve_label_type(label, config)
                 values = data["gene"][label]
                 if not isinstance(values, torch.Tensor):
                     values = torch.tensor(values, dtype=torch.float)
@@ -386,7 +417,6 @@ class LabelBinningTransform(BaseTransform):  # type: ignore[misc]  # BaseTransfo
                 if config.get("store_continuous", True):
                     data["gene"][f"{label}_continuous"] = values
 
-                label_type = config.get("label_type", "categorical").lower()
                 if label_type == "categorical":
                     onehot_labels = strategy.compute_onehot_labels(values, bin_edges)
                     data["gene"][label] = onehot_labels
@@ -402,30 +432,42 @@ class LabelBinningTransform(BaseTransform):  # type: ignore[misc]  # BaseTransfo
                         sigma,
                     )
                     data["gene"][label] = soft_labels
-                elif label_type == "ordinal":
+                else:  # "ordinal", the only type resolve_label_type leaves
                     ordinal_labels = strategy.compute_ordinal_labels(values, bin_edges)
                     data["gene"][label] = ordinal_labels
 
         return data
 
     def inverse(self, data: HeteroData, seed: int = 42) -> HeteroData:
-        """Inverse transform to recover continuous values using random sampling within bins."""
+        """Inverse transform from binned predictions back to continuous values.
+
+        Rows containing a NaN map to NaN. The other rows are decoded per label type:
+
+        * ``categorical``: the softmax argmax bin, then a uniform draw within that bin.
+        * ``ordinal``: the number of entries above 0.5 selects the bin, then a uniform
+          draw within it.
+        * ``soft``: deterministic, no sampling. The softmax of the row is averaged over
+          the bin centers in a five-bin window around its argmax (renormalized within
+          the window). When that window would cross the first or last edge, i.e. the
+          argmax is within two bins of an edge, the argmax bin center is returned.
+
+        The uniform draws come from the global generator reseeded with ``seed``.
+        """
         torch.manual_seed(seed)
         data = copy.copy(data)
 
         for label, config in self.label_configs.items():
             if label in data["gene"]:
-                device = data["gene"][label].device
-                label_type = config.get("label_type", "categorical").lower()
+                label_type = resolve_label_type(label, config)
+                values = data["gene"][label]
+                if not isinstance(values, torch.Tensor):
+                    values = torch.tensor(values, dtype=torch.float)
+                device = values.device
                 bin_edges = torch.tensor(
                     self.label_metadata[label]["bin_edges"],
                     device=device,
                     dtype=torch.float32,
                 )
-
-                values = data["gene"][label]
-                if not isinstance(values, torch.Tensor):
-                    values = torch.tensor(values, dtype=torch.float, device=device)
 
                 original_shape = values.shape
 
@@ -499,7 +541,7 @@ class LabelBinningTransform(BaseTransform):  # type: ignore[misc]  # BaseTransfo
 
                         continuous_values[non_nan_mask] = expected_values
 
-                    elif label_type == "categorical":
+                    else:  # "categorical", the only type resolve_label_type leaves
                         # Convert logits to probabilities
                         probs = torch.softmax(valid_values, dim=-1)
                         indices = torch.argmax(probs, dim=-1)

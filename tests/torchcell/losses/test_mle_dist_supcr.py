@@ -116,16 +116,21 @@ def test_temperature_scheduler() -> None:
     assert ts_cos.get_temperature(1000, 1000) == pytest.approx(0.1, abs=1e-15)
 
 
-def test_an_unknown_temperature_schedule_holds_the_initial_temperature() -> None:
-    """Finding: an unrecognized schedule name is silently a constant schedule.
+def test_an_unknown_temperature_schedule_is_refused_at_construction() -> None:
+    """A schedule other than cosine or exponential raises when it is built (#529).
 
-    ``TemperatureScheduler.get_temperature`` (mle_dist_supcr.py:71-72) falls through to
-    ``return self.init_temp`` for any name but "exponential" and "cosine", so a typo
-    such as "linear" trains at the initial temperature throughout. Pinned until an
-    unknown schedule raises.
+    It used to fall through to ``init_temp``, so a typo such as "linear" trained at the
+    initial temperature throughout. ``MleDistSupCR`` with scheduling on builds the
+    scheduler in its constructor, so it refuses the same name there. Every committed
+    ``mle_dist_supcr`` config uses "exponential" or "cosine".
     """
-    ts = TemperatureScheduler(init_temp=0.7, final_temp=0.1, schedule="linear")
-    assert [ts.get_temperature(e, 100) for e in (0, 50, 100)] == [0.7, 0.7, 0.7]
+    message = (
+        r"^Unknown temperature schedule 'linear'; valid schedules: cosine, exponential$"
+    )
+    with pytest.raises(ValueError, match=message):
+        TemperatureScheduler(init_temp=0.7, final_temp=0.1, schedule="linear")
+    with pytest.raises(ValueError, match=message):
+        _plain(use_temp_scheduling=True, temp_schedule="linear")
 
 
 def test_mle_dist_supcr_basic() -> None:
@@ -170,14 +175,13 @@ def test_the_gradient_sign_follows_the_prediction_offset() -> None:
         assert b.grad.item() == pytest.approx(expected, abs=1e-6)
 
 
-def test_switched_off_terms_report_zero_and_two_placeholder_dims() -> None:
-    """Finding: a switched-off term logs ``torch.zeros(2)`` whatever the width.
+def test_switched_off_terms_report_zero_with_one_zero_per_target_dim() -> None:
+    """A switched-off term logs one zero per target column, the width an active term
+    logs (#529); it used to log ``torch.zeros(2)`` whatever the width.
 
-    The three lambda-zero branches (mle_dist_supcr.py:562-594, 624-634) hard-code
-    ``torch.zeros(2)  # Assuming 2 dimensions``, so a one-dimensional run logs two
-    per-dimension zeros. With all three off the total is 0 and neither the
-    ``norm_weighted_*`` nor the ``norm_unweighted_*`` ratios are written. Pinned until
-    the placeholder takes the target width.
+    One target column gives [0.0] for each term; three columns give [0.0, 0.0, 0.0].
+    With all three off the total is 0 and neither the ``norm_weighted_*`` nor the
+    ``norm_unweighted_*`` ratios are written.
     """
     total, parts = _plain(lambda_mse=0.0, lambda_dist=0.0, lambda_supcr=0.0)(
         PREDICTIONS, TARGETS, EMBEDDINGS
@@ -199,7 +203,14 @@ def test_switched_off_terms_report_zero_and_two_placeholder_dims() -> None:
     for key in ("mse", "dist", "supcr"):
         assert parts[f"{key}_loss"] == 0.0
         assert parts[f"weighted_{key}"] == 0.0
-        assert parts[f"{key}_dim_losses"].tolist() == [0.0, 0.0]
+        assert parts[f"{key}_dim_losses"].tolist() == [0.0]
+
+    three = TARGETS.repeat(1, 3)
+    _, wide = _plain(lambda_mse=0.0, lambda_dist=0.0, lambda_supcr=0.0)(
+        three, three, EMBEDDINGS
+    )
+    for key in ("mse", "dist", "supcr"):
+        assert wide[f"{key}_dim_losses"].tolist() == [0.0, 0.0, 0.0]
 
 
 def test_distribution_term_alone_has_all_three_ratios() -> None:
@@ -215,13 +226,18 @@ def test_distribution_term_alone_has_all_three_ratios() -> None:
 
 
 def test_the_buffered_dist_loss_counts_the_current_batch_twice() -> None:
-    """Finding: at buffer weight 1 the current batch is also read back from the buffer.
+    """Finding (LEFT OPEN in the #529 fix): at buffer weight 1 the current batch is
+    also read back from the buffer.
 
-    ``BufferedWeightedDistLoss.forward`` writes the batch into the buffer
-    (mle_dist_supcr.py:185) and then concatenates the batch with every buffered row
-    (220-221), so the first batch is scored doubled: the six-sample labels
-    [0, 0, 1, 1, 2, 2] give 0.08333, not the 0.41667 of the batch alone. Pinned until the
-    buffer is read before it is written.
+    ``BufferedWeightedDistLoss.forward`` writes the batch into the buffer and then
+    concatenates the batch with every buffered row, so the first batch is scored
+    doubled: the six-sample labels [0, 0, 1, 1, 2, 2] give 0.08333, not the 0.41667 of
+    the batch alone. With b the batch and B_t the buffer after writing b, the code
+    computes D([b; B_t]); candidates are D([b; B_(t-1)]) (read before write) and
+    D(B_t) (the buffer alone, which holds b once). The docstring, the comments and
+    ``notes/torchcell.losses.mle_dist_supcr.md`` do not decide between them, and no
+    committed config reaches weight 1 with a buffer (all 42 buffered configs use
+    adaptive weighting, at most 0.9), so the behavior stays pinned.
     """
     buffered = BufferedWeightedDistLoss(buffer_size=4, bandwidth=0.5, min_samples=3)
     loss, dims = buffered(PREDICTIONS, TARGETS)
@@ -232,14 +248,15 @@ def test_the_buffered_dist_loss_counts_the_current_batch_twice() -> None:
 
 
 def test_buffered_dist_loss_waits_for_min_samples_then_wraps_around() -> None:
-    """Buffer size 4, min 4: three samples return (0, zeros(2)); three more wrap, the
+    """Buffer size 4, min 4: three samples return (0, [0.0]), one zero per target
+    column; three more wrap, the
     first new row landing in slot 3 and the next two in slots 0 and 1, pointer
     (3 + 3) mod 4 = 2, total min(6, 4) = 4, and the buffer is full.
     """
     buffered = BufferedWeightedDistLoss(buffer_size=4, bandwidth=0.5, min_samples=4)
     loss, dims = buffered(PREDICTIONS, TARGETS)
     assert loss.item() == 0.0
-    assert dims.tolist() == [0.0, 0.0]
+    assert dims.tolist() == [0.0]
     assert (int(buffered.buffer_ptr), int(buffered.total_samples)) == (3, 3)
     assert not bool(buffered.buffer_full)
 
@@ -292,13 +309,18 @@ def test_buffered_dist_loss_fills_its_buffer_from_the_gathered_batch() -> None:
 
 
 def test_buffered_supcr_scales_the_loss_by_one_minus_half_the_buffer_weight() -> None:
-    """Finding: the "buffer influence" factor scales the WHOLE loss.
+    """Finding (LEFT OPEN in the #529 fix): the "buffer influence" factor scales the
+    WHOLE loss.
 
-    ``BufferedWeightedSupCRCell.forward`` (mle_dist_supcr.py:373-375) multiplies the
-    SupCR on [batch; buffer] by 1 - w + 0.5 w, so at w = 1 even the current-batch
-    anchors are halved and at w = 0.3 the factor is 0.85. The temperature argument
-    overwrites the inner SupCR's (0.1 to 1.0) and persists; without it the stored
-    temperature is used. Pinned until only the buffer rows are down-weighted.
+    ``BufferedWeightedSupCRCell.forward`` multiplies the SupCR on [batch; buffer] by
+    1 - w + 0.5 w, so at w = 1 even the current-batch anchors are halved and at w = 0.3
+    the factor is 0.85. The code computes (1 - 0.5 w) * S([z; Z]); the candidate that
+    matches the comment "Reduce buffer influence" leaves pairs within the current
+    batch at weight 1 and weights only the anchor/pair terms that touch a buffer row by
+    (1 - 0.5 w). The docstring and the paired note do not define the formula, and five
+    committed configs (006 cabbi_014, cabbi_016, cabbi_017, mmli_015, mmli_018) train
+    with this factor, so it stays pinned. The temperature argument overwrites the inner
+    SupCR's (0.1 to 1.0) and persists; without it the stored temperature is used.
     """
     base_doubled, dims_doubled = WeightedSupCRCell(temperature=1.0)(
         torch.cat([EMBEDDINGS, EMBEDDINGS]), torch.cat([TARGETS, TARGETS])
@@ -320,7 +342,8 @@ def test_buffered_supcr_scales_the_loss_by_one_minus_half_the_buffer_weight() ->
 
 
 def test_buffered_supcr_waits_wraps_and_takes_the_gathered_batch() -> None:
-    """Below min_samples: (0, zeros(2)). Gathered embeddings fill the buffer instead of
+    """Below min_samples: (0, [0.0]), one zero per label column. Gathered embeddings
+    fill the buffer instead of
     the local ones; a second push of 3 into a buffer of 4 holding 3 wraps like the
     distribution buffer (slots 3, 0, 1; pointer 2; full).
     """
@@ -330,7 +353,7 @@ def test_buffered_supcr_waits_wraps_and_takes_the_gathered_batch() -> None:
     gathered = EMBEDDINGS * 2.0
     loss, dims = cell(EMBEDDINGS, TARGETS, gathered, TARGETS + 5.0)
     assert loss.item() == 0.0
-    assert dims.tolist() == [0.0, 0.0]
+    assert dims.tolist() == [0.0]
     assert cell.embedding_buffer[:3].tolist() == gathered.tolist()
     assert cell.label_buffer[:3].flatten().tolist() == [5.0, 6.0, 7.0]
 

@@ -383,7 +383,10 @@ def _calls_verify_raw_files(path: Path) -> bool:
 
 
 #: Every loader module that verifies its raw pins at build time, found by reading the
-#: package sources, so a new pinned loader is patched and covered with no list to edit.
+#: package sources. A new module that calls ``verify_raw_files`` is patched and
+#: parametrized with no list to edit, but its test in ``test_raw_pins.py`` raises
+#: ``KeyError`` until its expected mapping gets a row in ``_pins_from_constants``; a
+#: module with a ``process()`` and no call must be on that file's ``UNPINNED_LOADERS``.
 PINNED_LOADERS = tuple(
     sorted(
         path.stem
@@ -435,6 +438,11 @@ def restore_real_pins(node: _HasMarkers, mp: pytest.MonkeyPatch) -> list[str]:
     Those tests (run only under ``--slow``/``--data``) build from the real mirrors, so
     they must meet the real pin; every other test keeps the recorder. Returns the
     modules restored, in ``PINNED_LOADERS`` order.
+
+    Limit: this runs as a function-scoped fixture, so a build made in a MODULE- or
+    session-scoped fixture is set up before it and still sees the recorder. Such a
+    fixture must restore the real check itself (``test_yeastphenome.py``'s ``dataset``
+    builds inside a ``pytest.MonkeyPatch.context()`` that does).
     """
     if not any(node.get_closest_marker(m) for m in REAL_DATA_MARKERS):
         return []
@@ -455,6 +463,12 @@ def _real_pins_for_real_data(
 def pin_restorer() -> Callable[[_HasMarkers, pytest.MonkeyPatch], list[str]]:
     """``restore_real_pins`` itself, for the test that drives it with each marker."""
     return restore_real_pins
+
+
+@pytest.fixture
+def pinned_loaders() -> tuple[str, ...]:
+    """``PINNED_LOADERS``, for tests that compare it with the package."""
+    return PINNED_LOADERS
 
 
 @pytest.fixture

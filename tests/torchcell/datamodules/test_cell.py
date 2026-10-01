@@ -16,8 +16,9 @@ it is given. Expected values come from the stdlib RNG the module seeds
 (``random.seed(42)``): one shuffle of ``list(range(10))`` gives
 [7, 3, 2, 8, 5, 6, 9, 4, 0, 1], and a key of n records is sliced
 ``int(0.8 n) / int(0.1 n) / rest``, so ten records give train [2..9], val [0], test [1].
-The test ratio is ``1 - 0.8 - 0.1 = 0.09999999999999995`` in floating point, so its
-balancing target for a 20-record key is ``int(1.999...) = 1`` and for a 10-record key 0.
+Balancing targets partition a key exactly, test taking the remainder, so a 20-record
+key targets 16 / 2 / 2 and a 10-record key 8 / 1 / 1 (the old test target
+``int(n * 0.09999999999999995)`` was 1 and 0 respectively).
 Cache-file tags are ``_pin{n}-`` / ``_sub{n}-`` plus the first eight hex digits of the
 sha256 of the payload spelled out in each test.
 """
@@ -439,9 +440,9 @@ class _UnreadableDataset(_KeyedDataset):
 
 
 def _ten(tmp_path: Path, **kwargs: Any) -> CellDataModule:
-    """Twelve records, one key ``a`` over records 0 to 9, seed 42."""
+    """Ten records, one key ``a`` over all of them, seed 42."""
     return CellDataModule(
-        dataset=_KeyedDataset(12, phenotype_label_index={"a": list(range(10))}),
+        dataset=_KeyedDataset(10, phenotype_label_index={"a": list(range(10))}),
         cache_dir=str(tmp_path / "cache"),
         split_indices="phenotype_label_index",
         random_seed=42,
@@ -467,48 +468,72 @@ def test_seed_42_shuffle_sliced_eight_one_one(tmp_path: Path) -> None:
     }
 
 
-def test_records_under_no_key_land_in_no_split(tmp_path: Path) -> None:
-    """Finding: records 10 and 11 exist (``len`` is 12) but sit under no key, so the
-    balancing loop (lines 501 to 528), which only walks key members, never places them;
-    they are silently absent from train, val and test. Pinned until unkeyed records are
-    either assigned or reported.
-    """
-    index = _ten(tmp_path).index
-    placed = set(index.train) | set(index.val) | set(index.test)
-    assert placed == set(range(10))
-    assert {10, 11}.isdisjoint(placed)
-
-
-def test_no_split_indices_gives_three_empty_splits(tmp_path: Path) -> None:
-    """Finding: with the default ``split_indices=None`` every final split is
-    ``all_indices.intersection()`` = all records, so every record is "conflicted", pulled
-    out of all three, and never reassigned (the balancing loop has no key to walk). The
-    module then trains on nothing without an error. Pinned until an empty
-    ``split_indices`` either raises or falls back to a plain ratio split.
-    """
-    dm = CellDataModule(
-        dataset=_KeyedDataset(10), cache_dir=str(tmp_path / "cache"), random_seed=42
+def _keyed_zero_to_nine(tmp_path: Path, n: int, **kwargs: Any) -> CellDataModule:
+    """``n`` records of which only 0 to 9 sit under a key, seed 42."""
+    return CellDataModule(
+        dataset=_KeyedDataset(n, phenotype_label_index={"a": list(range(10))}),
+        cache_dir=str(tmp_path / "cache"),
+        split_indices="phenotype_label_index",
+        random_seed=42,
+        **kwargs,
     )
-    assert dm.split_indices == []
-    assert dm.index.model_dump() == {"train": [], "val": [], "test": []}
-    assert dm.index_details.model_dump() == {
-        "methods": [],
-        "train": {
-            "phenotype_label_index": None,
-            "perturbation_count_index": None,
-            "dataset_name_index": None,
-        },
-        "val": {
-            "phenotype_label_index": None,
-            "perturbation_count_index": None,
-            "dataset_name_index": None,
-        },
-        "test": {
-            "phenotype_label_index": None,
-            "perturbation_count_index": None,
-            "dataset_name_index": None,
-        },
+
+
+def test_records_under_no_key_are_refused_with_their_indices(tmp_path: Path) -> None:
+    """Records 10 and 11 exist (``len`` is 12) but sit under no key, so the key-driven
+    assignment never reaches them; dropping them silently would be a data loss, so the
+    construction refuses and names them. Past ten orphans the list is cut after the
+    first ten and the total is given. No cache file is written for a refused split.
+    """
+    with pytest.raises(ValueError) as excinfo:
+        _keyed_zero_to_nine(tmp_path, 12)
+    assert str(excinfo.value) == (
+        "2 record(s) sit under no key of ['phenotype_label_index'] and would land in "
+        "no split: [10, 11]"
+    )
+    with pytest.raises(ValueError) as excinfo:
+        _keyed_zero_to_nine(tmp_path, 25)
+    assert str(excinfo.value) == (
+        "15 record(s) sit under no key of ['phenotype_label_index'] and would land in "
+        "no split: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, ... (15 in all)]"
+    )
+    assert list((tmp_path / "cache").iterdir()) == []
+
+
+def test_unkeyed_records_placed_by_a_pin_are_not_orphans(tmp_path: Path) -> None:
+    """The orphan check runs after pinning: records 10 and 11, under no key but pinned
+    to test, are placed, and the keyed ten split 8 / 1 / 1 as usual around them.
+    """
+    index = _keyed_zero_to_nine(tmp_path, 12, pinned_test_indices=[10, 11]).index
+    assert index.model_dump() == {
+        "train": [2, 3, 4, 5, 6, 7, 8, 9],
+        "val": [0],
+        "test": [1, 10, 11],
     }
+
+
+@pytest.mark.parametrize("split_indices", [None, []])
+def test_no_split_indices_is_refused_at_construction(
+    tmp_path: Path, split_indices: list[str] | None
+) -> None:
+    """Records are placed only through split-index keys, so with none (the ``None``
+    default, or an empty list) every record would land in no split and the module would
+    train on nothing. Construction refuses before any cache is written. The argument keeps
+    its ``None`` default because legacy callers (experiments 002, smf-dmf-tmf-001, the
+    DEPRECATED_costanzo scripts, ``torchcell/trainers/cell.py``) omit it.
+    """
+    with pytest.raises(ValueError) as excinfo:
+        CellDataModule(
+            dataset=_KeyedDataset(10),
+            cache_dir=str(tmp_path / "cache"),
+            random_seed=42,
+            split_indices=split_indices,
+        )
+    assert str(excinfo.value) == (
+        "split_indices is required: name at least one split index of the dataset "
+        "(e.g. 'phenotype_label_index'); without one every record lands in no split"
+    )
+    assert not (tmp_path / "cache").exists()
 
 
 def test_multiply_keyed_records_are_reassigned_exactly_once(tmp_path: Path) -> None:
@@ -519,11 +544,11 @@ def test_multiply_keyed_records_are_reassigned_exactly_once(tmp_path: Path) -> N
     11, 10, 16, 1, 12, 5, 18, 2, 0, 4, 9, 15, 7, 13, 19, 6, 17] (val {13, 19}, test
     {6, 17}). The per-split unions make {0, 3, 6, 7, 8, 13, 17, 19} conflicted; they are
     pulled out, leaving train = the 12 records both keys put in train. Balancing under key
-    ``a`` (total 20, targets train 16, val 2, test int(1.999...) = 1) visits the eight in
+    ``a`` (total 20, targets train 16, val 2, test the remainder 2) visits the eight in
     ascending order and picks the split with the most negative (count - target) / target,
-    first in train/val/test order on a tie: 0 -> val (-1 ties test), 3 -> test, 6 -> val,
-    then 7, 8, 13, 17, 19 -> train (19 on a three-way tie at 0). Final: train 17, val
-    [0, 6], test [3].
+    first in train/val/test order on a tie: 0 -> val (-1 ties test), 3 -> test (-1),
+    6 -> val (-0.5 ties test), 7 -> test (-0.5), then 8, 13, 17, 19 -> train. Final:
+    train 16, val [0, 6], test [3, 7], exactly the 16 / 2 / 2 targets.
     """
     rng = random.Random(42)
     a, b = list(range(20)), list(range(20))
@@ -539,41 +564,67 @@ def test_multiply_keyed_records_are_reassigned_exactly_once(tmp_path: Path) -> N
         random_seed=42,
     )
     assert dm.index.model_dump() == {
-        "train": [1, 2, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+        "train": [1, 2, 4, 5, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
         "val": [0, 6],
-        "test": [3],
+        "test": [3, 7],
     }
     details = dm.index_details.model_dump()
-    assert details["train"]["phenotype_label_index"]["a"]["count"] == 17
+    assert details["train"]["phenotype_label_index"]["a"]["count"] == 16
     assert details["val"]["phenotype_label_index"]["b"] == {
         "indices": [0, 6],
         "count": 2,
     }
 
 
-def test_two_indices_with_ten_record_keys_divide_by_zero(tmp_path: Path) -> None:
-    """Finding: when two split indices disagree, the disputed records are balanced under
-    the first index's keys with target ``int(total * ratio)``; for a 10-record key the
-    test target is ``int(10 * 0.09999999999999995) = 0`` and the ``min`` key divides by it
-    (line 523), so construction raises ``ZeroDivisionError``. Any key under 10 records
-    that holds a disputed record fails the same way on the val target. Pinned until a zero
-    target is guarded.
+def _two_indices(tmp_path: Path, n: int) -> CellDataModule:
+    """``2n`` records: phenotype keys ``a`` = 0..n-1 and ``b`` = n..2n-1, perturbation
+    count keys 1 = evens and 2 = odds, so the two indices disagree on some records.
     """
-    assert int(10 * (1 - 0.8 - 0.1)) == 0
-    with pytest.raises(ZeroDivisionError, match="^division by zero$"):
-        CellDataModule(
-            dataset=_KeyedDataset(
-                20,
-                phenotype_label_index={"a": list(range(10)), "b": list(range(10, 20))},
-                perturbation_count_index={
-                    1: list(range(0, 20, 2)),
-                    2: list(range(1, 20, 2)),
-                },
-            ),
-            cache_dir=str(tmp_path / "cache"),
-            split_indices=["phenotype_label_index", "perturbation_count_index"],
-            random_seed=42,
-        )
+    return CellDataModule(
+        dataset=_KeyedDataset(
+            2 * n,
+            phenotype_label_index={"a": list(range(n)), "b": list(range(n, 2 * n))},
+            perturbation_count_index={
+                1: list(range(0, 2 * n, 2)),
+                2: list(range(1, 2 * n, 2)),
+            },
+        ),
+        cache_dir=str(tmp_path / f"cache{n}"),
+        split_indices=["phenotype_label_index", "perturbation_count_index"],
+        random_seed=42,
+    )
+
+
+def test_two_indices_balance_ten_record_keys_to_eight_one_one(tmp_path: Path) -> None:
+    """When two split indices disagree, the disputed records are balanced under the first
+    index's keys toward targets that partition the key exactly, test taking the
+    remainder: a 10-record key targets 8 / 1 / 1 (the old ``int(10 * 0.0999...) = 0``
+    test target divided by zero). Ten is the smallest key that balances, since at nine the
+    val target ``int(0.9)`` is 0. The seeded result puts both phenotype keys at exactly
+    8 / 1 / 1 and the three splits partition all 20 records.
+    """
+    index = _two_indices(tmp_path, 10).index
+    assert index.model_dump() == {
+        "train": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18],
+        "val": [0, 16],
+        "test": [1, 19],
+    }
+    assert sorted(index.train + index.val + index.test) == list(range(20))
+
+
+def test_two_indices_refuse_a_nine_record_key_with_a_disputed_record(
+    tmp_path: Path,
+) -> None:
+    """A 9-record key targets 7 / 0 / 2; a zero target cannot be balanced toward, so the
+    construction refuses with the key, its size and the empty split named.
+    """
+    with pytest.raises(ValueError) as excinfo:
+        _two_indices(tmp_path, 9)
+    assert str(excinfo.value) == (
+        "Key 'a' of phenotype_label_index has 1 record(s) left to balance, but its 9 "
+        "records give a target of 0 for ['val']; balancing needs at least 10 records "
+        "per such key"
+    )
 
 
 def test_subset_skips_a_key_with_no_members_and_reports_it_empty(
@@ -658,7 +709,7 @@ def test_existing_cache_is_loaded_without_touching_the_dataset(tmp_path: Path) -
     """
     first = _ten(tmp_path)
     second = CellDataModule(
-        dataset=_UnreadableDataset(12, phenotype_label_index={"a": list(range(10))}),
+        dataset=_UnreadableDataset(10, phenotype_label_index={"a": list(range(10))}),
         cache_dir=str(tmp_path / "cache"),
         split_indices="phenotype_label_index",
         random_seed=42,
@@ -736,7 +787,7 @@ def test_setup_builds_subsets_once_and_keeps_a_later_narrowing(tmp_path: Path) -
 def test_dataloader_options_at_two_workers(tmp_path: Path) -> None:
     """With two workers: timeout 10800 s, a spawn context, persistent workers, prefetch 2;
     train shuffles (``RandomSampler``), val and test do not; val uses ``val_batch_size``;
-    the collater carries the custom ``follow_batch``; ``all_dataloader`` spans all 12
+    the collater carries the custom ``follow_batch``; ``all_dataloader`` spans all 10
     records.
     """
     dm = _ten(
@@ -754,12 +805,14 @@ def test_dataloader_options_at_two_workers(tmp_path: Path) -> None:
         assert loader.multiprocessing_context.get_start_method() == "spawn"
         assert loader.persistent_workers is True
         assert loader.pin_memory is False
+        assert isinstance(loader.collate_fn, Collater)
         assert loader.collate_fn.follow_batch == ["x_gene"]
     assert isinstance(train.sampler, RandomSampler)
     assert isinstance(val.sampler, SequentialSampler)
     assert isinstance(test.sampler, SequentialSampler)
     assert (train.batch_size, val.batch_size, test.batch_size) == (3, 5, 3)
-    assert len(full.dataset) == 12
+    assert isinstance(full.dataset, _KeyedDataset)
+    assert len(full.dataset) == 10
 
 
 def test_dataloader_defaults_at_zero_workers(tmp_path: Path) -> None:
@@ -773,29 +826,36 @@ def test_dataloader_defaults_at_zero_workers(tmp_path: Path) -> None:
     assert loader.timeout == 0
     assert loader.multiprocessing_context is None
     assert loader.persistent_workers is False
+    assert isinstance(loader.collate_fn, Collater)
     assert loader.collate_fn.follow_batch == ["x", "x_pert"]
     assert isinstance(loader.sampler, SequentialSampler)
     assert loader.batch_size == 32
 
 
-def test_custom_collate_fn_is_replaced_by_the_pyg_collater(tmp_path: Path) -> None:
-    """Finding: ``collate_fn`` is put into the kwargs (line 679), but PyG's ``DataLoader``
-    pops ``collate_fn`` and always installs its own ``Collater``, so the caller's function
-    is never called. Pinned until the module uses a torch ``DataLoader`` when a
-    ``collate_fn`` is given, or drops the option.
+def test_custom_collate_fn_is_honored_through_a_torch_loader(tmp_path: Path) -> None:
+    """PyG's ``DataLoader`` pops any ``collate_fn`` and installs its own ``Collater``, so
+    a caller's collate (experiment 006 passes a ``LazyCollater``) is honored by building
+    the plain torch ``DataLoader`` instead; it receives each batch's items and its return
+    value is the batch. The worker options still apply, and without a ``collate_fn`` the
+    PyG loader and its ``Collater`` are kept.
     """
-    calls: list[int] = []
+    calls: list[list[int]] = []
 
-    def my_collate(items: list[Any]) -> list[Any]:
-        calls.append(len(items))
-        return items
+    def my_collate(items: list[int]) -> tuple[str, list[int]]:
+        calls.append(items)
+        return ("batch", items)
 
-    dm = _ten(tmp_path, collate_fn=my_collate)
+    dm = _ten(tmp_path, collate_fn=my_collate, batch_size=5, train_shuffle=False)
     dm.setup()
-    loader = dm.val_dataloader()
-    assert dm.collate_fn is my_collate
-    assert type(loader.collate_fn) is Collater
-    assert calls == []
+    loader = dm.train_dataloader()
+    assert type(loader) is torch.utils.data.DataLoader
+    assert loader.collate_fn is my_collate
+    assert (loader.batch_size, loader.timeout) == (5, 0)
+    assert list(loader) == [("batch", [2, 3, 4, 5, 6]), ("batch", [7, 8, 9])]
+    assert calls == [[2, 3, 4, 5, 6], [7, 8, 9]]
+    plain = _ten(tmp_path)
+    plain.setup()
+    assert type(plain.train_dataloader().collate_fn) is Collater
 
 
 def test_prefetch_wraps_the_loader_on_the_cpu_when_cuda_is_absent(
@@ -890,19 +950,17 @@ def test_df_summary_counts_ratios_and_totals_per_key() -> None:
     assert str(_details()) == _details().df_summary().to_string()
 
 
-def test_details_str_of_an_empty_summary_raises_key_error() -> None:
-    """Finding: with no index data ``df_summary`` builds a column-less DataFrame and
-    ``df["split"]`` (line 114) raises ``KeyError('split')``, so ``__str__``'s
-    ``"DataModuleIndexDetails(empty)"`` branch (lines 128 to 129) is unreachable; this is
-    the details object a module with no ``split_indices`` produces. Pinned until
-    ``df_summary`` returns an empty frame with its columns.
+def test_details_str_of_an_empty_summary_is_the_empty_form() -> None:
+    """With no index data ``df_summary`` returns an empty frame that still carries its
+    six columns, so ``__str__`` prints ``"DataModuleIndexDetails(empty)"``.
     """
     empty = DataModuleIndexDetails(
         methods=[], train=DatasetSplit(), val=DatasetSplit(), test=DatasetSplit()
     )
-    with pytest.raises(KeyError) as excinfo:
-        str(empty)
-    assert excinfo.value.args == ("split",)
+    df = empty.df_summary()
+    assert list(df.columns) == ["split", "index_type", "key", "count", "ratio", "total"]
+    assert len(df) == 0
+    assert str(empty) == "DataModuleIndexDetails(empty)"
 
 
 def test_overlap_dataset_index_split_intersects_each_dataset_with_each_split() -> None:
@@ -921,14 +979,16 @@ def test_overlap_dataset_index_split_intersects_each_dataset_with_each_split() -
     }
 
 
-def test_overlap_dataset_index_split_raises_when_a_split_is_empty() -> None:
-    """Finding: a split with no overlapping dataset is passed as ``None`` (lines 210 to
-    212), but ``DatasetIndexSplit`` declares ``dict`` fields whose ``None`` is only a
-    default, so validation refuses the explicit ``None``. The experiment 003 scripts that
-    call this therefore fail whenever one split holds none of the datasets. Pinned until
-    the fields are ``dict | None``.
+def test_overlap_dataset_index_split_gives_an_empty_dict_for_an_empty_split() -> None:
+    """A split that holds none of the datasets is an empty dict (the experiment 003
+    plotting scripts that call this skip a falsy split): dataset ``x`` = {0, 1} over
+    train {0}, val {1}, test {} gives train {x: [0]}, val {x: [1]}, test {}; with no
+    datasets at all every split is empty.
     """
-    with pytest.raises(ValueError, match="test\n  Input should be a valid dictionary"):
-        overlap_dataset_index_split(
-            {"x": [0, 1]}, DataModuleIndex(train=[0], val=[1], test=[])
-        )
+    split = overlap_dataset_index_split(
+        {"x": [0, 1]}, DataModuleIndex(train=[0], val=[1], test=[])
+    )
+    assert split.model_dump() == {"train": {"x": [0]}, "val": {"x": [1]}, "test": {}}
+    assert overlap_dataset_index_split(
+        {}, DataModuleIndex(train=[0], val=[1], test=[2])
+    ).model_dump() == {"train": {}, "val": {}, "test": {}}

@@ -67,4 +67,4 @@ A rebuilt store differs on disk (tensor instead of a list of numpy arrays; float
 
 ## 2026.10.01 - genome built with overwrite=False
 
-The `SCerevisiaeGenome` construction here passed `overwrite=True`, rebuilding the shared `data.db` under every other reader. It now passes `overwrite=False`, which opens the existing database after checking its source record (see [[torchcell.sequence.genome.scerevisiae.s288c]]).
+The `SCerevisiaeGenome` construction here passed `overwrite=True`, rebuilding the shared `data.db` under every other reader. It now passes `overwrite=False`, which opens the existing database after verifying its record (migrating it once when untrusted) (see [[torchcell.sequence.genome.scerevisiae.s288c]]).

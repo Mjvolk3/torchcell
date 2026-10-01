@@ -98,6 +98,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    check_manifest_pin,
     link_verified,
     post_process,
     verify_raw_files,
@@ -559,19 +560,21 @@ class FattyAcidSmith2006Dataset(ExperimentDataset):
         return [XLS_FILENAME]
 
     def download(self) -> None:
-        """Link the manifest-listed mirror file into ``raw/`` and verify its sha256.
+        """Link the mirror file into ``raw/`` after verifying it against ``XLS_SHA256``.
 
-        The mirror plus its recorded sha256 is canonical; the Europe PMC URL is retrieval
-        metadata that ``deposit_raw_mirror`` records, never a live build dependency.
+        The mirror plus the ``XLS_SHA256`` pin is canonical; the Europe PMC URL is
+        retrieval metadata that ``deposit_raw_mirror`` records, never a live build
+        dependency. The manifest is the retrieval record and must carry the pin, else
+        ``ManifestPinMismatchError`` names both digests.
         """
         data_root = _data_root()
         manifest = load_manifest(data_root)
-        expected = manifest_sha256(manifest, XLS_REL)
+        check_manifest_pin(XLS_REL, manifest_sha256(manifest, XLS_REL), XLS_SHA256)
         src = raw_mirror_dir(data_root) / XLS_REL
         if not src.exists():
             raise RuntimeError(f"required raw artifact missing from mirror: {src}")
         os.makedirs(self.raw_dir, exist_ok=True)
-        link_verified(src, osp.join(self.raw_dir, XLS_FILENAME), expected)
+        link_verified(src, osp.join(self.raw_dir, XLS_FILENAME), XLS_SHA256)
         log.info("Smith 2006 raw table linked into %s (sha256 verified)", self.raw_dir)
 
     def _read_table(self) -> pd.DataFrame:

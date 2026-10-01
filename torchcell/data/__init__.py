@@ -5,7 +5,9 @@ from .data import ExperimentReferenceIndex, ReferenceIndex, compute_sha256_hash
 from .deduplicate import Deduplicator
 from .experiment_dataset import (
     ExperimentDataset,
+    ManifestPinMismatchError,
     RawSha256MismatchError,
+    check_manifest_pin,
     compute_experiment_reference_index_parallel,
     compute_experiment_reference_index_sequential,
     copy_verified,
@@ -45,6 +47,8 @@ __all__ = [
     "compute_experiment_reference_index_parallel",
     "post_process",
     "RawSha256MismatchError",
+    "ManifestPinMismatchError",
+    "check_manifest_pin",
     "file_sha256",
     "verify_sha256",
     "verify_raw_files",

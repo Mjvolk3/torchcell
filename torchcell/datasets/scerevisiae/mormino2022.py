@@ -89,6 +89,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    check_manifest_pin,
     link_verified,
     post_process,
     verify_raw_files,
@@ -531,12 +532,20 @@ class CrispriMormino2022Dataset(ExperimentDataset):
         return [PDF_FILENAME, PAPER_MD]
 
     def download(self) -> None:
-        """Link the manifest-listed mirror files into ``raw/`` and verify their sha256."""
+        """Link the mirror files into ``raw/`` after verifying each against its pin.
+
+        ``PDF_SHA256`` and ``PAPER_MD_SHA256`` are the pins; the manifest is the
+        retrieval record and must carry the same digests, else
+        ``ManifestPinMismatchError`` names both.
+        """
         data_root = _data_root()
         manifest = load_manifest(data_root)
         os.makedirs(self.raw_dir, exist_ok=True)
-        for relpath in (PDF_REL, PAPER_MD_REL):
-            expected = manifest_sha256(manifest, relpath)
+        for relpath, expected in (
+            (PDF_REL, PDF_SHA256),
+            (PAPER_MD_REL, PAPER_MD_SHA256),
+        ):
+            check_manifest_pin(relpath, manifest_sha256(manifest, relpath), expected)
             src = raw_mirror_dir(data_root) / relpath
             if not src.exists():
                 raise RuntimeError(f"required raw artifact missing from mirror: {src}")

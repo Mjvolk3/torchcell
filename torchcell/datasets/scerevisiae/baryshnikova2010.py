@@ -107,6 +107,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    check_manifest_pin,
     link_verified,
     post_process,
     verify_raw_files,
@@ -606,19 +607,23 @@ class SmfBaryshnikova2010Dataset(ExperimentDataset):
         return [XLS_NAME]
 
     def download(self) -> None:
-        """Symlink the manifest-listed mirror file into ``raw/`` and verify its sha256."""
+        """Symlink the mirror file into ``raw/`` after verifying it against ``XLS_SHA256``.
+
+        ``XLS_SHA256`` is the one pin; the manifest is the retrieval record and must
+        carry the same digest, else ``ManifestPinMismatchError`` names both.
+        """
         data_root = _data_root()
         manifest = load_manifest(data_root)
         src = raw_mirror_dir(data_root) / XLS_REL
         if not src.exists():
             raise RuntimeError(f"required raw artifact missing from mirror: {src}")
-        expected = manifest_sha256(manifest, XLS_REL)
+        check_manifest_pin(XLS_REL, manifest_sha256(manifest, XLS_REL), XLS_SHA256)
         os.makedirs(self.raw_dir, exist_ok=True)
-        link_verified(src, osp.join(self.raw_dir, XLS_NAME), expected)
+        link_verified(src, osp.join(self.raw_dir, XLS_NAME), XLS_SHA256)
         log.info(
             "Baryshnikova 2010 raw file linked into %s (sha256 %s)",
             self.raw_dir,
-            expected,
+            XLS_SHA256,
         )
 
     def _resolver(self) -> Callable[[str], str | None]:

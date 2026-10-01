@@ -17,3 +17,9 @@ Two fixtures for the loader pin check (issues #518, #524, #528, #537). `raw_pin_
 ## 2026.09.30 - CGT fixture batch carries num_graphs (issue #523)
 
 `make_batch` sets `batch.num_graphs = 3`, the attribute a collated PyG `Batch` carries and the CGT now reads as the genotype count.
+
+## 2026.09.30 - Recorder scope and pinned-loader enumeration (issue #561)
+
+- `PINNED_LOADERS` is no longer a hand list: it is every module under `torchcell/datasets/scerevisiae/` whose source calls `verify_raw_files(...)` (AST scan, 30 modules, the same set as the old list).
+- `raw_pin_calls` is unchanged for synthetic tests. A new function-scoped autouse fixture, `_real_pins_for_real_data`, calls `restore_real_pins`, which puts the real `verify_raw_files` back in every pinned loader for a test marked `slow` or `data`. Those tests run only under `--slow`/`--data` and build from the real mirrors, so they now meet the real pin. The issue asked for the whole fixture to go inert under the flags; that would also hand the real check to every synthetic build test in a `--slow` run and fail them all, so the switch is per test marker instead.
+- New fixtures `pin_restorer`, `real_verify_raw_files`, and a `pytest_generate_tests` hook that parametrizes `pinned_loader` over `PINNED_LOADERS`, all consumed by [[tests.torchcell.datasets.scerevisiae.test_raw_pins]].

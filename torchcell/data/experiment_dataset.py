@@ -88,6 +88,31 @@ class RawSha256MismatchError(RuntimeError):
         )
 
 
+class ManifestPinMismatchError(RuntimeError):
+    """A raw-mirror manifest records a sha256 other than its loader's module pin.
+
+    The module constant is the one pin; the manifest is the retrieval record that
+    ``deposit_raw_mirror`` writes from that constant, so the two disagree only when one
+    of them was edited by hand.
+    """
+
+    def __init__(self, relpath: str, recorded: str, pin: str) -> None:
+        """Record the mirror path and both digests in the message."""
+        self.relpath = relpath
+        self.recorded = recorded
+        self.pin = pin
+        super().__init__(
+            f"raw-mirror manifest records sha256 {recorded} for {relpath}, but the "
+            f"loader pins {pin}"
+        )
+
+
+def check_manifest_pin(relpath: str, recorded: str, pin: str) -> None:
+    """Raise ``ManifestPinMismatchError`` unless the manifest's ``recorded`` is ``pin``."""
+    if recorded != pin:
+        raise ManifestPinMismatchError(relpath, recorded, pin)
+
+
 def file_sha256(path: str | Path, chunk_size: int = 1 << 20) -> str:
     """Hex sha256 of a file's bytes (symlinks are followed), read in chunks."""
     h = hashlib.sha256()

@@ -74,6 +74,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    check_manifest_pin,
     link_verified,
     post_process,
     verify_raw_files,
@@ -578,19 +579,21 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
         return [DATA_FILENAME]
 
     def download(self) -> None:
-        """Link the manifest-listed mirror file into ``raw/`` and verify its sha256.
+        """Link the mirror file into ``raw/`` after verifying it against ``DATA_SHA256``.
 
-        The mirror + its recorded sha256 is canonical; the GEO URL is retrieval metadata
-        that ``deposit_raw_mirror`` re-runs, never a live build dependency.
+        The mirror + the ``DATA_SHA256`` pin is canonical; the GEO URL is retrieval
+        metadata that ``deposit_raw_mirror`` re-runs, never a live build dependency. The
+        manifest is the retrieval record and must carry the pin, else
+        ``ManifestPinMismatchError`` names both digests.
         """
         data_root = _data_root()
         manifest = load_manifest(data_root)
-        expected = manifest_sha256(manifest, DATA_REL)
+        check_manifest_pin(DATA_REL, manifest_sha256(manifest, DATA_REL), DATA_SHA256)
         src = raw_mirror_dir(data_root) / DATA_REL
         if not src.exists():
             raise RuntimeError(f"required raw artifact missing from mirror: {src}")
         os.makedirs(self.raw_dir, exist_ok=True)
-        link_verified(src, osp.join(self.raw_dir, DATA_FILENAME), expected)
+        link_verified(src, osp.join(self.raw_dir, DATA_FILENAME), DATA_SHA256)
         log.info(
             "Vanacloig 2022 raw matrix linked into %s (sha256 verified)", self.raw_dir
         )

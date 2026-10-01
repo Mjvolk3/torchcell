@@ -39,7 +39,9 @@ manifests; an existing manifest is read on skip and a corrupt one raises
 ``_run_mineru.py`` copies ``<stem>_content_list.json``, ``<stem>_middle.json`` and
 ``images/`` next to every PDF it OCRs, so ``si/si1_middle.json`` and
 ``si/si1_content_list.json`` are ``ocr_layout`` and ``si/images/*.jpg`` is ``ocr_image``,
-exactly as their ``paper_*`` and ``images/`` counterparts. ``si/si_data/`` keeps
+exactly as their ``paper_*`` and ``images/`` counterparts. The rules are anchored to the
+runner's output, not substrings: ``si/Figure_S1_images/a.png`` and
+``si/Table_middle.json`` stay ``si_data``. ``si/si_data/`` keeps
 ``si_data`` even for a released file whose name looks like a sidecar, and a loose
 ``si/`` table is still ``si_data``. The full role table of a captured key is pinned on
 the live layout of ``avsecEffectiveGeneExpression2021`` (one SI PDF, one image per
@@ -231,6 +233,11 @@ def test_role_for_mineru_sidecars_under_si_are_ocr_roles() -> None:
     assert _role_for("si/si_data/images/plate.png") == "si_data"
     assert _role_for("si/si_data/run_middle.json") == "si_data"
     assert _role_for("si/Table_S2.json") == "si_data"
+    # Anchored to what _run_mineru.py writes: images/ directly beside the PDF and
+    # <stem>_middle.json for a PDF stem (paper, si*), never a substring match.
+    assert _role_for("si/Figure_S1_images/a.png") == "si_data"
+    assert _role_for("si/Table_middle.json") == "si_data"
+    assert _role_for("si/Table_content_list.json") == "si_data"
     assert _role_for("si/si1.pdf") == "si_pdf"
     assert _role_for("si/si1.md") == "si_ocr"
 

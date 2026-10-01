@@ -7,6 +7,7 @@
 
 import hashlib
 import logging
+import re
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
@@ -174,6 +175,13 @@ class Manifest(BaseModel):
     created_at: str | None = None
 
 
+# What ``_run_mineru.py`` writes beside each PDF ``ocr.ocr_artifact`` OCRs
+# (``paper.pdf`` and ``si/si*.pdf``): an ``images/`` directory and
+# ``<stem>_content_list.json`` / ``<stem>_middle.json`` with ``<stem>`` the PDF stem.
+_MINERU_IMAGE = re.compile(r"(si/)?images/[^/]+\.(jpg|jpeg|png)")
+_MINERU_LAYOUT = re.compile(r"(paper|si/si[^/]*)_(content_list|middle)\.json")
+
+
 def _role_for(rel_path: str) -> str:
     """Infer a file's role from its relative path within the artifact dir."""
     if rel_path == "paper.pdf":
@@ -188,9 +196,9 @@ def _role_for(rel_path: str) -> str:
     # ``<stem>_content_list.json``, ``<stem>_middle.json`` and ``images/`` next
     # to every PDF it OCRs, so ``si/si1_middle.json`` and ``si/images/*.jpg`` are
     # OCR sidecars and must win over the loose-SI rule below.
-    if "images/" in rel_path and rel_path.endswith((".jpg", ".jpeg", ".png")):
+    if _MINERU_IMAGE.fullmatch(rel_path):
         return ROLE_OCR_IMAGE
-    if rel_path.endswith(("_content_list.json", "_middle.json")):
+    if _MINERU_LAYOUT.fullmatch(rel_path):
         return ROLE_OCR_LAYOUT
     if rel_path.startswith("si/") and rel_path.endswith(".pdf"):
         return ROLE_SI_PDF

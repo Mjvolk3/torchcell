@@ -19,3 +19,7 @@ All five Phase 13 Findings are retired. Now asserted: an enriched manifest witho
 ## 2026.09.30 - SI sidecar roles pinned (issue #564)
 
 New `test_role_for_mineru_sidecars_under_si_are_ocr_roles` (sidecars under `si/` are `ocr_layout` / `ocr_image`; `si/si_data/images/plate.png`, `si/si_data/run_middle.json` and `si/Table_S2.json` stay `si_data`) and `test_captured_key_full_role_table` (the full `(path, role, source)` table of an `avsecEffectiveGeneExpression2021`-shaped key from `build_manifest`).
+
+## 2026.09.30 - Sidecar boundary pinned
+
+`test_role_for_mineru_sidecars_under_si_are_ocr_roles` now also asserts `si/Figure_S1_images/a.png`, `si/Table_middle.json` and `si/Table_content_list.json` stay `si_data`.

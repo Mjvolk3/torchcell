@@ -479,12 +479,14 @@ def test_microarray_merge_refuses_records_that_disagree_on_carrying_an_uncertain
 def test_metabolite_se_is_dropped_where_a_contributing_record_has_none(
     tmp_path: Any,
 ) -> None:
-    """The metabolite validator allows an SE on a subset of keys, so an unknown SE stays
-    unknown: Lopez-style record 1 has no SE (n < 2), Cachera-style record 2 has SE 0.4,
-    the merged level is (1 + 3) / 2 = 2.0 and the merged SE is None (not 0.4 from the
-    one carrier, which is what the RMS pool reported).
+    """The pool helper's contract on the metabolite family, not a loader pair (no two
+    committed metabolite loaders share a metabolite key): the metabolite validator
+    allows an SE on a subset of keys, so an unknown SE stays unknown. Record 1 has no
+    SE, record 2 has SE 0.4; the merged level is (1 + 3) / 2 = 2.0, replicates 1 + 3 =
+    4, and the merged SE is None (not 0.4 from the one carrier, which the RMS pool
+    reported).
     """
-    first = _metabolite("lopez", 1.0, 0.3, 1)
+    first = _metabolite("a", 1.0, 0.3, 1)
     phenotype = first["experiment"].phenotype.model_copy(
         update={"metabolite_level_se": None}
     )
@@ -492,7 +494,7 @@ def test_metabolite_se_is_dropped_where_a_contributing_record_has_none(
         update={"phenotype": phenotype}
     )
     entry = _dedup(tmp_path).create_deduplicate_entry(
-        [first, _metabolite("cachera", 3.0, 0.4, 3)]
+        [first, _metabolite("b", 3.0, 0.4, 3)]
     )
     merged = entry["experiment"].phenotype
     assert isinstance(merged, MetabolitePhenotype)
@@ -614,6 +616,53 @@ def test_protein_abundance_three_duplicates_in_closed_form(tmp_path: Any) -> Non
     genotype = experiment.genotype
     assert isinstance(genotype, Genotype)
     assert [getattr(p, "num_duplicates") for p in genotype.perturbations] == [3]
+
+
+def test_protein_se_is_dropped_when_a_messner_style_record_has_none(
+    tmp_path: Any,
+) -> None:
+    """The reachable drop with the committed loaders: Messner 2023 knockouts carry
+    ``protein_abundance_se=None`` (single replicate) and Zelezniak 2018 kinase knockouts
+    carry an SE, both keyed by ORF, and Messner's genome-wide set contains Zelezniak's
+    kinases. Messner-style abundance {YAL001C: 2.0}, n 1, no SE, merged with a
+    Zelezniak-style abundance {YAL001C: 4.0}, n 3, SE 0.3: abundance (2 + 4) / 2 = 3.0,
+    replicates 4, SE None (the RMS pool reported 0.3). The pair also merges different
+    ``measurement_type`` values (``swath_ms_maxlfq_batch_corrected_quantity`` and
+    ``swath_ms_label_free_log_signal_sva``) under the first record's label, a
+    pre-existing hazard this PR does not change.
+    """
+    messner = ProteinAbundancePhenotype(
+        protein_abundance={"YAL001C": 2.0},
+        protein_abundance_se=None,
+        n_replicates={"YAL001C": 1},
+        measurement_type="swath_ms_maxlfq_batch_corrected_quantity",
+    )
+    zelezniak = ProteinAbundancePhenotype(
+        protein_abundance={"YAL001C": 4.0},
+        protein_abundance_se={"YAL001C": 0.3},
+        n_replicates={"YAL001C": 3},
+        measurement_type="swath_ms_label_free_log_signal_sva",
+    )
+    data = [
+        _vector_record(
+            ProteinAbundanceExperiment,
+            ProteinAbundanceExperimentReference,
+            "messner2023",
+            messner,
+        ),
+        _vector_record(
+            ProteinAbundanceExperiment,
+            ProteinAbundanceExperimentReference,
+            "zelezniak2018",
+            zelezniak,
+        ),
+    ]
+    merged = _dedup(tmp_path).create_deduplicate_entry(data)["experiment"].phenotype
+    assert isinstance(merged, ProteinAbundancePhenotype)
+    assert merged.protein_abundance == {"YAL001C": pytest.approx(3.0)}
+    assert merged.n_replicates == {"YAL001C": 4}
+    assert merged.protein_abundance_se is None
+    assert merged.measurement_type == "swath_ms_maxlfq_batch_corrected_quantity"
 
 
 def _visual(

@@ -87,6 +87,9 @@ _NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.\-]*$")
 # `_bib/_retired/<generated_at>/`, never deleted.
 BIB_STORE_RETIRED_SUBDIR = "_retired"
 
+# The exporter's stamp, ``datetime.now(UTC).isoformat()``; it names a directory.
+_GENERATED_AT_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{6})?\+00:00")
+
 # A Zotero collection key: 8 upper-case letters or digits. Used only to VALIDATE a
 # value declared as a key, never to decide whether a value is a key.
 _COLLECTION_KEY_RE = re.compile(r"[A-Z0-9]{8}")
@@ -201,19 +204,20 @@ def parse_makefile_collections(makefile: Path) -> tuple[str, str]:
     """``(ZOTERO_COLLECTION, ZOTERO_PERSONAL_COLLECTION)`` from a notes-tex Makefile.
 
     Either may be empty: a document that cites nothing declares neither. A trailing
-    ``# comment`` is cut off the value, as make does. A value of more than one word is
-    refused with ``ValueError`` naming the Makefile and the variable, so a document is
-    never silently left without its bibliography.
+    ``# comment`` is cut off the value, as make does. A value that is not one
+    collection key (a name, two words) is refused with ``ValueError`` naming the
+    Makefile and the variable, so a document is never silently left without its
+    bibliography and the refusal points at the file to fix.
     """
     values = {"ZOTERO_COLLECTION": "", "ZOTERO_PERSONAL_COLLECTION": ""}
     for line in makefile.read_text().splitlines():
         match = _MAKEFILE_VAR_RE.match(line)
         if match:
             value = match.group(2).split("#", 1)[0].strip()
-            if len(value.split()) > 1:
+            if value and not _COLLECTION_KEY_RE.fullmatch(value):
                 raise ValueError(
-                    f"{makefile}: {match.group(1)} must be one collection key, "
-                    f"got {value!r}"
+                    f"{makefile}: {match.group(1)} must be one Zotero collection key "
+                    f"(8 upper-case letters or digits), got {value!r}"
                 )
             values[match.group(1)] = value
     return values["ZOTERO_COLLECTION"], values["ZOTERO_PERSONAL_COLLECTION"]
@@ -341,33 +345,92 @@ def write_bib(
     return path
 
 
+def validate_generated_at(stamp: str) -> str:
+    """Return ``stamp`` if it is a UTC ISO timestamp as the exporter writes it.
+
+    ``datetime.now(UTC).isoformat()`` gives ``YYYY-MM-DDTHH:MM:SS[.ffffff]+00:00``;
+    the stamp names a ``_retired/`` directory, so anything else (a path separator,
+    ``..``) is refused by value before the store is touched.
+    """
+    if not _GENERATED_AT_RE.fullmatch(stamp):
+        raise ValueError(
+            "generated_at must be a UTC ISO timestamp "
+            f"(YYYY-MM-DDTHH:MM:SS[.ffffff]+00:00), got {stamp!r}"
+        )
+    return stamp
+
+
+def _carried_records(
+    store_dir: Path, declared: list[BibSpec], exported: set[str]
+) -> dict[str, BibRecord]:
+    """Previous-manifest records of declared specs this run does not re-export.
+
+    A record is carried only when its file is on disk with the manifest's sha256;
+    otherwise the export is refused by name, because carrying it would advertise a
+    file the store does not have. No previous manifest carries nothing.
+    """
+    manifest_path = store_dir / BIB_STORE_MANIFEST
+    if not manifest_path.is_file():
+        return {}
+    previous = BibStoreManifest.model_validate_json(manifest_path.read_text())
+    carried: dict[str, BibRecord] = {}
+    for spec in declared:
+        record = previous.get(spec.name)
+        if spec.name in exported or record is None:
+            continue
+        target = store_dir / record.path
+        if not target.is_file():
+            raise ValueError(
+                f"cannot carry {spec.name} forward: the previous manifest lists "
+                f"{record.path} but it is absent on disk; run a full export"
+            )
+        if sha256_file(target) != record.sha256:
+            raise ValueError(
+                f"cannot carry {spec.name} forward: {record.path} no longer has the "
+                "sha256 the previous manifest pins; run a full export"
+            )
+        carried[spec.name] = record
+    return carried
+
+
 def export_bib_store(
     mirror_root: str | Path,
     specs: list[BibSpec],
     group: ZoteroLibrary,
     user: ZoteroLibrary,
     *,
+    declared: list[BibSpec],
     generated_at: str | None = None,
 ) -> BibStoreManifest:
-    """Pull every spec, write the files, and write the manifest.
+    """Pull ``specs``, write the files, and write the manifest.
 
-    A store manifest already on disk is replaced wholesale by the specs given, so
-    a spec removed from the repo stops being served on the next export. Every
-    file is pulled and written under a ``.part`` suffix first; the served files
-    and the manifest are swapped in only once every spec succeeded, so a pull that
-    fails part-way leaves the previous store intact and consistent, and the
-    manifest never advertises a hash the file beside it does not have. A failed
-    export removes every ``.part`` file it staged before re-raising.
+    ``declared`` is EVERY spec the repo declares (:func:`discover_bib_specs`);
+    ``specs`` is the subset to re-export now (all of them on the nightly run, one
+    or more on a ``--name`` run) and must be drawn from it. The new manifest lists,
+    in declared order, a fresh record for each exported spec and the previous
+    manifest's record, unchanged, for each declared spec not re-exported (refused by
+    name if that record's file is missing or its sha256 drifted). A spec removed
+    from the repo is therefore unlisted on any run, and a subset run leaves the
+    other served bibliographies exactly as they were.
 
-    After a successful export, any ``<name>.bib`` (or leftover ``<name>.bib.part``)
-    that no given spec wrote is moved to ``_retired/<generated_at>/`` with a warning
-    naming it, so the store directory holds only what the manifest serves. This
-    includes the specs left out of a ``--name`` subset run, which the replaced
-    manifest stops serving too.
+    Every file is pulled and written under a ``.part`` suffix first; the served
+    files and the manifest are swapped in only once every spec succeeded, so a
+    pull that fails part-way leaves the previous store intact and consistent. A
+    failed export removes every ``.part`` file it staged before re-raising.
+
+    After a successful export, every ``<name>.bib`` whose name no declared spec
+    carries, and every leftover ``*.bib.part``, is moved to
+    ``_retired/<generated_at>/`` with a warning naming it; nothing is deleted.
     """
+    stamp = validate_generated_at(generated_at or datetime.now(UTC).isoformat())
+    declared_names = [validate_bib_name(spec.name) for spec in declared]
+    undeclared = sorted({spec.name for spec in specs} - set(declared_names))
+    if undeclared:
+        raise ValueError(f"exported specs not declared by the repo: {undeclared}")
     store_dir = bib_store_dir(mirror_root)
     store_dir.mkdir(parents=True, exist_ok=True)
-    stamp = generated_at or datetime.now(UTC).isoformat()
+    exported = {spec.name for spec in specs}
+    carried = _carried_records(store_dir, declared, exported)
     staged: list[tuple[BibSpec, Path, int]] = []
     attempted: list[Path] = []
     try:
@@ -383,45 +446,62 @@ def export_bib_store(
             part.unlink(missing_ok=True)
         raise
 
-    records: list[BibRecord] = []
+    fresh: dict[str, BibRecord] = {}
     for spec, part, n_entries in staged:
         final = part.with_suffix("")  # strip .part -> <name>.bib
         part.replace(final)
-        records.append(
-            BibRecord(
-                name=spec.name,
-                path=final.name,
-                bytes=final.stat().st_size,
-                sha256=sha256_file(final),
-                n_entries=n_entries,
-                scope=spec.scope,
-                origin=spec.origin,
-                generated_at=stamp,
-            )
+        fresh[spec.name] = BibRecord(
+            name=spec.name,
+            path=final.name,
+            bytes=final.stat().st_size,
+            sha256=sha256_file(final),
+            n_entries=n_entries,
+            scope=spec.scope,
+            origin=spec.origin,
+            generated_at=stamp,
         )
+    records = [
+        fresh.get(name) or carried[name]
+        for name in declared_names
+        if name in fresh or name in carried
+    ]
     manifest = BibStoreManifest(bibs=records, generated_at=stamp)
     (store_dir / BIB_STORE_MANIFEST).write_text(manifest.model_dump_json(indent=2))
-    log.info("bib_store: wrote %d bibliographies -> %s", len(records), store_dir)
-    _retire_undeclared(store_dir, {record.path for record in records}, stamp)
+    log.info(
+        "bib_store: wrote %d bibliographies (%d exported, %d carried) -> %s",
+        len(records),
+        len(fresh),
+        len(carried),
+        store_dir,
+    )
+    _retire_undeclared(store_dir, {f"{name}.bib" for name in declared_names}, stamp)
     return manifest
 
 
-def _retire_undeclared(store_dir: Path, served: set[str], stamp: str) -> list[Path]:
-    """Move every ``*.bib`` / ``*.bib.part`` the manifest does not serve aside.
+def _retire_undeclared(store_dir: Path, declared: set[str], stamp: str) -> list[Path]:
+    """Move undeclared ``*.bib`` files and leftover ``*.bib.part`` files aside.
 
-    The destination is ``<store_dir>/_retired/<stamp>/<file name>``; each move is
-    logged as a warning naming the bibliography. Returns the new paths.
+    A ``<name>.bib`` stays when ``<name>`` is a spec the repo declares (served or
+    not); every other one, and every ``*.bib.part`` (staging a successful export
+    has already renamed), moves to ``<store_dir>/_retired/<stamp>/`` with a warning
+    naming it. Returns the new paths.
     """
     retired_dir = store_dir / BIB_STORE_RETIRED_SUBDIR / stamp
     moved: list[Path] = []
     for path in sorted([*store_dir.glob("*.bib"), *store_dir.glob("*.bib.part")]):
-        if path.name in served:
+        if path.name in declared:
             continue
         retired_dir.mkdir(parents=True, exist_ok=True)
         target = path.replace(retired_dir / path.name)
+        reason = (
+            "is a leftover staging file"
+            if path.name.endswith(".part")
+            else "is not declared by any spec in the repo"
+        )
         log.warning(
-            "bib_store: %s is not declared by any exported spec; moved %s -> %s",
+            "bib_store: %s %s; moved %s -> %s",
             path.name.split(".bib", 1)[0],
+            reason,
             path,
             target,
         )

@@ -24,9 +24,10 @@ Usage::
     python scripts/lit_bib_store.py --name paper --name eqtl-data-model   # a subset
     python scripts/lit_bib_store.py --dry-run    # pull + report counts, write nothing
 
-A subset run replaces the manifest with that subset, so the other bibliographies
-stop being served and their files are moved to ``_bib/_retired/<generated_at>/``
-(logged by name, never deleted); the next full run exports them again.
+A subset run re-exports only the named bibliographies; every other one the repo
+declares keeps its previous manifest record and file unchanged. A ``.bib`` that no
+spec in the repo declares is moved to ``_bib/_retired/<generated_at>/`` (logged by
+name, never deleted) on any run.
 
 Cadence: nightly from cron after ``lit_sync.py`` (see ``scripts/crontab.txt``), and
 by hand right after a collection changes. Unlike ``lit_bib.py`` this writes nothing
@@ -94,12 +95,13 @@ def main() -> None:
 
     group_id = os.environ["ZOTERO_LIBRARY_ID"]
     user_id = os.environ["ZOTERO_USER_ID"]
-    specs = discover_bib_specs(
+    declared = discover_bib_specs(
         _PROJECT_ROOT,
         group_library_id=group_id,
         user_library_id=user_id,
         user_root_collection=args.root_collection,
     )
+    specs = declared
     if args.name:
         known = {s.name for s in specs}
         missing = sorted(set(args.name) - known)
@@ -128,7 +130,7 @@ def main() -> None:
         return
 
     mirror_root = Path(os.environ["DATA_ROOT"]) / LIBRARY_SUBDIR
-    manifest = export_bib_store(mirror_root, specs, group, user)
+    manifest = export_bib_store(mirror_root, specs, group, user, declared=declared)
     for record in manifest.bibs:
         log.info(
             "%-28s %5d entries  sha256=%s", record.name, record.n_entries, record.sha256

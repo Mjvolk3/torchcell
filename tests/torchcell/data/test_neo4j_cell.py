@@ -53,6 +53,7 @@ from torchcell.data.neo4j_cell import (
     ParsedGenome,
     ProcessingStep,
     _label_values,
+    _print_label_stats,
     create_embedding_graph,
     create_graph_from_gene_set,
     min_max_normalize_dataset,
@@ -160,6 +161,42 @@ def test_label_values_drops_missing_rows_and_returns_a_float_array() -> None:
     assert type(values) is np.ndarray
     assert values.dtype == np.float64
     assert values.tolist() == [0.25, 1.5]
+
+
+def test_print_label_stats_prints_exact_statistics_per_label(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """``_print_label_stats`` prints, per label, the count, min, max, mean and population
+    std (ddof 0) of the non-missing values, to four decimals.
+
+    By hand: ``fitness`` = [1.0, NaN, 3.0] drops the NaN -> [1.0, 3.0]: count 2, min 1,
+    max 3, mean (1 + 3) / 2 = 2, std sqrt(((1 - 2)^2 + (3 - 2)^2) / 2) = 1.
+    ``gene_interaction`` = [0.0, 0.5, 1.0]: count 3, min 0, max 1, mean 1.5 / 3 = 0.5,
+    std sqrt((0.25 + 0 + 0.25) / 3) = sqrt(1 / 6) = 0.408248... -> 0.4082.
+    """
+    label_df = pd.DataFrame(
+        {"fitness": [1.0, float("nan"), 3.0], "gene_interaction": [0.0, 0.5, 1.0]}
+    )
+
+    _print_label_stats(label_df, ["fitness", "gene_interaction"])
+
+    assert capsys.readouterr().out.split("\n") == [
+        "",
+        "fitness statistics (original):",
+        "  Count: 2",
+        "  Min: 1.0000",
+        "  Max: 3.0000",
+        "  Mean: 2.0000",
+        "  Std: 1.0000",
+        "",
+        "gene_interaction statistics (original):",
+        "  Count: 3",
+        "  Min: 0.0000",
+        "  Max: 1.0000",
+        "  Mean: 0.5000",
+        "  Std: 0.4082",
+        "",
+    ]
 
 
 def test_min_max_normalize_dataset_rewrites_the_first_key_in_place() -> None:

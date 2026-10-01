@@ -13,3 +13,5 @@ The six pickling tests (Phase 2: `__getstate__` drops the LMDB environment and e
 ## 2026.09.30 - _label_values
 
 Added `test_label_values_drops_missing_rows_and_returns_a_float_array`: on a three-row frame with one NaN in `fitness`, `_label_values` returns a `numpy.ndarray` of dtype float64 equal to `[0.25, 1.5]`, in row order (issue #555, PR #576).
+
+Added `test_print_label_stats_prints_exact_statistics_per_label`: on `fitness` = [1.0, NaN, 3.0] and `gene_interaction` = [0.0, 0.5, 1.0], captured stdout equals the exact lines (count 2, min 1.0000, max 3.0000, mean 2.0000, std 1.0000; count 3, min 0.0000, max 1.0000, mean 0.5000, std 0.4082 = sqrt(1/6)), each number derived by hand in the docstring.

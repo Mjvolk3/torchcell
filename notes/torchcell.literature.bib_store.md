@@ -98,3 +98,17 @@ Fix:
 Issue #563 (nightly export failing since 2026-09-21 with `Zotero collection 'torchcell' not found`): not fixed here, but explained. `/tmp/torchcell-lit-bib-store.log` lists exactly 100 available collections (alphabetical through `w019-strain-build-list`, with `torchcell-topics` present and `torchcell` absent). `ZoteroLibrary.collection_key` calls `self.zot.collections()` without `everything(...)`, so it reads one 100-collection page; the personal library now has more than 100 collections and `torchcell` falls off that page. `collection_tree` pages correctly and then resolves its root through the unpaged `collection_key`. Hypothesis (consistent with the log, not tested against Zotero): paging `list_collections` fixes #563.
 
 Evidence: `test_scope_collections_are_keys_by_declaration`, `test_empty_pull_message_and_no_part_file_left_by_a_failed_export`, `test_partial_failure_leaves_previous_store_intact`, `test_dropped_spec_is_unserved_and_its_file_is_moved_aside`, `test_inline_comment_after_the_value_is_cut_off`, `test_a_two_word_makefile_value_is_refused_by_name` in [[tests.torchcell.literature.test_bib_store]].
+
+## 2026.10.01 - Subset runs carry forward; stamp and Makefile refusals (review of PR #589)
+
+The first version of this fix moved every `.bib` outside a `--name` subset to `_retired/`, which (with the manifest rebuilt from the subset) took every other bibliography offline; `notes-tex/010-additive-baselines/Makefile` and `notes-tex/025-additive-baselines/Makefile` tell the operator to run exactly such a subset, and the full nightly has failed since 2026-09-21 (#563), so nothing would have restored them.
+
+Now `export_bib_store` takes `declared` (every spec `discover_bib_specs` finds; `scripts/lit_bib_store.py` passes it before the `--name` filter) alongside `specs` (what to re-export, which must be drawn from `declared`):
+
+- the manifest lists, in declared order, fresh records for the exported specs and the previous manifest's record, unchanged, for every other declared spec;
+- a previous record whose file is missing or whose sha256 drifted is refused by name before any pull (`cannot carry <name> forward: ...; run a full export`), never carried silently; a full run carries nothing and so repairs such a store;
+- only a `.bib` whose name no DECLARED spec carries is retired ("is not declared by any spec in the repo"), plus any leftover `*.bib.part` ("is a leftover staging file"), on full and subset runs alike.
+
+`generated_at` names the `_retired/` directory, and `"../../escaped"` moved a file outside `_bib/`; it is now validated (`validate_generated_at`) against the exporter's own format `YYYY-MM-DDTHH:MM:SS[.ffffff]+00:00` and refused by value before anything is touched. A Makefile value that is not one key is refused in `parse_makefile_collections` with the Makefile path in the message (the `BibScope` validator alone did not name the file).
+
+Tests: `test_subset_run_carries_the_other_declared_bibliographies_forward`, `test_subset_run_still_retires_a_spec_removed_from_the_repo`, `test_subset_run_refuses_to_carry_a_broken_record_by_name`, `test_spec_removed_from_the_repo_is_unserved_and_moved_aside` (replaces the test that pinned a 404 after a fewer-spec run), `test_exported_spec_must_be_declared`, `test_generated_at_outside_the_exporter_format_is_refused`, `test_a_makefile_value_that_is_not_one_key_is_refused_naming_the_makefile` in [[tests.torchcell.literature.test_bib_store]].

@@ -144,3 +144,13 @@ env_chemgen_auesukaree2009: PASS
 Issue #518 (sweep); the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes; PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: yes; refused deposit leaving a directory: yes (mkdir before hash).
 
 Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `_PDF_SHA256`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.
+
+## 2026.10.01 - Per-class count check and an in-table collapse ledger
+
+Previous behavior: `_parse_tables` used each functional class's declared (N) only to decide whether an indented line continues the class, so a class declaring (5) and listing two genes parsed without error; only the per-stress total was checked. `_resolve_stress` collapsed a second token onto an ORF already claimed in the same table (`resolved.setdefault`) with no ledger entry, so `n_listed_tokens` could exceed `n_kept_records + n_dropped_records`.
+
+Fix (issue #520): `_check_class_count` refuses a class whose parsed count differs from its declared count (checked when the next class row opens and when the table ends), naming the stress, the class label and both counts. A collapsed token is recorded as a `CollapsedToken` (stress, token, systematic name, kept gene name) in `DropLog.collapsed_tokens`, with `DropLog.n_collapsed_tokens`, so listed = kept + dropped + collapsed.
+
+Record-neutral, measured on the pinned PDF (sha256 `01b94544...`): all 67 classes of Tables 1 to 6 match their declared count (the count gate still ends the NaCl table at a page-header line after its last class is complete); 0 repeated tokens within a table; the dev build ledger reads 525 listed, 525 kept, 0 dropped, and its LMDB holds 525 entries, so 0 collapses. The fixed parser returns the expected per-stress counts on the real PDF. `dropped_records.json` gains two keys (`n_collapsed_tokens: 0`, `collapsed_tokens: []`) on the next rebuild; records are unchanged.
+
+Tests: `test_a_class_short_of_its_declared_count_refuses_at_table_end`, `test_a_class_over_its_declared_count_refuses_at_the_next_class_row`, `test_drop_log_ledgers_the_in_table_collapse`.

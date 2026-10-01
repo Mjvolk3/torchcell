@@ -17,7 +17,9 @@ both from the same Zenodo record 1320289 (concept DOI 10.5281/zenodo.1320288):
   ``ProteinAbundancePhenotype`` (WS9): ``protein_abundance = {protein_ORF -> mean log
   signal}`` with ``measurement_type = "swath_ms_label_free_log_signal_sva"``. The parent
   **WT** strain (``KO_ORF == "WT"``) supplies the reference profile. Every protein has
-  >=2 replicate samples per strain, so the standard error is always defined.
+  >=2 replicate samples per strain, so the standard error is always defined. A blank
+  value or a repeated (protein, strain, replicate) row refuses the build (neither occurs
+  in the pinned release), since either would make the row count misstate ``n``.
 
 - ``MetaboliteZelezniak2018Dataset`` -- the targeted central-carbon/amino-acid
   METABOLOME of the same 95 kinase-KO strains (plus a measured WT) by SRM-MS/MS. The file
@@ -155,8 +157,32 @@ class ProteomeZelezniak2018Dataset(ExperimentDataset):
         log.info("Wrote %s (%d bytes, sha256 verified)", dest, len(data))
 
     @staticmethod
-    def _aggregate(sub: pd.DataFrame) -> dict[str, Any]:
-        """Aggregate one strain's replicate rows to per-protein mean/se/n dicts."""
+    def _aggregate(sub: pd.DataFrame, strain: str) -> dict[str, Any]:
+        """Aggregate one strain's replicate rows to per-protein mean/se/n dicts.
+
+        ``n`` is the row count per protein, so every row must be one distinct replicate
+        with a value. A blank value (which pandas would leave out of ``n`` unrecorded)
+        and a repeated (protein, replicate) id (which would count as an extra replicate
+        and shrink the SE) both refuse, naming the strain. Measured on the pinned
+        release (sha256 ``9ff81ecb...``): 0 blank values and 0 repeated (ORF, KO_ORF,
+        replicate) rows of 264,264, so neither refusal fires on the real file.
+        """
+        blank = sub[sub["value"].isna()]
+        if len(blank):
+            raise RuntimeError(
+                f"Zelezniak proteome strain {strain}: {len(blank)} blank protein "
+                f"value(s), first {blank['ORF'].iloc[0]} replicate "
+                f"{blank['replicate'].iloc[0]}; a blank would drop out of n_replicates "
+                "unrecorded"
+            )
+        repeated = sub[sub.duplicated(["ORF", "replicate"], keep=False)]
+        if len(repeated):
+            raise RuntimeError(
+                f"Zelezniak proteome strain {strain}: {len(repeated)} rows share a "
+                f"(protein, replicate) id, first {repeated['ORF'].iloc[0]} replicate "
+                f"{repeated['replicate'].iloc[0]}; a repeated replicate would count "
+                "as an extra replicate"
+            )
         grp = sub.groupby("ORF")["value"].agg(["mean", "std", "count"])
         abundance: dict[str, float] = {}
         se: dict[str, float] = {}
@@ -180,7 +206,7 @@ class ProteomeZelezniak2018Dataset(ExperimentDataset):
         wt_rows = df[df["KO_ORF"] == _WT]
         if wt_rows.empty:
             raise RuntimeError("Zelezniak matrix missing the WT reference strain")
-        self._reference = self._aggregate(wt_rows)
+        self._reference = self._aggregate(wt_rows, _WT)
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         n_bad_orf = 0
@@ -190,7 +216,13 @@ class ProteomeZelezniak2018Dataset(ExperimentDataset):
                 n_bad_orf += 1
                 continue
             gene = str(sub["KO_gene_name"].iloc[0])
-            rows.append({"orf": str(ko_orf), "gene": gene, "agg": self._aggregate(sub)})
+            rows.append(
+                {
+                    "orf": str(ko_orf),
+                    "gene": gene,
+                    "agg": self._aggregate(sub, str(ko_orf)),
+                }
+            )
         log.info(
             "Zelezniak: %d knockout strains, WT reference with %d proteins, "
             "%d non-systematic KO_ORF skipped",

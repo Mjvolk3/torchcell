@@ -18,10 +18,14 @@ two typed dispersion gaps) with their shared reference; the side files (records 
 counts (8 strain datapoints, 1 non-strain row, 5 cells; one cell whose every screen is
 flagged non-replicate), including a blank line and a strain row with a blank z_score,
 neither counted. Refusals with exact messages: an off-genome ORF, two identities with one
-canonical name, two distinct z strings of equal value (SD exactly 0), and every
-``download`` path (no manifest, a file missing from the mirror, a digest mismatch naming
-the manifest's digest). ``deposit_raw_mirror`` is pinned on synthetic files with the pins
-monkeypatched to their digests, and one build runs through ``download`` from that mirror.
+canonical name, and every ``download`` path (no manifest, a file missing from the mirror,
+a digest mismatch naming the manifest's digest). ``deposit_raw_mirror`` is pinned on
+synthetic files with the pins monkeypatched to their digests, and one build runs through
+``download`` from that mirror.
+
+2026.10.01 (issue #520): the datapoint key is the parsed z, so two z strings of equal
+value (``-4.0`` / ``-4.00``) are one screen (n 1) rather than an SD-0 abort, and a missing
+mirror manifest refuses with the deposit step instead of a bare ``FileNotFoundError``.
 """
 
 from __future__ import annotations
@@ -620,14 +624,13 @@ def test_two_identities_with_one_canonical_name_refuse(
     )
 
 
-def test_two_z_strings_of_equal_value_abort_the_build(
+def test_two_z_strings_of_equal_value_are_one_screen(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: the datapoint key is the z_score STRING, so ``-4.0`` and ``-4.00`` in one
-    cell are two screens whose sample SD is exactly 0, and the build aborts rather than
-    collapsing them as the same datapoint. The module docstring's measurement (no two
-    distinct datapoints share a z) holds for the release's formatting only. Pinned until
-    the key is the parsed value.
+    """Contract (issue #520): the datapoint key is the PARSED z, so ``-4.0`` and
+    ``-4.00`` in one cell are the same released datapoint: one screen, z -4.0, n 1, and
+    the single-screen dispersion gaps, instead of two screens with SD 0 that aborted the
+    build. The pinned export has 0 cells with two z strings of equal value.
     """
     rows = [
         _row(
@@ -640,12 +643,15 @@ def test_two_z_strings_of_equal_value_abort_the_build(
         for z in ("-4.0", "-4.00")
     ]
     _write_raw(tmp_path, rows)
-    with pytest.raises(RuntimeError) as info:
-        _build(tmp_path, monkeypatch)
-    assert str(info.value) == (
-        "YAL001C/CID 1183: 2 distinct screens with a sample SD of exactly 0, which the "
-        "datapoint-key measurement says cannot happen"
-    )
+    dataset = _build(tmp_path, monkeypatch)
+    assert len(dataset) == 1
+    phenotype = dataset[0]["experiment"]["phenotype"]
+    assert phenotype["environment_response"] == -4.0
+    assert phenotype["n_samples"] == 1
+    assert [gap["field"] for gap in phenotype["provenance_gaps"]] == [
+        "environment_response_uncertainty",
+        "environment_response_se",
+    ]
 
 
 def test_canonical_names_skip_standards_that_do_not_resolve_back() -> None:
@@ -875,18 +881,21 @@ def _bare(root: Path) -> Any:
     return dataset
 
 
-def test_download_without_a_manifest_raises_file_not_found(
+def test_download_without_a_manifest_refuses_naming_the_deposit_step(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: with no mirror deposited, ``download`` fails inside ``load_manifest`` as a
-    bare ``FileNotFoundError`` on ``manifest.json`` instead of the loader's own "required
-    raw artifact missing from mirror" message. Pinned until the manifest read refuses
-    with a message naming the deposit step.
+    """Contract (issue #520): with no mirror deposited, ``download`` refuses in
+    ``load_manifest`` with the manifest path and the deposit step, not a bare
+    ``FileNotFoundError``.
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path / "dr"))
-    with pytest.raises(FileNotFoundError) as info:
+    with pytest.raises(RuntimeError) as info:
         _bare(tmp_path / "ds").download()
-    assert info.value.filename == str(w.raw_mirror_dir() / "manifest.json")
+    manifest = w.raw_mirror_dir() / "manifest.json"
+    assert str(info.value) == (
+        f"raw-mirror manifest missing: {manifest}. Deposit the mirror with "
+        "deposit_raw_mirror() first."
+    )
 
 
 def test_download_refuses_a_missing_file_and_a_digest_mismatch(

@@ -15,3 +15,7 @@ Findings: a score symbol other than `0`, `+`, `++` is skipped without being coun
 ## 2026.09.30 - Raw sha256 pin enforced at build time
 
 Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.
+
+## 2026.10.01 - Grade-symbol and header findings retired (issue #520)
+
+Retired: `test_unknown_grade_symbol_is_skipped_without_a_ledger_entry` and `test_a_sheet_without_the_header_row_raises_a_bare_stop_iteration`. The `+++` row left the shared edge fixture; a dedicated test now asserts the exact refusal for it, and the missing header asserts the exact `RuntimeError` naming the file.

@@ -15,3 +15,7 @@ Findings: the datapoint key is the z string, so `-4.0` and `-4.00` count as two 
 ## 2026.09.30 - Raw sha256 pin enforced at build time
 
 Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.
+
+## 2026.10.01 - z-key and manifest findings retired (issue #520)
+
+Retired: `test_two_z_strings_of_equal_value_abort_the_build` and `test_download_without_a_manifest_raises_file_not_found`. Now asserted: `-4.0` and `-4.00` in one cell build one record with z -4.0, n 1 and the two single-screen dispersion gaps; `download()` with no manifest raises the exact `RuntimeError` naming the manifest path and the deposit step.

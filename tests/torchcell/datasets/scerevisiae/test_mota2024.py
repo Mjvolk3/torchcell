@@ -18,7 +18,6 @@ and a blank row before the ``Gene/ORF name`` header, so the header search is exe
               YDL001W (blank score)   skipped                           no
               (blank token) +         skipped                           no
               YDL001W 0               the reference grade, skipped      no
-              YDL001W +++             not a grade symbol, skipped       no
               nbsp-only token +       empty after strip, skipped        no
     butyric   ALIASX +, YBR001C +     one gene YBR001C, tie; the        yes, yes
                                       attribute table's name is None,
@@ -34,6 +33,11 @@ acid has its own reference (the acid rides on the reference plate), so the refer
 index is [[0, 1], [2], [3]]. Also pinned: the download order (mirror, then the ESM URL),
 the sha256 refusals with both digests, ``deposit_raw_mirror`` and its manifest, the
 missing-genome and missing-header refusals.
+
+2026.10.01 (issue #520): a score outside ``0``, ``+``, ``++`` (``+++``, formerly a row of
+the edge acetic table that was skipped uncounted) now refuses with a message naming the
+file, the symbol and the token, and a sheet without the header row refuses with a message
+naming the file instead of a bare ``StopIteration``.
 """
 
 from __future__ import annotations
@@ -256,7 +260,6 @@ _EDGE_ROWS: dict[str, list[tuple[str | None, str | None]]] = {
         ("YDL001W", None),
         (None, "+"),
         ("YDL001W", "0"),
-        ("YDL001W", "+++"),
         ("\xa0", "+"),
     ],
     "butyric": [("ALIASX", "+"), ("YBR001C", "+"), ("RLM2", "+"), ("SBR2", "+")],
@@ -501,24 +504,27 @@ def test_edge_drop_log_equals_the_hand_built_ledger(
     )
 
 
-def test_unknown_grade_symbol_is_skipped_without_a_ledger_entry(
-    edge_built: m.EnvChemgenMota2024Dataset,
+def test_unknown_grade_symbol_refuses_naming_file_symbol_and_token(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: a score cell outside ``0``, ``+``, ``++`` (here ``+++`` on YDL001W in the
-    acetic table) is skipped before ``n_raw`` is counted, exactly like the blank score and
-    the reference grade ``0``, so a malformed or new grade symbol vanishes with no count
-    and no ledger entry. Pinned until an unknown symbol refuses or is ledgered.
+    """Contract (issue #520): a score cell outside ``0``, ``+``, ``++`` (here ``+++`` on
+    YDL001W in the acetic table) refuses the build instead of being skipped before
+    ``n_raw`` is counted. The pinned sheets carry 0 such cells.
     """
-    acetic_orfs = {
-        edge_built[i]["experiment"]["genotype"]["perturbations"][0][
-            "systematic_gene_name"
-        ]
-        for i in range(2)
-    }
-    assert acetic_orfs == {"YAL001C", "YGR271C-A"}
-    log = json.loads(Path(edge_built.root, m._DROPPED_FILENAME).read_text())
-    assert "YDL001W" not in json.dumps(log["dropped"])
-    assert log["n_raw_rows"] == 10
+    monkeypatch.setitem(
+        _EDGE_ROWS, "acetic", [("TFC3", "+"), ("YDL001W", "+++"), ("EFG1", "+")]
+    )
+    root = tmp_path / "ds"
+    (root / "raw").mkdir(parents=True)
+    _write_edge_sheets(root / "raw")
+    with pytest.raises(RuntimeError) as info:
+        m.EnvChemgenMota2024Dataset(
+            root=str(root), genome=cast(SCerevisiaeGenome, _EdgeGenome())
+        )
+    assert str(info.value) == (
+        "12934_2024_2309_MOESM1_ESM.xlsx: score '+++' for 'YDL001W' is not one of the "
+        "grade symbols ['+', '++', '0']"
+    )
 
 
 def test_edge_side_files_one_reference_per_acid(
@@ -538,21 +544,21 @@ def test_edge_side_files_one_reference_per_acid(
     assert edge_built.reference_class is EnvironmentResponseExperimentReference
 
 
-def test_a_sheet_without_the_header_row_raises_a_bare_stop_iteration(
-    tmp_path: Path,
-) -> None:
-    """Finding: ``_parse_acid`` finds the header with ``next(...)`` and no default, so a
-    renamed header column surfaces as a bare ``StopIteration`` with no message naming the
-    file. Pinned until the header search refuses with a message.
+def test_a_sheet_without_the_header_row_refuses_naming_the_file(tmp_path: Path) -> None:
+    """Contract (issue #520): a renamed header column refuses with a message naming the
+    first acid's file and the header it looked for, not a bare ``StopIteration``.
     """
     root = tmp_path / "ds"
     (root / "raw").mkdir(parents=True)
     _write_edge_sheets(root / "raw", header="Gene name")
-    with pytest.raises(StopIteration) as info:
+    with pytest.raises(RuntimeError) as info:
         m.EnvChemgenMota2024Dataset(
             root=str(root), genome=cast(SCerevisiaeGenome, _EdgeGenome())
         )
-    assert info.value.args == ()
+    assert str(info.value) == (
+        "12934_2024_2309_MOESM1_ESM.xlsx: no row starts with the 'Gene/ORF name' "
+        "header in the first sheet"
+    )
 
 
 def test_parsing_without_a_genome_refuses() -> None:

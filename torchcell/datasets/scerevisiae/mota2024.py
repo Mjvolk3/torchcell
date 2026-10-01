@@ -76,6 +76,10 @@ SOURCE ARTIFACTS / QUIRKS handled deterministically (``_DEDUP_RULE``):
   RLM2, SBR2 (all three acids), ILM2 (butyric), VPS236 (butyric, octanoic), SIW15
   (octanoic) -- 13 records. Resolving them is a flagged follow-up (likely SI typos:
   VPS236->VPS36?, SIW15->SIW14?, ILM2->ILM1?, RLM2->RLM1?).
+- A score cell outside ``0``, ``+``, ``++`` refuses the build rather than vanishing
+  uncounted, and so does a sheet with no ``Gene/ORF name`` header row. Neither occurs in
+  the pinned sheets (scored rows: acetic 331 ``+`` / 46 ``++``, butyric 371 / 51,
+  octanoic 437 / 53; 0 other symbols).
 
 Final: acetic 372, butyric 415, octanoic 483 = 1270 records (1289 raw susceptible rows
 - 3 RNR4 duplicates - 3 EFG1/YGR272C merges - 13 retired-token drops).
@@ -567,8 +571,13 @@ class EnvChemgenMota2024Dataset(ExperimentDataset):
         sheet = workbook[workbook.sheetnames[0]]
         rows = list(sheet.iter_rows(values_only=True))
         header_idx = next(
-            i for i, row in enumerate(rows) if row and row[0] == "Gene/ORF name"
+            (i for i, row in enumerate(rows) if row and row[0] == "Gene/ORF name"), None
         )
+        if header_idx is None:
+            raise RuntimeError(
+                f"{spec['filename']}: no row starts with the 'Gene/ORF name' header "
+                "in the first sheet"
+            )
         claims: dict[str, list[tuple[str, str]]] = {}
         dropped: dict[str, str] = {}
         n_raw = 0
@@ -577,7 +586,14 @@ class EnvChemgenMota2024Dataset(ExperimentDataset):
                 continue
             token = str(row[0]).replace("\xa0", " ").strip()
             score = str(row[2]).strip()
-            if not token or score not in _RANK or score == _REFERENCE_SYMBOL:
+            if not token:
+                continue
+            if score not in _RANK:
+                raise RuntimeError(
+                    f"{spec['filename']}: score {score!r} for {token!r} is not one of "
+                    f"the grade symbols {sorted(_RANK)}"
+                )
+            if score == _REFERENCE_SYMBOL:
                 continue
             n_raw += 1
             resolution = resolve(token)

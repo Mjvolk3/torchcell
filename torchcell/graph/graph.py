@@ -912,8 +912,11 @@ class SCerevisiaeGraph:
                         tf_sys in self.genome.gene_set
                         and target_sys in self.genome.gene_set
                     ):
-                        # Add edge with all metadata from the row
-                        edge_data = row.to_dict()
+                        # Add edge with all metadata from the row; read_csv takes
+                        # the column names from the header, so they are strings.
+                        edge_data: dict[str, Any] = {
+                            str(column): value for column, value in row.items()
+                        }
                         # Add systematic names to edge data
                         edge_data["TF_systematic"] = tf_sys
                         edge_data["Target_systematic"] = target_sys

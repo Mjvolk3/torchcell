@@ -30,3 +30,9 @@ len(set([i['experiment']['pubmed_id'] for i in dataset]))
 ## 2024.09.15 - Rename to Match other Datasets
 
 We have been naming datasets with label(phenotype) and then source and date.
+
+## 2026.10.01 - Issue #533 No overwrite=True and No Relative Fallback
+
+- `process` read the gene directory from `os.environ.get("DATA_ROOT", "data")`, a relative fallback; it now uses `torchcell.graph.sgd.data_root()`, which refuses an unset `DATA_ROOT` with a named `ValueError`.
+- `main` built the genome with `overwrite=True`, which races any concurrent reader of the shared genome build, and the dataset at the relative default root. It now passes `overwrite=False` and roots the dataset at `$DATA_ROOT/data/torchcell/gene_essentiality_sgd`.
+- Left open (adapter scope): the content hash in `cell_adapter.py` excludes the publication, so records that differ only in publication collapse to one graph node (1,329 records to 1,140 nodes on the datasets page).

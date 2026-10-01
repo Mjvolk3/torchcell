@@ -1446,7 +1446,7 @@ def main() -> None:
     genome = SCerevisiaeGenome(
         genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
         go_root=osp.join(DATA_ROOT, "data/go"),
-        overwrite=True,
+        overwrite=False,  # never True: a rebuild races readers of the shared genome
     )
     graph = SCerevisiaeGraph(
         sgd_root=osp.join(DATA_ROOT, "data/sgd/genome"),

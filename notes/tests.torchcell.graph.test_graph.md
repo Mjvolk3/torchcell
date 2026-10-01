@@ -15,3 +15,8 @@ Twenty-two hermetic tests added beside the two SGD-backed ones, which now carry 
 Twenty-four to thirty-seven tests; alone 73 to 93 percent, the `tests/torchcell/graph/` directory 87 to 98. The 2017-07-19 date filter and the IGI filter on the built GO graph with exact edges, the log line and the surviving child GO:0000002 re-attached to the BP root; the contained-genes filter with no gene set (n = 2 drops the four one-gene leaves); pickle-first loading for `G_gene`, `G_genetic`, `G_regulatory` and `G_go` and every lazy graph keeping its first read; a missing STRING table (9.1, 11.0, 12.0) or TFLink table triggering one download of the exact URL; a TFLink download that writes nothing giving an empty graph and two exact log lines; a genetic partner outside the raw graph dropped; regulatory edges extending a supplied graph; `build_gene_multigraph` omitting a graph that loads as None with a warning; both `check_regulatory_nodes_have_edges` messages.
 
 Findings: only the last evidence row per gene and term is kept, so the IGI filter's result depends on row order (lines 1074-1077); `main` builds the genome with `overwrite=True` (1449).
+
+## 2026.10.01 - Issue #533 Findings Retired
+
+- Retired: `main` building the genome with `overwrite=True`; `test_main_opens_the_genome_with_overwrite_false` asserts `overwrite=False`.
+- Still pinned: the last-evidence-row finding (`test_two_evidence_rows_for_one_term_keep_only_the_last`), now with the measured real-data impact in its docstring.

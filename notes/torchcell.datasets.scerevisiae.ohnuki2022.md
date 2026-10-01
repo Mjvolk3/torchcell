@@ -42,3 +42,9 @@ background gene too). Added an optional injectable `genome`.
 Issue #518 (sweep); the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes; PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: no (source hashed first; a failed post-copy check left the copy); refused deposit leaving a directory: n/a.
 
 Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `MUTANT_SHA256`, `WT_SHA256`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.
+
+## 2026.10.01 - Issue #533 Repeated ORFs and Blank Reference Cells Refused
+
+- A target ORF listed twice (after strip, uppercase and name reconciliation) used to give two records of one quadruple genotype; it is now refused by name. 0 of the 1982 released rows repeat.
+- The 3Delta reference mean used to skip a blank cell (`mean` skips NaN) while a blank mutant cell dropped its strain. A blank reference cell is now refused, so the reference is never averaged over a subset of replicates. 0 blank cells in the released 749 x 501 `wt749data.tsv`; the blank mutant drop (YGL141W, 2 cells) is unchanged.
+- Tests: `test_repeated_target_orf_refuses`, `test_blank_reference_cell_refuses`, `test_clean_base_only_matrix`.

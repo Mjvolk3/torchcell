@@ -857,7 +857,10 @@ def test_two_evidence_rows_for_one_term_keep_only_the_last(
     a gene with two evidence rows for GO:0000002 keeps only the last one, and
     ``filter_go_IGI`` keeps or drops it by row ORDER: IGI then IDA survives, IDA then
     IGI is removed although IDA evidence exists. ``go_to_genes`` counts the gene once
-    either way. Pinned until the node keeps every evidence row.
+    either way. Pinned until the node keeps every evidence row: left open by issue #533
+    because it changes the GO graph built from the real SGD gene files (1,935 of 29,893
+    multi-evidence (gene, term) pairs mix IGI with other evidence; 800 are removed now
+    though non-IGI evidence exists, 1,135 kept only because a non-IGI row comes last).
     """
     graph = _make_graph(tmp_path, _StubGenome(ALIASES))
     data = _raw_nodes()["YAL001C"]
@@ -1172,12 +1175,11 @@ def test_check_regulatory_nodes_reports_all_connected_then_self_loops(
     )
 
 
-def test_main_rebuilds_the_genome_with_overwrite_true(
+def test_main_opens_the_genome_with_overwrite_false(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Finding: graph.py:1449 builds the genome with ``overwrite=True``, the setting that
-    races a concurrent rebuild of the shared genome (``check_regulatory_nodes_have_edges``
-    and the SGD-backed tests use ``overwrite=False``). Pinned until main passes False.
+    """``main`` opens the genome with ``overwrite=False``: ``overwrite=True`` rebuilds the
+    shared genome and races any concurrent reader of it (issue #533).
 
     It prints the obsolete id met while collecting terms, the term container's type,
     and the term-to-gene map.
@@ -1190,7 +1192,7 @@ def test_main_rebuilds_the_genome_with_overwrite_true(
         {
             "genome_root": str(root / "data/sgd/genome"),
             "go_root": str(root / "data/go"),
-            "overwrite": True,
+            "overwrite": False,
         }
     ]
     out = capsys.readouterr().out

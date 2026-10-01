@@ -34,7 +34,7 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.graph import SCerevisiaeGraph
-from torchcell.graph.sgd import main_get_all_genes
+from torchcell.graph.sgd import data_root, main_get_all_genes
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -160,10 +160,8 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
         os.makedirs(self.processed_dir, exist_ok=True)
         os.makedirs(self.preprocess_dir, exist_ok=True)
 
-        # Check if SGD gene data exists
-        sgd_genes_dir = osp.join(
-            os.environ.get("DATA_ROOT", "data"), "data/sgd/genome/genes"
-        )
+        # Check if SGD gene data exists (DATA_ROOT unset is refused by data_root())
+        sgd_genes_dir = osp.join(data_root(), "data/sgd/genome/genes")
         if osp.exists(sgd_genes_dir):
             gene_files = [f for f in os.listdir(sgd_genes_dir) if f.endswith(".json")]
             gene_count = len(gene_files)
@@ -277,30 +275,32 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
 
 
 def main() -> None:
-    """Build and inspect the SGD gene essentiality dataset for ad-hoc runs."""
-    import os
-
+    """Build and inspect the SGD gene essentiality dataset under ``$DATA_ROOT``."""
     from dotenv import load_dotenv
 
     from torchcell.graph import SCerevisiaeGraph
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    root = data_root()
 
+    # Never overwrite=True: a rebuild races any other process reading the shared genome.
     genome = SCerevisiaeGenome(
-        genome_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome"),
-        go_root=osp.join(cast(str, DATA_ROOT), "data/go"),
-        overwrite=True,
+        genome_root=osp.join(root, "data/sgd/genome"),
+        go_root=osp.join(root, "data/go"),
+        overwrite=False,
     )
     graph = SCerevisiaeGraph(
-        sgd_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome"),
-        string_root=osp.join(cast(str, DATA_ROOT), "data/string"),
-        tflink_root=osp.join(cast(str, DATA_ROOT), "data/tflink"),
+        sgd_root=osp.join(root, "data/sgd/genome"),
+        string_root=osp.join(root, "data/string"),
+        tflink_root=osp.join(root, "data/tflink"),
         genome=genome,
     )
 
-    dataset = GeneEssentialitySgdDataset(scerevisiae_graph=graph)
+    dataset = GeneEssentialitySgdDataset(
+        root=osp.join(root, "data/torchcell/gene_essentiality_sgd"),
+        scerevisiae_graph=graph,
+    )
     print(dataset)
 
 

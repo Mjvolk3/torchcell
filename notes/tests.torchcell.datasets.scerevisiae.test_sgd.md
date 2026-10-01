@@ -15,3 +15,8 @@ The loader has no raw files; `process()` walks `scerevisiae_graph.G_raw` and fet
 Six to twelve tests, 89 to 99 percent (line 108 cannot be reached). The two `is` checks on the schema classes are now a `transform_item` round trip; the sha256 content hash (the formula at `cell_adapter.py` line 527) maps 3 records to 2 ids, the loader-level cause of 1,329 records becoming 1,140 graph nodes; the fetch threshold counts `.json` files only (0 files, 99 plus a `.txt`, and 100, each with the exact log line); `preprocess_raw` and `download` do nothing; `main`.
 
 Findings: `main` builds the genome with `overwrite=True` (line 294) and the dataset at a relative root (303); with `DATA_ROOT` unset the gene directory falls back to the relative path `"data"` (165).
+
+## 2026.10.01 - Issue #533 Findings Retired
+
+- Retired: `main` with `overwrite=True` and a relative dataset root, and the relative `"data"` fallback for an unset `DATA_ROOT`.
+- Now asserted: `main` passes `overwrite=False` and `root=$DATA_ROOT/data/torchcell/gene_essentiality_sgd`; an unset `DATA_ROOT` refuses the build with the named `data_root` error, no fetch and no LMDB. The content-hash collapse stays pinned (adapter scope).

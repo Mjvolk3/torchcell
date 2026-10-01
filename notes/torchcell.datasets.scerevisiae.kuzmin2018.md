@@ -192,3 +192,10 @@ The published trigenic score subtracts the double-mutant query strain's own fitn
 - Digenic records keep their positions and serialize byte-identically (410,399 before), so the served graph takes the new records as a superset admission without moving any content-addressed id [[torchcell.knowledge_graphs.incremental-admission]].
 - No SD: Data File S4 carries it, but S4 is not among this loader's raw files.
 - Consumed at read time by [[torchcell.data.label_policy]], which joins a triple to its query strain on the tm token.
+
+## 2026.10.01 - Issue #533 Refusals for Unknown Arrays, Blank SDs and Repeated Crosses
+
+- Previously `SmfKuzmin2018Dataset.create_experiment` never bound `genotype` for an array strain that was neither `tsa` nor `dma` and failed with `UnboundLocalError` (the `"allele"` array branch was dead); the other four loaders stopped at their genotype-size assertion. Now `_array_perturbation_type` classifies the array column in every `preprocess_raw` and refuses any other strain id with a named `ValueError`, so the dead branch is gone.
+- A blank Dmf or Tmf SD used to be stored as `fitness_std` NaN while the uncertainty fields were None. `_reported_sd` stores it as None. The SI lists the column only as "12. Combined mutant fitness standard deviation" (`kuzminSystematicAnalysisComplex2018/si/si1.md` line 427) and defines no meaning for a blank, so None records "no value reported".
+- Dmf and Dmi stored a repeated digenic (query strain, array strain) cross twice. `_refuse_repeated_crosses` now refuses it by name.
+- Record-neutral: on the pinned `aao1729_data_s1.tsv` each input occurs 0 times (0 other array strains, 0 blank SDs, 0 repeated crosses among 501,510 rows). Tests: `test_unknown_array_strain_type_refuses_the_build`, `test_dmf_allele_pairs_and_blank_sd`, `test_repeated_digenic_cross_is_refused_by_dmf_and_dmi` in `tests/torchcell/datasets/scerevisiae/test_kuzmin2018.py`.

@@ -19,7 +19,7 @@ S1     YAL015C+YOL043C_tm72        YBL007C_dma91     tri   0.85      0.05  1.013
        ntg1Δ+ntg2Δ                 sla1Δ
 S3     YAL015C+YDL227C_tm461       YBR001C_tsa100    dig   0.7       0.03  0.98      -0.02    0.5
        ntg1Δ+hoΔ                   nth2-5001
-S3     YAL015C+YBR001C_tm99        YCR002C_sn1       tri   0.6       0.01  0.77      -0.15    0.001
+S3     YAL015C+YBR001C_tm99        YCR002C_tsa1      tri   0.6       0.01  0.77      -0.15    0.001
        ntg1Δ+nth2-5001             cdc10-1
 =====  ==========================  ================  ====  ========  ====  ========  =======  ======
 
@@ -28,14 +28,14 @@ single mutants (NTG1 ``delta`` sn123 0.98/0.01; NTH2 ``nth2-5001`` sn124 0.8/0.0
 single mutant with no fitness (CDC10 sn125, dropped), and the double mutant ``tm72``
 (1.0133/0.008) that the Dmf join finds on the bare tm number. ``tm99`` has no S5 row,
 so its query-strain record falls back to the S1/S3 column (0.77, no SD).
-``YCR002C_sn1`` is neither ``dma`` nor ``tsa``, the "unknown" array type that the 2020
-loaders store as ``SgaAllelePerturbation``. Perturbed gene names are the allele name
+``YCR002C_tsa1`` is a ts array (an array strain that is neither ``dma`` nor ``tsa`` is
+refused, pinned in ``test_kuzmin2020.py``; it used to be stored as an
+``SgaAllelePerturbation``). Perturbed gene names are the allele name
 before the first ``_`` (``ntg1`` from ``ntg1_delta``), except Smf, which stores
 ``Gene1`` verbatim. PubMed 32586993 / DOI 10.1126/science.aaz5667 on every record.
 """
 
 import json
-import math
 from pathlib import Path
 from typing import Any
 
@@ -96,14 +96,14 @@ TM72_QUERY = "YAL015C+YOL043C_tm72"
 TM99_QUERY = "YAL015C+YBR001C_tm99"
 ARRAY_DMA = "YBL007C_dma91"
 ARRAY_TSA = "YBR001C_tsa100"
-ARRAY_UNKNOWN = "YCR002C_sn1"
+ARRAY_TS_CDC10 = "YCR002C_tsa1"
 S1_ROWS: list[list[Any]] = [
     [DIGENIC_QUERY, "ntg1Δ+hoΔ", ARRAY_DMA, "sla1Δ", "digenic", 0.9695, 0.0465, 0.98, 0.9, 0.01, 0.6],
     [TM72_QUERY, "ntg1Δ+ntg2Δ", ARRAY_DMA, "sla1Δ", "trigenic", 0.85, 0.05, 1.0133, 0.9, -0.08, 0.02],
 ]  # fmt: skip
 S3_ROWS: list[list[Any]] = [
     [DIGENIC_QUERY, "ntg1Δ+hoΔ", ARRAY_TSA, "nth2-5001", "digenic", 0.7, 0.03, 0.98, 0.8, -0.02, 0.5],
-    [TM99_QUERY, "ntg1Δ+nth2-5001", ARRAY_UNKNOWN, "cdc10-1", "trigenic", 0.6, 0.01, 0.77, 0.85, -0.15, 0.001],
+    [TM99_QUERY, "ntg1Δ+nth2-5001", ARRAY_TS_CDC10, "cdc10-1", "trigenic", 0.6, 0.01, 0.77, 0.85, -0.15, 0.001],
 ]  # fmt: skip
 S5_SINGLE_ROWS: list[list[Any]] = [
     ["Single mutant", "delta", "YAL015C", "NTG1", "sn123", 0.98, 0.01],
@@ -142,8 +142,8 @@ SLA1 = SgaKanMxDeletionPerturbation(
 NTH2_TS = SgaTsAllelePerturbation(
     systematic_gene_name="YBR001C", perturbed_gene_name="nth2-5001", strain_id=ARRAY_TSA
 )  # fmt: skip
-CDC10_UNKNOWN = SgaAllelePerturbation(
-    systematic_gene_name="YCR002C", perturbed_gene_name="cdc10-1", strain_id=ARRAY_UNKNOWN
+CDC10_TS = SgaTsAllelePerturbation(
+    systematic_gene_name="YCR002C", perturbed_gene_name="cdc10-1", strain_id=ARRAY_TS_CDC10
 )  # fmt: skip
 # The Tmf and Tmi loaders tag query perturbations with the SPLIT halves of the query
 # strain id ("YAL015C" and "YOL043C_tm72"), not the full id (see test_tmf_records).
@@ -157,7 +157,7 @@ NTH2_SPLIT_TM99 = SgaAllelePerturbation(
     systematic_gene_name="YBR001C", perturbed_gene_name="nth2-5001", strain_id="YBR001C_tm99"
 )  # fmt: skip
 TM72_TRIGENIC = Genotype(perturbations=[NTG1_SPLIT, NTG2_SPLIT_TM72, SLA1])
-TM99_TRIGENIC = Genotype(perturbations=[NTG1_SPLIT, NTH2_SPLIT_TM99, CDC10_UNKNOWN])
+TM99_TRIGENIC = Genotype(perturbations=[NTG1_SPLIT, NTH2_SPLIT_TM99, CDC10_TS])
 
 
 def write_xlsx(path: Path, columns: list[str], rows: list[list[Any]]) -> None:
@@ -336,18 +336,14 @@ def test_dmf_records(tmp_path: Path) -> None:
     ``bootstrap_se`` n = 12, so ``fitness_se`` is 0.008 undivided. tm99 has no S5
     row: ntg1 (KanMX) + nth2-5001 (allele) at the S1/S3 column value 0.77 with no SD.
 
-    Finding: the fallback record's ``fitness_std`` is a float ``nan``, not ``None``.
-    ``_double_mutant_query_strain_rows`` masks the SD with ``where(Fitness.notna())``,
-    which yields NaN, and ``create_experiment`` passes it straight into
-    ``FitnessPhenotype(fitness_std=row["fitness_std"])``; only the uncertainty fields
-    go through the ``pd.isna`` check. The stored value therefore never compares equal
-    to itself, so it is pinned with ``math.isnan`` and excluded from the dump equality.
+    The fallback record's ``fitness_std`` is None, not the float NaN that
+    ``where(Fitness.notna())`` leaves in the frame: ``create_experiment`` stores a blank
+    SD as "no value reported", matching its empty uncertainty fields (issue #533).
     """
     ds = build(tmp_path, DmfKuzmin2020Dataset)
     assert len(ds) == 4
     stored = dumps(experiments(ds))
-    fallback_std = stored[3]["phenotype"].pop("fitness_std")
-    assert isinstance(fallback_std, float) and math.isnan(fallback_std)
+    assert stored[3]["phenotype"]["fitness_std"] is None
     expected = [
         FitnessExperiment(
             dataset_name="DmfKuzmin2020Dataset",
@@ -380,9 +376,7 @@ def test_dmf_records(tmp_path: Path) -> None:
             phenotype=FitnessPhenotype(fitness=0.77, fitness_std=None),
         ),
     ]
-    expected_dumps = dumps(expected)
-    assert expected_dumps[3]["phenotype"].pop("fitness_std") is None
-    assert stored == expected_dumps
+    assert stored == dumps(expected)
     assert [e.phenotype.fitness_se for e in experiments(ds)] == [
         0.02325,
         0.015,
@@ -427,7 +421,7 @@ def test_tmf_records(tmp_path: Path) -> None:
     """Tmf: the 2 trigenic rows (S1 tm72, S3 tm99) with three perturbations each.
 
     tm72: ntg1, ntg2 and sla1 at 0.85 / SD 0.05; tm99: ntg1 (KanMX), nth2-5001
-    (allele) and cdc10-1 (unknown array type, stored as an SGA allele) at 0.6 / 0.01.
+    (allele) and cdc10-1 (the ts array, an SGA ts allele) at 0.6 / 0.01.
 
     Finding: the query perturbations carry the SPLIT halves of the query strain id
     (``YAL015C`` and ``YOL043C_tm72``), not the full id the Dmf query-strain records
@@ -502,8 +496,8 @@ def test_tmi_records(tmp_path: Path) -> None:
     """Tmi: the 2 trigenic rows as hyperedge interactions, tau -0.08 / -0.15.
 
     P-values 0.02 and 0.001; the genotypes are the same hand-built ``TM72_TRIGENIC`` /
-    ``TM99_TRIGENIC`` Tmf stores (split query strain ids, the unknown array type as an
-    SGA allele); ``graph_level`` stays "hyperedge".
+    ``TM99_TRIGENIC`` Tmf stores (split query strain ids, cdc10-1 as an SGA ts
+    allele); ``graph_level`` stays "hyperedge".
     """
     ds = build(tmp_path, TmiKuzmin2020Dataset)
     assert len(ds) == 2
@@ -549,8 +543,7 @@ def test_reopen_reads_the_built_store_without_reprocessing(
 
     ``processed/lmdb`` exists, so PyG skips ``process()``; deleting the raw tables
     first proves neither download nor process runs (``_download`` returns early when
-    the LMDB exists). Records are compared through sorted JSON so Dmf's ``nan``
-    fallback SD (see ``test_dmf_records``) compares equal to itself.
+    the LMDB exists). Records are compared through sorted JSON.
     """
     first = build(tmp_path, cls)
     records = [json.dumps(first[i], sort_keys=True) for i in range(n)]

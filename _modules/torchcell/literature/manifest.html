@@ -146,6 +146,10 @@
 <span class="n">ROLE_RAW_DATA</span> <span class="o">=</span> <span class="s2">"raw_data"</span>
 <span class="n">ROLE_OCR_IMAGE</span> <span class="o">=</span> <span class="s2">"ocr_image"</span>
 <span class="n">ROLE_OCR_LAYOUT</span> <span class="o">=</span> <span class="s2">"ocr_layout"</span>
+<span class="c1"># ``ocr.ocr_pdf``'s ProcessingRecord for one OCR'd PDF, written beside its markdown</span>
+<span class="c1"># as ``&lt;stem&gt;_ocr_provenance.json`` and attached to that markdown's record.</span>
+<span class="n">ROLE_OCR_PROVENANCE</span> <span class="o">=</span> <span class="s2">"ocr_provenance"</span>
+<span class="n">OCR_PROVENANCE_SUFFIX</span> <span class="o">=</span> <span class="s2">"_ocr_provenance.json"</span>
 <span class="c1"># Our own reading notes pulled from Zotero -- the only role not derived from the</span>
 <span class="c1"># paper's own bytes, so it is sourced to Zotero rather than to a retrieval URL.</span>
 <span class="n">ROLE_ANNOTATIONS</span> <span class="o">=</span> <span class="s2">"annotations"</span>
@@ -164,7 +168,10 @@
 <span class="w">    </span><span class="sd">"""One captured file in an artifact directory."""</span>
 
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"Path relative to the artifact directory."</span><span class="p">)</span>
-    <span class="n">role</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"paper_pdf | paper_ocr | si_pdf | si_ocr | si_data"</span><span class="p">)</span>
+    <span class="n">role</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"paper_pdf | paper_ocr | si_pdf | si_ocr | si_data | raw_data | "</span>
+        <span class="s2">"ocr_image | ocr_layout | ocr_provenance | annotations"</span>
+    <span class="p">)</span>
     <span class="nb">bytes</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">sha256</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
@@ -295,10 +302,18 @@
 
 
 <span class="c1"># What ``_run_mineru.py`` writes beside each PDF ``ocr.ocr_artifact`` OCRs</span>
-<span class="c1"># (``paper.pdf`` and ``si/si*.pdf``): an ``images/`` directory and</span>
-<span class="c1"># ``&lt;stem&gt;_content_list.json`` / ``&lt;stem&gt;_middle.json`` with ``&lt;stem&gt;`` the PDF stem.</span>
-<span class="n">_MINERU_IMAGE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(si/)?images/[^/]+\.(jpg|jpeg|png)"</span><span class="p">)</span>
+<span class="c1"># (``paper.pdf`` and ``si/si*.pdf``): its figures, ``&lt;stem&gt;_content_list.json`` /</span>
+<span class="c1"># ``&lt;stem&gt;_middle.json`` with ``&lt;stem&gt;`` the PDF stem, and ``ocr.ocr_pdf`` adds</span>
+<span class="c1"># ``&lt;stem&gt;_ocr_provenance.json``. Figures: ``images/&lt;file&gt;`` for the paper,</span>
+<span class="c1"># ``images/&lt;stem&gt;/&lt;file&gt;`` for another PDF at the key root (``SOM.pdf``) and</span>
+<span class="c1"># ``si/images/&lt;si stem&gt;/&lt;file&gt;`` per SI PDF (``ocr.images_dir_for``); the flat</span>
+<span class="c1"># ``si/images/&lt;file&gt;`` is the layout written before issue #579 and is still an OCR</span>
+<span class="c1"># figure, so keys with one SI PDF stay valid without a re-OCR.</span>
+<span class="n">_MINERU_IMAGE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="sa">r</span><span class="s2">"(images|images/[^/]+|si/images|si/images/si[^/]*)/[^/]+\.(jpg|jpeg|png)"</span>
+<span class="p">)</span>
 <span class="n">_MINERU_LAYOUT</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(paper|si/si[^/]*)_(content_list|middle)\.json"</span><span class="p">)</span>
+<span class="n">_MINERU_PROVENANCE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(paper|si/si[^/]*)_ocr_provenance\.json"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_role_for</span><span class="p">(</span><span class="n">rel_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -319,6 +334,8 @@
         <span class="k">return</span> <span class="n">ROLE_OCR_IMAGE</span>
     <span class="k">if</span> <span class="n">_MINERU_LAYOUT</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="n">rel_path</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">ROLE_OCR_LAYOUT</span>
+    <span class="k">if</span> <span class="n">_MINERU_PROVENANCE</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="n">rel_path</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ROLE_OCR_PROVENANCE</span>
     <span class="k">if</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"si/"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".pdf"</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">ROLE_SI_PDF</span>
     <span class="k">if</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"si/"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".md"</span><span class="p">):</span>
@@ -378,7 +395,10 @@
 <span class="w">    </span><span class="sd">"""Scan an artifact directory and build its manifest.</span>
 
 <span class="sd">    Walks every file except ``manifest.json`` itself, computes sha256 and size,</span>
-<span class="sd">    and tags each with a role and (when known) a source URL / Zotero md5.</span>
+<span class="sd">    and tags each with a role and (when known) a source URL / Zotero md5. A MinerU</span>
+<span class="sd">    markdown whose ``&lt;stem&gt;_ocr_provenance.json`` sits beside it (written by</span>
+<span class="sd">    ``ocr.ocr_pdf``) carries that ProcessingRecord as ``processing``; markdown</span>
+<span class="sd">    OCR'd before the record existed has none.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        artifact_dir: The ``&lt;...&gt;/&lt;citation_key&gt;/`` directory.</span>
@@ -404,7 +424,14 @@
             <span class="k">continue</span>
         <span class="n">rel</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">artifact_dir</span><span class="p">))</span>
         <span class="n">role</span> <span class="o">=</span> <span class="n">_role_for</span><span class="p">(</span><span class="n">rel</span><span class="p">)</span>
-        <span class="n">default_source</span> <span class="o">=</span> <span class="s2">"mineru-ocr"</span> <span class="k">if</span> <span class="n">_is_mineru_output</span><span class="p">(</span><span class="n">rel</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">mineru_output</span> <span class="o">=</span> <span class="n">_is_mineru_output</span><span class="p">(</span><span class="n">rel</span><span class="p">)</span>
+        <span class="n">default_source</span> <span class="o">=</span> <span class="s2">"mineru-ocr"</span> <span class="k">if</span> <span class="n">mineru_output</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">record_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">stem</span><span class="si">}{</span><span class="n">OCR_PROVENANCE_SUFFIX</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">processing</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">ProcessingRecord</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span><span class="n">record_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">mineru_output</span> <span class="ow">and</span> <span class="n">record_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
         <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">ArtifactRecord</span><span class="p">(</span>
                 <span class="n">path</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span>
@@ -413,6 +440,7 @@
                 <span class="n">sha256</span><span class="o">=</span><span class="n">sha256_file</span><span class="p">(</span><span class="n">path</span><span class="p">),</span>
                 <span class="n">source</span><span class="o">=</span><span class="n">sources</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">rel</span><span class="p">,</span> <span class="n">default_source</span><span class="p">),</span>
                 <span class="n">zotero_md5</span><span class="o">=</span><span class="n">zotero_md5</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">rel</span><span class="p">),</span>
+                <span class="n">processing</span><span class="o">=</span><span class="n">processing</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">Manifest</span><span class="p">(</span>

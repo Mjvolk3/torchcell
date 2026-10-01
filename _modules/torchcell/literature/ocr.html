@@ -123,9 +123,16 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.literature.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">OCR_PROVENANCE_SUFFIX</span><span class="p">,</span>
+    <span class="n">ProcessingRecord</span><span class="p">,</span>
+    <span class="n">sha256_file</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -135,6 +142,22 @@
 <span class="c1"># Override with $TORCHCELL_MINERU_PYTHON (e.g. once a torchcell-mineru env exists).</span>
 <span class="n">DEFAULT_MINERU_PYTHON</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">"~/miniconda3/envs/swanki-mineru/bin/python"</span><span class="p">)</span>
 <span class="n">_RUNNER</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">"_run_mineru.py"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PdfNotFoundError</span><span class="p">(</span><span class="ne">FileNotFoundError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The PDF handed to :func:`ocr_pdf` is not a file."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MissingPaperPdfError</span><span class="p">(</span><span class="ne">FileNotFoundError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""An artifact directory handed to :func:`ocr_artifact` has no ``paper.pdf``."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">RunnerReportError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The runner exited 0 without reporting its MinerU version and DPI."""</span>
+
+
+<span class="c1">#: Facts ``_run_mineru.py`` prints on stdout, one ``KEY=value`` line each.</span>
+<span class="n">_RUNNER_FACTS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"MINERU_VERSION"</span><span class="p">,</span> <span class="s2">"MINERU_DPI"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_mineru_python</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -166,6 +189,47 @@
     <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"TORCHCELL_MINERU_DPI"</span><span class="p">,</span> <span class="s2">"0"</span><span class="p">))</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">images_dir_for</span><span class="p">(</span><span class="n">pdf_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Figures directory for one PDF, relative to the PDF's directory.</span>
+
+<span class="sd">    ``paper.pdf`` keeps the flat ``images/`` every mirrored key already has. Any other</span>
+<span class="sd">    PDF gets ``images/&lt;stem&gt;/``: all of a key's ``si/si*.pdf`` write into ``si/``, and a</span>
+<span class="sd">    key root can hold other PDFs beside ``paper.pdf`` (Costanzo 2016's ``SOM.pdf``,</span>
+<span class="sd">    Lopez's ``thesis.pdf``), so a shared directory would hold only the last PDF's</span>
+<span class="sd">    figures (issue #579). The runner replaces only the files directly in a PDF's own</span>
+<span class="sd">    directory, so the paper's re-run never touches ``images/&lt;stem&gt;/``.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="s2">"images"</span> <span class="k">if</span> <span class="n">pdf_path</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">"paper.pdf"</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"images/</span><span class="si">{</span><span class="n">pdf_path</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">natural_key</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Sort key that orders digit runs numerically: ``si2`` before ``si10``."""</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="nb">int</span><span class="p">(</span><span class="n">part</span><span class="p">)</span> <span class="k">if</span> <span class="n">part</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span> <span class="k">else</span> <span class="n">part</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(\d+)"</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_runner_facts</span><span class="p">(</span><span class="n">stdout</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">pdf_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The ``KEY=value`` facts the runner printed, each required exactly once."""</span>
+    <span class="n">facts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">_RUNNER_FACTS</span><span class="p">}</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">stdout</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+        <span class="n">key</span><span class="p">,</span> <span class="n">sep</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s2">"="</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sep</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">facts</span><span class="p">:</span>
+            <span class="n">facts</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="n">bad</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">facts</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">bad</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">RunnerReportError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"MinerU runner on </span><span class="si">{</span><span class="n">pdf_name</span><span class="si">}</span><span class="s2"> must print each of </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_RUNNER_FACTS</span><span class="p">)</span><span class="si">}</span><span class="s2"> "</span>
+            <span class="sa">f</span><span class="s2">"exactly once; wrong count for </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bad</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">facts</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">ocr_provenance_path</span><span class="p">(</span><span class="n">md_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Where :func:`ocr_pdf` writes the processing record of ``&lt;stem&gt;.md``."""</span>
+    <span class="k">return</span> <span class="n">md_path</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">md_path</span><span class="o">.</span><span class="n">stem</span><span class="si">}{</span><span class="n">OCR_PROVENANCE_SUFFIX</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="ocr_pdf">
 <a class="viewcode-back" href="../../../generated/torchcell.literature.ocr_pdf.html#torchcell.literature.ocr_pdf">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">ocr_pdf</span><span class="p">(</span>
@@ -181,8 +245,14 @@
 <span class="w">    </span><span class="sd">"""OCR one PDF to markdown next to it (``&lt;stem&gt;.pdf`` -&gt; ``&lt;stem&gt;.md``).</span>
 
 <span class="sd">    Runs the standalone ``_run_mineru.py`` under the isolated MinerU env. The</span>
-<span class="sd">    runner writes ``&lt;stem&gt;.md`` (plus ``images/`` and layout JSON) into the PDF's</span>
-<span class="sd">    directory. Raises ``RuntimeError`` on non-zero exit -- no silent skip.</span>
+<span class="sd">    runner writes ``&lt;stem&gt;.md`` (plus its figures in :func:`images_dir_for` and the</span>
+<span class="sd">    layout JSON) into the PDF's directory. Then the processing record</span>
+<span class="sd">    (:class:`~torchcell.literature.manifest.ProcessingRecord`: the MinerU version</span>
+<span class="sd">    and effective DPI the runner reported, the arguments, the exact command and</span>
+<span class="sd">    the PDF's sha256) is written to ``&lt;stem&gt;_ocr_provenance.json`` beside the</span>
+<span class="sd">    markdown, where ``build_manifest`` attaches it to the markdown's record.</span>
+<span class="sd">    Raises :class:`PdfNotFoundError` before starting MinerU when the PDF is not a</span>
+<span class="sd">    file, ``RuntimeError`` on a non-zero exit -- no silent skip.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        pdf_path: PDF to OCR.</span>
@@ -198,7 +268,10 @@
 <span class="sd">        Path to the produced markdown file.</span>
 <span class="sd">    """</span>
     <span class="n">pdf_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">pdf_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">pdf_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="n">PdfNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"PDF not found: </span><span class="si">{</span><span class="n">pdf_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">out_dir</span> <span class="o">=</span> <span class="n">pdf_path</span><span class="o">.</span><span class="n">parent</span>
+    <span class="n">images_rel</span> <span class="o">=</span> <span class="n">images_dir_for</span><span class="p">(</span><span class="n">pdf_path</span><span class="p">)</span>
     <span class="n">env</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="n">hf_home</span> <span class="o">=</span> <span class="n">_hf_home</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">hf_home</span><span class="p">:</span>
@@ -208,6 +281,7 @@
         <span class="s2">"MINERU_DEVICE_MODE"</span><span class="p">,</span> <span class="s2">"cuda"</span>
     <span class="p">)</span>
 
+    <span class="n">dpi_requested</span> <span class="o">=</span> <span class="n">_resolve_dpi</span><span class="p">(</span><span class="n">dpi</span><span class="p">)</span>
     <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">_mineru_python</span><span class="p">(),</span>
         <span class="nb">str</span><span class="p">(</span><span class="n">_RUNNER</span><span class="p">),</span>
@@ -222,7 +296,9 @@
         <span class="s2">"--method"</span><span class="p">,</span>
         <span class="n">method</span><span class="p">,</span>
         <span class="s2">"--dpi"</span><span class="p">,</span>
-        <span class="nb">str</span><span class="p">(</span><span class="n">_resolve_dpi</span><span class="p">(</span><span class="n">dpi</span><span class="p">)),</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">dpi_requested</span><span class="p">),</span>
+        <span class="s2">"--images-dir"</span><span class="p">,</span>
+        <span class="n">images_rel</span><span class="p">,</span>
     <span class="p">]</span>
     <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"MinerU: OCR </span><span class="si">%s</span><span class="s2"> (device=</span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span> <span class="n">pdf_path</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">env</span><span class="p">[</span><span class="s2">"MINERU_DEVICE_MODE"</span><span class="p">])</span>
     <span class="n">proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="n">env</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
@@ -234,6 +310,24 @@
     <span class="n">md_path</span> <span class="o">=</span> <span class="n">pdf_path</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">".md"</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">md_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"MinerU reported success but </span><span class="si">{</span><span class="n">md_path</span><span class="si">}</span><span class="s2"> is missing"</span><span class="p">)</span>
+    <span class="n">facts</span> <span class="o">=</span> <span class="n">_runner_facts</span><span class="p">(</span><span class="n">proc</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span> <span class="n">pdf_path</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">record</span> <span class="o">=</span> <span class="n">ProcessingRecord</span><span class="p">(</span>
+        <span class="n">processor</span><span class="o">=</span><span class="s2">"torchcell.literature.ocr.ocr_pdf"</span><span class="p">,</span>
+        <span class="n">tool</span><span class="o">=</span><span class="s2">"mineru"</span><span class="p">,</span>
+        <span class="n">version</span><span class="o">=</span><span class="n">facts</span><span class="p">[</span><span class="s2">"MINERU_VERSION"</span><span class="p">],</span>
+        <span class="n">params</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"backend"</span><span class="p">:</span> <span class="n">backend</span><span class="p">,</span>
+            <span class="s2">"lang"</span><span class="p">:</span> <span class="n">lang</span><span class="p">,</span>
+            <span class="s2">"method"</span><span class="p">:</span> <span class="n">method</span><span class="p">,</span>
+            <span class="s2">"device_mode"</span><span class="p">:</span> <span class="n">env</span><span class="p">[</span><span class="s2">"MINERU_DEVICE_MODE"</span><span class="p">],</span>
+            <span class="s2">"dpi_requested"</span><span class="p">:</span> <span class="n">dpi_requested</span><span class="p">,</span>
+            <span class="s2">"dpi"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">facts</span><span class="p">[</span><span class="s2">"MINERU_DPI"</span><span class="p">]),</span>
+            <span class="s2">"images_dir"</span><span class="p">:</span> <span class="n">images_rel</span><span class="p">,</span>
+            <span class="s2">"command"</span><span class="p">:</span> <span class="n">cmd</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="n">input_sha256</span><span class="o">=</span><span class="p">[</span><span class="n">sha256_file</span><span class="p">(</span><span class="n">pdf_path</span><span class="p">)],</span>
+    <span class="p">)</span>
+    <span class="n">ocr_provenance_path</span><span class="p">(</span><span class="n">md_path</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
     <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"MinerU: wrote </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%d</span><span class="s2"> bytes)"</span><span class="p">,</span> <span class="n">md_path</span><span class="p">,</span> <span class="n">md_path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">md_path</span></div>
 
@@ -244,16 +338,22 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">ocr_artifact</span><span class="p">(</span><span class="n">artifact_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""OCR every PDF in an artifact directory: ``paper.pdf`` and each ``si/si*.pdf``.</span>
 
-<span class="sd">    Returns the list of markdown paths produced (``paper.md``, ``si/si1.md``...).</span>
+<span class="sd">    The SI PDFs run in natural order (``si2`` before ``si10``). A directory with no</span>
+<span class="sd">    ``paper.pdf`` raises :class:`MissingPaperPdfError` before any OCR: every artifact</span>
+<span class="sd">    is captured with its article as ``paper.pdf`` (``ZoteroLibrary.download_artifact``),</span>
+<span class="sd">    so its absence means a broken capture, not an SI-only paper.</span>
+
+<span class="sd">    Returns the list of markdown paths produced (``paper.md``, ``si/si1.md``,</span>
+<span class="sd">    ``si/si2.md``...).</span>
 <span class="sd">    """</span>
     <span class="n">artifact_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">artifact_dir</span><span class="p">)</span>
-    <span class="n">produced</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">paper</span> <span class="o">=</span> <span class="n">artifact_dir</span> <span class="o">/</span> <span class="s2">"paper.pdf"</span>
-    <span class="k">if</span> <span class="n">paper</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-        <span class="n">produced</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ocr_pdf</span><span class="p">(</span><span class="n">paper</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">paper</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="n">MissingPaperPdfError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no paper.pdf in artifact directory </span><span class="si">{</span><span class="n">artifact_dir</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">produced</span> <span class="o">=</span> <span class="p">[</span><span class="n">ocr_pdf</span><span class="p">(</span><span class="n">paper</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)]</span>
     <span class="n">si_dir</span> <span class="o">=</span> <span class="n">artifact_dir</span> <span class="o">/</span> <span class="s2">"si"</span>
     <span class="k">if</span> <span class="n">si_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
-        <span class="k">for</span> <span class="n">si_pdf</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">si_dir</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">"si*.pdf"</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">si_pdf</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">si_dir</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">"si*.pdf"</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="n">natural_key</span><span class="p">):</span>
             <span class="n">produced</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ocr_pdf</span><span class="p">(</span><span class="n">si_pdf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">produced</span></div>
 

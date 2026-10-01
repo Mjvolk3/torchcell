@@ -181,3 +181,13 @@ Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `DATA_
 ## 2026.09.30 - Module constant is the one pin at download (issue #561)
 
 Before this change, `download()` verified the mirror bytes against the digest recorded in the raw-mirror `manifest.json`, and `process()` verified them against the module constant. Because `deposit_raw_mirror` writes the manifest from the constant, the two were equal by construction, but the loader still carried two pins. Now `download()` verifies the bytes against the module constant, and `check_manifest_pin` refuses a manifest that records any other digest, raising `ManifestPinMismatchError` named by path with both digests. The manifest stays the retrieval record. Built records are unchanged. Tests: `test_download_refuses_a_manifest_digest_off_the_module_pin` in [[tests.torchcell.datasets.scerevisiae.test_raw_pins]].
+
+## 2026.10.01 - Datapoint key is the parsed z; missing manifest refuses
+
+Previous behavior: `MatrixCell.screens` was keyed by the z_score STRING, so `-4.0` and `-4.00` in one cell counted as two screens with a sample SD of exactly 0, and `_phenotype` aborted the build. `download()` with no mirror deposited failed in `load_manifest` as a bare `FileNotFoundError`.
+
+Fix (issue #520): `screens` is keyed by the parsed float, so equal values are one datapoint; the SD-0 guard in `_phenotype` is removed because two distinct float keys cannot have a sample SD of 0. `load_manifest` refuses with the manifest path and the `deposit_raw_mirror()` step.
+
+Record-neutral, measured on the pinned `1159580.csv.gz`: 484,830 strain datapoint rows, 428,573 cells, 0 cells holding two z strings of equal value, 0 non-finite z. The issue #504 input-audit items (essential genes, background, z reference) are not touched here.
+
+Tests: `test_two_z_strings_of_equal_value_are_one_screen`, `test_download_without_a_manifest_refuses_naming_the_deposit_step`.

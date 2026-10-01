@@ -15,3 +15,7 @@ Findings: the class counts the docstring calls "per-class self-checksums" only g
 ## 2026.09.30 - Raw sha256 pin enforced at build time
 
 Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.
+
+## 2026.10.01 - Class-count and collapse findings retired (issue #520)
+
+Retired: `test_class_count_gates_continuations_but_is_never_checked` and `test_drop_log_counts_and_the_unledgered_duplicate`. Now asserted: a class short of its declared count refuses at table end and a class over it refuses at the next class row, both with exact messages; the drop log reads 11 listed = 8 kept + 2 dropped + 1 collapsed, with the ethanol YBR127C token ledgered as a `CollapsedToken` keeping VMA2.

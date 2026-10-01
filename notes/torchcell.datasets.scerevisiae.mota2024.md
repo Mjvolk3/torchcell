@@ -148,3 +148,13 @@ env_chemgen_mota2024: PASS
 Issue #518 (sweep); the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes; PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: yes (mirror copy and ESM write before hash); refused deposit leaving a directory: partial.
 
 Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `_ACID_SPECS` pins, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.
+
+## 2026.10.01 - Unknown grade symbol and missing header refuse
+
+Previous behavior: `_parse_acid` skipped a score outside `0`, `+`, `++` before `n_raw` was counted, so a malformed or new grade vanished uncounted, and the header search `next(...)` had no default, so a missing `Gene/ORF name` row raised a bare `StopIteration`.
+
+Fix (issue #520): an unknown score refuses with the file, the symbol, the token and the known symbols; a sheet with no header row refuses naming the file.
+
+Record-neutral, measured on the three pinned sheets: header found in each (row 5, 5, 7), scored rows acetic 331 `+` / 46 `++`, butyric 371 / 51, octanoic 437 / 53, 0 other symbols.
+
+Tests: `test_unknown_grade_symbol_refuses_naming_file_symbol_and_token`, `test_a_sheet_without_the_header_row_refuses_naming_the_file`.

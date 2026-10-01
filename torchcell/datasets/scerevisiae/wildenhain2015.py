@@ -40,8 +40,10 @@ recurs across the four libraries, and the export ALSO re-emits the same datapoin
 gene-symbol spellings (``MDH1`` / ``mdh1``): of the 46,195 cells with more than one released
 row, 33,483 contain byte-identical duplicates. Within a cell, two rows sharing a z_score
 share every other data column too, and no two genuinely distinct datapoints of a cell share
-a z_score, so the z string IS the datapoint key. After deduplication the screens-per-cell
-histogram is {1: 412,368, 2: 14,579, 3: 1,617, 4: 7, 5: 2}. ``n_samples`` is therefore the
+a z_score, so the z value IS the datapoint key. The key is the PARSED value, not the string,
+so ``-4.0`` and ``-4.00`` are one datapoint (measured: 0 of the 428,573 cells hold two z
+strings of equal value, so the parsed key and the string key give the same cells). After
+deduplication the screens-per-cell histogram is {1: 412,368, 2: 14,579, 3: 1,617, 4: 7, 5: 2}. ``n_samples`` is therefore the
 number of contributing SCREENS with ``sample_unit=screen`` (the independent unit; the two
 OD reads inside a screen are the technical duplicate the z already averages), and the
 uncertainty is the sample SD across those screens, or a typed ``ProvenanceGap`` for the
@@ -424,8 +426,13 @@ def deposit_raw_mirror(
 
 
 def load_manifest(data_root: str | None = None) -> Manifest:
-    """Read the raw mirror's ``manifest.json``."""
+    """Read the raw mirror's ``manifest.json``; refuse, naming the deposit step, if absent."""
     path = raw_mirror_dir(data_root) / "manifest.json"
+    if not path.exists():
+        raise RuntimeError(
+            f"raw-mirror manifest missing: {path}. Deposit the mirror with "
+            "deposit_raw_mirror() first."
+        )
     return Manifest.model_validate_json(path.read_text())
 
 
@@ -467,15 +474,15 @@ class MatrixCell(BaseModel):
     identity: str
     pubchem_cid: int | None
     smiles: str | None
-    #: z_score string -> (non-replicate flag, activity outcome, bioactivity), one entry
-    #: per DISTINCT released datapoint (the z string is the datapoint key; see the
-    #: module docstring for the measurement behind that).
-    screens: dict[str, tuple[str, str, str]] = {}
+    #: parsed z_score -> (non-replicate flag, activity outcome, bioactivity), one entry
+    #: per DISTINCT released datapoint (the z value is the datapoint key, so ``-4.0`` and
+    #: ``-4.00`` are one; see the module docstring for the measurement behind that).
+    screens: dict[float, tuple[str, str, str]] = {}
 
     @property
     def z_values(self) -> list[float]:
         """The distinct per-screen z-scores contributing to this cell."""
-        return [float(z) for z in self.screens]
+        return list(self.screens)
 
     @property
     def n_screens(self) -> int:
@@ -578,7 +585,7 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
         """Read the datapoint CSV; collapse to one cell per (ORF, compound identity).
 
         Identity is the PubChem CID when present, else the SID. Repeated releases of the
-        SAME datapoint (identical z) collapse; distinct screens accumulate. Returns the
+        SAME datapoint (equal parsed z) collapse; distinct screens accumulate. Returns the
         cells plus the strain-row and non-strain-row counts.
         """
         path = osp.join(self.raw_dir, DATA_FILENAME)
@@ -615,7 +622,7 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
                         or None,
                     )
                     cells[key] = cell
-                cell.screens[z_raw] = (
+                cell.screens[float(z_raw)] = (
                     row[idx["non replicate"]].strip(),
                     row[idx["PUBCHEM_ACTIVITY_OUTCOME"]].strip(),
                     row[idx["bioactivity"]].strip(),
@@ -724,16 +731,9 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
                     )
                 ],
             )
-        dispersion = stdev(z_values)
-        if dispersion == 0.0:
-            raise RuntimeError(
-                f"{cell.orf}/{cell.identity}: {cell.n_screens} distinct screens with a "
-                "sample SD of exactly 0, which the datapoint-key measurement says "
-                "cannot happen"
-            )
         return EnvironmentResponsePhenotype(
             **common,
-            environment_response_uncertainty=dispersion,
+            environment_response_uncertainty=stdev(z_values),
             environment_response_uncertainty_type=UncertaintyType.sample_sd,
         )
 

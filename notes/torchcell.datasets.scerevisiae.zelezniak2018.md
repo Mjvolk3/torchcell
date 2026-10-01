@@ -155,3 +155,15 @@ clean.
 Issue #518 (sweep); the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes; PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: no; refused deposit leaving a directory: n/a.
 
 Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `DATA_SHA256`, `METABOLITE_DATA_SHA256`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.
+
+## 2026.10.01 - Proteome aggregation refuses a blank value or a repeated replicate id
+
+Previous behavior: `ProteomeZelezniak2018Dataset._aggregate` grouped by protein and took `count` as `n`, never reading `replicate`. A repeated (ORF, KO_ORF, replicate) row was counted as an extra replicate (larger `n`, smaller SE), a blank value silently left `n` one short, and a protein blank in every row of a strain aborted later in `ProteinAbundancePhenotype` validation ("n_replicates for YBR002C must be >= 1").
+
+Fix (issue #520): `_aggregate(sub, strain)` refuses, naming the strain (WT included), the row count and the first offending (protein, replicate), for any blank value and for any repeated (protein, replicate) id. The all-blank case now refuses there too.
+
+Record-neutral, measured on the pinned `proteins_dataset.data_prep.tsv` (sha256 `9ff81ecb...`): 264,264 rows, 0 blank values, 0 rows in repeated (ORF, KO_ORF, replicate) groups, 0 all-blank (strain, protein) cells, 0 cells with n < 2 of 71,148. Script: the b4-zelezniak scratchpad `classify_zelezniak.py`.
+
+Tests: `test_proteome_repeated_replicate_id_refuses_naming_the_strain`, `test_proteome_repeated_replicate_id_in_the_wt_reference_refuses`, `test_proteome_blank_value_refuses_instead_of_shrinking_n`, `test_proteome_all_blank_protein_refuses_with_a_loader_message`.
+
+Not changed, observed while measuring: the metabolome file pools rows across the `dataset` protocol column, and 378 rows share a (metabolite, genotype, replicate) id across protocols (0 when `dataset` is included in the key). For `3pg;2pg` the two protocols differ by about three orders of magnitude (WT replicate 1: 850.27 under protocol 1, 0.388 under protocol 2), so pooling them into one mean and SD is worth a separate review. Out of scope for issue #520.

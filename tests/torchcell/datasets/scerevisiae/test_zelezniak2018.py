@@ -40,10 +40,13 @@ metabolites: KEGG wins over BiGG, a cytosolic form wins over the first-listed on
 metabolite with no cytosolic form takes the first listed compartment, a ``;``-merged id
 resolves through its first token, a list-valued annotation indexes every token, a
 ``nan`` KEGG id falls back to BiGG, and an unmatched id refuses with both tokens. A
-proteome edge fixture pins the replicate handling: a repeated (ORF, strain, replicate)
-row counts as a second replicate, a blank value drops out of ``n``, the first
-``KO_gene_name`` of a strain wins, and a protein whose every value in a strain is blank
-aborts the build in schema validation.
+proteome edge fixture pins the replicate handling: the first ``KO_gene_name`` of a
+strain wins.
+
+2026.10.01 (issue #520): ``n`` is the row count, so the proteome loader now refuses a
+repeated (ORF, strain, replicate) row and a blank value, naming the strain (WT included);
+an all-blank protein refuses there too instead of in schema validation. Exact messages are
+asserted. The pinned release has 0 of each (264,264 rows), so stored records are unchanged.
 """
 
 import hashlib
@@ -55,7 +58,6 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
-import pydantic
 import pytest
 
 from torchcell.data import RawSha256MismatchError
@@ -716,25 +718,19 @@ def test_proteome_build_without_raw_downloads_then_builds(
 # --------------------------------------------------------------------------- #
 
 
-def test_proteome_repeated_row_counts_twice_and_blank_value_drops_out(
+def test_proteome_first_gene_name_wins_and_n_counts_distinct_replicates(
     tmp_path: Path,
 ) -> None:
-    """Strain YDR003W: YAL001C rows (rep 1: 8), (rep 1: 8, a repeat), (rep 2: blank);
-    YBR002C (rep 1: 6). The repeat is pooled as a second replicate (mean 8.0, SD 0.0,
-    SE 0.0, n 2), the blank is excluded by pandas (not an n of 3), YBR002C is n 1 with
-    SE NaN. The first row's ``KO_gene_name`` (KIN3) is stored over the later ``kin3x``.
-
-    Finding: ``_aggregate`` never looks at the ``replicate`` column, so a repeated
-    (ORF, strain, replicate) row inflates ``n`` and shrinks the SE. Pinned until the
-    loader deduplicates or refuses a repeated replicate id.
+    """Strain YDR003W: YAL001C rows (rep 1: 8), (rep 2: 10); YBR002C (rep 1: 6). The
+    first row's ``KO_gene_name`` (KIN3) is stored over the later ``kin3x``; YAL001C is
+    mean 9.0, SD sqrt(2), SE 1.0, n 2; YBR002C is n 1 with SE NaN.
     """
     rows = [
         ("YAL001C", "WT", "WT", 1, 10.0),
         ("YAL001C", "WT", "WT", 2, 12.0),
         ("YBR002C", "WT", "WT", 1, 5.0),
         ("YAL001C", "YDR003W", "KIN3", 1, 8.0),
-        ("YAL001C", "YDR003W", "kin3x", 1, 8.0),
-        ("YAL001C", "YDR003W", "KIN3", 2, ""),
+        ("YAL001C", "YDR003W", "kin3x", 2, 10.0),
         ("YBR002C", "YDR003W", "KIN3", 1, 6.0),
     ]
     root = _proteome_root(tmp_path, rows)
@@ -743,33 +739,101 @@ def test_proteome_repeated_row_counts_twice_and_blank_value_drops_out(
     (perturbation,) = ds[0]["experiment"]["genotype"]["perturbations"]
     assert perturbation["perturbed_gene_name"] == "KIN3"
     phenotype = ds[0]["experiment"]["phenotype"]
-    assert phenotype["protein_abundance"] == {"YAL001C": 8.0, "YBR002C": 6.0}
+    assert phenotype["protein_abundance"] == {"YAL001C": 9.0, "YBR002C": 6.0}
     assert phenotype["n_replicates"] == {"YAL001C": 2, "YBR002C": 1}
     se = phenotype["protein_abundance_se"]
     assert list(se) == ["YAL001C", "YBR002C"]
-    assert se["YAL001C"] == 0.0
+    assert se["YAL001C"] == pytest.approx(1.0, abs=1e-12)
     assert math.isnan(se["YBR002C"])
     assert (root / "preprocess" / "data.csv").read_text() == "orf,gene\nYDR003W,KIN3\n"
     reference = ds[0]["reference"]["phenotype_reference"]
     assert reference["n_replicates"] == {"YAL001C": 2, "YBR002C": 1}
 
 
-def test_proteome_all_blank_protein_aborts_in_schema_validation(tmp_path: Path) -> None:
-    """Finding: a protein whose every value in one strain is blank aggregates to count
-    0 and mean NaN, and the build aborts in ``ProteinAbundancePhenotype`` validation
-    ("n_replicates for YBR002C must be >= 1") instead of a loader message naming the
-    strain. Pinned until the loader drops or reports such a cell.
+def test_proteome_repeated_replicate_id_refuses_naming_the_strain(
+    tmp_path: Path,
+) -> None:
+    """Contract (issue #520): ``n`` is the row count, so a repeated (ORF, strain,
+    replicate) row would be counted as a second replicate (n 2, SE 0.0 for two copies of
+    8.0). The loader refuses instead, naming the strain, the number of rows in repeated
+    groups, and the first such (protein, replicate). The pinned release has 0 such rows.
+    """
+    rows = [
+        ("YAL001C", "WT", "WT", 1, 10.0),
+        ("YAL001C", "WT", "WT", 2, 12.0),
+        ("YAL001C", "YDR003W", "KIN3", 1, 8.0),
+        ("YAL001C", "YDR003W", "KIN3", 1, 8.0),
+        ("YAL001C", "YDR003W", "KIN3", 2, 9.0),
+    ]
+    with pytest.raises(RuntimeError) as info:
+        ProteomeZelezniak2018Dataset(root=str(_proteome_root(tmp_path, rows)))
+    assert str(info.value) == (
+        "Zelezniak proteome strain YDR003W: 2 rows share a (protein, replicate) id, "
+        "first YAL001C replicate 1; a repeated replicate would count as an extra "
+        "replicate"
+    )
+
+
+def test_proteome_repeated_replicate_id_in_the_wt_reference_refuses(
+    tmp_path: Path,
+) -> None:
+    """The WT reference goes through the same aggregation, so its repeat refuses with
+    the strain named ``WT`` before any knockout strain is read.
+    """
+    rows = [
+        ("YAL001C", "WT", "WT", 3, 10.0),
+        ("YAL001C", "WT", "WT", 3, 12.0),
+        ("YAL001C", "YDR003W", "KIN3", 1, 8.0),
+    ]
+    with pytest.raises(RuntimeError) as info:
+        ProteomeZelezniak2018Dataset(root=str(_proteome_root(tmp_path, rows)))
+    assert str(info.value) == (
+        "Zelezniak proteome strain WT: 2 rows share a (protein, replicate) id, "
+        "first YAL001C replicate 3; a repeated replicate would count as an extra "
+        "replicate"
+    )
+
+
+def test_proteome_blank_value_refuses_instead_of_shrinking_n(tmp_path: Path) -> None:
+    """Contract (issue #520): pandas leaves a blank value out of ``count``, so YAL001C
+    (rep 1: 8, rep 2: blank) would be stored as n 1 with nothing recording the missing
+    replicate. The loader refuses, naming the strain and the first blank cell. The
+    pinned release has 0 blank values.
+    """
+    rows = [
+        ("YAL001C", "WT", "WT", 1, 10.0),
+        ("YAL001C", "WT", "WT", 2, 12.0),
+        ("YAL001C", "YDR003W", "KIN3", 1, 8.0),
+        ("YAL001C", "YDR003W", "KIN3", 2, ""),
+    ]
+    with pytest.raises(RuntimeError) as info:
+        ProteomeZelezniak2018Dataset(root=str(_proteome_root(tmp_path, rows)))
+    assert str(info.value) == (
+        "Zelezniak proteome strain YDR003W: 1 blank protein value(s), first YAL001C "
+        "replicate 2; a blank would drop out of n_replicates unrecorded"
+    )
+
+
+def test_proteome_all_blank_protein_refuses_with_a_loader_message(
+    tmp_path: Path,
+) -> None:
+    """Contract (issue #520): a protein whose every value in one strain is blank used to
+    reach ``ProteinAbundancePhenotype`` validation ("n_replicates for YBR002C must be
+    >= 1"); it now refuses in the loader, naming the strain, before any schema object.
     """
     rows = [
         ("YAL001C", "WT", "WT", 1, 10.0),
         ("YBR002C", "WT", "WT", 1, 5.0),
         ("YAL001C", "YDR003W", "KIN3", 1, 8.0),
         ("YBR002C", "YDR003W", "KIN3", 1, ""),
+        ("YBR002C", "YDR003W", "KIN3", 2, ""),
     ]
-    with pytest.raises(pydantic.ValidationError) as info:
+    with pytest.raises(RuntimeError) as info:
         ProteomeZelezniak2018Dataset(root=str(_proteome_root(tmp_path, rows)))
-    (error,) = info.value.errors()
-    assert error["msg"] == "Value error, n_replicates for YBR002C must be >= 1"
+    assert str(info.value) == (
+        "Zelezniak proteome strain YDR003W: 2 blank protein value(s), first YBR002C "
+        "replicate 1; a blank would drop out of n_replicates unrecorded"
+    )
 
 
 # --------------------------------------------------------------------------- #

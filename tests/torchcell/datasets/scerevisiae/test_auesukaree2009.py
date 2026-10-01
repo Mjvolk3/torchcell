@@ -25,8 +25,8 @@ and a ``Table 7`` caption outside the 1-6 pattern. Parsed tokens and records:
 
 VMA2 is RENAMED onto YBR127C and the same table also lists YBR127C, so the ethanol
 table's four tokens give three records and the first-seen name VMA2 is stored. Ledger:
-11 listed tokens, 8 kept records, 2 dropped (NOSUCHGENE twice, RETIRED); 11 is not
-8 + 2 because the in-table duplicate is collapsed without a ledger entry (a Finding).
+11 listed tokens = 8 kept records + 2 dropped (NOSUCHGENE twice, RETIRED) + 1 collapsed
+(the ethanol YBR127C token, ledgered since 2026.10.01, issue #520).
 All eight records share the one non-stress reference, so the reference index is
 [[0, ..., 7]]; ``gene_set.json`` is the eight ORFs sorted. Refusals pinned with their
 exact messages: the missing raw mirror, a ``RawSha256MismatchError`` naming the file and
@@ -34,6 +34,10 @@ both digests (in ``download`` before the copy, in ``deposit_raw_mirror`` before 
 mirror directory exists, and in ``process`` for a file placed in ``raw/`` by hand,
 issue #518's sweep), an existing mirror file with other bytes,
 a missing genome, a per-stress checksum miss, and a stress table absent from the PDF.
+
+2026.10.01 (issue #520): a functional class whose parsed gene count differs from its
+declared (N) refuses (short at table end, over at the next class row), and an in-table
+collapse onto an already-claimed ORF is ledgered as a ``CollapsedToken``.
 """
 
 from __future__ import annotations
@@ -361,27 +365,56 @@ def test_parse_tables_reads_the_layout_text_layer(
     ]
 
 
-def test_class_count_gates_continuations_but_is_never_checked(
+_HEAT_CAPTION = (
+    "Table 4. Classification of genes whose deletions result in heat sensitivity"
+)
+
+
+def test_a_class_short_of_its_declared_count_refuses_at_table_end(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: the module docstring calls the parenthetical class counts "per-class
-    self-checksums", but ``_parse_tables`` uses ``cur_declared`` only to decide whether an
-    indented line continues the class; a class declaring (5) that lists two genes is
-    returned without error. Only the per-stress total in ``_resolve_stress`` is checked.
-    Pinned until the per-class comparison is added.
+    """Contract (issue #520): the parenthetical class count is a per-class
+    self-checksum. The last class of a table, declaring (5) and listing two genes, refuses
+    when the table ends, naming the stress, the class and both counts. All 67 classes of
+    the pinned PDF match their declared count.
+    """
+    text = "\n".join(
+        [_HEAT_CAPTION, "Unknown function (5)        YAL002W, YAL003W", ""]
+    )
+    _fake_subprocess(monkeypatch, text)
+    dataset = _dataset()
+    dataset.root = str(tmp_path)
+    with pytest.raises(RuntimeError) as info:
+        dataset._parse_tables()
+    assert str(info.value) == (
+        "heat: class 'Unknown function' declares 5 genes, parsed 2 "
+        "(per-class table extraction self-checksum failed)"
+    )
+
+
+def test_a_class_over_its_declared_count_refuses_at_the_next_class_row(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A class row listing three genes against a declared (2) refuses as soon as the
+    next class row opens, before that class is read.
     """
     text = "\n".join(
         [
-            "Table 4. Classification of genes whose deletions result in heat "
-            "sensitivity",
-            "Unknown function (5)        YAL002W, YAL003W",
+            _HEAT_CAPTION,
+            "Vacuolar function (2)        YAL002W, YAL003W, YAL004W",
+            "Unknown function (1)        YAL005C",
             "",
         ]
     )
     _fake_subprocess(monkeypatch, text)
     dataset = _dataset()
     dataset.root = str(tmp_path)
-    assert dataset._parse_tables() == {"heat": ["YAL002W", "YAL003W"]}
+    with pytest.raises(RuntimeError) as info:
+        dataset._parse_tables()
+    assert str(info.value) == (
+        "heat: class 'Vacuolar function' declares 2 genes, parsed 3 "
+        "(per-class table extraction self-checksum failed)"
+    )
 
 
 def test_tokenize_splits_on_commas_and_whitespace() -> None:
@@ -535,13 +568,14 @@ def test_heat_and_adjudicated_records_equal_the_hand_built_experiments(
     )
 
 
-def test_drop_log_counts_and_the_unledgered_duplicate(
+def test_drop_log_ledgers_the_in_table_collapse(
     layout_built: a.EnvChemgenAuesukaree2009Dataset,
 ) -> None:
-    """Finding: ``_resolve_stress`` collapses a second token for an ORF already seen in
-    the same table (``resolved.setdefault``) without recording it, so the drop log's
-    ``n_listed_tokens`` (11) is not ``n_kept_records + n_dropped_records`` (8 + 2) and
-    nothing names the collapsed YBR127C token. Pinned until the collapse is ledgered.
+    """Contract (issue #520): every listed token is kept, dropped or collapsed, so
+    ``n_listed_tokens`` (11) is ``n_kept_records + n_dropped_records +
+    n_collapsed_tokens`` (8 + 2 + 1). The ethanol table's YBR127C token, whose ORF VMA2
+    already claimed, is ledgered with the name that was kept. The pinned PDF has 0
+    collapses (525 listed tokens, 525 records).
     """
     log = a.DropLog.model_validate_json(
         Path(layout_built.root, a._DROPPED_FILENAME).read_text()
@@ -552,7 +586,16 @@ def test_drop_log_counts_and_the_unledgered_duplicate(
         n_listed_tokens=11,
         n_kept_records=8,
         n_dropped_records=2,
+        n_collapsed_tokens=1,
         dropped_tokens={"NOSUCHGENE": 2},
+        collapsed_tokens=[
+            a.CollapsedToken(
+                stress="ethanol",
+                token="YBR127C",
+                systematic_name="YBR127C",
+                kept_gene_name="VMA2",
+            )
+        ],
         adjudicated=[
             a._AMBIGUOUS_ADJUDICATIONS["PPA1"],
             a._AMBIGUOUS_ADJUDICATIONS["FEN1"],

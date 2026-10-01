@@ -64,11 +64,12 @@ DATA SOURCE (the sensitive-gene lists themselves):
   (poppler; the version used is recorded in the raw mirror's manifest). There is no
   separate data deposit -- the data IS the article tables. Each table row declares its
   functional-class member count in parentheses (e.g. "Vacuolar function (16)"); the parser
-  uses these declared counts as per-class self-checksums, so extraction drift is caught at
-  build time. The MinerU OCR ``paper.md`` in the same mirror is lossy for the TABLES (its
-  heat Table 4 "Unknown function" cell is truncated by two ORFs, YOR364w and YPL144w), so
-  the PDF text layer is the source of record for the gene lists while ``paper.md`` is the
-  anchor for the prose quotes.
+  uses these declared counts as per-class self-checksums (a class whose parsed count
+  differs refuses the build), so extraction drift is caught at build time. The MinerU
+  OCR ``paper.md`` in the same mirror is lossy for the TABLES (its heat Table 4 "Unknown
+  function" cell is truncated by two ORFs, YOR364w and YPL144w), so the PDF text layer is
+  the source of record for the gene lists while ``paper.md`` is the anchor for the prose
+  quotes.
 
 SOURCE COUNT NOTES (documented, not guessed):
 - Per-stress listed sensitive genes match the abstract/Figure headline counts EXACTLY for
@@ -410,6 +411,19 @@ def _tokenize(cell: str) -> list[str]:
     return [t for t in re.split(r"[,\s]+", cell.strip()) if t]
 
 
+def _check_class_count(stress: str, label: str, declared: int, parsed: int) -> None:
+    """Refuse a functional class whose parsed gene count differs from its declared (N).
+
+    ``label`` is empty before the first class row of a table, when there is nothing to
+    check. Measured on the pinned PDF: all 67 classes of Tables 1-6 match.
+    """
+    if label and parsed != declared:
+        raise RuntimeError(
+            f"{stress}: class {label!r} declares {declared} genes, parsed {parsed} "
+            "(per-class table extraction self-checksum failed)"
+        )
+
+
 def poppler_version() -> str:
     """The ``pdftotext`` version string, recorded as extraction provenance."""
     result = subprocess.run(
@@ -496,15 +510,30 @@ def deposit_raw_mirror(
     return str(root)
 
 
+class CollapsedToken(BaseModel):
+    """A listed token whose ORF an earlier token of the same table already claimed."""
+
+    stress: str
+    token: str
+    systematic_name: str
+    kept_gene_name: str
+
+
 class DropLog(BaseModel):
-    """The build's retention accounting, written beside ``processed/``."""
+    """The build's retention accounting, written beside ``processed/``.
+
+    Every listed token is exactly one of kept, dropped or collapsed, so
+    ``n_listed_tokens == n_kept_records + n_dropped_records + n_collapsed_tokens``.
+    """
 
     dataset: str
     rule: str
     n_listed_tokens: int
     n_kept_records: int
     n_dropped_records: int
+    n_collapsed_tokens: int
     dropped_tokens: dict[str, int] = Field(default_factory=dict)
+    collapsed_tokens: list[CollapsedToken] = Field(default_factory=list)
     adjudicated: list[AmbiguousAdjudication] = Field(default_factory=list)
 
 
@@ -578,6 +607,7 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
             stress = caption.group(1)
             i += 1
             genes: list[str] = []
+            cur_label = ""
             cur_declared = 0
             cur_count = 0
             while i < len(lines):
@@ -586,6 +616,8 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
                     break
                 class_row = _CLASS_RE.match(line)
                 if class_row:
+                    _check_class_count(stress, cur_label, cur_declared, cur_count)
+                    cur_label = line[: class_row.start(1) - 1].strip()
                     cur_declared = int(class_row.group(1))
                     toks = _tokenize(class_row.group(2))
                     cur_count = len(toks)
@@ -598,6 +630,7 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
                     # not a table row (footer / prose) -> table body ended
                     break
                 i += 1
+            _check_class_count(stress, cur_label, cur_declared, cur_count)
             tables[stress] = genes
         return tables
 
@@ -630,8 +663,13 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
 
     def _resolve_stress(
         self, stress: str, tokens: list[str]
-    ) -> tuple[dict[str, str], dict[str, int]]:
-        """Resolve one stress's tokens to ``{ORF: stored name}``; checksum + count drops."""
+    ) -> tuple[dict[str, str], dict[str, int], list[CollapsedToken]]:
+        """Resolve one stress's tokens to ``{ORF: stored name}``; checksum + count drops.
+
+        A token whose ORF an earlier token of the same table already claimed keeps the
+        first name and is ledgered as a ``CollapsedToken``. Measured on the pinned PDF:
+        0 collapses (525 listed tokens, 525 records, 0 dropped).
+        """
         expected = _EXPECTED_LISTED[stress]
         if len(tokens) != expected:
             raise RuntimeError(
@@ -640,22 +678,36 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
             )
         resolved: dict[str, str] = {}
         dropped: dict[str, int] = {}
+        collapsed: list[CollapsedToken] = []
         for token in tokens:
             hit = self._resolve_token(token)
             if hit is None:
                 dropped[token] = dropped.get(token, 0) + 1
                 continue
             orf, stored = hit
-            resolved.setdefault(orf, stored)
+            if orf in resolved:
+                collapsed.append(
+                    CollapsedToken(
+                        stress=stress,
+                        token=token,
+                        systematic_name=orf,
+                        kept_gene_name=resolved[orf],
+                    )
+                )
+                continue
+            resolved[orf] = stored
         log.info(
-            "Auesukaree2009 %s: %d listed -> %d unique-ORF records (dropped %d: %s)",
+            "Auesukaree2009 %s: %d listed -> %d unique-ORF records "
+            "(dropped %d: %s; collapsed %d: %s)",
             stress,
             len(tokens),
             len(resolved),
             sum(dropped.values()),
             sorted(dropped),
+            len(collapsed),
+            [c.token for c in collapsed],
         )
-        return resolved, dropped
+        return resolved, dropped, collapsed
 
     def _environment(self, spec: dict[str, Any]) -> Environment:
         """Aerobic solid-YPD plate carrying the edit (an added small molecule, or heat)."""
@@ -754,6 +806,7 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
         idx = 0
         n_listed = 0
         dropped_tokens: dict[str, int] = {}
+        collapsed_tokens: list[CollapsedToken] = []
         with env.begin(write=True) as txn:
             for spec in _STRESS_SPECS:
                 stress = spec["stress"]
@@ -764,9 +817,12 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
                     )
                 environment = self._environment(spec)
                 n_listed += len(tables[stress])
-                orf_names, dropped = self._resolve_stress(stress, tables[stress])
+                orf_names, dropped, collapsed = self._resolve_stress(
+                    stress, tables[stress]
+                )
                 for token, count in dropped.items():
                     dropped_tokens[token] = dropped_tokens.get(token, 0) + count
+                collapsed_tokens.extend(collapsed)
                 for orf, gene_name in tqdm(sorted(orf_names.items()), desc=f"{stress}"):
                     experiment = self._experiment(
                         orf=orf, gene_name=gene_name, environment=environment
@@ -790,7 +846,9 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
             n_listed_tokens=n_listed,
             n_kept_records=idx,
             n_dropped_records=sum(dropped_tokens.values()),
+            n_collapsed_tokens=len(collapsed_tokens),
             dropped_tokens=dropped_tokens,
+            collapsed_tokens=collapsed_tokens,
             adjudicated=list(_AMBIGUOUS_ADJUDICATIONS.values()),
         )
         with open(osp.join(self.root, _DROPPED_FILENAME), "w") as handle:

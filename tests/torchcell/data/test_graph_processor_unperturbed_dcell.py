@@ -207,7 +207,7 @@ def test_unperturbed_rejects_an_empty_batch_and_a_record_without_a_reference() -
 def test_dcell_zeroes_the_state_of_rows_annotated_to_perturbed_genes() -> None:
     """Genes 0 and 3 perturbed: rows 0 ([2, 0, ...]) and 3 ([0, 0, ...]) carry gene 0 and
     go to state 0; gene 3 has no annotation, so no other row changes. The gene store
-    keeps all 5 genes; perturbation_indices_batch is [0, 1] (one gene per record); the
+    keeps all 5 genes and no per-sample perturbation_indices_batch is written; the
     phenotype COO carries fitness [0.9, 0.4] and the single fitness_se 0.05.
     """
     cell_graph = _cell_graph()
@@ -219,7 +219,7 @@ def test_dcell_zeroes_the_state_of_rows_annotated_to_perturbed_genes() -> None:
     assert sorted(gene.perturbed_genes) == ["YAL001C", "YAL004W"]
     assert gene.perturbation_indices.tolist() == [0, 3]
     assert gene.pert_mask.tolist() == [True, False, False, True, False]
-    assert gene.perturbation_indices_batch.tolist() == [0, 1]
+    assert "perturbation_indices_batch" not in gene
     go = out["gene_ontology"]
     assert go.num_nodes == 3
     assert go.node_ids == ["GO:a", "GO:b", "GO:root"]
@@ -235,20 +235,18 @@ def test_dcell_zeroes_the_state_of_rows_annotated_to_perturbed_genes() -> None:
     assert out.edge_types == []
 
 
-def test_dcell_orders_perturbation_indices_by_node_and_the_batch_by_record() -> None:
-    """Finding: records {YAL002W} and {YAL001C, YAL003W} give perturbation_indices
-    [0, 1, 2] (node order, graph_processor.py:2237) but perturbation_indices_batch
-    [0, 1, 1] (record order, 2258-2274), so position 0 pairs gene 0 with record 0
-    although gene 0 belongs to record 1. No live consumer pairs the two tensors
-    (dcell.py:575 only prints them; int_transformer_cell.py:137 takes max() + 1), so
-    this pins the tensors, not a downstream error. All six GO rows carry gene 0, 1 or 2
-    and go to state 0.
+def test_dcell_orders_perturbation_indices_by_node_and_writes_no_batch_vector() -> None:
+    """Records {YAL002W} and {YAL001C, YAL003W} give perturbation_indices [0, 1, 2]
+    (node order, the union over records). The record-order batch vector [0, 1, 1] that
+    used to sit beside it (and mispaired position 0 with record 0) is no longer
+    written (issue #527 review); ``follow_batch`` builds the sample-level vector at
+    collate. All six GO rows carry gene 0, 1 or 2 and go to state 0.
     """
     data = [_record(["YAL002W"], 0.9), _record(["YAL001C", "YAL003W"], 0.4)]
     out = DCellGraphProcessor().process(_cell_graph(), PHENOTYPES, data)
     gene = out["gene"]
     assert gene.perturbation_indices.tolist() == [0, 1, 2]
-    assert gene.perturbation_indices_batch.tolist() == [0, 1, 1]
+    assert "perturbation_indices_batch" not in gene
     assert gene.pert_mask.tolist() == [True, True, True, False, False]
     state = out["gene_ontology"].go_gene_strata_state
     assert state[:, 3].tolist() == [0.0] * 6
@@ -264,7 +262,7 @@ def test_dcell_without_a_go_block_returns_only_the_gene_store() -> None:
     )
     assert out.node_types == ["gene"]
     assert out["gene"].perturbation_indices.tolist() == [4]
-    assert out["gene"].perturbation_indices_batch.tolist() == [0]
+    assert "perturbation_indices_batch" not in out["gene"]
 
 
 def test_dcell_rejects_an_empty_batch() -> None:

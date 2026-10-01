@@ -199,35 +199,56 @@ class RawStageGrouping:
         factory=list
     )
 
-    def __call__(self, index: int, record: dict[str, Any]) -> None:
-        """Record one written record's grouping key (and summary)."""
-        self.groups.setdefault(self.key_fn(record), []).append(index)
-        if self.summarize:
+    def prepare(
+        self, record: dict[str, Any]
+    ) -> tuple[str, tuple[str, str, str, int, tuple[tuple[str, Any], ...]] | None]:
+        """One record's grouping key and (with ``summarize``) summary.
+
+        Pure in the record, so the partitioned raw stage runs it in its fetch workers
+        (``SplitRecordObserver``).
+        """
+        if not self.summarize:
+            return self.key_fn(record), None
+        experiment = record["experiment"]
+        phenotype = experiment["phenotype"]
+        # label_df's per-value rule, minus the NaN test (applied per column at
+        # write time, as label_df applies it only to the build's label names).
+        values = tuple(
+            (name, phenotype[name])
+            for name in LABEL_NAME_CANDIDATES
+            if name in phenotype
+            and phenotype[name] is not None
+            and not isinstance(phenotype[name], (dict, list, tuple))
+        )
+        return self.key_fn(record), (
+            experiment["experiment_type"],
+            phenotype["label_name"],
+            experiment["dataset_name"],
+            len(experiment["genotype"]["perturbations"]),
+            values,
+        )
+
+    def accept(
+        self,
+        index: int,
+        prepared: tuple[
+            str, tuple[str, str, str, int, tuple[tuple[str, Any], ...]] | None
+        ],
+    ) -> None:
+        """Fold one record's key (and summary) in; records arrive in index order."""
+        key, summary = prepared
+        self.groups.setdefault(key, []).append(index)
+        if summary is not None:
             if index != len(self.summaries):
                 raise ValueError(
                     f"records must be observed in order; got {index} after "
                     f"{len(self.summaries)} records"
                 )
-            experiment = record["experiment"]
-            phenotype = experiment["phenotype"]
-            # label_df's per-value rule, minus the NaN test (applied per column at
-            # write time, as label_df applies it only to the build's label names).
-            values = tuple(
-                (name, phenotype[name])
-                for name in LABEL_NAME_CANDIDATES
-                if name in phenotype
-                and phenotype[name] is not None
-                and not isinstance(phenotype[name], (dict, list, tuple))
-            )
-            self.summaries.append(
-                (
-                    experiment["experiment_type"],
-                    phenotype["label_name"],
-                    experiment["dataset_name"],
-                    len(experiment["genotype"]["perturbations"]),
-                    values,
-                )
-            )
+            self.summaries.append(summary)
+
+    def __call__(self, index: int, record: dict[str, Any]) -> None:
+        """Record one written record's grouping key (and summary)."""
+        self.accept(index, self.prepare(record))
 
     def key_groups(self) -> dict[str, list[bytes]]:
         """The grouping as pass 1 builds it from a cursor walk of the raw LMDB.
@@ -302,6 +323,7 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         pre_transform: Callable[..., Any] | None = None,
         pre_filter: Callable[..., Any] | None = None,
         phenotype_labels: list[str] | None = None,
+        fetch_workers: int = 0,
     ) -> None:
         """Configure data sources, processing pipeline, and load or build the dataset.
 
@@ -321,12 +343,17 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
 
         ``None`` keeps the unordered full set, which is the pre-existing behavior and is
         unambiguous whenever the build has one phenotype.
+
+        ``fetch_workers`` > 0 runs the raw stage partitioned over that many processes
+        (``Neo4jQueryRaw.fetch_workers``); the query must then carry
+        ``PARTITION_MARKER`` once per ``UNION ALL`` block.
         """
         self.env: Any = None
         self.root = root
         # get item processor
         self.process_graph = graph_processor
         self.phenotype_labels = phenotype_labels
+        self.fetch_workers = fetch_workers
 
         # self loops, transform base graph
         self.add_remaining_gene_self_loops = add_remaining_gene_self_loops
@@ -441,6 +468,7 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         query: str,
         gene_set: GeneSet,
         record_observers: Sequence[RecordObserver] = (),
+        fetch_workers: int = 0,
     ) -> Neo4jQueryRaw:
         """Query Neo4j and load the raw experiment records for the gene set.
 
@@ -464,6 +492,7 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
             num_workers=10,
             cypher_kwargs=cypher_kwargs,
             record_observers=list(record_observers),
+            fetch_workers=fetch_workers,
         )
         return raw_db  # break point here
 
@@ -572,6 +601,7 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
             cast(str, self.query),
             self.gene_set,
             record_observers=[grouping] if grouping is not None else [],
+            fetch_workers=self.fetch_workers,
         )
         self.converter = (
             cast("type[Converter]", self.converter)(root=self.root, query=raw_db)

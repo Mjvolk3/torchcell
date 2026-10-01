@@ -10,11 +10,13 @@ import logging
 import multiprocessing as mp
 import os
 import os.path as osp
+import re
 import shutil
+from collections import deque
 from collections.abc import Callable, Iterator, Sequence
-from concurrent.futures import ProcessPoolExecutor
-from itertools import chain
-from typing import Any, cast
+from concurrent.futures import Future, ProcessPoolExecutor
+from itertools import chain, product
+from typing import Any, Literal, Protocol, cast, runtime_checkable
 
 import lmdb
 from attrs import define, field
@@ -175,6 +177,126 @@ the record index and a dict equal to ``json.loads`` of the value written under
 records, so an observer must not mutate the dict."""
 
 
+@runtime_checkable
+class SplitRecordObserver(Protocol):
+    """A ``RecordObserver`` split into a per-record map and an in-order reduce.
+
+    ``prepare`` is a pure function of one record (it may run in a fetch worker
+    process, so it must not depend on state the parent changes after the workers
+    fork); ``accept`` folds its result in, called in record order in the parent.
+    ``observer(index, record)`` must equal ``observer.accept(index,
+    observer.prepare(record))``. The partitioned raw stage (``fetch_workers > 0``)
+    takes only observers of this kind, so that the per-record work runs in the workers.
+    """
+
+    def prepare(self, record: dict[str, Any]) -> Any:
+        """Compute what ``accept`` needs from one record."""
+        ...
+
+    def accept(self, index: int, prepared: Any) -> None:
+        """Fold one record's prepared value in, in record order."""
+        ...
+
+    def __call__(self, index: int, record: dict[str, Any]) -> None:
+        """``accept(index, prepare(record))``."""
+        ...
+
+
+PARTITION_MARKER = "{partition}"
+"""Placeholder a query carries once per ``UNION ALL`` block, inside the block's WHERE
+right after its dataset filter, where the partitioned raw stage puts its ``e.id``
+prefix filter. The single-session path removes it."""
+
+PARTITIONS_IN_FLIGHT_PER_WORKER = 2
+"""Partitions submitted but not yet consumed, per fetch worker; with the partition
+size this bounds what the partitioned raw stage holds in memory at once."""
+
+_HEX = "0123456789abcdef"
+
+_Row = tuple[str, str, tuple[str, ...], Any]
+"""One rendered record: the LMDB value, its reference-index hash, its perturbed
+genes, and its observer payload (the record dict, or each observer's ``prepare``
+result, or ``None`` with no observers)."""
+
+
+def single_session_query(query: str) -> str:
+    """The query as one session runs it: every partition marker removed."""
+    return query.replace(PARTITION_MARKER, "")
+
+
+def partition_queries(query: str, prefix_length: int) -> list[tuple[int, str, str]]:
+    """Split a marked query into ``(block, prefix, query)`` partitions, in output order.
+
+    The query is split at ``UNION ALL`` into blocks, each of which must carry the
+    marker exactly once and end in ``ORDER BY e.id`` (its experiment node bound to
+    ``e``). Each block yields one partition per lowercase hex prefix of
+    ``prefix_length`` characters, in ascending order, with the marker replaced by
+    ``AND e.id STARTS WITH '<prefix>'``, then one GUARD partition (prefix ``""``)
+    selecting the block's records whose id does NOT start with a hex prefix; the
+    raw stage requires the guard to return nothing.
+
+    Ordering. A single session returns the blocks in query order (``UNION ALL``
+    concatenates), each block sorted by ``e.id``. Experiment ids are lowercase hex
+    sha256 digests (``CellAdapter._experiment_node``: the sha256 of the inlined
+    record), so every id starts with one of the prefixes, the prefixes are disjoint,
+    and since ``0 < ... < 9 < a < ... < f`` in string order, concatenating the prefix
+    partitions in ascending order, each sorted by ``e.id``, IS the block sorted by
+    ``e.id``. The guard turns the hex assumption into a checked one.
+    """
+    if prefix_length < 1:
+        raise ValueError(f"prefix_length must be at least 1, got {prefix_length}")
+    blocks = re.split(r"\bUNION\s+ALL\b", query, flags=re.IGNORECASE)
+    partitions: list[tuple[int, str, str]] = []
+    prefixes = ["".join(p) for p in product(_HEX, repeat=prefix_length)]
+    for b, block in enumerate(blocks):
+        if block.count(PARTITION_MARKER) != 1:
+            raise ValueError(
+                f"block {b} of the query carries the partition marker "
+                f"{PARTITION_MARKER!r} {block.count(PARTITION_MARKER)} times; the "
+                "partitioned raw stage needs it exactly once per UNION ALL block"
+            )
+        if re.search(r"\bUNION\b", block, flags=re.IGNORECASE):
+            raise ValueError(f"block {b} contains a UNION that is not UNION ALL")
+        if not re.search(r"ORDER\s+BY\s+e\.id\b", block, flags=re.IGNORECASE):
+            raise ValueError(f"block {b} is not ordered by e.id")
+        for prefix in prefixes:
+            partitions.append(
+                (
+                    b,
+                    prefix,
+                    block.replace(
+                        PARTITION_MARKER, f" AND e.id STARTS WITH '{prefix}'"
+                    ),
+                )
+            )
+        guard = f" AND NOT e.id =~ '[0-9a-f]{{{prefix_length}}}.*'"
+        partitions.append((b, "", block.replace(PARTITION_MARKER, guard)))
+    return partitions
+
+
+_PARTITION_WORKER: "Neo4jQueryRaw | None" = None
+"""The raw stage a forked fetch worker runs partitions for (set before the fork)."""
+
+_PARTITION_CONSTANTS: dict[str, Any] = {}
+"""A fetch worker's resolved interned constants, kept across its partitions."""
+
+
+def _render_partition(query: str) -> list[_Row]:
+    """Fetch-worker task: run one partition query and render its records in order."""
+    raw = _PARTITION_WORKER
+    assert raw is not None, "fetch worker started without a raw stage"
+    rows: list[_Row] = []
+    batch: list[tuple[int, dict[str, Any], str]] = []
+    for position, record in enumerate(raw.fetch_query(query)):
+        batch.append((position, *raw._record_parts(record)))
+        if len(batch) >= PROCESS_BATCH:
+            rows.extend(raw._render_batch(batch, _PARTITION_CONSTANTS, "prepare"))
+            batch = []
+    if batch:
+        rows.extend(raw._render_batch(batch, _PARTITION_CONSTANTS, "prepare"))
+    return rows
+
+
 @define
 class _CachedEnvironment:
     """A validated environment, the JSON it contributes to a record, and that parsed."""
@@ -243,6 +365,15 @@ class Neo4jQueryRaw:
     # True once ``process`` has written the LMDB in this instance, i.e. the observers
     # have seen every record; False when the LMDB already existed on disk.
     raw_stage_ran: bool = field(init=False, default=False)
+    # 0: one session runs the whole query (markers removed). N > 0: the query must
+    # carry PARTITION_MARKER once per UNION ALL block; it is split into e.id-prefix
+    # partitions (partition_queries) rendered by N forked worker processes, each with
+    # its own driver, and written by this process in single-session order.
+    fetch_workers: int = 0
+    # Hex characters per partition prefix: 1 gives 16 partitions per block, 2 gives
+    # 256. In-flight memory is about PARTITIONS_IN_FLIGHT_PER_WORKER * fetch_workers
+    # partitions of rendered records, so a multi-million-record block wants 2.
+    partition_prefix_length: int = 1
     _stream: _StreamState = field(init=False, factory=_StreamState, repr=False)
 
     def __attrs_post_init__(self) -> None:
@@ -276,8 +407,13 @@ class Neo4jQueryRaw:
         driver = GraphDatabase.driver(self.uri, auth=(self.username, self.password))
         return driver, database
 
-    def fetch_data(self) -> Iterator[Any]:
-        """Open a Neo4j session, run the query, and yield each result record."""
+    def fetch_query(self, query: str) -> Iterator[Any]:
+        """Open a Neo4j session (and driver), run ``query``, and yield each record.
+
+        The one place a query reaches the server: the single-session path runs the
+        whole query through it, and each fetch worker runs its partitions through
+        it, every call on its own driver.
+        """
         driver, database = self._connect()
         # The close is in ``finally`` so a consumer that stops early (closing the
         # generator) still closes the driver, after the session exits.
@@ -285,12 +421,16 @@ class Neo4jQueryRaw:
             # 1000 is default
             with driver.session(database=database, fetch_size=1000) as session:
                 log.info("Running query...")
-                result = session.run(self.query, **self.cypher_kwargs)
+                result = session.run(query, **self.cypher_kwargs)
                 log.info("Query executed, about to process results...")
                 yield from result
             log.info("All records processed.")
         finally:
             driver.close()
+
+    def fetch_data(self) -> Iterator[Any]:
+        """Run the whole query in one session (partition markers removed)."""
+        yield from self.fetch_query(single_session_query(self.query))
 
     def fetch_constants(self, refs: list[str]) -> dict[str, Any]:
         """Fetch interned constants by id and verify each payload against its id.
@@ -439,22 +579,51 @@ class Neo4jQueryRaw:
         parts = [f"{json.dumps(name)}: {frag}" for name, frag in fragments.items()]
         return "{" + ", ".join(parts) + "}", dump, fragments
 
-    def _write_batch(
-        self, batch: list[tuple[int, dict[str, Any], str]], constants: dict[str, Any]
-    ) -> None:
-        """Resolve a batch's pointers (one fetch for its unseen ids) and write it.
+    @staticmethod
+    def _record_parts(record: Any) -> tuple[dict[str, Any], str]:
+        """``(experiment blob, ref_serialized)`` of one result record.
+
+        Two record shapes, by what the query RETURNs. Property shape
+        (e_serialized/ref_serialized strings) is REQUIRED at scale: returning
+        whole nodes makes the driver register every hydrated Node in the
+        result's Graph cache (neo4j/graph/__init__.py, graph._nodes) for the
+        life of the result, retaining 13.6 KB/record -- measured on the 025
+        build, which held 29 GB of heap at 2.2M records and projects past
+        machine RAM at 44M. Returning the serialized_data property instead
+        measures 3 B/record. Node shape (RETURN e, ref) stays supported for
+        the existing experiment queries, which are historical records.
+        """
+        if "e_serialized" in record.keys():
+            e_node_data = json.loads(record["e_serialized"])
+        else:
+            e_node_data = json.loads(record["e"]["serialized_data"])
+        if "ref_serialized" in record.keys():
+            ref_serialized = record["ref_serialized"]
+        else:
+            ref_serialized = record["ref"]["serialized_data"]
+        return e_node_data, ref_serialized
+
+    def _render_batch(
+        self,
+        batch: list[tuple[int, dict[str, Any], str]],
+        constants: dict[str, Any],
+        observe: Literal["record", "prepare"],
+    ) -> list[_Row]:
+        """Resolve a batch's pointers (one fetch for its unseen ids) and render it.
 
         Each item is ``(index, experiment blob, ref_serialized)``. Only the
         experiment is validated per record: its environment and the reference come
         from caches of validated models (``_environment``, ``_reference``), and the
-        written value is byte-identical to
+        rendered value is byte-identical to
         ``json.dumps({"experiment": e, "experiment_reference": r}, default=model_dump)``
-        (tests/torchcell/data/test_neo4j_query_raw_single_pass.py). The reference-index
-        hash and the gene set are accumulated in ``self._stream`` as each record is
-        written, which is what lets ``process`` skip both re-reads of the LMDB.
+        (tests/torchcell/data/test_neo4j_query_raw_single_pass.py). Each row also
+        carries the reference-index hash, the perturbed genes, and, with observers,
+        the record dict (``observe="record"``) or each observer's ``prepare`` of it
+        (``"prepare"``, run in a fetch worker). Nothing is written; ``_commit_rows``
+        writes rows in record order.
         """
         # Caches are emptied only between batches, so every reference this batch
-        # finds cached below stays cached until the batch is written.
+        # finds cached below stays cached until the batch is rendered.
         for cache in (self._stream.environments, self._stream.references):
             if len(cache) >= CONSTANT_CACHE_MAX:
                 cache.clear()
@@ -484,54 +653,93 @@ class Neo4jQueryRaw:
         if unseen:
             constants.update(self.fetch_constants(unseen))
         stream = self._stream
-        with self.env.begin(write=True) as txn:
-            for (i, e_node_data, ref_serialized), environment_key in zip(
-                batch, environment_keys, strict=True
-            ):
-                environment = self._environment(
-                    environment_key, e_node_data["environment"], constants
+        observers = self.record_observers
+        rows: list[_Row] = []
+        for (_, e_node_data, ref_serialized), environment_key in zip(
+            batch, environment_keys, strict=True
+        ):
+            environment = self._environment(
+                environment_key, e_node_data["environment"], constants
+            )
+            experiment = EXPERIMENT_TYPE_MAP[e_node_data["experiment_type"]](
+                dataset_name=e_node_data["dataset_name"],
+                genotype=resolve_pointers(e_node_data["genotype"], constants),
+                environment=environment.model,
+                phenotype=resolve_pointers(e_node_data["phenotype"], constants),
+            )
+            reference = (
+                stream.references[ref_serialized]
+                if ref_serialized in stream.references
+                else self._reference(
+                    ref_serialized, new_references[ref_serialized], constants
                 )
-                experiment = EXPERIMENT_TYPE_MAP[e_node_data["experiment_type"]](
-                    dataset_name=e_node_data["dataset_name"],
-                    genotype=resolve_pointers(e_node_data["genotype"], constants),
-                    environment=environment.model,
-                    phenotype=resolve_pointers(e_node_data["phenotype"], constants),
-                )
-                reference = (
-                    stream.references[ref_serialized]
-                    if ref_serialized in stream.references
-                    else self._reference(
-                        ref_serialized, new_references[ref_serialized], constants
+            )
+            experiment_json, dump, fragments = self._experiment_json(
+                experiment, environment
+            )
+            data_json = (
+                '{"experiment": '
+                + experiment_json
+                + ', "experiment_reference": '
+                + reference.fragment
+                + "}"
+            )
+            genes = tuple(self.extract_systematic_gene_names(dump["genotype"]))
+            payload: Any = None
+            if observers:
+                # json.loads of the concatenation is the composition of the parts'
+                # parses, so this dict equals json.loads(data_json).
+                record = {
+                    "experiment": {
+                        name: environment.parsed
+                        if name == "environment"
+                        else json.loads(frag)
+                        for name, frag in fragments.items()
+                    },
+                    "experiment_reference": reference.parsed,
+                }
+                payload = (
+                    record
+                    if observe == "record"
+                    else tuple(
+                        cast(SplitRecordObserver, o).prepare(record) for o in observers
                     )
                 )
-                experiment_json, dump, fragments = self._experiment_json(
-                    experiment, environment
-                )
-                data_json = (
-                    '{"experiment": '
-                    + experiment_json
-                    + ', "experiment_reference": '
-                    + reference.fragment
-                    + "}"
-                )
+            rows.append((data_json, reference.index_hash, genes, payload))
+        return rows
+
+    def _commit_rows(
+        self, first_index: int, rows: list[_Row], observe: Literal["record", "prepare"]
+    ) -> None:
+        """Write rendered rows from ``data_<first_index>`` on, in record order.
+
+        Each row is also folded into the reference index, the gene set and the
+        observers.
+        """
+        stream = self._stream
+        observers = self.record_observers
+        with self.env.begin(write=True) as txn:
+            for offset, (data_json, index_hash, genes, payload) in enumerate(rows):
+                i = first_index + offset
                 txn.put(f"data_{i}".encode(), data_json.encode())
-                stream.reference_members.setdefault(reference.index_hash, []).append(i)
-                for gene_name in self.extract_systematic_gene_names(dump["genotype"]):
+                stream.reference_members.setdefault(index_hash, []).append(i)
+                for gene_name in genes:
                     stream.gene_set.add(gene_name)
-                if self.record_observers:
-                    # json.loads of the concatenation is the composition of the parts'
-                    # parses, so this dict equals json.loads(data_json).
-                    record = {
-                        "experiment": {
-                            name: environment.parsed
-                            if name == "environment"
-                            else json.loads(frag)
-                            for name, frag in fragments.items()
-                        },
-                        "experiment_reference": reference.parsed,
-                    }
-                    for observer in self.record_observers:
-                        observer(i, record)
+                if not observers:
+                    continue
+                if observe == "record":
+                    for observer in observers:
+                        observer(i, payload)
+                else:
+                    for observer, prepared in zip(observers, payload, strict=True):
+                        cast(SplitRecordObserver, observer).accept(i, prepared)
+
+    def _write_batch(
+        self, batch: list[tuple[int, dict[str, Any], str]], constants: dict[str, Any]
+    ) -> None:
+        """Render a batch of consecutive records and write it (single-session path)."""
+        rows = self._render_batch(batch, constants, "record")
+        self._commit_rows(batch[0][0], rows, "record")
 
     def _reference_index_from_groups(
         self, groups: list[list[int]]
@@ -566,6 +774,82 @@ class Neo4jQueryRaw:
         self.close_lmdb()
         return self._experiment_reference_index
 
+    def _process_single_session(self, records: Iterator[Any]) -> int:
+        """Write the one session's ``records`` batch by batch; return the count."""
+        i = -1
+        constants: dict[str, Any] = {}
+        batch: list[tuple[int, dict[str, Any], str]] = []
+        for i, record in tqdm(enumerate(records)):
+            batch.append((i, *self._record_parts(record)))
+            if len(batch) >= PROCESS_BATCH:
+                self._write_batch(batch, constants)
+                batch = []
+        if batch:
+            self._write_batch(batch, constants)
+        log.info(f"Interned constants resolved: {len(constants)}")
+        return i + 1
+
+    def _process_partitioned(self) -> int:
+        """Render ``partition_queries`` in ``fetch_workers`` forked processes; write
+        them here in partition order, so the LMDB is the single session's.
+
+        The workers fork from this process with its (empty) caches and observers, each
+        running ``_render_partition``: its own driver per partition query, its own
+        validated-constant caches and resolved constants (each payload verified
+        against its id by ``fetch_constants``), and each observer's ``prepare``. This
+        process consumes partitions strictly in submission order, assigns
+        ``data_<i>`` sequentially, and keeps at most
+        ``PARTITIONS_IN_FLIGHT_PER_WORKER * fetch_workers`` partitions submitted and
+        unconsumed. Observers must be ``SplitRecordObserver``s.
+        """
+        global _PARTITION_WORKER
+        plain = [
+            o for o in self.record_observers if not isinstance(o, SplitRecordObserver)
+        ]
+        if plain:
+            raise TypeError(
+                f"fetch_workers={self.fetch_workers} needs SplitRecordObserver "
+                f"observers (prepare/accept); got {plain}"
+            )
+        partitions = partition_queries(self.query, self.partition_prefix_length)
+        in_flight = PARTITIONS_IN_FLIGHT_PER_WORKER * self.fetch_workers
+        # Fork with no LMDB environment open; reopen it for writing once the workers
+        # exist (the fork start method launches every worker at the first submit).
+        self.close_lmdb()
+        _PARTITION_WORKER = self
+        pending: deque[tuple[int, str, Future[list[_Row]]]] = deque()
+        next_partition = 0
+        n_records = 0
+        with ProcessPoolExecutor(
+            max_workers=self.fetch_workers, mp_context=mp.get_context("fork")
+        ) as pool:
+            while next_partition < len(partitions) and len(pending) < in_flight:
+                block, prefix, query = partitions[next_partition]
+                pending.append((block, prefix, pool.submit(_render_partition, query)))
+                next_partition += 1
+            _PARTITION_WORKER = None
+            self._init_lmdb(readonly=False)
+            with tqdm(total=len(partitions), desc="partitions") as progress:
+                while pending:
+                    block, prefix, future = pending.popleft()
+                    rows = future.result()
+                    if next_partition < len(partitions):
+                        b, p, query = partitions[next_partition]
+                        pending.append((b, p, pool.submit(_render_partition, query)))
+                        next_partition += 1
+                    if prefix == "" and rows:
+                        raise ValueError(
+                            f"block {block}: {len(rows)} records have an e.id that "
+                            "does not start with a lowercase hex prefix, so the "
+                            "prefix partitions would have dropped them"
+                        )
+                    for start in range(0, len(rows), PROCESS_BATCH):
+                        chunk = rows[start : start + PROCESS_BATCH]
+                        self._commit_rows(n_records, chunk, "prepare")
+                        n_records += len(chunk)
+                    progress.update(1)
+        return n_records
+
     def process(self) -> None:
         """Stream query results into LMDB and write the reference index and gene set.
 
@@ -596,20 +880,35 @@ class Neo4jQueryRaw:
                 "partial store; inspect and remove it, then construct again"
             )
         log.info("Processing data...")
-        records = self.fetch_data()
-        first = next(records, None)
-        if first is None:
-            raise EmptyQueryResultError(
-                f"the query returned no records; no store was written at "
-                f"{self.lmdb_dir}. Query: {self.query}"
-            )
+        self._stream = _StreamState()
+        records: Iterator[Any] | None = None
+        if self.fetch_workers == 0:
+            # One session: the first record decides whether a store is written at all.
+            # The partitioned path learns the count only once every partition is in,
+            # and then removes its staging store the same way.
+            records = self.fetch_data()
+            first = next(records, None)
+            if first is None:
+                raise EmptyQueryResultError(
+                    f"the query returned no records; no store was written at "
+                    f"{self.lmdb_dir}. Query: {self.query}"
+                )
+            records = chain([first], records)
         final_dir = self.lmdb_dir
         os.makedirs(staging_dir)
         self.lmdb_dir = staging_dir
         try:
-            self._init_lmdb(readonly=False)
-            n_records = self._write_records(chain([first], records))
+            if records is None:
+                n_records = self._process_partitioned()
+            else:
+                self._init_lmdb(readonly=False)
+                n_records = self._process_single_session(records)
             self.close_lmdb()
+            if n_records == 0:
+                raise EmptyQueryResultError(
+                    f"the query returned no records; no store was written at "
+                    f"{final_dir}. Query: {self.query}"
+                )
         except BaseException:
             self.close_lmdb()
             shutil.rmtree(staging_dir)
@@ -630,40 +929,6 @@ class Neo4jQueryRaw:
         self.gene_set = self._stream.gene_set
         self._stream = _StreamState()
         self.raw_stage_ran = True
-
-    def _write_records(self, records: Iterator[Any]) -> int:
-        """Write each query record as ``data_<i>``; return the number written."""
-        i = -1
-        constants: dict[str, Any] = {}
-        self._stream = _StreamState()
-        batch: list[tuple[int, dict[str, Any], str]] = []
-        for i, record in tqdm(enumerate(records)):
-            # Two record shapes, by what the query RETURNs. Property shape
-            # (e_serialized/ref_serialized strings) is REQUIRED at scale: returning
-            # whole nodes makes the driver register every hydrated Node in the
-            # result's Graph cache (neo4j/graph/__init__.py, graph._nodes) for the
-            # life of the result, retaining 13.6 KB/record -- measured on the 025
-            # build, which held 29 GB of heap at 2.2M records and projects past
-            # machine RAM at 44M. Returning the serialized_data property instead
-            # measures 3 B/record. Node shape (RETURN e, ref) stays supported for
-            # the existing experiment queries, which are historical records.
-            if "e_serialized" in record.keys():
-                e_node_data = json.loads(record["e_serialized"])
-            else:
-                e_node_data = json.loads(record["e"]["serialized_data"])
-            if "ref_serialized" in record.keys():
-                ref_serialized = record["ref_serialized"]
-            else:
-                ref_serialized = record["ref"]["serialized_data"]
-            batch.append((i, e_node_data, ref_serialized))
-            if len(batch) >= PROCESS_BATCH:
-                self._write_batch(batch, constants)
-                batch = []
-        if batch:
-            self._write_batch(batch, constants)
-
-        log.info(f"Interned constants resolved: {len(constants)}")
-        return i + 1
 
     def __getitem__(self, index: int | slice | list[int]) -> Any:
         """Return the record(s) for an int, slice, or list of indices."""

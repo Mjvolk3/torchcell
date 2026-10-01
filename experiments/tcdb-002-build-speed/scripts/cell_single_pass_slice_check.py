@@ -130,6 +130,7 @@ def build(
         query: str,
         gene_set: GeneSet,
         record_observers: list[RecordObserver],
+        fetch_workers: int,
     ) -> Neo4jQueryRaw:
         raw = SliceQueryRaw(
             uri=uri,
@@ -138,6 +139,7 @@ def build(
             root_dir=root_dir,
             query=query,
             record_observers=list(record_observers),
+            fetch_workers=fetch_workers,
         )
         if withhold:
             raw.raw_stage_ran = False

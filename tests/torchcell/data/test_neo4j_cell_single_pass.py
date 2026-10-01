@@ -171,6 +171,7 @@ def _build(
         query: str,
         gene_set: GeneSet,
         record_observers: list[RecordObserver],
+        fetch_workers: int,
     ) -> Neo4jQueryRaw:
         raw = _MemoryQueryRaw(
             uri=uri,
@@ -179,6 +180,7 @@ def _build(
             root_dir=root_dir,
             query=query,
             record_observers=list(record_observers),
+            fetch_workers=fetch_workers,
         )
         if withhold_grouping:
             raw.raw_stage_ran = False

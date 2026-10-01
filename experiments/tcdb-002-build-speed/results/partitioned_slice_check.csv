@@ -1,0 +1,5 @@
+fetch_workers,records,identical_to_one_session,wall_ms_per_record,records_per_s,stream_ms_per_record,stream_records_per_s,reference_index_s,parent_cpu_ms_per_record,worker_cpu_ms_per_record,parent_rss_before_mb,parent_peak_rss_during_build_mb,worker_peak_rss_mb
+0,21184,True,0.9611,1040.5,0.7101,1408.3,5.16,0.959,0.0,1696,2395,0
+1,21184,True,0.9392,1064.8,0.705,1418.4,4.95,0.279,0.6953,1695,1952,1700
+2,21184,True,0.6074,1646.2,0.3752,2665.4,4.91,0.2751,0.7352,1697,1961,1535
+3,21184,True,0.5104,1959.2,0.2792,3582.2,4.89,0.2745,0.8141,1699,1951,1486

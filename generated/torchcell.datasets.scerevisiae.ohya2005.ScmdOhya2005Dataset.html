@@ -161,6 +161,13 @@ drug-hypersensitive quadruple deletions).</p>
 <dt class="sig sig-object py" id="torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.process">
 <span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/datasets/scerevisiae/ohya2005.html#ScmdOhya2005Dataset.process"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.process" title="Link to this definition"></a></dt>
 <dd><p>Load raw TSVs, build CalMorph experiments, and write the LMDB store.</p>
+<p>Every record is built (and so every refusal raised) BEFORE <code class="docutils literal notranslate"><span class="pre">data.csv</span></code> or the
+store is written, so a refused matrix leaves no <code class="docutils literal notranslate"><span class="pre">processed/lmdb</span></code> for a retry to
+serve as empty and no <code class="docutils literal notranslate"><span class="pre">preprocess/data.csv</span></code>.
+Records are written through <code class="docutils literal notranslate"><span class="pre">_intern_record</span></code>: the constant reference (the
+501-feature WT phenotype) is stored once in the sibling <code class="docutils literal notranslate"><span class="pre">interned</span></code> env and each
+record carries a <code class="docutils literal notranslate"><span class="pre">$ref</span></code> pointer that <code class="docutils literal notranslate"><span class="pre">get_single_item</span></code> splices back, so the
+resolved records are the same values as the earlier inline layout.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -185,7 +192,7 @@ so the two strains stay distinct. Retired/ambiguous names are kept verbatim.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.create_experiment">
 <span class="sig-name descname"><span class="pre">create_experiment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/datasets/scerevisiae/ohya2005.html#ScmdOhya2005Dataset.create_experiment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.create_experiment" title="Link to this definition"></a></dt>
-<dd><p>Required by base class but not used - see create_calmorph_experiment.</p>
+<dd><p>Not used: records are built by <code class="docutils literal notranslate"><span class="pre">create_calmorph_experiment</span></code>.</p>
 </dd></dl>
 
 <dl class="py method">

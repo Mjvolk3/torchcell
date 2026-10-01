@@ -398,30 +398,54 @@
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.oduibhir2014.SmfODuibhir2014Dataset.html#torchcell.datasets.scerevisiae.oduibhir2014.SmfODuibhir2014Dataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Convert each Dataset S2 row into a fitness record; write LMDB."""</span>
+<span class="w">        </span><span class="sd">"""Convert each Dataset S2 row into a fitness record; write LMDB.</span>
+
+<span class="sd">        Every record is built and every refusal raised BEFORE the store is opened, so a</span>
+<span class="sd">        refused file leaves no ``processed/lmdb`` behind for a retry to serve as empty.</span>
+<span class="sd">        Refusals (each 0 of the 1312 rows of the pinned file, 2026.10.01): a blank</span>
+<span class="sd">        ``commonName`` or ``log2relT``, and two rows resolving to the same ORF.</span>
+<span class="sd">        """</span>
         <span class="n">verify_raw_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">_RAW_FILENAME</span><span class="p">:</span> <span class="n">_DATASET_S2_SHA256</span><span class="p">})</span>
         <span class="n">resolve</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="p">()</span>
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_dataset_s2</span><span class="p">()</span>
 
-        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
         <span class="n">dropped</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e11</span><span class="p">))</span>
-        <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"oduibhir2014"</span><span class="p">):</span>
-                <span class="n">token</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">])</span>
-                <span class="n">orf</span> <span class="o">=</span> <span class="n">resolve</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">orf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">dropped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
-                    <span class="k">continue</span>
-                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_experiment</span><span class="p">(</span>
+        <span class="n">first_row</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">records</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span>
+            <span class="nb">tuple</span><span class="p">[</span><span class="n">FitnessExperiment</span><span class="p">,</span> <span class="n">FitnessExperimentReference</span><span class="p">,</span> <span class="n">Publication</span><span class="p">]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="n">token</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">])</span>
+            <span class="n">orf</span> <span class="o">=</span> <span class="n">resolve</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">orf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">dropped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">first_row</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Dataset S2 lists </span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2"> twice (rows </span><span class="si">{</span><span class="n">first_row</span><span class="p">[</span><span class="n">orf</span><span class="p">]</span><span class="si">!r}</span><span class="s2"> and "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">token</span><span class="si">!r}</span><span class="s2">); one record per deletion strain is required"</span>
+                <span class="p">)</span>
+            <span class="n">first_row</span><span class="p">[</span><span class="n">orf</span><span class="p">]</span> <span class="o">=</span> <span class="n">token</span>
+            <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"commonName"</span><span class="p">]):</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Dataset S2 row </span><span class="si">{</span><span class="n">token</span><span class="si">!r}</span><span class="s2"> has a blank commonName"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"log2relT"</span><span class="p">]):</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Dataset S2 row </span><span class="si">{</span><span class="n">token</span><span class="si">!r}</span><span class="s2"> has a blank log2relT"</span><span class="p">)</span>
+            <span class="n">records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_experiment</span><span class="p">(</span>
                     <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                     <span class="n">orf</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
                     <span class="n">common_name</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"commonName"</span><span class="p">]),</span>
                     <span class="n">log2relt</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"log2relT"</span><span class="p">]),</span>
                 <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e11</span><span class="p">))</span>
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+                <span class="n">tqdm</span><span class="p">(</span><span class="n">records</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"oduibhir2014"</span><span class="p">)</span>
+            <span class="p">):</span>
                 <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
                     <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
@@ -432,11 +456,10 @@
                         <span class="p">}</span>
                     <span class="p">),</span>
                 <span class="p">)</span>
-                <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> ODuibhir2014 fitness experiments to LMDB (</span><span class="si">%d</span><span class="s2"> ORFs dropped: </span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span>
-            <span class="n">idx</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">),</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">dropped</span><span class="p">),</span>
             <span class="nb">sorted</span><span class="p">(</span><span class="n">dropped</span><span class="p">),</span>
         <span class="p">)</span></div>

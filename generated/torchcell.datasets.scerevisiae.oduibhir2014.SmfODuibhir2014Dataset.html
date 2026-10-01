@@ -160,6 +160,10 @@ canonical source is the sha256-pinned file already staged in the library mirror.
 <dt class="sig sig-object py" id="torchcell.datasets.scerevisiae.oduibhir2014.SmfODuibhir2014Dataset.process">
 <span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/datasets/scerevisiae/oduibhir2014.html#SmfODuibhir2014Dataset.process"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datasets.scerevisiae.oduibhir2014.SmfODuibhir2014Dataset.process" title="Link to this definition"></a></dt>
 <dd><p>Convert each Dataset S2 row into a fitness record; write LMDB.</p>
+<p>Every record is built and every refusal raised BEFORE the store is opened, so a
+refused file leaves no <code class="docutils literal notranslate"><span class="pre">processed/lmdb</span></code> behind for a retry to serve as empty.
+Refusals (each 0 of the 1312 rows of the pinned file, 2026.10.01): a blank
+<code class="docutils literal notranslate"><span class="pre">commonName</span></code> or <code class="docutils literal notranslate"><span class="pre">log2relT</span></code>, and two rows resolving to the same ORF.</p>
 </dd></dl>
 
 <dl class="py method">

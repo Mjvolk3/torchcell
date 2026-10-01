@@ -158,6 +158,12 @@
 <dt class="sig sig-object py" id="torchcell.datasets.scerevisiae.dasilveira2014.MetaboliteDaSilveira2014Dataset.process">
 <span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/datasets/scerevisiae/dasilveira2014.html#MetaboliteDaSilveira2014Dataset.process"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datasets.scerevisiae.dasilveira2014.MetaboliteDaSilveira2014Dataset.process" title="Link to this definition"></a></dt>
 <dd><p>Parse the Quant sheet into per-mutant Metabolite experiments and write LMDB.</p>
+<p>Every record is built and every refusal raised BEFORE <code class="docutils literal notranslate"><span class="pre">lipid_chebi.csv</span></code>,
+<code class="docutils literal notranslate"><span class="pre">data.csv</span></code> or the store is written, so a refused matrix writes nothing under
+<code class="docutils literal notranslate"><span class="pre">preprocess/</span></code> or <code class="docutils literal notranslate"><span class="pre">processed/</span></code>. Refusals (each 0 in the pinned Table S4,
+2026.10.01: 147 lipids, 127 mutant rows): a lipid that no WT control row
+measured (it would have no reference value), two mutant rows resolving to one
+ORF, and a mutant row with every lipid blank.</p>
 </dd></dl>
 
 <dl class="py method">

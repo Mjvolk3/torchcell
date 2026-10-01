@@ -127,7 +127,7 @@
 
 <span class="sd">Values are RAW per-strain CalMorph population averages, one 501-length vector per strain:</span>
 <span class="sd">281 base parameters (``CALMORPH_LABELS``: 220 mean + 61 ratio) + 220 coefficient-of-</span>
-<span class="sd">variation / noise parameters (``CALMORPH_STATISTICS``, prefixed CCV/ACV/DCV/TCV). The</span>
+<span class="sd">variation / noise parameters (``CALMORPH_STATISTICS``, prefixed CCV/ACV/DCV). The</span>
 <span class="sd">122-row wildtype matrix (122 independent ``his3`` WT replicate averages) is aggregated</span>
 <span class="sd">per-feature into a single mean-WT reference phenotype.</span>
 
@@ -182,11 +182,9 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 
@@ -220,8 +218,9 @@
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
-<span class="c1"># CV parameters are prefixed CCV/ACV/DCV/TCV; everything else is a base parameter.</span>
-<span class="n">_CV_PREFIXES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"CCV"</span><span class="p">,</span> <span class="s2">"ACV"</span><span class="p">,</span> <span class="s2">"DCV"</span><span class="p">,</span> <span class="s2">"TCV"</span><span class="p">)</span>
+<span class="c1"># CV parameters are prefixed CCV/ACV/DCV (60 + 33 + 127 = 220 in the pinned matrices; no</span>
+<span class="c1"># TCV parameter exists, #494); everything else is a base parameter.</span>
+<span class="n">_CV_PREFIXES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"CCV"</span><span class="p">,</span> <span class="s2">"ACV"</span><span class="p">,</span> <span class="s2">"DCV"</span><span class="p">)</span>
 
 <span class="c1"># sha256-pinned raw matrices in the library mirror ``data/`` directory.</span>
 <span class="n">_RAW_FILES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
@@ -306,7 +305,16 @@
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.html#torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Load raw TSVs, build CalMorph experiments, and write the LMDB store."""</span>
+<span class="w">        </span><span class="sd">"""Load raw TSVs, build CalMorph experiments, and write the LMDB store.</span>
+
+<span class="sd">        Every record is built (and so every refusal raised) BEFORE ``data.csv`` or the</span>
+<span class="sd">        store is written, so a refused matrix leaves no ``processed/lmdb`` for a retry to</span>
+<span class="sd">        serve as empty and no ``preprocess/data.csv``.</span>
+<span class="sd">        Records are written through ``_intern_record``: the constant reference (the</span>
+<span class="sd">        501-feature WT phenotype) is stored once in the sibling ``interned`` env and each</span>
+<span class="sd">        record carries a ``$ref`` pointer that ``get_single_item`` splices back, so the</span>
+<span class="sd">        resolved records are the same values as the earlier inline layout.</span>
+<span class="sd">        """</span>
         <span class="n">verify_raw_files</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"sha256"</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">_RAW_FILES</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
         <span class="p">)</span>
@@ -315,35 +323,30 @@
 
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_calmorph_data</span><span class="p">(</span><span class="n">df_mutant</span><span class="p">)</span>
 
-        <span class="c1"># Save preprocessed data</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-
         <span class="c1"># Aggregate the 122 WT replicate averages into a single mean-WT reference.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">wt_reference_phenotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_wt_reference</span><span class="p">(</span><span class="n">df_wt</span><span class="p">)</span>
 
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Processing Ohya 2005 CalMorph morphology data..."</span><span class="p">)</span>
 
-        <span class="c1"># Initialize LMDB environment</span>
-        <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e12</span><span class="p">))</span>
+        <span class="n">records</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">create_calmorph_experiment</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">wt_reference_phenotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">wt_reference_phenotype</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="p">]</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
-                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_calmorph_experiment</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">wt_reference_phenotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">wt_reference_phenotype</span>
+        <span class="n">env</span><span class="p">,</span> <span class="n">interned_env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_write_lmdb</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">))</span>
+        <span class="c1"># LIFO exit: the interned txn commits before the records txn (crash safety).</span>
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">,</span> <span class="n">interned_env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">records</span><span class="p">):</span>
+                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_intern_record</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span><span class="p">,</span> <span class="n">itxn</span><span class="p">),</span>
                 <span class="p">)</span>
-
-                <span class="c1"># Serialize the Pydantic objects</span>
-                <span class="n">serialized_data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
-                    <span class="p">{</span>
-                        <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
-                        <span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
-                        <span class="s2">"publication"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
-                    <span class="p">}</span>
-                <span class="p">)</span>
-                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">serialized_data</span><span class="p">)</span>
-
-        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">interned_env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="ScmdOhya2005Dataset.preprocess_raw">
@@ -373,8 +376,24 @@
         <span class="n">df_mutant</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="c1"># The ORF column carries the systematic gene name; there is no common-name column.</span>
         <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"ORF"</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-        <span class="n">df_mutant</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="p">[</span><span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()]</span>
-        <span class="n">df_mutant</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="p">[</span><span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">""</span><span class="p">]</span>
+        <span class="c1"># A row with a blank ORF names no strain; it is dropped and counted (0 of the</span>
+        <span class="c1"># 4718 rows of the pinned matrix, 2026.10.01).</span>
+        <span class="n">blank</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span> <span class="o">|</span> <span class="p">(</span>
+            <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">""</span>
+        <span class="p">)</span>
+        <span class="n">n_blank</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">blank</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">n_blank</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">"Ohya 2005: dropping </span><span class="si">%d</span><span class="s2"> mutant row(s) with a blank ORF"</span><span class="p">,</span> <span class="n">n_blank</span>
+            <span class="p">)</span>
+        <span class="n">df_mutant</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="p">[</span><span class="o">~</span><span class="n">blank</span><span class="p">]</span>
+        <span class="n">duplicated</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span><span class="o">.</span><span class="n">duplicated</span><span class="p">(</span><span class="n">keep</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">duplicated</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">"Ohya 2005: the same strain is listed more than once (ORF stripped and "</span>
+                <span class="s2">"uppercased): "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">df_mutant</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">duplicated</span><span class="p">,</span><span class="w"> </span><span class="s1">'ORF'</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
 
         <span class="c1"># Drop any strain with a missing CalMorph value -- CalMorph completeness requires</span>
         <span class="c1"># the full 501-trait vocabulary per record; values are NEVER imputed (drop whole).</span>
@@ -420,8 +439,10 @@
 <div class="viewcode-block" id="ScmdOhya2005Dataset.create_experiment">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.html#torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.create_experiment">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Required by base class but not used - see create_calmorph_experiment."""</span>
-        <span class="k">pass</span></div>
+<span class="w">        </span><span class="sd">"""Not used: records are built by ``create_calmorph_experiment``."""</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">"ScmdOhya2005Dataset builds records with create_calmorph_experiment"</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ScmdOhya2005Dataset.create_calmorph_experiment">

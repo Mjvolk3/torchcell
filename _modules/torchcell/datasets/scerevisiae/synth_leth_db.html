@@ -156,6 +156,34 @@
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">BlankPubmedIdError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A SynLethDB row with a blank or whitespace-only ``r.pubmed_id``.</span>
+
+<span class="sd">    Every record cites its PMID, so a blank one is refused by name. The pinned</span>
+<span class="sd">    ``Yeast_SL.csv`` (14,000 rows) and ``Yeast_SR.csv`` (6,948 rows) have none</span>
+<span class="sd">    (0 empty and 0 whitespace-only cells).</span>
+<span class="sd">    """</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_synlethdb_csv</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Read a SynLethDB CSV with ``r.pubmed_id`` as text, refusing a blank PMID.</span>
+
+<span class="sd">    A cell that is empty or only whitespace counts as blank.</span>
+
+<span class="sd">    Reading the PMID as text keeps it verbatim (``"18676811"``, or</span>
+<span class="sd">    ``"24125552;19918932"`` for a row citing two papers); read as a number, one blank</span>
+<span class="sd">    cell would turn the whole column float and every PMID into ``"111.0"``.</span>
+<span class="sd">    """</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="s2">"r.pubmed_id"</span><span class="p">:</span> <span class="nb">str</span><span class="p">})</span>
+    <span class="n">blank</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"r.pubmed_id"</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">blank</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="n">BlankPubmedIdError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">blank</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2"> row(s) with a blank r.pubmed_id "</span>
+            <span class="sa">f</span><span class="s2">"(first at row </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">blank</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">df</span>
+
+
 <div class="viewcode-block" id="SynthLethalityYeastSynthLethDbDataset">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset.html#torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset">[docs]</a>
 <span class="nd">@register_dataset</span>
@@ -276,7 +304,7 @@
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Processing Synthetic Lethality Yeast Data..."</span><span class="p">)</span>
 
         <span class="n">raw_data_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_file_names</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">raw_data_path</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">_read_synlethdb_csv</span><span class="p">(</span><span class="n">raw_data_path</span><span class="p">)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_raw</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
 
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -489,7 +517,7 @@
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Processing Synthetic Rescue Yeast Data..."</span><span class="p">)</span>
 
         <span class="n">raw_data_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_file_names</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">raw_data_path</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">_read_synlethdb_csv</span><span class="p">(</span><span class="n">raw_data_path</span><span class="p">)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_raw</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
 
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -586,7 +614,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Build and inspect both SynLethDB datasets from a local genome."""</span>
+<span class="w">    </span><span class="sd">"""Build and inspect both SynLethDB datasets under ``$DATA_ROOT``.</span>
+
+<span class="sd">    The roots are the dev-tree directories the knowledge-graph configs read</span>
+<span class="sd">    (``torchcell/knowledge_graphs/conf/synth_*_yeast_synth_leth_db.yaml``).</span>
+<span class="sd">    """</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
@@ -600,10 +632,16 @@
         <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">lethality_dataset</span> <span class="o">=</span> <span class="n">SynthLethalityYeastSynthLethDbDataset</span><span class="p">(</span><span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">)</span>
+    <span class="n">lethality_dataset</span> <span class="o">=</span> <span class="n">SynthLethalityYeastSynthLethDbDataset</span><span class="p">(</span>
+        <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/synth_lethality_yeast_synth_leth_db"</span><span class="p">),</span>
+        <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">lethality_dataset</span><span class="p">)</span>
 
-    <span class="n">rescue_dataset</span> <span class="o">=</span> <span class="n">SynthRescueYeastSynthLethDbDataset</span><span class="p">(</span><span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">)</span>
+    <span class="n">rescue_dataset</span> <span class="o">=</span> <span class="n">SynthRescueYeastSynthLethDbDataset</span><span class="p">(</span>
+        <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/synth_rescue_yeast_synth_leth_db"</span><span class="p">),</span>
+        <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">rescue_dataset</span><span class="p">)</span>
 
 

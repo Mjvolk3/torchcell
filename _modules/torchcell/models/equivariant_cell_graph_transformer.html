@@ -1123,10 +1123,14 @@
 <span class="sd">    forces the model to use it. (Measured: the Perceiver alone moved seed 0 by only</span>
 <span class="sd">    +0.0045 -- a pathway with nothing requiring it.)</span>
 
-<span class="sd">    EVALUATION STAYS COMPARABLE. At validation no labels are observed, so the mask is</span>
-<span class="sd">    100% and the forward pass is identical to the unconditioned model. The per-feature</span>
-<span class="sd">    metric is therefore directly comparable to every other arm -- masking changes the</span>
-<span class="sd">    TRAINING signal, not the inference task.</span>
+<span class="sd">    A 100%-MASKED FORWARD IS NOT THE UNCONDITIONED MODEL. With no label observed the</span>
+<span class="sd">    features are [0, 0], but this module still adds ``gate * proj([0, 0])`` to every gene</span>
+<span class="sd">    token (see ``__init__``). In eval that offset is the same vector on every token; in</span>
+<span class="sd">    train the dropout inside ``proj`` makes it differ per token; under</span>
+<span class="sd">    ``gate_mode="rezero"`` it is zero at init (gate 0) and grows with the learned gate.</span>
+<span class="sd">    Only a call with ``observed_values=None`` skips the encoder and is the unconditioned</span>
+<span class="sd">    model, so a metric from an all-masked pass is the unconditioned model plus that</span>
+<span class="sd">    offset (issue #566).</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">gate_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"on"</span><span class="p">):</span>
@@ -1139,9 +1143,10 @@
 <span class="sd">                init 0). Defaults to forced-on because the whole point is to push</span>
 <span class="sd">                gradient through the conditioning pathway. With everything masked the</span>
 <span class="sd">                features are [0, 0], but the forced-on gate still adds</span>
-<span class="sd">                ``proj([0, 0]) = W2 relu(b1) + b2``, the same offset on every token, so</span>
-<span class="sd">                a 100%-masked (validation) forward is NOT an identity; ``rezero`` is the</span>
-<span class="sd">                identity at init.</span>
+<span class="sd">                ``proj([0, 0]) = W2 relu(b1) + b2`` (in eval the same offset on every</span>
+<span class="sd">                token; in train the dropout makes it differ per token), so a</span>
+<span class="sd">                100%-masked forward is NOT an identity; ``rezero`` is the identity at</span>
+<span class="sd">                init.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">proj</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
@@ -1152,7 +1157,8 @@
         <span class="p">)</span>
         <span class="c1"># Defaults to FORCED ON: the whole point is to push gradient through the</span>
         <span class="c1"># conditioning pathway. With everything masked the features are [0, 0] and the</span>
-        <span class="c1"># forward adds the constant offset proj([0, 0]) to every token (not an identity).</span>
+        <span class="c1"># forward adds proj([0, 0]) to every token (not an identity; the same vector per</span>
+        <span class="c1"># token in eval, per-token dropout noise in train).</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gate_mode</span> <span class="o">=</span> <span class="n">gate_mode</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gate</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span> <span class="o">|</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
         <span class="k">if</span> <span class="n">gate_mode</span> <span class="o">==</span> <span class="s2">"on"</span><span class="p">:</span>

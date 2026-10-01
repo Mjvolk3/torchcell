@@ -470,21 +470,40 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_systematic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gene</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Resolve a common/systematic gene name to a systematic ORF id (must succeed)."""</span>
+<span class="w">        </span><span class="sd">"""Resolve a common/systematic gene name to a systematic ORF id (must succeed).</span>
+
+<span class="sd">        A systematic-shaped name must be a gene of the injected genome, and a common name</span>
+<span class="sd">        must name exactly one gene; anything else is refused by name rather than stored.</span>
+<span class="sd">        """</span>
         <span class="n">gene</span> <span class="o">=</span> <span class="n">gene</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">gene</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">gene</span>
         <span class="n">genome</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">gene</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">gene</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Yoshida2012: systematic name '</span><span class="si">{</span><span class="n">gene</span><span class="si">}</span><span class="s2">' is not a gene of the genome"</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="n">gene</span>
         <span class="n">candidates</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">alias_to_systematic</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gene</span><span class="p">,</span> <span class="p">[])</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">candidates</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Yoshida2012: could not resolve gene name '</span><span class="si">{</span><span class="n">gene</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Yoshida2012: gene name '</span><span class="si">{</span><span class="n">gene</span><span class="si">}</span><span class="s2">' is an alias of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"ORFs </span><span class="si">{</span><span class="n">candidates</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
         <span class="k">return</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
 <div class="viewcode-block" id="OrganicAcidYoshida2012Dataset.process">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.yoshida2012.OrganicAcidYoshida2012Dataset.html#torchcell.datasets.scerevisiae.yoshida2012.OrganicAcidYoshida2012Dataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Build per-strain Metabolite experiments from the Table 3 literal, write LMDB."""</span>
+<span class="w">        </span><span class="sd">"""Build per-strain Metabolite experiments from the Table 3 literal, write LMDB.</span>
+
+<span class="sd">        Every record is built and every refusal raised BEFORE ``data.csv`` or the store is</span>
+<span class="sd">        written, so a refused table leaves nothing for a retry to serve. Refusals (each</span>
+<span class="sd">        0 of the 17 strains of the released Table 3, 2026.10.01): an unresolvable or</span>
+<span class="sd">        ambiguous name, two strains resolving to one ORF, and a NaN mean or SD.</span>
+<span class="sd">        """</span>
         <span class="n">verify_raw_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">PDF_FILENAME</span><span class="p">:</span> <span class="n">PDF_SHA256</span><span class="p">})</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
@@ -495,15 +514,29 @@
         <span class="c1"># stays unmapped (inorganic; not a modelled organic-acid target).</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_s_id_map</span> <span class="o">=</span> <span class="n">build_metabolite_s_id_map</span><span class="p">(</span><span class="n">ACID_KEGG_IDS</span><span class="p">)</span>
 
+        <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">TABLE_3</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">column</span><span class="p">,</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">sd</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">_TABLE_3_COLUMNS</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">mean</span><span class="p">)</span> <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">sd</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"Yoshida2012: Table 3 row '</span><span class="si">{</span><span class="n">gene</span><span class="si">}</span><span class="s2">' has a NaN </span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s2"> cell "</span>
+                        <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">mean</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">sd</span><span class="si">}</span><span class="s2">)"</span>
+                    <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span> <span class="o">=</span> <span class="n">_row_analytes</span><span class="p">(</span><span class="n">TABLE_3</span><span class="p">[</span><span class="n">_WT_KEY</span><span class="p">])</span>
 
-        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">gene_by_orf</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">TABLE_3</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">gene</span> <span class="o">==</span> <span class="n">_WT_KEY</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="n">orf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_systematic</span><span class="p">(</span><span class="n">gene</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">gene_by_orf</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Yoshida2012: Table 3 rows '</span><span class="si">{</span><span class="n">gene_by_orf</span><span class="p">[</span><span class="n">orf</span><span class="p">]</span><span class="si">}</span><span class="s2">' and '</span><span class="si">{</span><span class="n">gene</span><span class="si">}</span><span class="s2">' both "</span>
+                    <span class="sa">f</span><span class="s2">"resolve to </span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+            <span class="n">gene_by_orf</span><span class="p">[</span><span class="n">orf</span><span class="p">]</span> <span class="o">=</span> <span class="n">gene</span>
             <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"orf"</span><span class="p">:</span> <span class="n">orf</span><span class="p">,</span> <span class="s2">"gene"</span><span class="p">:</span> <span class="n">gene</span><span class="p">,</span> <span class="s2">"analytes"</span><span class="p">:</span> <span class="n">_row_analytes</span><span class="p">(</span><span class="n">values</span><span class="p">)})</span>
+        <span class="n">records</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span><span class="n">record_row</span><span class="p">)</span> <span class="k">for</span> <span class="n">record_row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">"Yoshida2012: </span><span class="si">%d</span><span class="s2"> deletion strains, WT reference over </span><span class="si">%d</span><span class="s2"> analytes, "</span>
             <span class="s2">"</span><span class="si">%d</span><span class="s2"> organic acids mapped to Yeast9 s_NNNN"</span><span class="p">,</span>
@@ -511,15 +544,14 @@
             <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">),</span>
             <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_s_id_map</span><span class="p">),</span>
         <span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([{</span><span class="s2">"orf"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">],</span> <span class="s2">"gene"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]}</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">])</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
             <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span>
         <span class="p">)</span>
 
         <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e11</span><span class="p">))</span>
-        <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">record_row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">rows</span><span class="p">):</span>
-                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span><span class="n">record_row</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tqdm</span><span class="p">(</span><span class="n">records</span><span class="p">)):</span>
                 <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
                     <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
@@ -530,9 +562,8 @@
                         <span class="p">}</span>
                     <span class="p">),</span>
                 <span class="p">)</span>
-                <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Yoshida2012 organic-acid experiments to LMDB"</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span></div>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Yoshida2012 organic-acid experiments to LMDB"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="OrganicAcidYoshida2012Dataset.preprocess_raw">

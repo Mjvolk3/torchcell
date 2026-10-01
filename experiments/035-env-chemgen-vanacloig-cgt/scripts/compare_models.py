@@ -77,6 +77,8 @@ def load_scores(ladder_tag: str) -> pd.DataFrame:
         # continuation (r6b_mix_fs1) belongs with the round it continues (r6_mix)
         sweep = re.sub(r"_fs\d$", "", sweep)
         sweep = re.sub(r"^(r\d+)b_", r"\1_", sweep)
+        # round 8 is split over cards and chained jobs (r8_small_a, r8_deep_c, ...)
+        sweep = re.sub(r"^r8_(small|deep)_[a-z]$", "r8", sweep)
         d = pd.read_csv(path)
         # a config repeated per fold seed is named <name>_fs<seed>; pool it under <name>
         # a config run one fold per process is named <name>_f<fold>; pool it the same way

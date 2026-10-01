@@ -10,6 +10,8 @@ import os
 import os.path as osp
 import sqlite3
 import tempfile
+import weakref
+from datetime import UTC, datetime
 from enum import StrEnum
 from itertools import product
 from pathlib import Path
@@ -504,12 +506,7 @@ CREATE_DB_KWARGS: dict[str, Any] = {
 
 
 class GenomeDatabaseSource(BaseModel):
-    """What a genome ``data.db`` was built from: the pinned GFF and the build arguments.
-
-    It is stored as one JSON row in :data:`SOURCE_TABLE` inside the database itself, so
-    the record and the features it describes are replaced together by one atomic rename
-    and a reader can never pair a new database with an old record.
-    """
+    """What a genome ``data.db`` is built from: the pinned GFF and the build arguments."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -521,14 +518,31 @@ class GenomeDatabaseSource(BaseModel):
     sort_attribute_values: bool
 
 
+class GenomeDatabaseRecord(BaseModel):
+    """The one row of :data:`SOURCE_TABLE`: the source plus the row counts at build.
+
+    The record lives inside the sqlite file, so the record and the rows it describes
+    are replaced together by one atomic rename. The counts are re-taken at every open
+    (one ``GROUP BY`` over ``features`` and one ``COUNT`` over ``relations``), so rows
+    deleted in place after the build, by a process running pre-2026.10.01 code, are
+    detected. In-place rewrites that keep every count (an attribute ``update``) are not.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    source: GenomeDatabaseSource
+    featuretype_counts: dict[str, int]
+    relations_count: int
+
+
 class GenomeDatabaseSourceError(RuntimeError):
-    """``data.db`` cannot be shown to have been built from this genome's pinned GFF."""
+    """``data.db`` records a different source than this genome's pinned GFF."""
 
 
 def genome_database_source(
     assembly_set: str, gff_filename: str, gff_path: str
 ) -> GenomeDatabaseSource:
-    """The source record a database built from ``gff_path`` now would carry."""
+    """The source a database built from ``gff_path`` now would record."""
     return GenomeDatabaseSource(
         assembly_set=assembly_set,
         gff_filename=gff_filename,
@@ -537,35 +551,52 @@ def genome_database_source(
     )
 
 
-def build_genome_database(
-    gff_path: str, db_path: str, source: GenomeDatabaseSource
-) -> None:
-    """Build ``db_path`` from ``gff_path`` beside it, record ``source``, rename it in.
+def _database_counts(conn: sqlite3.Connection) -> tuple[dict[str, int], int]:
+    """Per-featuretype row counts of ``features`` and the row count of ``relations``."""
+    featuretype_counts = {
+        str(featuretype): int(n)
+        for featuretype, n in conn.execute(
+            "SELECT featuretype, COUNT(*) FROM features GROUP BY featuretype"
+        )
+    }
+    relations_count = int(conn.execute("SELECT COUNT(*) FROM relations").fetchone()[0])
+    return featuretype_counts, relations_count
 
-    The database is written to a temporary file in the same directory and moved onto
-    ``db_path`` with ``os.replace``, so a concurrent reader opens either the previous
-    complete file or the new complete file, never a missing or half-written one.
+
+def write_genome_database(
+    gff_path: str, db_dir: str, source: GenomeDatabaseSource
+) -> str:
+    """Build a complete, recorded database in a new temporary file in ``db_dir``.
+
+    The file name is unique per call (``tempfile.mkstemp``), so concurrent builders
+    never write the same file. Returns its path; :func:`install_genome_database` or
+    ``os.replace`` moves it into place.
     """
-    db_dir = osp.dirname(db_path)
     os.makedirs(db_dir, exist_ok=True)
     fd, tmp_path = tempfile.mkstemp(
-        prefix=GENOME_DB_FILENAME + ".", suffix=".building", dir=db_dir
+        prefix=f"{GENOME_DB_FILENAME}.{os.getpid()}.", suffix=".building", dir=db_dir
     )
     os.close(fd)
     gffutils.create_db(gff_path, dbfn=tmp_path, force=True, **CREATE_DB_KWARGS)
-    with sqlite3.connect(tmp_path) as conn:
-        conn.execute(f"CREATE TABLE {SOURCE_TABLE} (record TEXT NOT NULL)")
-        conn.execute(
-            f"INSERT INTO {SOURCE_TABLE} (record) VALUES (?)",
-            (source.model_dump_json(),),
-        )
+    conn = sqlite3.connect(tmp_path)
+    featuretype_counts, relations_count = _database_counts(conn)
+    record = GenomeDatabaseRecord(
+        source=source,
+        featuretype_counts=featuretype_counts,
+        relations_count=relations_count,
+    )
+    conn.execute(f"CREATE TABLE {SOURCE_TABLE} (record TEXT NOT NULL)")
+    conn.execute(
+        f"INSERT INTO {SOURCE_TABLE} (record) VALUES (?)", (record.model_dump_json(),)
+    )
+    conn.commit()
     conn.close()
     os.chmod(tmp_path, 0o644)
-    os.replace(tmp_path, db_path)
+    return tmp_path
 
 
-def read_genome_database_source(db_path: str) -> GenomeDatabaseSource | None:
-    """The source recorded inside ``db_path``, or None when it carries no record."""
+def read_genome_database_record(db_path: str) -> GenomeDatabaseRecord | None:
+    """The record stored inside ``db_path``, or None when it carries none."""
     conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
     has_table = conn.execute(
         "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (SOURCE_TABLE,)
@@ -579,47 +610,122 @@ def read_genome_database_source(db_path: str) -> GenomeDatabaseSource | None:
         raise GenomeDatabaseSourceError(
             f"{db_path}: {SOURCE_TABLE} holds {len(rows)} rows, expected exactly 1"
         )
-    return GenomeDatabaseSource.model_validate_json(rows[0][0])
+    return GenomeDatabaseRecord.model_validate_json(rows[0][0])
 
 
-def check_genome_database_source(
+def untrusted_reason(
     db_path: str, expected: GenomeDatabaseSource, rebuild_call: str
-) -> None:
-    """Refuse ``db_path`` unless it records exactly ``expected`` as its source."""
-    recorded = read_genome_database_source(db_path)
-    if recorded is None:
+) -> str | None:
+    """Why the existing ``db_path`` cannot be trusted, or None when it can.
+
+    Untrusted (returned as a reason): no record, which is every database built before
+    2026.10.01 and every one rebuilt in place by a process still running older code;
+    or a record whose stored counts differ from the rows now in the file, which is
+    rows deleted in place by such a process. A record for a different source raises
+    :class:`GenomeDatabaseSourceError`: the pinned GFF changed, which is a real
+    source change, not a migration.
+    """
+    record = read_genome_database_record(db_path)
+    if record is None:
+        return f"it carries no {SOURCE_TABLE} record"
+    if record.source != expected:
         raise GenomeDatabaseSourceError(
-            f"{db_path} carries no {SOURCE_TABLE} record, so it cannot be shown to "
-            f"have been built from {expected.assembly_set}/{expected.gff_filename} "
-            f"(sha256 {expected.gff_sha256}). Rebuild it deliberately, once, while "
-            f"no job reads it: {rebuild_call}"
-        )
-    if recorded != expected:
-        raise GenomeDatabaseSourceError(
-            f"{db_path} was built from {recorded.model_dump()} but this genome's "
+            f"{db_path} was built from {record.source.model_dump()} but this genome's "
             f"source is {expected.model_dump()}. Rebuild it deliberately, once, while "
             f"no job reads it: {rebuild_call}"
         )
+    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    featuretype_counts, relations_count = _database_counts(conn)
+    conn.close()
+    if (featuretype_counts, relations_count) != (
+        record.featuretype_counts,
+        record.relations_count,
+    ):
+        return (
+            "its row counts differ from its record (features "
+            f"{sum(featuretype_counts.values())} vs "
+            f"{sum(record.featuretype_counts.values())} recorded, relations "
+            f"{relations_count} vs {record.relations_count} recorded)"
+        )
+    return None
+
+
+def install_genome_database(
+    tmp_path: str,
+    db_path: str,
+    expected: GenomeDatabaseSource,
+    rebuild_call: str,
+    reason: str,
+) -> None:
+    """Replace the untrusted ``db_path`` with the fresh build at ``tmp_path``.
+
+    The untrusted file is first hard-linked to ``data.db.untrusted-<UTC timestamp>-
+    <pid>`` (kept, never deleted), then ``tmp_path`` is renamed onto ``db_path``, so
+    the path never goes missing and readers holding the old inode keep it. When
+    another process finished the same migration first (``db_path`` is trusted again),
+    this process's build is discarded instead. One WARNING line names the reason and
+    the kept file.
+    """
+    if untrusted_reason(db_path, expected, rebuild_call) is None:
+        os.remove(tmp_path)
+        return
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S.%fZ")
+    aside = f"{db_path}.untrusted-{stamp}-{os.getpid()}"
+    os.link(db_path, aside)
+    os.replace(tmp_path, db_path)
+    log.warning(
+        "genome database %s was not trusted (%s); kept it as %s and installed a "
+        "fresh build from the pinned GFF",
+        db_path,
+        reason,
+        aside,
+    )
+
+
+def _remove_private_copy(path: str, owner_pid: int) -> None:
+    """Delete an instance's private database copy, only in the process that made it."""
+    if os.getpid() == owner_pid and osp.exists(path):
+        os.remove(path)
+
+
+def _restore_genome(
+    cls: type["SCerevisiaeGenome"],
+    genome_root: str,
+    go_root: str,
+    private_db_path: str | None,
+) -> "SCerevisiaeGenome":
+    """Unpickling target: reopen with ``overwrite=False``, on the same database file."""
+    genome = cls(genome_root, go_root, False)
+    if private_db_path is not None:
+        genome._db_connection_manager = GffutilsConnectionManager(private_db_path)
+    return genome
 
 
 @define(eq=False)
 class SCerevisiaeGenome(Genome):
     """S288C genome wrapper exposing genes, GO annotations, and sequence queries.
 
-    ``overwrite`` decides what happens to ``<genome_root>/data.db``, the gffutils
-    database built from the pinned GFF:
+    ``<genome_root>/data.db`` is the gffutils database built from the pinned GFF. It
+    is shared by every process on the same ``genome_root`` and is never written after
+    it is built: every build goes to a unique temporary file that is renamed into place
+    (:func:`write_genome_database`), and :meth:`drop_chrmt`, :meth:`drop_empty_go` and
+    :meth:`remove_deprecated_go_terms` write to a private copy owned by this instance
+    (made on its first write, in ``tempfile.gettempdir()``, deleted when the instance
+    is collected in the process that made it).
 
-    * ``False`` (the default): build it only when it is absent; otherwise open the
-      existing file, after checking that the source recorded inside it (assembly set,
-      GFF filename, GFF sha256, build arguments) equals this genome's. A database with
-      no record or a different record raises :class:`GenomeDatabaseSourceError`.
-    * ``True``: rebuild it unconditionally. Every other process reading the same
-      ``genome_root`` is affected, so pass it only deliberately, while nothing runs.
+    ``overwrite`` decides how the constructor treats the shared file:
 
-    Either build is written beside ``data.db`` and renamed onto it, so a reader never
-    sees a missing or partial file. The record does not detect rows deleted afterwards:
-    :meth:`drop_chrmt` and :meth:`drop_empty_go` delete from this same file in place,
-    so a later genome on the same ``genome_root`` opens the reduced database.
+    * ``False`` (the default): build it when absent. When present, open it if its
+      record (:class:`GenomeDatabaseRecord`) names this genome's source and its row
+      counts still match. A record for a different source (the pinned GFF changed)
+      raises :class:`GenomeDatabaseSourceError`. A database with no record, or whose
+      rows no longer match its record, was built or modified in place by code from
+      before 2026.10.01; it is migrated once: kept as ``data.db.untrusted-<UTC
+      timestamp>-<pid>``, replaced by a fresh recorded build, and logged as one
+      WARNING (:func:`install_genome_database`). This is a stated one-time migration
+      of a database that cannot be trusted, not a fallback: the replacement is built
+      from the same sha256-pinned GFF.
+    * ``True``: rebuild it unconditionally (atomically). Pass it only deliberately.
     """
 
     #: The assembly set in the genomes tier this class reads its release files from.
@@ -649,6 +755,12 @@ class SCerevisiaeGenome(Genome):
     # Use factory to ensure GO DAG is not pickled
     _go_dag: GODag | None = field(init=False, factory=lambda: None, repr=False)
     _obo_path: str | None = field(init=False, default=None, repr=False)
+    # This instance's private copy of data.db (made on its first write) and the
+    # (pid, id) that made it; a pickled or forked copy writes to a copy of its own.
+    _private_db_path: str | None = field(init=False, default=None, repr=False)
+    _private_db_owner: tuple[int, int] | None = field(
+        init=False, default=None, repr=False
+    )
 
     def __attrs_post_init__(self) -> None:
         """Resolve the release files from the genomes tier and build the GFF database."""
@@ -676,15 +788,20 @@ class SCerevisiaeGenome(Genome):
 
         db_path = osp.join(self.genome_root, GENOME_DB_FILENAME)
         source = genome_database_source(self.ASSEMBLY_SET, gff_filename, self._gff_path)
+        rebuild_call = (
+            f"SCerevisiaeGenome(genome_root={self.genome_root!r}, "
+            f"go_root={self.go_root!r}, overwrite=True)"
+        )
         if self.overwrite or not osp.exists(db_path):
-            build_genome_database(self._gff_path, db_path, source)
+            tmp_path = write_genome_database(self._gff_path, self.genome_root, source)
+            os.replace(tmp_path, db_path)
         else:
-            check_genome_database_source(
-                db_path,
-                source,
-                f"SCerevisiaeGenome(genome_root={self.genome_root!r}, "
-                f"go_root={self.go_root!r}, overwrite=True)",
-            )
+            reason = untrusted_reason(db_path, source, rebuild_call)
+            if reason is not None:
+                tmp_path = write_genome_database(
+                    self._gff_path, self.genome_root, source
+                )
+                install_genome_database(tmp_path, db_path, source, rebuild_call, reason)
 
         # Set up connection manager for thread/process-safe database access
         self._db_connection_manager = GffutilsConnectionManager(db_path)
@@ -750,19 +867,44 @@ class SCerevisiaeGenome(Genome):
         if "_go_dag" in state:
             state["_go_dag"] = None
 
-        # Reconstruct with overwrite=False: unpickling in a worker must open the
-        # parent's database, never rebuild it under the other workers. The original
-        # ``overwrite`` value comes back with ``state``.
+        # Reconstruct with overwrite=False on the same database file (the private
+        # copy when this instance has written): unpickling in a worker must never
+        # rebuild the shared file. The original ``overwrite`` comes back in ``state``.
         return (
-            self.__class__,
-            (self.genome_root, self.go_root, False),
+            _restore_genome,
+            (self.__class__, self.genome_root, self.go_root, self._private_db_path),
             state,
             None,
             iter([]),
         )
 
+    def _writable_db(self) -> Any:
+        """This instance's private copy of the database, made on its first write.
+
+        The copy is a sqlite backup of the file this instance currently reads, so
+        every later read and write of this instance sees exactly the database it had,
+        and the shared ``data.db`` is never written. A pickled or forked copy of the
+        instance (a different pid or object) makes a copy of its own.
+        """
+        owner = (os.getpid(), id(self))
+        if self._private_db_owner != owner:
+            assert self._db_connection_manager is not None
+            source_path = self._db_connection_manager.db_path
+            fd, path = tempfile.mkstemp(prefix="torchcell-genome-", suffix=".db")
+            os.close(fd)
+            src = sqlite3.connect(f"file:{source_path}?mode=ro", uri=True)
+            dst = sqlite3.connect(path)
+            src.backup(dst)
+            dst.close()
+            src.close()
+            self._db_connection_manager = GffutilsConnectionManager(path)
+            self._private_db_path = path
+            self._private_db_owner = owner
+            weakref.finalize(self, _remove_private_copy, path, os.getpid())
+        return self.db
+
     def remove_deprecated_go_terms(self) -> None:
-        """Drop GO terms absent from or obsolete in the GO DAG and update the DB."""
+        """Drop GO terms absent from or obsolete in the GO DAG in this instance's copy."""
         # Create a list to hold updated features
         updated_features = []
 
@@ -795,11 +937,10 @@ class SCerevisiaeGenome(Genome):
                 # Add the updated feature to the list
                 updated_features.append(feature)
 
-        # Update all features in the database at once
-        self.db.update(updated_features, merge_strategy="replace")
-
-        # Commit the changes to the database
-        self.db.conn.commit()
+        # Update all features in this instance's private copy at once
+        db = self._writable_db()
+        db.update(updated_features, merge_strategy="replace", make_backup=False)
+        db.conn.commit()
 
     @property
     def alias_to_systematic(self) -> dict[str, list[str]]:
@@ -1071,7 +1212,7 @@ class SCerevisiaeGenome(Genome):
         return GeneSet(genes)
 
     def drop_chrmt(self) -> None:
-        """Remove all mitochondrial (chrmt) features from the database and cache."""
+        """Remove all chrmt features from this instance's database copy and cache."""
         mitochondrial_features = [
             f for f in self.db.all_features() if f.seqid == "chrmt"
         ]
@@ -1081,12 +1222,11 @@ class SCerevisiaeGenome(Genome):
             for feature in mitochondrial_features:
                 self._gene_set.discard(feature.id)
 
-        # Remove these features from the database
+        # Remove these features from this instance's private copy of the database
+        db = self._writable_db()
         for feature in mitochondrial_features:
-            self.db.delete(feature.id, feature_type=feature.featuretype)
-
-        # Commit the changes to the database
-        self.db.conn.commit()
+            db.delete(feature.id, make_backup=False)
+        db.conn.commit()
 
         # The locus index and the GO-to-genes map were built from the pre-drop
         # database; reset them so the next access rebuilds without chrmt.
@@ -1094,7 +1234,7 @@ class SCerevisiaeGenome(Genome):
         self._go_genes = None
 
     def drop_empty_go(self) -> None:
-        """Remove genes that have no GO terms from the database and gene set."""
+        """Remove genes without GO terms from this instance's database copy and gene set."""
         # Initialize a list to hold genes to be removed
         genes_to_remove = []
 
@@ -1111,12 +1251,11 @@ class SCerevisiaeGenome(Genome):
         for gene_id in genes_to_remove:
             self._gene_set.discard(gene_id)
 
-        # Remove these genes from the database
+        # Remove these genes from this instance's private copy of the database
+        db = self._writable_db()
         for gene_id in genes_to_remove:
-            self.db.delete(gene_id, feature_type="gene")
-
-        # Commit the changes to the database
-        self.db.conn.commit()
+            db.delete(gene_id, make_backup=False)
+        db.conn.commit()
 
         # Same as drop_chrmt: the locus index and the GO-to-genes map were built from
         # the pre-drop gene set; reset them so the next access rebuilds without the

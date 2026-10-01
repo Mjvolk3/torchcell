@@ -139,6 +139,40 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.profiling.timing</span><span class="w"> </span><span class="kn">import</span> <span class="n">time_method</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_gene_edge_indices</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Return the gene-to-gene ``edge_index`` tensors an incidence cache is built from."""</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="n">et</span><span class="p">:</span> <span class="n">cell_graph</span><span class="p">[</span><span class="n">et</span><span class="p">]</span><span class="o">.</span><span class="n">edge_index</span>
+        <span class="k">for</span> <span class="n">et</span> <span class="ow">in</span> <span class="n">cell_graph</span><span class="o">.</span><span class="n">edge_types</span>
+        <span class="k">if</span> <span class="n">et</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"gene"</span> <span class="ow">and</span> <span class="n">et</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"gene"</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_incidence_source_matches</span><span class="p">(</span>
+    <span class="n">built_from</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span> <span class="n">cell_graph</span><span class="p">:</span> <span class="n">HeteroData</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether an incidence cache built from ``built_from`` is valid for ``cell_graph``.</span>
+
+<span class="sd">    The cache stores, per gene-gene edge type, the edge positions touching each gene, so</span>
+<span class="sd">    it depends on exactly the gene count and those ``edge_index`` tensors. A tensor that</span>
+<span class="sd">    is the same object as the recorded one matches in O(1); otherwise the contents are</span>
+<span class="sd">    compared, and on a match the record is re-pointed at the new tensor so the next</span>
+<span class="sd">    call takes the O(1) path (a processor and graph pickled into a DataLoader worker</span>
+<span class="sd">    compare contents once, then never again).</span>
+<span class="sd">    """</span>
+    <span class="n">num_genes</span><span class="p">,</span> <span class="n">built_edges</span> <span class="o">=</span> <span class="n">built_from</span>
+    <span class="n">edges</span> <span class="o">=</span> <span class="n">_gene_edge_indices</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">num_genes</span> <span class="o">!=</span> <span class="n">cell_graph</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span> <span class="ow">or</span> <span class="n">built_edges</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">!=</span> <span class="n">edges</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="n">et</span><span class="p">,</span> <span class="n">edge_index</span> <span class="ow">in</span> <span class="n">edges</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">built_edges</span><span class="p">[</span><span class="n">et</span><span class="p">]</span> <span class="ow">is</span> <span class="n">edge_index</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">built_edges</span><span class="p">[</span><span class="n">et</span><span class="p">],</span> <span class="n">edge_index</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">built_edges</span><span class="p">[</span><span class="n">et</span><span class="p">]</span> <span class="o">=</span> <span class="n">edge_index</span>
+    <span class="k">return</span> <span class="kc">True</span>
+
+
 <span class="k">class</span><span class="w"> </span><span class="nc">GraphProcessor</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Abstract base class for processors that build per-sample graphs."""</span>
 
@@ -346,26 +380,6 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="n">max_reaction_idx</span> <span class="o">=</span> <span class="n">cell_graph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span>
 
-        <span class="c1"># Create Growth subsystem indicator first (before any conditional returns)</span>
-        <span class="n">w_growth</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">max_reaction_idx</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
-
-        <span class="c1"># Check if subsystem attribute exists</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">],</span> <span class="s2">"subsystem"</span><span class="p">):</span>
-            <span class="c1"># Check data type and structure</span>
-            <span class="n">subsystems</span> <span class="o">=</span> <span class="n">cell_graph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">subsystem</span>
-
-            <span class="c1"># Populate the w_growth tensor</span>
-            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_reaction_idx</span><span class="p">):</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">subsystems</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">subsystems</span><span class="p">)</span> <span class="ow">and</span> <span class="n">subsystems</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"Growth"</span><span class="p">:</span>
-                        <span class="n">w_growth</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
-                <span class="k">elif</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">subsystems</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="n">subsystems</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"Growth"</span><span class="p">:</span>
-                        <span class="n">w_growth</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
-                <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">subsystems</span><span class="p">,</span> <span class="s2">"__getitem__"</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="n">subsystems</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"Growth"</span><span class="p">:</span>
-                        <span class="n">w_growth</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
-
         <span class="c1"># If no GPR relationship exists, assume all reactions are valid.</span>
         <span class="k">if</span> <span class="p">(</span><span class="s2">"gene"</span><span class="p">,</span> <span class="s2">"gpr"</span><span class="p">,</span> <span class="s2">"reaction"</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cell_graph</span><span class="o">.</span><span class="n">edge_types</span><span class="p">:</span>
             <span class="n">valid_reactions</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">max_reaction_idx</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
@@ -383,12 +397,10 @@
             <span class="p">)</span>
             <span class="n">reaction_map</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">max_reaction_idx</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
 
-            <span class="c1"># Include w_growth in the return dictionary</span>
             <span class="k">return</span> <span class="p">{</span>
                 <span class="s2">"valid_reactions"</span><span class="p">:</span> <span class="n">valid_reactions</span><span class="p">,</span>
                 <span class="s2">"gene_map"</span><span class="p">:</span> <span class="n">gene_map</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
                 <span class="s2">"reaction_map"</span><span class="p">:</span> <span class="n">reaction_map</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
-                <span class="s2">"w_growth"</span><span class="p">:</span> <span class="n">w_growth</span><span class="p">,</span>
             <span class="p">}</span>
 
         <span class="c1"># Process gene–reaction (GPR) edges</span>
@@ -464,12 +476,10 @@
         <span class="p">]</span><span class="o">.</span><span class="n">num_edges</span> <span class="o">=</span> <span class="n">new_gpr_edge_index</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">integrated_subgraph</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">,</span> <span class="s2">"gpr"</span><span class="p">,</span> <span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">pert_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">edge_mask</span>
 
-        <span class="c1"># Include w_growth in the return</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">"valid_reactions"</span><span class="p">:</span> <span class="n">valid_reactions</span><span class="p">,</span>
             <span class="s2">"gene_map"</span><span class="p">:</span> <span class="n">gene_map</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
             <span class="s2">"reaction_map"</span><span class="p">:</span> <span class="n">reaction_map</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
-            <span class="s2">"w_growth"</span><span class="p">:</span> <span class="n">w_growth</span><span class="p">,</span>
         <span class="p">}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_add_reaction_data</span><span class="p">(</span>
@@ -484,7 +494,8 @@
         <span class="n">integrated_subgraph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">valid_reactions</span><span class="p">)</span>
         <span class="n">integrated_subgraph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">node_ids</span> <span class="o">=</span> <span class="n">valid_reactions</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
-        <span class="c1"># Subset w_growth to valid reactions if it exists in cell_graph</span>
+        <span class="c1"># w_growth has one source: the tensor ``to_cell_data`` stores on the cell</span>
+        <span class="c1"># graph (1 for a Growth-subsystem reaction). Subset it to the kept reactions.</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">],</span> <span class="s2">"w_growth"</span><span class="p">):</span>
             <span class="n">w_growth</span> <span class="o">=</span> <span class="n">cell_graph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">w_growth</span>
             <span class="n">integrated_subgraph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">w_growth</span> <span class="o">=</span> <span class="n">w_growth</span><span class="p">[</span><span class="n">valid_reactions</span><span class="p">]</span>
@@ -718,13 +729,16 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"cpu"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">masks</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_edge_incidence_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># (gene count, gene-gene edge_index per edge type) the cache was built from</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_incidence_built_from</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">edge_incidence_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""Lazily build and return edge incidence cache.</span>
 
 <span class="sd">        Maps each node to tensor of edge positions where that node appears.</span>
-<span class="sd">        Built once on first access, then cached for all subsequent calls.</span>
+<span class="sd">        Built on first use and rebuilt whenever a different cell graph arrives (see</span>
+<span class="sd">        ``_build_incidence_cache``).</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_edge_incidence_cache</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
@@ -752,7 +766,9 @@
 <span class="sd">        """</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_edge_incidence_cache</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_incidence_built_from</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">_incidence_source_matches</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_incidence_built_from</span><span class="p">,</span> <span class="n">cell_graph</span>
+        <span class="p">):</span>
             <span class="k">return</span> <span class="p">{</span><span class="s2">"total_time_ms"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">"num_edge_types"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"total_edges"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
 
         <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -785,11 +801,22 @@
 <span class="sd">        For each gene node, stores tensor of edge positions (indices) where</span>
 <span class="sd">        that gene appears as either source or destination.</span>
 
-<span class="sd">        Complexity: O(E) per edge type, one-time cost</span>
+<span class="sd">        Complexity: O(E) per edge type, one-time cost per cell graph</span>
 <span class="sd">        Memory: O(E) total across all edge types</span>
+
+<span class="sd">        The cache is tied to the graph it was built from: the gene count and the</span>
+<span class="sd">        gene-gene ``edge_index`` tensors, the only inputs it depends on. When a</span>
+<span class="sd">        different graph arrives the cache is REBUILT rather than refused, because the</span>
+<span class="sd">        cache is a pure function of the graph and a processor may legitimately serve</span>
+<span class="sd">        several graphs (one per dataset, or a test and a benchmark graph); reusing it</span>
+<span class="sd">        across graphs read edge positions of the wrong graph and emitted node index -1</span>
+<span class="sd">        (issue #527). The per-call check is an identity test per edge type, O(1) for</span>
+<span class="sd">        the usual single-graph dataset.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_edge_incidence_cache</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span>  <span class="c1"># Already built</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_incidence_built_from</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">_incidence_source_matches</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_incidence_built_from</span><span class="p">,</span> <span class="n">cell_graph</span>
+        <span class="p">):</span>
+            <span class="k">return</span>  <span class="c1"># built from this graph</span>
 
         <span class="n">num_genes</span> <span class="o">=</span> <span class="n">cell_graph</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span>
         <span class="n">cache</span> <span class="o">=</span> <span class="p">{}</span>
@@ -819,6 +846,7 @@
                 <span class="p">]</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_edge_incidence_cache</span> <span class="o">=</span> <span class="n">cache</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_incidence_built_from</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_genes</span><span class="p">,</span> <span class="n">_gene_edge_indices</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">))</span>
 
     <span class="nd">@time_method</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_masks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell_graph</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -977,7 +1005,7 @@
 <span class="w">        </span><span class="sd">"""Process gene-gene edge types using incidence-based filtering.</span>
 
 <span class="sd">        Algorithm:</span>
-<span class="sd">        1. Build incidence cache on first call (lazy initialization)</span>
+<span class="sd">        1. Build incidence cache for this graph (no-op when already built from it)</span>
 <span class="sd">        2. Compute node relabeling mapping once for all edge types</span>
 <span class="sd">        3. For each edge type:</span>
 <span class="sd">           - Use incidence map to directly find edges touching removed nodes</span>
@@ -989,9 +1017,8 @@
 <span class="sd">        - d = average degree of removed nodes</span>
 <span class="sd">        - E' = number of kept edges (for filtering/relabeling)</span>
 <span class="sd">        """</span>
-        <span class="c1"># Build cache on first use</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_edge_incidence_cache</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_build_incidence_cache</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">)</span>
+        <span class="c1"># Build the cache on first use, or rebuild it for a different graph</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build_incidence_cache</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">)</span>
 
         <span class="c1"># Pre-compute gene mapping ONCE (not per edge type)</span>
         <span class="n">num_genes</span> <span class="o">=</span> <span class="n">cell_graph</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span>
@@ -1049,26 +1076,6 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="n">max_reaction_idx</span> <span class="o">=</span> <span class="n">cell_graph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span>
 
-        <span class="c1"># Create Growth subsystem indicator first (before any conditional returns)</span>
-        <span class="n">w_growth</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">max_reaction_idx</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
-
-        <span class="c1"># Check if subsystem attribute exists</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">],</span> <span class="s2">"subsystem"</span><span class="p">):</span>
-            <span class="c1"># Check data type and structure</span>
-            <span class="n">subsystems</span> <span class="o">=</span> <span class="n">cell_graph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">subsystem</span>
-
-            <span class="c1"># Populate the w_growth tensor</span>
-            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_reaction_idx</span><span class="p">):</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">subsystems</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">subsystems</span><span class="p">)</span> <span class="ow">and</span> <span class="n">subsystems</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"Growth"</span><span class="p">:</span>
-                        <span class="n">w_growth</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
-                <span class="k">elif</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">subsystems</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="n">subsystems</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"Growth"</span><span class="p">:</span>
-                        <span class="n">w_growth</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
-                <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">subsystems</span><span class="p">,</span> <span class="s2">"__getitem__"</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="n">subsystems</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"Growth"</span><span class="p">:</span>
-                        <span class="n">w_growth</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
-
         <span class="c1"># If no GPR relationship exists, assume all reactions are valid.</span>
         <span class="k">if</span> <span class="p">(</span><span class="s2">"gene"</span><span class="p">,</span> <span class="s2">"gpr"</span><span class="p">,</span> <span class="s2">"reaction"</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cell_graph</span><span class="o">.</span><span class="n">edge_types</span><span class="p">:</span>
             <span class="n">valid_reactions</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">max_reaction_idx</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
@@ -1086,12 +1093,10 @@
             <span class="p">)</span>
             <span class="n">reaction_map</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">max_reaction_idx</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
 
-            <span class="c1"># Include w_growth in the return dictionary</span>
             <span class="k">return</span> <span class="p">{</span>
                 <span class="s2">"valid_reactions"</span><span class="p">:</span> <span class="n">valid_reactions</span><span class="p">,</span>
                 <span class="s2">"gene_map"</span><span class="p">:</span> <span class="n">gene_map</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
                 <span class="s2">"reaction_map"</span><span class="p">:</span> <span class="n">reaction_map</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
-                <span class="s2">"w_growth"</span><span class="p">:</span> <span class="n">w_growth</span><span class="p">,</span>
             <span class="p">}</span>
 
         <span class="c1"># Process gene–reaction (GPR) edges</span>
@@ -1167,12 +1172,10 @@
         <span class="p">]</span><span class="o">.</span><span class="n">num_edges</span> <span class="o">=</span> <span class="n">new_gpr_edge_index</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">integrated_subgraph</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">,</span> <span class="s2">"gpr"</span><span class="p">,</span> <span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">pert_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">edge_mask</span>
 
-        <span class="c1"># Include w_growth in the return</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">"valid_reactions"</span><span class="p">:</span> <span class="n">valid_reactions</span><span class="p">,</span>
             <span class="s2">"gene_map"</span><span class="p">:</span> <span class="n">gene_map</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
             <span class="s2">"reaction_map"</span><span class="p">:</span> <span class="n">reaction_map</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
-            <span class="s2">"w_growth"</span><span class="p">:</span> <span class="n">w_growth</span><span class="p">,</span>
         <span class="p">}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_add_reaction_data</span><span class="p">(</span>
@@ -1187,7 +1190,8 @@
         <span class="n">integrated_subgraph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">valid_reactions</span><span class="p">)</span>
         <span class="n">integrated_subgraph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">node_ids</span> <span class="o">=</span> <span class="n">valid_reactions</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
-        <span class="c1"># Subset w_growth to valid reactions if it exists in cell_graph</span>
+        <span class="c1"># w_growth has one source: the tensor ``to_cell_data`` stores on the cell</span>
+        <span class="c1"># graph (1 for a Growth-subsystem reaction). Subset it to the kept reactions.</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">],</span> <span class="s2">"w_growth"</span><span class="p">):</span>
             <span class="n">w_growth</span> <span class="o">=</span> <span class="n">cell_graph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">w_growth</span>
             <span class="n">integrated_subgraph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">w_growth</span> <span class="o">=</span> <span class="n">w_growth</span><span class="p">[</span><span class="n">valid_reactions</span><span class="p">]</span>
@@ -1413,13 +1417,16 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"cpu"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">masks</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_edge_incidence_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># (gene count, gene-gene edge_index per edge type) the cache was built from</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_incidence_built_from</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">edge_incidence_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""Lazily build and return edge incidence cache.</span>
 
 <span class="sd">        Maps each node to tensor of edge positions where that node appears.</span>
-<span class="sd">        Built once on first access, then cached for all subsequent calls.</span>
+<span class="sd">        Built on first use and rebuilt whenever a different cell graph arrives (see</span>
+<span class="sd">        ``_build_incidence_cache``).</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_edge_incidence_cache</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
@@ -1447,7 +1454,9 @@
 <span class="sd">        """</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_edge_incidence_cache</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_incidence_built_from</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">_incidence_source_matches</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_incidence_built_from</span><span class="p">,</span> <span class="n">cell_graph</span>
+        <span class="p">):</span>
             <span class="k">return</span> <span class="p">{</span><span class="s2">"total_time_ms"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">"num_edge_types"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"total_edges"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
 
         <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -1480,11 +1489,22 @@
 <span class="sd">        For each gene node, stores tensor of edge positions (indices) where</span>
 <span class="sd">        that gene appears as either source or destination.</span>
 
-<span class="sd">        Complexity: O(E) per edge type, one-time cost</span>
+<span class="sd">        Complexity: O(E) per edge type, one-time cost per cell graph</span>
 <span class="sd">        Memory: O(E) total across all edge types</span>
+
+<span class="sd">        The cache is tied to the graph it was built from: the gene count and the</span>
+<span class="sd">        gene-gene ``edge_index`` tensors, the only inputs it depends on. When a</span>
+<span class="sd">        different graph arrives the cache is REBUILT rather than refused, because the</span>
+<span class="sd">        cache is a pure function of the graph and a processor may legitimately serve</span>
+<span class="sd">        several graphs (one per dataset, or a test and a benchmark graph); reusing it</span>
+<span class="sd">        across graphs read edge positions of the wrong graph and emitted node index -1</span>
+<span class="sd">        (issue #527). The per-call check is an identity test per edge type, O(1) for</span>
+<span class="sd">        the usual single-graph dataset.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_edge_incidence_cache</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span>  <span class="c1"># Already built</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_incidence_built_from</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">_incidence_source_matches</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_incidence_built_from</span><span class="p">,</span> <span class="n">cell_graph</span>
+        <span class="p">):</span>
+            <span class="k">return</span>  <span class="c1"># built from this graph</span>
 
         <span class="n">num_genes</span> <span class="o">=</span> <span class="n">cell_graph</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span>
         <span class="n">cache</span> <span class="o">=</span> <span class="p">{}</span>
@@ -1514,6 +1534,7 @@
                 <span class="p">]</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_edge_incidence_cache</span> <span class="o">=</span> <span class="n">cache</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_incidence_built_from</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_genes</span><span class="p">,</span> <span class="n">_gene_edge_indices</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">))</span>
 
     <span class="nd">@time_method</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_masks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell_graph</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1689,9 +1710,8 @@
 
 <span class="sd">        Model must apply edge masks during message passing.</span>
 <span class="sd">        """</span>
-        <span class="c1"># Build cache on first use</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_edge_incidence_cache</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_build_incidence_cache</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">)</span>
+        <span class="c1"># Build the cache on first use, or rebuild it for a different graph</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build_incidence_cache</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">)</span>
 
         <span class="c1"># Get perturbed nodes</span>
         <span class="n">perturbed_nodes</span> <span class="o">=</span> <span class="n">gene_info</span><span class="p">[</span><span class="s2">"remove_subset"</span><span class="p">]</span>
@@ -1729,22 +1749,6 @@
 <span class="sd">        """</span>
         <span class="n">max_reaction_idx</span> <span class="o">=</span> <span class="n">cell_graph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span>
 
-        <span class="n">w_growth</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">max_reaction_idx</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">],</span> <span class="s2">"subsystem"</span><span class="p">):</span>
-            <span class="n">subsystems</span> <span class="o">=</span> <span class="n">cell_graph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">subsystem</span>
-
-            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_reaction_idx</span><span class="p">):</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">subsystems</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">subsystems</span><span class="p">)</span> <span class="ow">and</span> <span class="n">subsystems</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"Growth"</span><span class="p">:</span>
-                        <span class="n">w_growth</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
-                <span class="k">elif</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">subsystems</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="n">subsystems</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"Growth"</span><span class="p">:</span>
-                        <span class="n">w_growth</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
-                <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">subsystems</span><span class="p">,</span> <span class="s2">"__getitem__"</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="n">subsystems</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"Growth"</span><span class="p">:</span>
-                        <span class="n">w_growth</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
-
         <span class="c1"># If no GPR edges, all reactions are valid</span>
         <span class="k">if</span> <span class="p">(</span><span class="s2">"gene"</span><span class="p">,</span> <span class="s2">"gpr"</span><span class="p">,</span> <span class="s2">"reaction"</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cell_graph</span><span class="o">.</span><span class="n">edge_types</span><span class="p">:</span>
             <span class="c1"># Keep all reactions</span>
@@ -1760,7 +1764,6 @@
                 <span class="s2">"valid_reactions"</span><span class="p">:</span> <span class="n">valid_reactions</span><span class="p">,</span>
                 <span class="s2">"gene_map"</span><span class="p">:</span> <span class="n">gene_map</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
                 <span class="s2">"reaction_map"</span><span class="p">:</span> <span class="n">reaction_map</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
-                <span class="s2">"w_growth"</span><span class="p">:</span> <span class="n">w_growth</span><span class="p">,</span>
             <span class="p">}</span>
 
         <span class="c1"># Get FULL GPR edge_index (zero-copy reference)</span>
@@ -1840,7 +1843,6 @@
             <span class="s2">"valid_reactions"</span><span class="p">:</span> <span class="n">valid_reactions</span><span class="p">,</span>
             <span class="s2">"gene_map"</span><span class="p">:</span> <span class="n">gene_map</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
             <span class="s2">"reaction_map"</span><span class="p">:</span> <span class="n">reaction_map</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
-            <span class="s2">"w_growth"</span><span class="p">:</span> <span class="n">w_growth</span><span class="p">,</span>
         <span class="p">}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_add_reaction_data</span><span class="p">(</span>
@@ -1860,10 +1862,11 @@
         <span class="n">integrated_subgraph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">valid_reactions</span><span class="p">)</span>
         <span class="n">integrated_subgraph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">node_ids</span> <span class="o">=</span> <span class="n">valid_reactions</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
-        <span class="c1"># Return full w_growth (reference, no filtering since valid_reactions contains all indices)</span>
+        <span class="c1"># w_growth has one source, the tensor ``to_cell_data`` stores on the cell</span>
+        <span class="c1"># graph, as for SubgraphRepresentation; every reaction is kept, so it is</span>
+        <span class="c1"># returned whole (a reference, no copy).</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">],</span> <span class="s2">"w_growth"</span><span class="p">):</span>
-            <span class="n">w_growth</span> <span class="o">=</span> <span class="n">reaction_info</span><span class="p">[</span><span class="s2">"w_growth"</span><span class="p">]</span>
-            <span class="n">integrated_subgraph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">w_growth</span> <span class="o">=</span> <span class="n">w_growth</span>
+            <span class="n">integrated_subgraph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">w_growth</span> <span class="o">=</span> <span class="n">cell_graph</span><span class="p">[</span><span class="s2">"reaction"</span><span class="p">]</span><span class="o">.</span><span class="n">w_growth</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_process_metabolic_network</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -2067,9 +2070,9 @@
         <span class="n">phenotype_fields</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">phenotype</span> <span class="ow">in</span> <span class="n">phenotype_info</span><span class="p">:</span>
             <span class="n">phenotype_fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_fields</span><span class="p">[</span><span class="s2">"label_name"</span><span class="p">]</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
-            <span class="n">phenotype_fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">phenotype</span><span class="o">.</span><span class="n">model_fields</span><span class="p">[</span><span class="s2">"label_statistic_name"</span><span class="p">]</span><span class="o">.</span><span class="n">default</span>
-            <span class="p">)</span>
+            <span class="n">stat_name</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">model_fields</span><span class="p">[</span><span class="s2">"label_statistic_name"</span><span class="p">]</span><span class="o">.</span><span class="n">default</span>
+            <span class="k">if</span> <span class="n">stat_name</span><span class="p">:</span>
+                <span class="n">phenotype_fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stat_name</span><span class="p">)</span>
 
         <span class="c1"># Add experiment data</span>
         <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">phenotype_fields</span><span class="p">:</span>
@@ -2411,27 +2414,11 @@
         <span class="p">)</span>
         <span class="n">processed_graph</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">pert_mask</span> <span class="o">=</span> <span class="n">pert_mask</span>
 
-        <span class="c1"># Group perturbation indices by experiment for batch processing</span>
-        <span class="n">batch_indices</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">batch_mapping</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># Maps experiment index to list of perturbation indices</span>
-
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
-            <span class="n">perturbed_genes</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">p</span><span class="o">.</span><span class="n">systematic_gene_name</span>
-                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">cast</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">item</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">])</span><span class="o">.</span><span class="n">genotype</span><span class="o">.</span><span class="n">perturbations</span>
-            <span class="p">]</span>
-            <span class="n">gene_indices</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">node_ids</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">gene</span><span class="p">)</span> <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">perturbed_genes</span> <span class="k">if</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">node_ids</span>
-            <span class="p">]</span>
-
-            <span class="n">batch_indices</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">gene_indices</span><span class="p">))</span>
-            <span class="n">batch_mapping</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">gene_indices</span>
-
-        <span class="c1"># Add batch indices for perturbations - needed for processing by experiment</span>
-        <span class="k">if</span> <span class="n">batch_indices</span><span class="p">:</span>
-            <span class="n">processed_graph</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">perturbation_indices_batch</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
-                <span class="n">batch_indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span>
-            <span class="p">)</span>
+        <span class="c1"># No per-sample ``perturbation_indices_batch`` is written: the collated batch</span>
+        <span class="c1"># vector comes from ``follow_batch=["perturbation_indices"]``, which handles a</span>
+        <span class="c1"># sample with no perturbed node. A per-sample key would not collate, since PyG</span>
+        <span class="c1"># increments any key containing "batch" by ``value.max() + 1`` and an empty</span>
+        <span class="c1"># tensor has no max (issue #527 review).</span>
 
         <span class="c1"># Process gene ontology if it exists in cell_graph</span>
         <span class="k">if</span> <span class="s2">"gene_ontology"</span> <span class="ow">in</span> <span class="n">cell_graph</span><span class="o">.</span><span class="n">node_types</span><span class="p">:</span>
@@ -2827,7 +2814,18 @@
             <span class="n">integrated_subgraph</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">][</span><span class="s2">"phenotype_sample_indices"</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
                 <span class="n">all_sample_indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span>
             <span class="p">)</span>
-            <span class="n">integrated_subgraph</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">][</span><span class="s2">"phenotype_types"</span><span class="p">]</span> <span class="o">=</span> <span class="n">phenotype_types</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># The placeholder the subgraph processors write: one NaN at type 0, sample 0</span>
+            <span class="n">integrated_subgraph</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">][</span><span class="s2">"phenotype_values"</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+                <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">)],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span>
+            <span class="p">)</span>
+            <span class="n">integrated_subgraph</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">][</span><span class="s2">"phenotype_type_indices"</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span>
+            <span class="p">)</span>
+            <span class="n">integrated_subgraph</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">][</span><span class="s2">"phenotype_sample_indices"</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span>
+            <span class="p">)</span>
+        <span class="n">integrated_subgraph</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">][</span><span class="s2">"phenotype_types"</span><span class="p">]</span> <span class="o">=</span> <span class="n">phenotype_types</span>
         <span class="k">if</span> <span class="n">all_stat_values</span><span class="p">:</span>
             <span class="n">integrated_subgraph</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">][</span><span class="s2">"phenotype_stat_values"</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
                 <span class="n">all_stat_values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span>

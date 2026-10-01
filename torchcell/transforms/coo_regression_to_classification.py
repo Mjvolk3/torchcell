@@ -10,12 +10,16 @@ from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
+import numpy.typing as npt
 import torch
 from torch_geometric.data import Batch, HeteroData
 from torch_geometric.transforms import BaseTransform, Compose
 
 if TYPE_CHECKING:
     from torchcell.data.neo4j_cell import Neo4jCellDataset
+
+NORMALIZATION_STRATEGIES = ("minmax", "robust", "standard")
+LABEL_TYPES = ("categorical", "ordinal", "soft")
 
 
 class COOLabelNormalizationTransform(BaseTransform):  # type: ignore[misc]  # BaseTransform is Any (torch_geometric untyped)
@@ -73,10 +77,15 @@ class COOLabelNormalizationTransform(BaseTransform):  # type: ignore[misc]  # Ba
                     f"fit_indices names {missing} record indices absent from label_df"
                 )
         for label, config in label_configs.items():
+            if config["strategy"] not in NORMALIZATION_STRATEGIES:
+                raise ValueError(
+                    f"Unknown normalization strategy {config['strategy']!r} for label "
+                    f"{label!r}; valid strategies: {', '.join(NORMALIZATION_STRATEGIES)}"
+                )
             if label not in df.columns:
                 raise ValueError(f"Label {label} not found in dataset")
 
-            values = cast(np.ndarray, df[label].dropna().values)
+            values = cast(npt.NDArray[Any], df[label].dropna().values)
             stats = {
                 "mean": float(np.mean(values)),
                 "std": float(np.std(values)),
@@ -256,7 +265,7 @@ class BaseBinningStrategy(ABC):
         # form is a compatible supertype so subclass overrides do not conflict.
         def compute_bins(
             self, *args: Any, **kwargs: Any
-        ) -> tuple[np.ndarray, dict[str, Any]]:
+        ) -> tuple[npt.NDArray[Any], dict[str, Any]]:
             """Compute bin edges and metadata for the binning strategy.
 
             Returns:
@@ -276,7 +285,14 @@ class BaseBinningStrategy(ABC):
     def compute_ordinal_labels(
         self, values: torch.Tensor, bin_edges: torch.Tensor
     ) -> torch.Tensor:
-        """Compute ordinal labels with clamping for out-of-bounds values."""
+        """Compute ordinal labels with clamping for out-of-bounds values.
+
+        Threshold ``k`` is 1 when the clamped value is ``>=`` interior edge ``k + 1``,
+        the same left-closed convention as the one-hot path (bin ``i`` is
+        ``[edge_i, edge_{i+1})``, as ``torch.bucketize(..., right=True) - 1`` and
+        ``np.digitize``): the number of ones equals the one-hot bin index, so a value
+        exactly on an interior edge belongs to the bin that edge opens under both.
+        """
         # Move bin_edges to the same device as values
         bin_edges = bin_edges.to(values.device)
         ordinal_labels = torch.zeros(
@@ -288,7 +304,7 @@ class BaseBinningStrategy(ABC):
             if torch.isnan(val):
                 ordinal_labels[i] = torch.nan
             else:
-                ordinal_labels[i] = (clamped_values[i] > bin_edges[1:-1]).float()
+                ordinal_labels[i] = (clamped_values[i] >= bin_edges[1:-1]).float()
         return ordinal_labels
 
     def compute_soft_labels(
@@ -298,7 +314,13 @@ class BaseBinningStrategy(ABC):
         strategy: str = "equal_width",
         sigma_scale: float = 3,
     ) -> torch.Tensor:
-        """Compute soft labels with clamping for out-of-bounds values."""
+        """Compute soft labels with clamping for out-of-bounds values.
+
+        Each row is a Gaussian on the bin centers normalized to sum to one, computed as
+        a softmax of the log-weights ``-0.5 * (distance / sigma) ** 2``. The softmax
+        subtracts the row maximum before exponentiating, so a narrow sigma whose raw
+        weights would all underflow to 0 still yields a distribution.
+        """
         # Move bin_edges to the same device as values
         bin_edges = bin_edges.to(values.device)
         bin_centers = (bin_edges[1:] + bin_edges[:-1]) / 2
@@ -314,11 +336,7 @@ class BaseBinningStrategy(ABC):
             else:
                 # Use clamped value for gaussian computation
                 distances = torch.abs(clamped_values[i] - bin_centers)
-                soft_labels[i] = torch.exp(-0.5 * (distances / sigma) ** 2)
-
-                # Normalize to sum to 1
-                if torch.sum(soft_labels[i]) > 0:
-                    soft_labels[i] = soft_labels[i] / torch.sum(soft_labels[i])
+                soft_labels[i] = torch.softmax(-0.5 * (distances / sigma) ** 2, dim=0)
 
         return soft_labels
 
@@ -351,8 +369,8 @@ class EqualWidthStrategy(BaseBinningStrategy):
     """Binning strategy with bins of equal width across the value range."""
 
     def compute_bins(
-        self, values: np.ndarray, num_bins: int
-    ) -> tuple[np.ndarray, dict[str, Any]]:
+        self, values: npt.NDArray[Any], num_bins: int
+    ) -> tuple[npt.NDArray[Any], dict[str, Any]]:
         """Compute equal-width bins."""
         non_nan = values[~np.isnan(values)]
         bin_edges = np.linspace(non_nan.min(), non_nan.max(), num_bins + 1)
@@ -372,8 +390,8 @@ class EqualFrequencyStrategy(BaseBinningStrategy):
     """Binning strategy with bins holding roughly equal sample counts."""
 
     def compute_bins(
-        self, values: np.ndarray, num_bins: int
-    ) -> tuple[np.ndarray, dict[str, Any]]:
+        self, values: npt.NDArray[Any], num_bins: int
+    ) -> tuple[npt.NDArray[Any], dict[str, Any]]:
         """Compute equal-frequency (quantile) bins."""
         non_nan = values[~np.isnan(values)]
         bin_edges = np.percentile(non_nan, np.linspace(0, 100, num_bins + 1))
@@ -393,14 +411,16 @@ class AutoBinStrategy(BaseBinningStrategy):
     """Binning strategy that picks the bin count from the data's spread."""
 
     def compute_bins(
-        self, values: np.ndarray, num_bins: int | None = None
-    ) -> tuple[np.ndarray, dict[str, Any]]:
+        self, values: npt.NDArray[Any], num_bins: int | None = None
+    ) -> tuple[npt.NDArray[Any], dict[str, Any]]:
         """Compute bins based on data std."""
         non_nan = values[~np.isnan(values)]
         std = np.std(non_nan)
         range_width = np.max(non_nan) - np.min(non_nan)
         num_bins = int(range_width / std) if num_bins is None else num_bins
-        return EqualWidthStrategy().compute_bins(values, num_bins)
+        bin_edges, metadata = EqualWidthStrategy().compute_bins(values, num_bins)
+        metadata["strategy"] = "auto"
+        return bin_edges, metadata
 
 
 class COOLabelBinningTransform(BaseTransform):  # type: ignore[misc]  # BaseTransform is Any (torch_geometric untyped)
@@ -427,6 +447,14 @@ class COOLabelBinningTransform(BaseTransform):  # type: ignore[misc]  # BaseTran
             "equal_frequency": EqualFrequencyStrategy(),
             "auto": AutoBinStrategy(),
         }
+
+        for label, config in label_configs.items():
+            label_type = config.get("label_type", "categorical").lower()
+            if label_type not in LABEL_TYPES:
+                raise ValueError(
+                    f"Unknown label_type {label_type!r} for label {label!r}; "
+                    f"valid label types: {', '.join(LABEL_TYPES)}"
+                )
 
         # Initialize binning parameters for each label
         self.label_metadata = {}
@@ -482,8 +510,25 @@ class COOLabelBinningTransform(BaseTransform):  # type: ignore[misc]  # BaseTran
                     "gene"
                 ]["phenotype_values"].numpy()
 
+    def label_width(self, label: str) -> int:
+        """Number of COO entries one value of ``label`` expands into.
+
+        Categorical and soft labels emit one entry per bin (``num_bins``); ordinal
+        labels emit one per interior edge (``num_bins - 1`` thresholds).
+        """
+        num_bins = len(self.label_metadata[label]["bin_edges"]) - 1
+        label_type = self.label_configs[label].get("label_type", "categorical").lower()
+        return num_bins - 1 if label_type == "ordinal" else num_bins
+
     def forward(self, data: HeteroData | Batch) -> HeteroData | Batch:
-        """Transform the data by binning specified labels in COO format."""
+        """Transform the data by binning specified labels in COO format.
+
+        The type list is rewritten in its own order: a configured label becomes
+        ``<label>_bin_0 .. <label>_bin_{w-1}`` (``w`` from ``label_width``) and any other
+        label passes through under its own name. Each COO entry is replaced in place by
+        its ``w`` binned entries (configured label) or kept as is (other label), with
+        type indices taken from that rewritten list.
+        """
         # Check if we have phenotype data in COO format
         if not hasattr(data["gene"], "phenotype_values"):
             return data
@@ -498,35 +543,40 @@ class COOLabelBinningTransform(BaseTransform):  # type: ignore[misc]  # BaseTran
             # In batch mode, all items should have the same phenotype types
             phenotype_types = phenotype_types[0]
 
+        if not any(label in self.label_configs for label in phenotype_types):
+            return data
+
         # Handle scalar tensors by ensuring at least 1D
         phenotype_values = data["gene"].phenotype_values
         if phenotype_values.dim() == 0:
             phenotype_values = phenotype_values.unsqueeze(0)
+        type_indices = data["gene"].phenotype_type_indices
+        sample_indices = data["gene"].phenotype_sample_indices
 
-        # We need to handle the binning differently for COO format
-        # Since binning changes the dimensionality, we'll need to reorganize the data
+        # Rewritten type list and the explicit old type index -> new type indices map
+        new_phenotype_types: list[str] = []
+        old_to_new: list[list[int]] = []
+        for ptype in phenotype_types:
+            start = len(new_phenotype_types)
+            if ptype in self.label_configs:
+                width = self.label_width(ptype)
+                new_phenotype_types.extend(f"{ptype}_bin_{j}" for j in range(width))
+            else:
+                new_phenotype_types.append(ptype)
+            old_to_new.append(list(range(start, len(new_phenotype_types))))
 
-        # Collect all phenotype data
-        all_values = []
-        all_type_indices = []
-        all_sample_indices = []
-
+        # Binned rows, keyed by the position of the COO entry they replace
+        binned_rows: dict[int, torch.Tensor] = {}
         for label, config in self.label_configs.items():
             if label not in phenotype_types:
                 continue
 
-            # Find indices where this phenotype appears
             label_idx = phenotype_types.index(label)
-            mask = data["gene"].phenotype_type_indices == label_idx
-
+            mask = type_indices == label_idx
             if mask.sum() == 0:
                 continue
 
-            # Get values and indices for this phenotype
             values = phenotype_values[mask]
-            sample_indices = data["gene"].phenotype_sample_indices[mask]
-
-            # Get binning parameters
             bin_edges = torch.tensor(self.label_metadata[label]["bin_edges"])
             strategy = self.strategies[config["strategy"]]
 
@@ -549,42 +599,47 @@ class COOLabelBinningTransform(BaseTransform):  # type: ignore[misc]  # BaseTran
                     strategy,  # type: ignore[arg-type]  # unused str param; object passed, runtime no-op
                     sigma,
                 )
-            elif label_type == "ordinal":
+            else:  # "ordinal"; label_type was validated at construction
                 binned_values = strategy.compute_ordinal_labels(values, bin_edges)
 
-            # For binned data, we need to expand the indices
-            num_bins = binned_values.shape[1]
-            for i in range(len(values)):
-                for j in range(num_bins):
-                    all_values.append(binned_values[i, j])
-                    all_type_indices.append(label_idx * num_bins + j)
-                    all_sample_indices.append(sample_indices[i])
+            positions = torch.nonzero(mask).flatten().tolist()
+            for row, position in zip(binned_values, positions, strict=True):
+                binned_rows[position] = row
 
-        # Update the data with binned values
-        if all_values:
-            data["gene"].phenotype_values = torch.stack(all_values)
-            data["gene"].phenotype_type_indices = torch.tensor(
-                all_type_indices, dtype=torch.long
-            )
-            data["gene"].phenotype_sample_indices = torch.tensor(
-                all_sample_indices, dtype=torch.long
-            )
+        all_values: list[torch.Tensor] = []
+        all_type_indices: list[int] = []
+        all_sample_indices: list[int] = []
+        for position in range(len(phenotype_values)):
+            new_types = old_to_new[int(type_indices[position])]
+            sample = int(sample_indices[position])
+            if position in binned_rows:
+                row = binned_rows[position]
+                all_values.extend(row.unbind())
+            else:
+                all_values.append(phenotype_values[position])
+            all_type_indices.extend(new_types)
+            all_sample_indices.extend([sample] * len(new_types))
 
-            # Update phenotype types to include bin information
-            new_phenotype_types = []
-            for label, config in self.label_configs.items():
-                if label in phenotype_types:
-                    label_type = config.get("label_type", "categorical").lower()
-                    bin_edges = self.label_metadata[label]["bin_edges"]
-                    num_bins = len(bin_edges) - 1
-                    for i in range(num_bins):
-                        new_phenotype_types.append(f"{label}_bin_{i}")
-            data["gene"].phenotype_types = new_phenotype_types
+        data["gene"].phenotype_values = torch.stack(all_values)
+        data["gene"].phenotype_type_indices = torch.tensor(
+            all_type_indices, dtype=torch.long
+        )
+        data["gene"].phenotype_sample_indices = torch.tensor(
+            all_sample_indices, dtype=torch.long
+        )
+        data["gene"].phenotype_types = new_phenotype_types
 
         return data
 
     def inverse(self, data: HeteroData | Batch, seed: int = 42) -> HeteroData | Batch:
-        """Inverse transform to recover continuous values from binned COO format."""
+        """Inverse transform to recover continuous values from binned COO format.
+
+        Mirrors ``forward``: the ``<label>_bin_<j>`` types of each configured label
+        collapse back to ``<label>`` at the position of its first bin, and every other
+        type passes through with its entries unchanged and its type index remapped.
+        Output entries follow the rewritten type list; a binned label's samples are
+        decoded in sorted sample order, one seeded draw each where the decode samples.
+        """
         torch.manual_seed(seed)
         # Check if we have phenotype data in COO format
         if not hasattr(data["gene"], "phenotype_values"):
@@ -608,27 +663,46 @@ class COOLabelBinningTransform(BaseTransform):  # type: ignore[misc]  # BaseTran
         if phenotype_values.dim() == 0:
             phenotype_values = phenotype_values.unsqueeze(0)
 
-        # Group by original phenotype (before binning)
+        # Group bin types by original phenotype; every other type passes through.
+        # ``order`` lists the rewritten types: a configured label, or a pass-through
+        # type with its old type index.
         phenotype_groups: dict[str, list[int]] = {}
+        order: list[tuple[str, int | None]] = []
         for i, ptype in enumerate(phenotype_types):
-            # Extract original phenotype name from binned name
+            owner = None
             for label in self.label_configs:
                 if ptype.startswith(f"{label}_bin_"):
-                    if label not in phenotype_groups:
-                        phenotype_groups[label] = []
-                    phenotype_groups[label].append(i)
+                    owner = label
                     break
+            if owner is None:
+                order.append((ptype, i))
+            else:
+                if owner not in phenotype_groups:
+                    phenotype_groups[owner] = []
+                    order.append((owner, None))
+                phenotype_groups[owner].append(i)
+
+        if not phenotype_groups:
+            return data
 
         # Reconstruct continuous values
-        new_values = []
-        new_type_indices = []
-        new_sample_indices = []
+        new_values: list[float] = []
+        new_type_indices: list[int] = []
+        new_sample_indices: list[int] = []
         new_phenotype_types: list[str] = []
 
-        for label, config in self.label_configs.items():
-            if label not in phenotype_groups:
+        for label, old_idx in order:
+            if old_idx is not None:
+                mask = data["gene"].phenotype_type_indices == old_idx
+                new_values.extend(phenotype_values[mask].tolist())
+                new_type_indices.extend([len(new_phenotype_types)] * int(mask.sum()))
+                new_sample_indices.extend(
+                    data["gene"].phenotype_sample_indices[mask].tolist()
+                )
+                new_phenotype_types.append(label)
                 continue
 
+            config = self.label_configs[label]
             label_type = config.get("label_type", "categorical").lower()
             bin_edges = torch.tensor(
                 self.label_metadata[label]["bin_edges"],
@@ -683,9 +757,11 @@ class COOLabelBinningTransform(BaseTransform):  # type: ignore[misc]  # BaseTran
                         continuous_value = rand_val.item()
 
                     elif label_type == "soft":
-                        # Use weighted average based on soft labels
+                        # Soft labels are already probabilities: average the bin
+                        # centers weighted by them (no softmax) over a window of
+                        # 2 bins either side of the argmax.
                         window_size = 2
-                        probs = torch.softmax(bin_values_tensor, dim=-1)
+                        probs = bin_values_tensor
                         bin_centers = (bin_edges[1:] + bin_edges[:-1]) / 2
                         # cast for typing only: a 0-d index tensor behaves like an
                         # int for the slicing/arithmetic below (no runtime change).
@@ -719,19 +795,17 @@ class COOLabelBinningTransform(BaseTransform):  # type: ignore[misc]  # BaseTran
                 new_type_indices.append(len(new_phenotype_types))
                 new_sample_indices.append(sample_idx)
 
-            if label not in new_phenotype_types:
-                new_phenotype_types.append(label)
+            new_phenotype_types.append(label)
 
         # Update data with reconstructed continuous values
-        if new_values:
-            data["gene"].phenotype_values = torch.tensor(new_values, dtype=torch.float)
-            data["gene"].phenotype_type_indices = torch.tensor(
-                new_type_indices, dtype=torch.long
-            )
-            data["gene"].phenotype_sample_indices = torch.tensor(
-                new_sample_indices, dtype=torch.long
-            )
-            data["gene"].phenotype_types = new_phenotype_types
+        data["gene"].phenotype_values = torch.tensor(new_values, dtype=torch.float)
+        data["gene"].phenotype_type_indices = torch.tensor(
+            new_type_indices, dtype=torch.long
+        )
+        data["gene"].phenotype_sample_indices = torch.tensor(
+            new_sample_indices, dtype=torch.long
+        )
+        data["gene"].phenotype_types = new_phenotype_types
 
         return data
 

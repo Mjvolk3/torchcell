@@ -1,0 +1,1229 @@
+# torchcell/benchmark/app.py
+# [[torchcell.benchmark.app]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/benchmark/app.py
+# Test file: tests/torchcell/benchmark/test_app.py
+
+"""``tc-bench``: the HTTP service behind the public benchmark leaderboard.
+
+Reading the board needs no account. Submitting needs an account with a confirmed email
+address, a bearer token from ``/auth/login``, and quota (see
+:mod:`torchcell.benchmark.ratelimit`). A submission is a multipart upload of a
+predictions CSV and a metadata JSON; the server validates both with the pydantic models
+of :mod:`torchcell.benchmark.submission`, rejects a malformed upload with explicit
+reasons (HTTP 422), and otherwise grades it, flags it, archives it as a zip and returns
+the scores with the status ``provisional``. An admin (``X-API-Key``, the same named-key
+scheme as ``tc-data``) promotes a reproduced submission to ``verified``, withdraws one,
+approves or disables an account, and uploads baselines through the same grader.
+
+Every attempt is one ``submissions`` row, rejected ones included, because the quota
+counts attempts. The quota check and the insert run in one transaction under a lock on
+the user's row, so concurrent uploads cannot both pass.
+
+The server binds 127.0.0.1 by default and is meant to sit behind a TLS reverse proxy;
+it is never the process that listens on a public port. Configuration is all
+environment-driven (``TC_BENCH_*``), with every secret read from a file:
+
+- ``TC_BENCH_DB_HOST``, ``TC_BENCH_DB_PORT`` (5432), ``TC_BENCH_DB_NAME``,
+  ``TC_BENCH_DB_USER``, ``TC_BENCH_DB_PASSWORD_FILE``: the PostgreSQL database.
+- ``TC_BENCH_DATASETS_ROOT``: the bundles (:mod:`torchcell.benchmark.bundle`), loaded
+  once at startup, so adding a dataset needs a restart.
+- ``TC_BENCH_SUBMISSIONS_ROOT``: where scored submissions are archived.
+- ``TC_BENCH_JWT_SECRET_FILE``: the session signing secret (32 bytes or more).
+- ``TC_BENCH_ADMIN_KEYS_FILE``: JSON ``{name: sha256hex}`` of the admin keys.
+- ``TC_BENCH_ACCOUNT_URL``: public URL of the site's account page; the confirmation
+  link is this URL with ``?verify=<token>``.
+- ``TC_BENCH_CORS_ORIGINS``: comma-separated origins of the website.
+- ``TC_BENCH_EMAIL_BACKEND``: ``smtp`` (with ``TC_BENCH_SMTP_HOST``, ``_PORT`` (587),
+  ``_USERNAME``, ``_PASSWORD_FILE``, ``_SENDER``) or ``console`` (local development).
+- Optional: ``TC_BENCH_HOST`` (127.0.0.1), ``TC_BENCH_PORT`` (8725),
+  ``TC_BENCH_TRUST_PROXY`` (``1`` when behind the reverse proxy, so the client address
+  is read from ``X-Forwarded-For``), ``TC_BENCH_REQUIRE_APPROVAL`` (``1`` to hold new
+  accounts until an admin approves them), ``TC_BENCH_BLOCKED_DOMAINS_FILE`` (one email
+  domain per line), ``TC_BENCH_ALLOWED_DOMAIN_SUFFIXES`` (comma-separated).
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import os
+from collections.abc import Callable, Iterator
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Annotated, Any, Literal, Self
+
+import uvicorn
+from dotenv import load_dotenv
+from fastapi import (
+    APIRouter,
+    Depends,
+    FastAPI,
+    File,
+    Form,
+    HTTPException,
+    Request,
+    UploadFile,
+    status,
+)
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.security import APIKeyHeader, HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    SecretStr,
+    StringConstraints,
+    ValidationError,
+    model_validator,
+)
+from sqlalchemy import URL, Engine, func, select
+from sqlalchemy.orm import Session
+from starlette.datastructures import Headers
+from starlette.types import ASGIApp, Receive, Scope, Send
+
+from torchcell.api_keys import API_KEY_HEADER, ApiKeys, print_minted_key
+from torchcell.benchmark.bundle import (
+    SPLITS_FILENAME,
+    TEMPLATE_FILENAME,
+    BenchmarkBundle,
+    BenchmarkDatasetPublic,
+    load_bundles,
+    sha256_bytes,
+)
+from torchcell.benchmark.db import (
+    BOARD_STATUSES,
+    EmailToken,
+    Submission,
+    SubmissionStatus,
+    User,
+    init_schema,
+    make_engine,
+    make_session_factory,
+    new_id,
+    utcnow,
+)
+from torchcell.benchmark.grading import SplitScores, score
+from torchcell.benchmark.integrity import IntegrityPolicy, flag_submission, oriented
+from torchcell.benchmark.mailer import (
+    ConsoleMailer,
+    Mailer,
+    SmtpConfig,
+    SmtpMailer,
+    confirmation_message,
+)
+from torchcell.benchmark.ratelimit import QuotaStatus, SubmissionLimits, evaluate_quota
+from torchcell.benchmark.security import (
+    DUMMY_PASSWORD_HASH,
+    JWT_SECRET_MIN_BYTES,
+    PASSWORD_MAX_LENGTH,
+    PASSWORD_MIN_LENGTH,
+    AccountPolicy,
+    canonical_email,
+    decode_access_token,
+    hash_client_address,
+    hash_password,
+    hash_token,
+    issue_access_token,
+    new_one_time_token,
+    verify_password,
+)
+from torchcell.benchmark.storage import archive_submission
+from torchcell.benchmark.submission import (
+    Split,
+    SubmissionMetadata,
+    submission_json_schema,
+)
+from torchcell.benchmark.validation import validate_predictions
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
+
+APP_TITLE = "torchcell benchmark endpoint"
+APP_VERSION = "0.1.0"
+API_PREFIX = "/api/v1"
+DEFAULT_HOST = "127.0.0.1"
+DEFAULT_PORT = 8725
+ADMIN_KEYS_FILE_VAR = "TC_BENCH_ADMIN_KEYS_FILE"
+MAX_METADATA_BYTES = 16 * 1024
+MULTIPART_OVERHEAD_BYTES = 64 * 1024
+MAX_LIVE_EMAIL_TOKENS = 3
+SIGNUP_WINDOW = timedelta(hours=24)
+BASELINE_USER_EMAIL = "baselines@torchcell.invalid"
+BASELINE_USER_NAME = "TorchCell baselines"
+SIGNUP_MESSAGE = (
+    "If the address can register, a confirmation link was sent to it. "
+    "The account is active once the link is opened."
+)
+LOGIN_FAILED = "invalid email or password"
+
+
+class BenchServerConfig(BaseModel):
+    """Runtime configuration of the benchmark service."""
+
+    model_config = ConfigDict(frozen=True)
+
+    database_url: SecretStr
+    datasets_root: Path
+    submissions_root: Path
+    jwt_secret: SecretStr
+    admin_keys: ApiKeys
+    account_url: str = Field(description="Public URL of the website's account page.")
+    cors_origins: tuple[str, ...]
+    email_backend: Literal["smtp", "console"]
+    smtp: SmtpConfig | None = None
+    host: str = DEFAULT_HOST
+    port: int = DEFAULT_PORT
+    trust_proxy: bool = False
+    require_approval: bool = False
+    max_upload_bytes: int = 16 * 1024 * 1024
+    limits: SubmissionLimits = SubmissionLimits()
+    integrity: IntegrityPolicy = IntegrityPolicy()
+    account_policy: AccountPolicy = AccountPolicy()
+    access_token_ttl: timedelta = timedelta(hours=12)
+    email_token_ttl: timedelta = timedelta(hours=24)
+    max_signups_per_address: int = 5
+    max_failed_logins: int = 5
+    lockout: timedelta = timedelta(minutes=15)
+
+    @model_validator(mode="after")
+    def _check(self) -> Self:
+        if len(self.jwt_secret.get_secret_value().encode()) < JWT_SECRET_MIN_BYTES:
+            raise ValueError(
+                f"jwt secret must be at least {JWT_SECRET_MIN_BYTES} bytes"
+            )
+        if self.email_backend == "smtp" and self.smtp is None:
+            raise ValueError("email_backend 'smtp' needs the smtp settings")
+        return self
+
+    @classmethod
+    def from_env(cls) -> Self:
+        """Build the config from ``TC_BENCH_*``; a missing required variable raises."""
+        env = os.environ
+
+        def secret_file(name: str) -> str:
+            return Path(env[name]).read_text(encoding="utf-8").strip()
+
+        database_url = URL.create(
+            "postgresql+psycopg",
+            username=env["TC_BENCH_DB_USER"],
+            password=secret_file("TC_BENCH_DB_PASSWORD_FILE"),
+            host=env["TC_BENCH_DB_HOST"],
+            port=int(env.get("TC_BENCH_DB_PORT", "5432")),
+            database=env["TC_BENCH_DB_NAME"],
+        ).render_as_string(hide_password=False)
+        backend = env["TC_BENCH_EMAIL_BACKEND"]
+        smtp = (
+            SmtpConfig(
+                host=env["TC_BENCH_SMTP_HOST"],
+                port=int(env.get("TC_BENCH_SMTP_PORT", "587")),
+                username=env["TC_BENCH_SMTP_USERNAME"],
+                password=SecretStr(secret_file("TC_BENCH_SMTP_PASSWORD_FILE")),
+                sender=env["TC_BENCH_SMTP_SENDER"],
+            )
+            if backend == "smtp"
+            else None
+        )
+        blocked_file = env.get("TC_BENCH_BLOCKED_DOMAINS_FILE")
+        blocked = (
+            frozenset(
+                line.strip().lower()
+                for line in Path(blocked_file).read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            )
+            if blocked_file
+            else frozenset()
+        )
+        suffixes = tuple(
+            s.strip().lower()
+            for s in env.get("TC_BENCH_ALLOWED_DOMAIN_SUFFIXES", "").split(",")
+            if s.strip()
+        )
+        return cls.model_validate(
+            {
+                "database_url": database_url,
+                "datasets_root": env["TC_BENCH_DATASETS_ROOT"],
+                "submissions_root": env["TC_BENCH_SUBMISSIONS_ROOT"],
+                "jwt_secret": secret_file("TC_BENCH_JWT_SECRET_FILE"),
+                "admin_keys": ApiKeys.from_file(env[ADMIN_KEYS_FILE_VAR]),
+                "account_url": env["TC_BENCH_ACCOUNT_URL"],
+                "cors_origins": tuple(
+                    o.strip()
+                    for o in env["TC_BENCH_CORS_ORIGINS"].split(",")
+                    if o.strip()
+                ),
+                "email_backend": backend,
+                "smtp": smtp,
+                "host": env.get("TC_BENCH_HOST", DEFAULT_HOST),
+                "port": int(env.get("TC_BENCH_PORT", str(DEFAULT_PORT))),
+                "trust_proxy": env.get("TC_BENCH_TRUST_PROXY", "0") == "1",
+                "require_approval": env.get("TC_BENCH_REQUIRE_APPROVAL", "0") == "1",
+                "account_policy": AccountPolicy(
+                    blocked_domains=blocked, allowed_domain_suffixes=suffixes
+                ),
+            }
+        )
+
+
+def build_mailer(config: BenchServerConfig) -> Mailer:
+    """The mailer ``config`` selects."""
+    if config.smtp is not None:
+        return SmtpMailer(config.smtp)
+    return ConsoleMailer()
+
+
+# ---------------------------------------------------------------- request and response
+
+DisplayName = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=2, max_length=60)
+]
+Affiliation = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)
+]
+Password = Annotated[
+    str,
+    StringConstraints(min_length=PASSWORD_MIN_LENGTH, max_length=PASSWORD_MAX_LENGTH),
+]
+
+
+class SignupRequest(BaseModel):
+    """Body of ``POST /auth/signup``."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    email: EmailStr
+    password: Password
+    display_name: DisplayName
+    affiliation: Affiliation | None = None
+
+
+class VerifyRequest(BaseModel):
+    """Body of ``POST /auth/verify``."""
+
+    token: Annotated[str, StringConstraints(min_length=1, max_length=256)]
+
+
+class LoginRequest(BaseModel):
+    """Body of ``POST /auth/login``."""
+
+    email: EmailStr
+    password: Annotated[
+        str, StringConstraints(min_length=1, max_length=PASSWORD_MAX_LENGTH)
+    ]
+
+
+class ReviewRequest(BaseModel):
+    """Body of the admin verify and withdraw routes."""
+
+    note: Annotated[str, StringConstraints(strip_whitespace=True, max_length=2000)] = ""
+
+
+class Message(BaseModel):
+    """A plain acknowledgment."""
+
+    message: str
+
+
+class Health(BaseModel):
+    """Liveness summary (no auth)."""
+
+    status: str
+    n_datasets: int
+
+
+class TokenResponse(BaseModel):
+    """A session token."""
+
+    access_token: str
+    token_type: Literal["bearer"] = "bearer"
+    expires_at: datetime
+
+
+class UserPublic(BaseModel):
+    """What the board shows about an account."""
+
+    user_id: str
+    display_name: str
+    affiliation: str | None
+    created_at: datetime
+
+
+class MeResponse(UserPublic):
+    """The signed-in account as its owner sees it."""
+
+    email: str
+    email_verified: bool
+    approved: bool
+
+
+class Quota(BaseModel):
+    """The signed-in account's submission quota."""
+
+    max_per_window: int
+    window_hours: float
+    min_gap_minutes: float
+    used_in_window: int
+    remaining: int
+    next_allowed_at: datetime | None
+
+
+class SubmissionResult(BaseModel):
+    """One attempt as its owner sees it: scores, or the reasons it was rejected."""
+
+    submission_id: str
+    dataset_slug: str
+    status: SubmissionStatus
+    submitted_at: datetime
+    method_name: str
+    rejection_reasons: list[str]
+    val: SplitScores | None
+    test: SplitScores | None
+    flags: list[str]
+    archive_sha256: str | None
+
+
+class LeaderboardRow(BaseModel):
+    """One scored submission on a dataset's board."""
+
+    submission_id: str
+    user_id: str
+    display_name: str
+    affiliation: str | None
+    method_name: str
+    model_family: str
+    encoding: str
+    code_url: str | None
+    status: SubmissionStatus
+    submitted_at: datetime
+    is_baseline: bool
+    val: SplitScores
+    test: SplitScores
+    flags: list[str]
+
+
+class UserHistoryRow(LeaderboardRow):
+    """A leaderboard row that also names its dataset."""
+
+    dataset_slug: str
+
+
+class UserHistory(BaseModel):
+    """An account's public record: every scored submission, oldest first."""
+
+    user: UserPublic
+    submissions: list[UserHistoryRow]
+
+
+def _user_public(user: User) -> UserPublic:
+    return UserPublic(
+        user_id=user.id,
+        display_name=user.display_name,
+        affiliation=user.affiliation,
+        created_at=user.created_at,
+    )
+
+
+def _scores(raw: dict[str, Any] | None) -> SplitScores | None:
+    return None if raw is None else SplitScores.model_validate(raw)
+
+
+def _result(submission: Submission) -> SubmissionResult:
+    return SubmissionResult(
+        submission_id=submission.id,
+        dataset_slug=submission.dataset_slug,
+        status=SubmissionStatus(submission.status),
+        submitted_at=submission.created_at,
+        method_name=submission.method_name,
+        rejection_reasons=submission.rejection_reasons,
+        val=_scores(submission.val_scores),
+        test=_scores(submission.test_scores),
+        flags=submission.flags,
+        archive_sha256=submission.archive_sha256,
+    )
+
+
+def _row(submission: Submission, user: User) -> UserHistoryRow:
+    return UserHistoryRow(
+        submission_id=submission.id,
+        user_id=user.id,
+        display_name=user.display_name,
+        affiliation=user.affiliation,
+        method_name=submission.method_name,
+        model_family=submission.model_family or "",
+        encoding=submission.encoding or "",
+        code_url=submission.code_url,
+        status=SubmissionStatus(submission.status),
+        submitted_at=submission.created_at,
+        is_baseline=submission.is_baseline,
+        val=SplitScores.model_validate(submission.val_scores),
+        test=SplitScores.model_validate(submission.test_scores),
+        flags=submission.flags,
+        dataset_slug=submission.dataset_slug,
+    )
+
+
+# ------------------------------------------------------------------------- middleware
+
+
+class UploadSizeGuard:
+    """Refuse an oversized upload from its ``Content-Length``, before the body is read.
+
+    The framework spools a multipart body to disk before the route runs, so the size
+    limit has to be applied here. A request without ``Content-Length`` is refused (411)
+    because its size cannot be bounded up front.
+    """
+
+    def __init__(self, app: ASGIApp, *, paths: frozenset[str], max_bytes: int) -> None:
+        """Guard ``POST`` requests to ``paths`` with a body limit of ``max_bytes``."""
+        self.app = app
+        self.paths = paths
+        self.max_bytes = max_bytes
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        """Answer 411 or 413 for a guarded upload that is unbounded or too large."""
+        if (
+            scope["type"] == "http"
+            and scope["method"] == "POST"
+            and scope["path"] in self.paths
+        ):
+            length = Headers(scope=scope).get("content-length")
+            if length is None or not length.isdigit():
+                response = JSONResponse(
+                    {"detail": "Content-Length is required for uploads"},
+                    status_code=411,
+                )
+                await response(scope, receive, send)
+                return
+            if int(length) > self.max_bytes:
+                response = JSONResponse(
+                    {"detail": f"upload exceeds {self.max_bytes} bytes"},
+                    status_code=413,
+                )
+                await response(scope, receive, send)
+                return
+        await self.app(scope, receive, send)
+
+
+# ------------------------------------------------------------------------------- app
+
+
+def create_app(
+    config: BenchServerConfig,
+    *,
+    engine: Engine | None = None,
+    mailer: Mailer | None = None,
+    clock: Callable[[], datetime] = utcnow,
+) -> FastAPI:
+    """Build the FastAPI app bound to ``config``.
+
+    ``engine``, ``mailer`` and ``clock`` default to what ``config`` describes and the
+    wall clock; tests pass their own.
+    """
+    db_engine = engine or make_engine(config.database_url.get_secret_value())
+    sessions = make_session_factory(db_engine)
+    outbox = mailer or build_mailer(config)
+    bundles = load_bundles(config.datasets_root)
+    secret = config.jwt_secret.get_secret_value()
+
+    app = FastAPI(
+        title=APP_TITLE,
+        summary="Accounts, submissions and leaderboards of the TorchCell benchmark.",
+        description=(
+            "Reading datasets and leaderboards needs no account. Submitting needs a "
+            "confirmed account and a bearer token. Submit predictions, not scores: the "
+            "server validates the upload against the dataset's template, grades it on "
+            "the validation and test splits, and returns the result."
+        ),
+        version=APP_VERSION,
+    )
+    app.state.config = config
+    app.state.engine = db_engine
+    app.add_middleware(
+        UploadSizeGuard,
+        paths=frozenset({f"{API_PREFIX}/submissions", f"{API_PREFIX}/admin/baselines"}),
+        max_bytes=config.max_upload_bytes
+        + MAX_METADATA_BYTES
+        + MULTIPART_OVERHEAD_BYTES,
+    )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=list(config.cors_origins),
+        allow_methods=["GET", "POST"],
+        allow_headers=["Authorization", "Content-Type"],
+    )
+
+    @app.middleware("http")
+    async def security_headers(request: Request, call_next: Any) -> Any:
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
+    bearer_scheme = HTTPBearer(auto_error=False)
+    admin_scheme = APIKeyHeader(name=API_KEY_HEADER, auto_error=False)
+
+    def get_session() -> Iterator[Session]:
+        with sessions() as session:
+            yield session
+
+    def current_user(
+        credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+        session: Session = Depends(get_session),
+    ) -> User:
+        user_id = (
+            decode_access_token(credentials.credentials, secret)
+            if credentials
+            else None
+        )
+        user = session.get(User, user_id) if user_id else None
+        if user is None or user.disabled:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="sign in to use this route",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        return user
+
+    def require_admin(api_key: str | None = Depends(admin_scheme)) -> str:
+        name = config.admin_keys.verify(api_key) if api_key else None
+        if name is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="invalid or missing admin key",
+            )
+        return name
+
+    def client_address(request: Request) -> str:
+        forwarded = request.headers.get("x-forwarded-for")
+        if config.trust_proxy and forwarded:
+            # The last entry is the one our own proxy appended.
+            return forwarded.split(",")[-1].strip()
+        return request.client.host if request.client else "unknown"
+
+    def get_bundle(slug: str) -> BenchmarkBundle:
+        bundle = bundles.get(slug)
+        if bundle is None:
+            raise HTTPException(status_code=404, detail="unknown benchmark dataset")
+        return bundle
+
+    def quota_state(session: Session, user_id: str, now: datetime) -> QuotaStatus:
+        attempts = session.scalars(
+            select(Submission.created_at).where(
+                Submission.user_id == user_id,
+                Submission.is_baseline.is_(False),
+                Submission.created_at > now - config.limits.window,
+            )
+        ).all()
+        return evaluate_quota(attempts, now, config.limits)
+
+    def to_quota(state: QuotaStatus) -> Quota:
+        return Quota(
+            max_per_window=config.limits.max_per_window,
+            window_hours=config.limits.window.total_seconds() / 3600,
+            min_gap_minutes=config.limits.min_gap.total_seconds() / 60,
+            used_in_window=state.used_in_window,
+            remaining=state.remaining if state.allowed else 0,
+            next_allowed_at=state.next_allowed_at,
+        )
+
+    def process_submission(
+        session: Session,
+        user: User,
+        bundle: BenchmarkBundle,
+        metadata_raw: str,
+        raw: bytes,
+        now: datetime,
+        *,
+        is_baseline: bool,
+    ) -> Submission:
+        """Record one attempt: validate, then grade, flag and archive when it is valid."""
+        submission = Submission(
+            id=new_id(),
+            user_id=user.id,
+            dataset_slug=bundle.dataset.slug,
+            dataset_version=bundle.dataset.version,
+            status=SubmissionStatus.REJECTED,
+            is_baseline=is_baseline,
+            created_at=now,
+            method_name="(metadata not parsed)",
+            upload_sha256=sha256_bytes(raw),
+            rejection_reasons=[],
+            flags=[],
+        )
+        session.add(submission)
+
+        reasons: list[str] = []
+        metadata: SubmissionMetadata | None = None
+        if len(metadata_raw.encode("utf-8")) > MAX_METADATA_BYTES:
+            reasons.append(f"metadata exceeds {MAX_METADATA_BYTES} bytes")
+        else:
+            try:
+                metadata = SubmissionMetadata.model_validate_json(metadata_raw)
+            except ValidationError as error:
+                reasons.extend(
+                    f"metadata.{'.'.join(str(p) for p in e['loc'])}: {e['msg']}"
+                    for e in error.errors()[:10]
+                )
+        if metadata is not None:
+            submission.method_name = metadata.method_name
+            submission.model_family = metadata.model_family
+            submission.encoding = metadata.encoding
+            submission.code_url = str(metadata.code_url) if metadata.code_url else None
+            submission.submission_metadata = metadata.model_dump(mode="json")
+
+        predictions: dict[tuple[str, str], float] | None = None
+        if len(raw) > config.max_upload_bytes:
+            reasons.append(f"predictions file exceeds {config.max_upload_bytes} bytes")
+        else:
+            report, predictions = validate_predictions(raw, bundle.spec)
+            submission.n_rows = report.n_rows
+            reasons.extend(report.reasons)
+
+        if reasons or metadata is None or predictions is None:
+            submission.rejection_reasons = reasons
+            return submission
+
+        scores = score(predictions, bundle.labels, bundle.spec.expected)
+        val, test = scores[Split.VAL], scores[Split.TEST]
+        primary = bundle.dataset.primary_metric
+        earlier = session.scalars(
+            select(Submission)
+            .where(
+                Submission.user_id == user.id,
+                Submission.dataset_slug == bundle.dataset.slug,
+                Submission.status.in_(BOARD_STATUSES),
+                Submission.id != submission.id,
+            )
+            .order_by(Submission.created_at)
+        ).all()
+        history = [
+            (
+                getattr(SplitScores.model_validate(s.val_scores).macro, primary),
+                getattr(SplitScores.model_validate(s.test_scores).macro, primary),
+            )
+            for s in earlier
+        ]
+        flags = flag_submission(
+            primary,
+            getattr(val.macro, primary),
+            getattr(test.macro, primary),
+            history,
+            config.integrity,
+        )
+        submission.status = SubmissionStatus.PROVISIONAL
+        submission.val_scores = val.model_dump(mode="json")
+        submission.test_scores = test.model_dump(mode="json")
+        submission.flags = [flag.value for flag in flags]
+        record = archive_submission(
+            config.submissions_root,
+            bundle.dataset.slug,
+            submission.id,
+            now,
+            {
+                "predictions.csv": raw,
+                "metadata.json": metadata.model_dump_json(indent=2).encode("utf-8"),
+                "result.json": _result(submission)
+                .model_dump_json(indent=2)
+                .encode("utf-8"),
+            },
+        )
+        submission.archive_path = record.relative_path
+        submission.archive_sha256 = record.sha256
+        return submission
+
+    def respond(submission: Submission) -> SubmissionResult:
+        result = _result(submission)
+        if result.status == SubmissionStatus.REJECTED:
+            raise HTTPException(status_code=422, detail=result.model_dump(mode="json"))
+        return result
+
+    router = APIRouter(prefix=API_PREFIX)
+
+    # ---------------------------------------------------------------------- service
+
+    @router.get("/health", response_model=Health, tags=["service"])
+    def health() -> Health:
+        """Liveness and the number of benchmark datasets loaded. No account needed."""
+        return Health(status="ok", n_datasets=len(bundles))
+
+    @router.get("/submission-schema", tags=["service"])
+    def submission_schema() -> dict[str, Any]:
+        """JSON Schema of a prediction row and of the metadata, plus the CSV columns."""
+        return submission_json_schema()
+
+    # ------------------------------------------------------------------------- auth
+
+    @router.post("/auth/signup", response_model=Message, status_code=201, tags=["auth"])
+    def signup(
+        body: SignupRequest, request: Request, session: Session = Depends(get_session)
+    ) -> Message:
+        """Create an account and email a confirmation link.
+
+        The answer is the same whether or not the address already has an account, so
+        the route cannot be used to list who is registered.
+        """
+        now = clock()
+        blocked = config.account_policy.rejection_reason(body.email)
+        if blocked is not None:
+            raise HTTPException(status_code=422, detail=blocked)
+        address_hash = hash_client_address(client_address(request), secret)
+        recent = session.scalar(
+            select(func.count())
+            .select_from(User)
+            .where(
+                User.signup_address_hash == address_hash,
+                User.created_at > now - SIGNUP_WINDOW,
+            )
+        )
+        if (recent or 0) >= config.max_signups_per_address:
+            raise HTTPException(
+                status_code=429, detail="too many signups; try tomorrow"
+            )
+        canonical = canonical_email(body.email)
+        user = session.scalar(select(User).where(User.email_canonical == canonical))
+        if user is None:
+            user = User(
+                id=new_id(),
+                email=body.email.lower(),
+                email_canonical=canonical,
+                display_name=body.display_name,
+                affiliation=body.affiliation,
+                password_hash=hash_password(body.password),
+                approved=not config.require_approval,
+                signup_address_hash=address_hash,
+                created_at=now,
+            )
+            session.add(user)
+            session.flush()
+        live_tokens = session.scalar(
+            select(func.count())
+            .select_from(EmailToken)
+            .where(
+                EmailToken.user_id == user.id,
+                EmailToken.used_at.is_(None),
+                EmailToken.expires_at > now,
+            )
+        )
+        if not user.email_verified and (live_tokens or 0) < MAX_LIVE_EMAIL_TOKENS:
+            token, token_hash = new_one_time_token()
+            session.add(
+                EmailToken(
+                    id=new_id(),
+                    user_id=user.id,
+                    token_sha256=token_hash,
+                    expires_at=now + config.email_token_ttl,
+                    created_at=now,
+                )
+            )
+            subject, text = confirmation_message(
+                user.display_name,
+                f"{config.account_url}?verify={token}",
+                int(config.email_token_ttl.total_seconds() // 3600),
+            )
+            outbox.send(user.email, subject, text)
+        session.commit()
+        return Message(message=SIGNUP_MESSAGE)
+
+    @router.post("/auth/verify", response_model=Message, tags=["auth"])
+    def verify_email(
+        body: VerifyRequest, session: Session = Depends(get_session)
+    ) -> Message:
+        """Confirm an address with the one-time token from the confirmation mail."""
+        now = clock()
+        token = session.scalar(
+            select(EmailToken).where(EmailToken.token_sha256 == hash_token(body.token))
+        )
+        if token is None or token.used_at is not None or token.expires_at <= now:
+            raise HTTPException(status_code=400, detail="invalid or expired token")
+        token.used_at = now
+        user = session.get_one(User, token.user_id)
+        user.email_verified = True
+        session.commit()
+        return Message(message="address confirmed; you can sign in")
+
+    @router.post("/auth/login", response_model=TokenResponse, tags=["auth"])
+    def login(
+        body: LoginRequest, session: Session = Depends(get_session)
+    ) -> TokenResponse:
+        """Exchange an email and password for a bearer token."""
+        now = clock()
+        user = session.scalar(
+            select(User).where(User.email_canonical == canonical_email(body.email))
+        )
+        if user is None or user.is_system:
+            verify_password(DUMMY_PASSWORD_HASH, body.password)
+            raise HTTPException(status_code=401, detail=LOGIN_FAILED)
+        if user.locked_until is not None and user.locked_until > now:
+            raise HTTPException(
+                status_code=429, detail="too many failed sign-ins; try later"
+            )
+        if not verify_password(user.password_hash, body.password):
+            user.failed_logins += 1
+            if user.failed_logins >= config.max_failed_logins:
+                user.failed_logins = 0
+                user.locked_until = now + config.lockout
+            session.commit()
+            raise HTTPException(status_code=401, detail=LOGIN_FAILED)
+        if user.disabled:
+            raise HTTPException(status_code=403, detail="this account is disabled")
+        if not user.email_verified:
+            raise HTTPException(
+                status_code=403, detail="confirm your email address first"
+            )
+        user.failed_logins = 0
+        user.locked_until = None
+        session.commit()
+        # Wall clock, not ``clock``: the token library checks ``iat`` and ``exp`` against
+        # the wall clock when it decodes, so a token must be issued on the same one.
+        token, expires_at = issue_access_token(
+            user.id, secret, config.access_token_ttl, utcnow()
+        )
+        return TokenResponse(access_token=token, expires_at=expires_at)
+
+    @router.get("/auth/me", response_model=MeResponse, tags=["auth"])
+    def me(user: User = Depends(current_user)) -> MeResponse:
+        """The signed-in account."""
+        return MeResponse(
+            **_user_public(user).model_dump(),
+            email=user.email,
+            email_verified=user.email_verified,
+            approved=user.approved,
+        )
+
+    # --------------------------------------------------------------------- datasets
+
+    @router.get(
+        "/datasets", response_model=list[BenchmarkDatasetPublic], tags=["datasets"]
+    )
+    def list_datasets() -> list[BenchmarkDatasetPublic]:
+        """Every benchmark dataset: targets, split sizes, primary metric, file hashes."""
+        return [bundle.dataset.public() for bundle in bundles.values()]
+
+    @router.get(
+        "/datasets/{slug}", response_model=BenchmarkDatasetPublic, tags=["datasets"]
+    )
+    def get_dataset(slug: str) -> BenchmarkDatasetPublic:
+        """One benchmark dataset."""
+        return get_bundle(slug).dataset.public()
+
+    @router.get("/datasets/{slug}/splits.csv", tags=["datasets"])
+    def get_splits(slug: str) -> FileResponse:
+        """``record_id,split`` for every record; ``X-Artifact-SHA256`` carries its hash."""
+        bundle = get_bundle(slug)
+        return FileResponse(
+            bundle.root / SPLITS_FILENAME,
+            media_type="text/csv",
+            filename=f"{slug}-splits.csv",
+            headers={"X-Artifact-SHA256": bundle.dataset.splits_sha256},
+        )
+
+    @router.get("/datasets/{slug}/template.csv", tags=["datasets"])
+    def get_template(slug: str) -> FileResponse:
+        """The submission template: every row to fill, with an empty ``prediction``."""
+        bundle = get_bundle(slug)
+        return FileResponse(
+            bundle.root / TEMPLATE_FILENAME,
+            media_type="text/csv",
+            filename=f"{slug}-template.csv",
+            headers={"X-Artifact-SHA256": bundle.dataset.template_sha256},
+        )
+
+    # ------------------------------------------------------------------ submissions
+
+    @router.get("/quota", response_model=Quota, tags=["submissions"])
+    def quota(
+        user: User = Depends(current_user), session: Session = Depends(get_session)
+    ) -> Quota:
+        """How many attempts the signed-in account has left, and when the next is allowed."""
+        return to_quota(quota_state(session, user.id, clock()))
+
+    @router.post(
+        "/submissions",
+        response_model=SubmissionResult,
+        status_code=201,
+        tags=["submissions"],
+    )
+    def submit(
+        dataset: str = Form(description="Slug of the benchmark dataset."),
+        metadata: str = Form(description="SubmissionMetadata as a JSON string."),
+        predictions: UploadFile = File(description="The predictions CSV."),
+        user: User = Depends(current_user),
+        session: Session = Depends(get_session),
+    ) -> SubmissionResult:
+        """Upload predictions for grading.
+
+        Returns 201 with validation and test scores, 422 with the rejection reasons
+        under ``detail``, or 429 with ``next_allowed_at`` when the quota is spent. A
+        rejected upload counts as an attempt; validate locally first with
+        ``python -m torchcell.benchmark.validation``.
+        """
+        if config.require_approval and not user.approved:
+            raise HTTPException(status_code=403, detail="this account awaits approval")
+        bundle = get_bundle(dataset)
+        now = clock()
+        # Serialize this account's attempts so two uploads cannot both pass the quota.
+        session.execute(select(User.id).where(User.id == user.id).with_for_update())
+        state = quota_state(session, user.id, now)
+        if state.next_allowed_at is not None:
+            raise HTTPException(
+                status_code=429,
+                detail={
+                    "message": state.reason,
+                    "next_allowed_at": state.next_allowed_at.isoformat(),
+                },
+            )
+        raw = predictions.file.read(config.max_upload_bytes + 1)
+        submission = process_submission(
+            session, user, bundle, metadata, raw, now, is_baseline=False
+        )
+        session.commit()
+        return respond(submission)
+
+    @router.get(
+        "/submissions/mine", response_model=list[SubmissionResult], tags=["submissions"]
+    )
+    def my_submissions(
+        user: User = Depends(current_user), session: Session = Depends(get_session)
+    ) -> list[SubmissionResult]:
+        """Every attempt of the signed-in account, newest first, rejected ones included."""
+        rows = session.scalars(
+            select(Submission)
+            .where(Submission.user_id == user.id)
+            .order_by(Submission.created_at.desc())
+        ).all()
+        return [_result(row) for row in rows]
+
+    # ------------------------------------------------------------------ leaderboard
+
+    @router.get(
+        "/leaderboard/{slug}", response_model=list[LeaderboardRow], tags=["leaderboard"]
+    )
+    def leaderboard(
+        slug: str, verified_only: bool = False, session: Session = Depends(get_session)
+    ) -> list[LeaderboardRow]:
+        """Scored submissions on one dataset, best test score on the primary metric first.
+
+        ``verified_only=true`` keeps reproduced submissions only; the default also
+        lists provisional ones, each marked by its ``status``.
+        """
+        bundle = get_bundle(slug)
+        statuses = (SubmissionStatus.VERIFIED,) if verified_only else BOARD_STATUSES
+        rows = session.execute(
+            select(Submission, User)
+            .join(User, Submission.user_id == User.id)
+            .where(Submission.dataset_slug == slug, Submission.status.in_(statuses))
+        ).all()
+        primary = bundle.dataset.primary_metric
+        board = [_row(submission, user) for submission, user in rows]
+        board.sort(
+            key=lambda row: oriented(primary, getattr(row.test.macro, primary)),
+            reverse=True,
+        )
+        return [LeaderboardRow.model_validate(row.model_dump()) for row in board]
+
+    @router.get(
+        "/users/{user_id}/submissions", response_model=UserHistory, tags=["leaderboard"]
+    )
+    def user_history(
+        user_id: str, session: Session = Depends(get_session)
+    ) -> UserHistory:
+        """An account's scored submissions on every dataset, oldest first."""
+        user = session.get(User, user_id)
+        if user is None:
+            raise HTTPException(status_code=404, detail="unknown user")
+        rows = session.scalars(
+            select(Submission)
+            .where(Submission.user_id == user_id, Submission.status.in_(BOARD_STATUSES))
+            .order_by(Submission.created_at)
+        ).all()
+        return UserHistory(
+            user=_user_public(user), submissions=[_row(row, user) for row in rows]
+        )
+
+    # ------------------------------------------------------------------------ admin
+
+    def review(
+        session: Session,
+        submission_id: str,
+        allowed_from: tuple[SubmissionStatus, ...],
+        new_status: SubmissionStatus,
+        reviewer: str,
+        note: str,
+    ) -> SubmissionResult:
+        submission = session.get(Submission, submission_id)
+        if submission is None:
+            raise HTTPException(status_code=404, detail="unknown submission")
+        if submission.status not in allowed_from:
+            raise HTTPException(
+                status_code=409, detail=f"submission is {submission.status}"
+            )
+        submission.status = new_status
+        submission.reviewed_at = clock()
+        submission.reviewed_by = reviewer
+        submission.review_note = note
+        session.commit()
+        return _result(submission)
+
+    @router.post(
+        "/admin/submissions/{submission_id}/verify",
+        response_model=SubmissionResult,
+        tags=["admin"],
+    )
+    def verify_submission(
+        submission_id: str,
+        body: ReviewRequest,
+        reviewer: str = Depends(require_admin),
+        session: Session = Depends(get_session),
+    ) -> SubmissionResult:
+        """Mark a provisional submission as reproduced."""
+        return review(
+            session,
+            submission_id,
+            (SubmissionStatus.PROVISIONAL,),
+            SubmissionStatus.VERIFIED,
+            reviewer,
+            body.note,
+        )
+
+    @router.post(
+        "/admin/submissions/{submission_id}/withdraw",
+        response_model=SubmissionResult,
+        tags=["admin"],
+    )
+    def withdraw_submission(
+        submission_id: str,
+        body: ReviewRequest,
+        reviewer: str = Depends(require_admin),
+        session: Session = Depends(get_session),
+    ) -> SubmissionResult:
+        """Take a scored submission off the board; its row and archive are kept."""
+        return review(
+            session,
+            submission_id,
+            BOARD_STATUSES,
+            SubmissionStatus.WITHDRAWN,
+            reviewer,
+            body.note,
+        )
+
+    def set_user_flags(session: Session, user_id: str, **flags: bool) -> Message:
+        user = session.get(User, user_id)
+        if user is None:
+            raise HTTPException(status_code=404, detail="unknown user")
+        for name, value in flags.items():
+            setattr(user, name, value)
+        session.commit()
+        return Message(message=f"user {user_id} updated")
+
+    @router.post(
+        "/admin/users/{user_id}/approve", response_model=Message, tags=["admin"]
+    )
+    def approve_user(
+        user_id: str,
+        _: str = Depends(require_admin),
+        session: Session = Depends(get_session),
+    ) -> Message:
+        """Allow an account to submit (used when new accounts are held for approval)."""
+        return set_user_flags(session, user_id, approved=True)
+
+    @router.post(
+        "/admin/users/{user_id}/disable", response_model=Message, tags=["admin"]
+    )
+    def disable_user(
+        user_id: str,
+        _: str = Depends(require_admin),
+        session: Session = Depends(get_session),
+    ) -> Message:
+        """Disable an account: its tokens stop working and it cannot sign in."""
+        return set_user_flags(session, user_id, disabled=True)
+
+    @router.post(
+        "/admin/baselines",
+        response_model=SubmissionResult,
+        status_code=201,
+        tags=["admin"],
+    )
+    def submit_baseline(
+        dataset: str = Form(),
+        metadata: str = Form(),
+        predictions: UploadFile = File(),
+        _: str = Depends(require_admin),
+        session: Session = Depends(get_session),
+    ) -> SubmissionResult:
+        """Grade a baseline's predictions through the same grader, outside the quota."""
+        bundle = get_bundle(dataset)
+        now = clock()
+        system_user = session.scalar(
+            select(User).where(User.email_canonical == BASELINE_USER_EMAIL)
+        )
+        if system_user is None:
+            system_user = User(
+                id=new_id(),
+                email=BASELINE_USER_EMAIL,
+                email_canonical=BASELINE_USER_EMAIL,
+                display_name=BASELINE_USER_NAME,
+                password_hash=DUMMY_PASSWORD_HASH,
+                email_verified=True,
+                approved=True,
+                is_system=True,
+                created_at=now,
+            )
+            session.add(system_user)
+            session.flush()
+        raw = predictions.file.read(config.max_upload_bytes + 1)
+        submission = process_submission(
+            session, system_user, bundle, metadata, raw, now, is_baseline=True
+        )
+        session.commit()
+        return respond(submission)
+
+    app.include_router(router)
+    return app
+
+
+def create_app_from_env() -> FastAPI:
+    """Factory for ``uvicorn --factory torchcell.benchmark.app:create_app_from_env``."""
+    load_dotenv()
+    return create_app(BenchServerConfig.from_env())
+
+
+def main() -> None:
+    """CLI: run the server, ``--init-db`` to create tables, ``--gen-admin-key NAME``."""
+    import argparse
+
+    load_dotenv()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--gen-admin-key", metavar="NAME", help="Mint an admin key, exit."
+    )
+    parser.add_argument(
+        "--init-db", action="store_true", help="Create the tables, exit."
+    )
+    parser.add_argument("--host", default=None, help="Override TC_BENCH_HOST.")
+    parser.add_argument(
+        "--port", type=int, default=None, help="Override TC_BENCH_PORT."
+    )
+    args = parser.parse_args()
+
+    if args.gen_admin_key:
+        print_minted_key(args.gen_admin_key, ADMIN_KEYS_FILE_VAR)
+        return
+
+    config = BenchServerConfig.from_env()
+    if args.init_db:
+        init_schema(make_engine(config.database_url.get_secret_value()))
+        print(json.dumps({"initialized": True}))
+        return
+
+    host = args.host or config.host
+    port = config.port if args.port is None else args.port
+    log.info(
+        "benchmark endpoint: datasets %s on %s:%d", config.datasets_root, host, port
+    )
+    uvicorn.run(create_app(config), host=host, port=port)
+
+
+if __name__ == "__main__":
+    main()

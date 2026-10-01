@@ -1,0 +1,48 @@
+# docker/tc-bench/Caddyfile.example
+# TLS reverse proxy for the website and the benchmark API, on one origin so the browser
+# needs no cross-origin requests:
+#
+#   https://<host>/            the built website (static files)
+#   https://<host>/api/v1/...  the benchmark API on the host's loopback port 8725
+#
+# This is the ONLY public entry point. It needs TCP 443 (and 80 for the ACME challenge
+# and the redirect) opened in the VM's OpenStack security group; nothing here opens
+# them. On torchcell-database.ncsa.illinois.edu a Let's Encrypt certificate already
+# exists for Neo4j (database/scripts/letsencrypt-deploy-hook.sh); either let Caddy obtain
+# its own, or point `tls` at that certificate and key.
+#
+# Replace bench.example.org and the site root before use.
+
+bench.example.org {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	handle /api/* {
+		# One submission is at most 16 MiB of predictions plus metadata; refuse larger
+		# bodies here, before they reach the API.
+		request_body {
+			max_size 17MB
+		}
+		reverse_proxy 127.0.0.1:8725
+	}
+
+	handle {
+		root * /srv/torchcell-site
+		try_files {path} {path}/index.html /404.html
+		file_server
+	}
+
+	log {
+		output file /var/log/caddy/tc-bench.log {
+			roll_size 20MiB
+			roll_keep 5
+		}
+	}
+}

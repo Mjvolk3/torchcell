@@ -17,3 +17,7 @@ Seeded determinism, a gradient reaching every parameter, the remaining `ValueErr
 ## 2026.09.29 - Phase 10 additions: shared children, sizing rule, the real data path, and main
 
 Eight tests added (23 in the file). A three-level ontology where term 2 is a child of both term 0 and term 1 gives sizes {2, 2, 1} under `max(1, ceil(0.3 * n))` (rounding or flooring would differ) and 39 parameters; the real path `to_cell_data` to `DCellGraphProcessor` to `Batch.from_data_list(follow_batch=["go_gene_strata_state"])` gives 51 parameters and `ptr == [0, 8, 16]`; the DCell loss trains every parameter; a root stratum added after construction is reported unprocessed with the exact message. Findings: `main` always crashes at its first intermediate plot because the helper calls `model(batch)` (`dcell.py:486`) while `forward` takes `(cell_graph, batch)`; a child that has not run yet is skipped at line 373 although its width was counted, so the parent's Linear fails with a shape mismatch. Coverage of `torchcell/models/dcell.py`: 47.8% to 96.3% (Phase 10 of [[test-campaign.2026.09.25]]).
+
+## 2026.09.30 - DCellLoss on model outputs sums the auxiliary terms (issue #554)
+
+`test_dcell_loss_on_model_outputs_trains_every_parameter` now asserts MSE(root) + 0.3 * (MSE(GO:1) + MSE(GO:2)) and that `linear_outputs["GO:0"] is linear_outputs["GO:ROOT"]`, the alias the loss uses to skip the root; the `main` config carries `aux_reduction: "sum"`.

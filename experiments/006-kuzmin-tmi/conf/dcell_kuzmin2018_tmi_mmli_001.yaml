@@ -69,6 +69,7 @@ regression_task:
   dcell_loss:
     alpha: 0.3 # Weight for auxiliary losses
     use_auxiliary_losses: true # default true  # Whether to use losses from non-root subsystems
+    aux_reduction: "sum" # Ma et al. 2018 sum over non-root subsystems; runs before 2026-09-30 used "mean" (issue #554)
 
   is_weighted_phenotype_loss: false
 

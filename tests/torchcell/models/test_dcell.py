@@ -418,8 +418,10 @@ def test_dcell_loss_on_model_outputs_trains_every_parameter(
 ) -> None:
     """With auxiliary losses on, the heads of terms 1 and 2 (untouched by the prediction
     alone, see the backward test above) receive gradient, so every parameter does.
-    The loss is exactly MSE(root) + 0.3 * mean(MSE(GO:1), MSE(GO:2)): GO:0 and GO:ROOT are
-    both skipped because GO:0 *is* the prediction tensor.
+    The loss is exactly MSE(root) + 0.3 * (MSE(GO:1) + MSE(GO:2)), the paper's sum over
+    non-root subsystems (issue #554): GO:ROOT is skipped by its key and GO:0 because the
+    model binds the same tensor object to both names (dcell.py ``linear_outputs["GO:ROOT"]
+    = predictions``).
     """
     model = _model(dcell_graph)
     predictions, outputs = model(dcell_graph, dcell_batch)
@@ -427,7 +429,8 @@ def test_dcell_loss_on_model_outputs_trains_every_parameter(
     total, parts = DCellLoss(alpha=0.3)(predictions, outputs, target)
     linear = outputs["linear_outputs"]
     mse = torch.nn.functional.mse_loss
-    auxiliary = (mse(linear["GO:1"], target) + mse(linear["GO:2"], target)) / 2
+    assert linear["GO:0"] is linear["GO:ROOT"]
+    auxiliary = mse(linear["GO:1"], target) + mse(linear["GO:2"], target)
     torch.testing.assert_close(total, mse(predictions, target) + 0.3 * auxiliary)
     torch.testing.assert_close(parts["auxiliary_loss"], auxiliary.detach())
     total.backward()
@@ -542,7 +545,11 @@ def _main_cfg(lr: float, epochs: int, plot_every: int) -> Any:
                 "output_size": 1,
             },
             "regression_task": {
-                "dcell_loss": {"alpha": 0.3, "use_auxiliary_losses": True},
+                "dcell_loss": {
+                    "alpha": 0.3,
+                    "use_auxiliary_losses": True,
+                    "aux_reduction": "sum",
+                },
                 "optimizer": {"type": "AdamW", "lr": lr, "weight_decay": 0.0},
                 "lr_scheduler": {
                     "type": "ReduceLROnPlateau",

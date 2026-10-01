@@ -594,6 +594,7 @@ def main(cfg: DictConfig) -> tuple[nn.Module, tuple[torch.Tensor, dict[str, Any]
     loss_func = DCellLoss(
         alpha=cfg.regression_task.dcell_loss.alpha,
         use_auxiliary_losses=cfg.regression_task.dcell_loss.use_auxiliary_losses,
+        aux_reduction=cfg.regression_task.dcell_loss.aux_reduction,
     )
 
     # Create optimizer

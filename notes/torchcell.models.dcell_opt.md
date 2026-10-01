@@ -595,3 +595,7 @@ def _process_dimension_group(self, term_indices, inputs, ...):
 2. **Graph Neural Network**: Rejected - changes model fundamentally  
 3. **torch.compile**: Tried - minimal improvement due to dynamic ops
 4. **This Approach**: Selected - best balance of performance and model preservation
+
+## 2026.09.30 - DCellLoss reduction passed from the config (issue #554)
+
+`main` now passes `cfg.regression_task.dcell_loss.aux_reduction` to `DCellLoss`, whose default became the paper's sum over non-root subsystems. Runs made before 2026-09-30 with auxiliary losses on used the mean; see [[torchcell.losses.dcell]].

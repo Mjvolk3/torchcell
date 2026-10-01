@@ -21,3 +21,7 @@ Findings, pinned as the code behaves:
 ## 2026.09.30 - Findings retired by the issue #516 fix
 
 All six findings of this file are retired. The tests now run with the `DCellLoss` the task constructs (no deprecated loss is installed) and assert: loss 1.225 (and 0.75 with auxiliary losses off, which pins the root as `predictions`); root-only RMSE/MSE/MAE (0.8660254, 0.75, 5/6); `val_pearson_root`/`val_spearman_root`; no `tracemalloc` tracing after construction; `ValueError` with the exact message for `target="growth_rate"`; a box plot of y against the root, and after one Adam step against the post-step root [0.001, -0.997001, 0.999001] with no sanity-pass values; one artifact per epoch holding that epoch's checkpoint; no artifact and no error with checkpointing disabled.
+
+## 2026.09.30 - Loss values under the paper's sum (issue #554)
+
+`DCellLoss` now sums the auxiliary MSEs, so the pinned loss is 0.75 + 0.3 * 9.5 / 3 = 1.7 (was 1.225 under the mean); the loss test also pins 1.225 under `aux_reduction="mean"` and 0.75 with auxiliary losses off. Auxiliary-head gradients doubled (GO:1 0.8 / 0.3, GO:2 0.9 / 0.3, `scale` [1.0, 0.8, 0.9]); their signs, and therefore the one-Adam-step deltas, are unchanged.

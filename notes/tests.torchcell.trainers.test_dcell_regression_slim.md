@@ -15,3 +15,7 @@ Findings: the same loss argument-order crash (`dcell_regression_slim.py` lines 1
 ## 2026.09.30 - Findings retired by the issue #516 fix
 
 The three findings of this file are retired. The tests run with the constructed `DCellLoss` and assert loss 1.225 at alpha 0.3 and 0.75 + 0.7 * 19/12 at alpha 0.7; `trainer.test` returns `test_root_*` (root MSE 0.75, RMSE 0.8660254, MAE 5/6, Pearson and Spearman 0.5) beside `test_*`, and the root collection holds no updates afterwards; with checkpointing disabled a two-epoch fit logs no artifact; with checkpointing each epoch's own checkpoint is logged once at its step.
+
+## 2026.09.30 - Loss values under the paper's sum (issue #554)
+
+Pinned loss is now 1.7 at alpha 0.3 and 0.75 + 0.7 * 19/6 = 2.9666667 at alpha 0.7 (were 1.225 and 1.8583333 under the mean). Gradient signs and the Adam-step deltas are unchanged.

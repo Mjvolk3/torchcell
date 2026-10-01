@@ -11,11 +11,13 @@ against ``fitness`` y = [1.0, 0.0, 0.5].
 
 The trainer calls the loss it constructs, ``torchcell.losses.DCellLoss(predictions,
 outputs, target)``, with predictions = the squeezed root head and
-``outputs["linear_outputs"]`` = every squeezed head (the loss skips ``GO:ROOT``):
+``outputs["linear_outputs"]`` = every squeezed head (the loss skips ``GO:ROOT``).
+``DCellLoss`` defaults to the SUM over non-root subsystems of Ma et al. 2018 (issue #554):
 
-* loss = MSE(root) + 0.3 * mean(MSE(GO:1), MSE(GO:2))
-  = (1 + 1 + 0.25) / 3 + 0.3 * ((1 + 1 + 2.25) / 3 + (1 + 4 + 0.25) / 3) / 2
-  = 0.75 + 0.3 * 9.5 / 6 = 0.75 + 0.475 = 1.225;
+* loss = MSE(root) + 0.3 * (MSE(GO:1) + MSE(GO:2))
+  = (1 + 1 + 0.25) / 3 + 0.3 * ((1 + 1 + 2.25) / 3 + (1 + 4 + 0.25) / 3)
+  = 0.75 + 0.3 * 9.5 / 3 = 0.75 + 0.95 = 1.7;
+  under ``aux_reduction="mean"`` (the 005/006 runs) it was 0.75 + 0.3 * 9.5 / 6 = 1.225;
 * subsystem mean m = mean over the three terms = [0, 2/3, 4/3];
 * Pearson(m, y) = -0.5 and Pearson(root, y) = +0.5 (deviations [-2/3, 0, 2/3] and
   [0, -1, 1] against [0.5, -0.5, 0]: cov -1/3 over 2/3, cov 1/2 over 1); Spearman
@@ -26,9 +28,10 @@ outputs, target)``, with predictions = the squeezed root head and
   MAE = 2.5 / 3 = 5/6, RMSE = sqrt(0.75) = 0.8660254.
 
 Gradients of that loss: root head weight 1.0 and bias -1.0 (2/3 * sum e * h and
-2/3 * sum e); GO:1 head weight 0.4 and bias 0.15; GO:2 head weight 0.45 and bias 0.15
-(each auxiliary head carries alpha / 2 = 0.15 of its MSE gradient); ``scale``
-[1.0, 0.4, 0.45] (every feature and head weight is 1). None is zero, so the first Adam
+2/3 * sum e); GO:1 head weight 0.8 and bias 0.3 (0.3 * 2/3 * [4, 1.5] with
+e1 = [-1, 1, 1.5]); GO:2 head weight 0.9 and bias 0.3 (0.3 * 2/3 * [4.5, 1.5] with
+e2 = [-1, 2, 0.5]); each auxiliary head carries alpha = 0.3 of its MSE gradient;
+``scale`` [1.0, 0.8, 0.9] (every feature and head weight is 1). None is zero, so the first Adam
 step moves each parameter by exactly -lr * sign(grad) (m_hat / sqrt(v_hat) = g / |g|
 on step one; eps 1e-8 and weight decay 1e-5 perturb it below 1e-7). After that step the
 root prediction is 0.999 * 0.999 * [0, -1, 1] + 0.001 = [0.001, -0.997001, 0.999001].
@@ -39,7 +42,7 @@ Metric values from torchmetrics carry float32 error of about 1e-6, hence ``abs=1
 import math
 import tracemalloc
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import lightning as L
 import matplotlib.pyplot as plt
@@ -64,7 +67,7 @@ from torchcell.trainers.dcell_regression import DCellRegressionTask
 
 Y = [1.0, 0.0, 0.5]
 ROOT = [0.0, -1.0, 1.0]
-LOSS = 1.225
+LOSS = 1.7
 ROOT_METRICS = {"MSE": 0.75, "MAE": 5 / 6, "RMSE": math.sqrt(0.75)}
 
 
@@ -172,19 +175,24 @@ def test_forward_feeds_dcell_outputs_through_the_linear_heads() -> None:
     }
 
 
-@pytest.mark.parametrize(("auxiliary", "expected"), [(True, LOSS), (False, 0.75)])
+@pytest.mark.parametrize(
+    ("auxiliary", "reduction", "expected"),
+    [(True, "sum", LOSS), (True, "mean", 1.225), (False, "sum", 0.75)],
+)
 def test_loss_feeds_the_root_as_prediction_and_every_head_as_auxiliary(
-    auxiliary: bool, expected: float
+    auxiliary: bool, reduction: Literal["sum", "mean"], expected: float
 ) -> None:
     """``_loss`` calls ``DCellLoss(predictions, outputs, target)`` in that order.
 
-    With auxiliary losses the value is 1.225 (root MSE 0.75 plus 0.3 times the mean of
-    the GO:1 and GO:2 MSEs); without them it is the root MSE alone, 0.75, so the root
+    With auxiliary losses the value is 1.7 (root MSE 0.75 plus 0.3 times the SUM of the
+    GO:1 and GO:2 MSEs, 9.5 / 3), or 1.225 under ``aux_reduction="mean"`` (9.5 / 6, the
+    005/006 runs); without them it is the root MSE alone, 0.75, so the root
     is what lands in ``predictions`` (issue #516: the steps used to pass the deprecated
     ``(outputs, target, weights)`` order and raised on a parameter generator).
     """
     task = _task()
     task.loss.use_auxiliary_losses = auxiliary
+    task.loss.aux_reduction = reduction
     batch = make_dcell_regression_batch()
     loss = task._loss(task(batch), batch.fitness)
     assert loss.item() == pytest.approx(expected, abs=1e-6)
@@ -193,9 +201,9 @@ def test_loss_feeds_the_root_as_prediction_and_every_head_as_auxiliary(
 def test_one_training_step_logs_closed_form_values_and_takes_one_adam_step(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """train_loss 1.225, correlations -0.5 (subsystems) / +0.5 (root), root metrics.
+    """train_loss 1.7, correlations -0.5 (subsystems) / +0.5 (root), root metrics.
 
-    ``training_step`` returns the loss (seen by callbacks as ``{"loss": 1.225}``), the
+    ``training_step`` returns the loss (seen by callbacks as ``{"loss": 1.7}``), the
     parameter count logged at train start is 3 + 3 * 2 = 9, and every parameter of both
     submodels moves by exactly -1e-3 * sign(grad) (signs from the module docstring).
     """

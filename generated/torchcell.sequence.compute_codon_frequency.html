@@ -129,14 +129,10 @@
 <dd><p>Compute relative codon frequencies for a coding sequence.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>cds_str</strong> – Coding sequence whose length must be a positive multiple of three.</p>
+<dd class="field-odd"><p><strong>cds_str</strong> – Coding sequence whose length must be a multiple of three.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A CodonFrequency mapping every codon to its relative frequency.</p>
-</dd>
-<dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the CDS is empty, its length is not a multiple of three, or
-    it carries a base other than A, T, G, C.</p>
 </dd>
 </dl>
 </dd></dl>

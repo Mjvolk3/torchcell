@@ -132,13 +132,6 @@
 <span class="sd">    Edge attributes are preserved in their original sparse format for memory</span>
 <span class="sd">    efficiency while adjacency/incidence matrices become boolean dense masks.</span>
 
-<span class="sd">    A mask entry is set only when both endpoints are real (original) nodes, so an edge</span>
-<span class="sd">    into a padding row or past the input's node count is dropped from the mask (it</span>
-<span class="sd">    stays in ``edge_index``). A node tensor is padded with zeros along every one of</span>
-<span class="sd">    its first two axes whose size equals the original node count, so a per-node</span>
-<span class="sd">    ``[N, N]`` matrix becomes ``[N_pad, N_pad]``. A feature axis that happens to equal</span>
-<span class="sd">    ``N`` is padded too: the transform cannot tell it from a node axis.</span>
-
 <span class="sd">    Args:</span>
 <span class="sd">        num_nodes_dict (Dict[str, int], optional): Dictionary mapping node types to</span>
 <span class="sd">            their desired number of nodes. If not provided for a node type, will</span>
@@ -159,9 +152,6 @@
 <span class="w">        </span><span class="sd">"""Add dense masks, pad node attributes, and return the transformed data."""</span>
         <span class="c1"># First determine number of nodes for each node type</span>
         <span class="n">num_nodes_dict</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">orig_num_nodes_dict</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">node_type</span><span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="n">node_type</span><span class="p">]</span><span class="o">.</span><span class="n">num_nodes</span> <span class="k">for</span> <span class="n">node_type</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">node_types</span>
-        <span class="p">}</span>
         <span class="k">for</span> <span class="n">node_type</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">node_types</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">node_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_nodes_dict</span><span class="p">:</span>
                 <span class="n">num_nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_nodes_dict</span><span class="p">[</span><span class="n">node_type</span><span class="p">]</span>
@@ -189,10 +179,9 @@
                     <span class="n">device</span><span class="o">=</span><span class="n">edge_index</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
                 <span class="p">)</span>
 
-                <span class="c1"># Fill the mask with edges between real nodes; padding rows and</span>
-                <span class="c1"># columns stay False</span>
-                <span class="n">valid_edges</span> <span class="o">=</span> <span class="p">(</span><span class="n">edge_index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">orig_num_nodes_dict</span><span class="p">[</span><span class="n">src</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span>
-                    <span class="n">edge_index</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">orig_num_nodes_dict</span><span class="p">[</span><span class="n">dst</span><span class="p">]</span>
+                <span class="c1"># Fill the mask with valid edges</span>
+                <span class="n">valid_edges</span> <span class="o">=</span> <span class="p">(</span><span class="n">edge_index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">src_num_nodes</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
+                    <span class="n">edge_index</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">dst_num_nodes</span>
                 <span class="p">)</span>
                 <span class="n">valid_edge_index</span> <span class="o">=</span> <span class="n">edge_index</span><span class="p">[:,</span> <span class="n">valid_edges</span><span class="p">]</span>
 
@@ -219,10 +208,9 @@
                     <span class="n">device</span><span class="o">=</span><span class="n">hyperedge_index</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
                 <span class="p">)</span>
 
-                <span class="c1"># Fill in the incidence matrix from the hyperedge_index, real</span>
-                <span class="c1"># nodes only</span>
-                <span class="n">valid_edges</span> <span class="o">=</span> <span class="p">(</span><span class="n">hyperedge_index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">orig_num_nodes_dict</span><span class="p">[</span><span class="n">src</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span>
-                    <span class="n">hyperedge_index</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">orig_num_nodes_dict</span><span class="p">[</span><span class="n">dst</span><span class="p">]</span>
+                <span class="c1"># Fill in the incidence matrix from the hyperedge_index</span>
+                <span class="n">valid_edges</span> <span class="o">=</span> <span class="p">(</span><span class="n">hyperedge_index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">src_num_nodes</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
+                    <span class="n">hyperedge_index</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">dst_num_nodes</span>
                 <span class="p">)</span>
                 <span class="n">valid_he_index</span> <span class="o">=</span> <span class="n">hyperedge_index</span><span class="p">[:,</span> <span class="n">valid_edges</span><span class="p">]</span>
 
@@ -273,14 +261,6 @@
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="n">orig_num_nodes</span><span class="p">:</span>
                     <span class="n">size</span> <span class="o">=</span> <span class="p">[</span><span class="n">num_nodes</span> <span class="o">-</span> <span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">())[</span><span class="mi">1</span><span class="p">:]</span>
                     <span class="n">padded_value</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">value</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">size</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-                    <span class="c1"># A per-node matrix ([N, N, ...]) is padded on its columns too</span>
-                    <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="n">orig_num_nodes</span><span class="p">:</span>
-                        <span class="n">size</span> <span class="o">=</span> <span class="p">[</span><span class="n">num_nodes</span><span class="p">,</span> <span class="n">num_nodes</span> <span class="o">-</span> <span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span>
-                            <span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
-                        <span class="p">)[</span><span class="mi">2</span><span class="p">:]</span>
-                        <span class="n">padded_value</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
-                            <span class="p">[</span><span class="n">padded_value</span><span class="p">,</span> <span class="n">padded_value</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">size</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span>
-                        <span class="p">)</span>
                     <span class="nb">setattr</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">padded_value</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">data</span></div>

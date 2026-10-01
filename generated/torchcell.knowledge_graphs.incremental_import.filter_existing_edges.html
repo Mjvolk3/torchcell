@@ -142,10 +142,6 @@
 the subset that already exists in the store (<code class="docutils literal notranslate"><span class="pre">query_existing_edges</span></code> bound to a
 session in production; any callable in tests). Originals are kept under an
 <code class="docutils literal notranslate"><span class="pre">unfiltered/</span></code> subdirectory, and a JSON summary is written.</p>
-<p>Idempotent: every run filters the CURRENT part file, never the backup, so a row an
-earlier run dropped stays dropped. A rerun (e.g. a retried increment job) only drops
-more. The <code class="docutils literal notranslate"><span class="pre">unfiltered/</span></code> copy is written once, by the first run that drops a row of
-that file, and never overwritten. The summary counts this run’s drops only.</p>
 </dd></dl>
 
 </section>

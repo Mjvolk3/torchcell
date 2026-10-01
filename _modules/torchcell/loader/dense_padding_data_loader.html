@@ -121,6 +121,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch.utils.data</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch_geometric</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">beartype.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data.dataloader</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_collate</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">Batch</span><span class="p">,</span> <span class="n">Dataset</span>
@@ -128,7 +129,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data.datapipes</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetAdapter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data.on_disk_dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">OnDiskDataset</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data.storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseStorage</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparseTensor</span><span class="p">,</span> <span class="n">TensorFrame</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparseTensor</span><span class="p">,</span> <span class="n">TensorFrame</span><span class="p">,</span> <span class="n">torch_frame</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_sparse</span>
 
 <span class="n">FLOAT_PADDING_VALUE</span> <span class="o">=</span> <span class="mf">1e-5</span>
@@ -150,11 +151,10 @@
 <span class="sd">        non_float_padding_value (int, optional): The padding value for non-`float` (e.g., `int`) dtype tensors.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        A tuple of the padded values (each with a leading batch dimension of 1) and</span>
-<span class="sd">        the mask, True on every position a value came from and False on padding. The</span>
-<span class="sd">        mask is built from each value's length along the padded axis, never by</span>
-<span class="sd">        comparing values with the pad, so a real value equal to the pad stays True.</span>
+<span class="sd">        A tuple containing the padded value and an optional mask.</span>
 <span class="sd">    """</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">cat_dim</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">elem</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">dtype</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">dtype</span>
     <span class="n">padding_value</span> <span class="o">=</span> <span class="p">(</span>
@@ -162,16 +162,6 @@
         <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_floating_point</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
         <span class="k">else</span> <span class="n">non_float_padding_value</span>
     <span class="p">)</span>
-    <span class="c1"># The axis pad_sequence pads: the edge axis of a [2, E] index, else the first.</span>
-    <span class="n">pad_axis</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="mi">1</span>
-        <span class="k">if</span> <span class="n">elem</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span>
-        <span class="ow">and</span> <span class="n">elem</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span>
-        <span class="ow">and</span> <span class="s2">"edge_index"</span> <span class="ow">in</span> <span class="n">key</span>
-        <span class="ow">and</span> <span class="n">dtype</span> <span class="o">!=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float</span>
-        <span class="k">else</span> <span class="mi">0</span>
-    <span class="p">)</span>
-    <span class="n">lengths</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">pad_axis</span><span class="p">]</span> <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">elem</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>
@@ -197,6 +187,14 @@
                         <span class="n">values</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">padding_value</span><span class="o">=</span><span class="n">padding_value</span>
                     <span class="p">)</span>
                 <span class="p">]</span>
+            <span class="k">if</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">]:</span>
+                <span class="c1"># NOTE: We cannot use `torch.nn.utils.rnn.pad_sequence` directly with unsigned integer/boolean tensors.</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+                    <span class="p">[(</span><span class="n">value</span> <span class="o">!=</span> <span class="n">padding_value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="n">cat_dim</span> <span class="ow">or</span> <span class="mi">0</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+                    <span class="n">value</span><span class="p">[</span><span class="n">value</span> <span class="o">==</span> <span class="n">padding_value</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">values</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">value</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -204,23 +202,6 @@
                     <span class="n">values</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">padding_value</span><span class="o">=</span><span class="n">padding_value</span>
                 <span class="p">)</span>
             <span class="p">]</span>
-
-    <span class="n">masks</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">value</span><span class="p">,</span> <span class="n">length</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">lengths</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">elem</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">sample_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">sample_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">pad_axis</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">sample_mask</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:</span><span class="n">length</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">sample_mask</span><span class="p">[:,</span> <span class="p">:</span><span class="n">length</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="n">masks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sample_mask</span><span class="p">)</span>
-    <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">masks</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">]</span> <span class="ow">and</span> <span class="n">elem</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="c1"># NOTE: these were padded as long; the pad becomes 0 (False) in the dtype.</span>
-        <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span><span class="o">.</span><span class="n">masked_fill</span><span class="p">(</span><span class="o">~</span><span class="n">m</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">masks</span><span class="p">)]</span>
 
     <span class="k">return</span> <span class="n">values</span><span class="p">,</span> <span class="n">mask</span>
 
@@ -246,10 +227,16 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        A tuple containing the collated value and an optional mask.</span>
 <span class="sd">    """</span>
+    <span class="n">cat_dim</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">elem</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_sparse</span><span class="p">(</span><span class="n">elem</span><span class="p">):</span>
         <span class="c1"># Concatenate a list of `torch.Tensor` along a new `batch_dim=0`.</span>
+        <span class="n">padding_value</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">float_padding_value</span>
+            <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_floating_point</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+            <span class="k">else</span> <span class="n">non_float_padding_value</span>
+        <span class="p">)</span>
         <span class="n">values</span><span class="p">,</span> <span class="n">mask</span> <span class="o">=</span> <span class="n">_dense_pad_tensor</span><span class="p">(</span>
             <span class="n">key</span><span class="p">,</span>
             <span class="n">values</span><span class="p">,</span>
@@ -261,21 +248,33 @@
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
                 <span class="s2">"Dense padding collation for nested tensors is not supported (tested) yet."</span>
             <span class="p">)</span>
+            <span class="n">tensors</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">nested_tensor</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+                <span class="n">tensors</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">nested_tensor</span><span class="o">.</span><span class="n">unbind</span><span class="p">())</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nested</span><span class="o">.</span><span class="n">nested_tensor</span><span class="p">(</span><span class="n">tensors</span><span class="p">)</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nested</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">tensor</span><span class="p">:</span> <span class="n">tensor</span> <span class="o">!=</span> <span class="n">padding_value</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">value</span><span class="p">,</span> <span class="n">mask</span>
 
         <span class="n">out</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get_worker_info</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># Write directly into shared memory to avoid an extra copy:</span>
-            <span class="c1"># torch &gt;= 2.0 (WITH_PT20) is required, so the untyped storage always exists</span>
             <span class="n">numel</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">)</span>
-            <span class="n">storage</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">untyped_storage</span><span class="p">()</span><span class="o">.</span><span class="n">_new_shared</span><span class="p">(</span>  <span class="c1"># type: ignore[no-untyped-call]  # torch storage internals untyped</span>
-                <span class="n">numel</span> <span class="o">*</span> <span class="n">elem</span><span class="o">.</span><span class="n">element_size</span><span class="p">(),</span> <span class="n">device</span><span class="o">=</span><span class="n">elem</span><span class="o">.</span><span class="n">device</span>
-            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">torch_geometric</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">WITH_PT20</span><span class="p">:</span>
+                <span class="n">storage</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">untyped_storage</span><span class="p">()</span><span class="o">.</span><span class="n">_new_shared</span><span class="p">(</span>  <span class="c1"># type: ignore[no-untyped-call]  # torch storage internals untyped</span>
+                    <span class="n">numel</span> <span class="o">*</span> <span class="n">elem</span><span class="o">.</span><span class="n">element_size</span><span class="p">(),</span> <span class="n">device</span><span class="o">=</span><span class="n">elem</span><span class="o">.</span><span class="n">device</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">torch_geometric</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">WITH_PT112</span><span class="p">:</span>
+                <span class="n">storage</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">storage</span><span class="p">()</span><span class="o">.</span><span class="n">_new_shared</span><span class="p">(</span><span class="n">numel</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">elem</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># type: ignore[no-untyped-call]  # torch storage internals untyped</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">storage</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">storage</span><span class="p">()</span><span class="o">.</span><span class="n">_new_shared</span><span class="p">(</span><span class="n">numel</span><span class="p">)</span>  <span class="c1"># type: ignore[no-untyped-call]  # torch storage internals untyped</span>
             <span class="n">shape</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">data_list</span><span class="p">)]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span>
                 <span class="n">values</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">([</span><span class="n">value</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">])]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
             <span class="p">)</span>
             <span class="n">out</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">storage</span><span class="p">)</span><span class="o">.</span><span class="n">resize_</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
 
-        <span class="n">value</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">cat_dim</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span> <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">value</span> <span class="o">!=</span> <span class="n">padding_value</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">value</span><span class="p">,</span> <span class="n">mask</span>
 
@@ -283,6 +282,11 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="s2">"Dense padding collation for TensorFrames is not supported (tested) yet."</span>
         <span class="p">)</span>
+        <span class="n">values</span><span class="p">,</span> <span class="n">mask</span> <span class="o">=</span> <span class="n">_dense_pad_tensor</span><span class="p">(</span>
+            <span class="n">key</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">non_float_padding_value</span><span class="o">=</span><span class="n">non_float_padding_value</span>
+        <span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">torch_frame</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">along</span><span class="o">=</span><span class="s2">"row"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span><span class="p">,</span> <span class="n">mask</span>
 
     <span class="k">elif</span> <span class="n">is_sparse</span><span class="p">(</span><span class="n">elem</span><span class="p">):</span>
         <span class="c1"># Concatenate a list of `SparseTensor` along the `cat_dim`.</span>
@@ -300,12 +304,7 @@
         <span class="n">value_dict</span><span class="p">,</span> <span class="n">mask_dict</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">elem</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="n">value_dict</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">mask_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">_dense_padded_collate</span><span class="p">(</span>
-                <span class="n">key</span><span class="p">,</span>
-                <span class="p">[</span><span class="n">v</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">],</span>
-                <span class="n">data_list</span><span class="p">,</span>
-                <span class="n">stores</span><span class="p">,</span>
-                <span class="n">float_padding_value</span><span class="o">=</span><span class="n">float_padding_value</span><span class="p">,</span>
-                <span class="n">non_float_padding_value</span><span class="o">=</span><span class="n">non_float_padding_value</span><span class="p">,</span>
+                <span class="n">key</span><span class="p">,</span> <span class="p">[</span><span class="n">v</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">],</span> <span class="n">data_list</span><span class="p">,</span> <span class="n">stores</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">value_dict</span><span class="p">,</span> <span class="n">mask_dict</span>
 
@@ -319,12 +318,7 @@
         <span class="n">value_list</span><span class="p">,</span> <span class="n">mask_list</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">elem</span><span class="p">)):</span>
             <span class="n">value</span><span class="p">,</span> <span class="n">mask</span> <span class="o">=</span> <span class="n">_dense_padded_collate</span><span class="p">(</span>
-                <span class="n">key</span><span class="p">,</span>
-                <span class="p">[</span><span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">],</span>
-                <span class="n">data_list</span><span class="p">,</span>
-                <span class="n">stores</span><span class="p">,</span>
-                <span class="n">float_padding_value</span><span class="o">=</span><span class="n">float_padding_value</span><span class="p">,</span>
-                <span class="n">non_float_padding_value</span><span class="o">=</span><span class="n">non_float_padding_value</span><span class="p">,</span>
+                <span class="n">key</span><span class="p">,</span> <span class="p">[</span><span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">],</span> <span class="n">data_list</span><span class="p">,</span> <span class="n">stores</span>
             <span class="p">)</span>
             <span class="n">value_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="n">mask_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
@@ -500,9 +494,7 @@
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">default_collate</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">TensorFrame</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                <span class="s2">"Dense padding collation for TensorFrames is not supported (tested) yet."</span>
-            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">torch_frame</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">along</span><span class="o">=</span><span class="s2">"row"</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>

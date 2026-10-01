@@ -152,8 +152,9 @@
 <dt class="sig sig-object py" id="torchcell.datasets.scerevisiae.messner2023.ProteomeMessner2023Dataset.download">
 <span class="sig-name descname"><span class="pre">download</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/datasets/scerevisiae/messner2023.html#ProteomeMessner2023Dataset.download"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datasets.scerevisiae.messner2023.ProteomeMessner2023Dataset.download" title="Link to this definition"></a></dt>
 <dd><p>Copy the hash-pinned matrix + metadata from the library mirror to raw_dir.</p>
-<p>The mirror is the canonical source (Mendeley fetched once); we verify each
-file’s sha256 after copy and never touch a live Mendeley URL.</p>
+<p>The mirror is the canonical source (Mendeley fetched once); each file’s sha256
+is verified before the copy (and again at build time by <code class="docutils literal notranslate"><span class="pre">process</span></code>), and no
+live Mendeley URL is touched.</p>
 </dd></dl>
 
 <dl class="py method">

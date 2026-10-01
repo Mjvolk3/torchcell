@@ -184,7 +184,12 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ExperimentDataset</span><span class="p">,</span>
+    <span class="n">post_process</span><span class="p">,</span>
+    <span class="n">verify_raw_files</span><span class="p">,</span>
+    <span class="n">verify_sha256</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Environment</span><span class="p">,</span>
     <span class="n">Experiment</span><span class="p">,</span>
@@ -202,7 +207,12 @@
     <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">PETER2018_1011</span><span class="p">,</span> <span class="n">SGD_S288C_R64</span><span class="p">,</span> <span class="n">resolve</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">PETER2018_1011</span><span class="p">,</span>
+    <span class="n">SGD_S288C_R64</span><span class="p">,</span>
+    <span class="n">load_genome_manifest</span><span class="p">,</span>
+    <span class="n">resolve</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -413,9 +423,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Symlink the hash-pinned mirror files into ``raw_dir`` and verify sha256.</span>
 
-<span class="sd">        Large artifacts are referenced in place (never copied). Only the two files with a</span>
-<span class="sd">        pinned sha256 (Caudal zip, Peter reference-gene tarball) are hash-verified; the</span>
-<span class="sd">        presence/copy-number matrices are existence-checked.</span>
+<span class="sd">        Large artifacts are referenced in place (never copied). The two files with a</span>
+<span class="sd">        module pin (Caudal zip, Peter reference-gene tarball) are hash-verified here; the</span>
+<span class="sd">        presence/copy-number matrices are verified by the genomes tier on ``resolve``.</span>
+<span class="sd">        ``process`` re-verifies all four in ``raw/`` before reading them.</span>
 <span class="sd">        """</span>
         <span class="n">data_root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_root</span><span class="p">()</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -435,11 +446,7 @@
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"required raw artifact missing from mirror: </span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="n">expected</span> <span class="o">=</span> <span class="n">sha256_expected</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">expected</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">got</span> <span class="o">=</span> <span class="n">_sha256</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">got</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> sha256 mismatch: got </span><span class="si">{</span><span class="n">got</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2">"</span>
-                    <span class="p">)</span>
+                <span class="n">verify_sha256</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">expected</span><span class="p">)</span>
             <span class="n">dest</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
                 <span class="n">os</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
@@ -452,8 +459,24 @@
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.html#torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Build the 943 per-isolate pan-transcriptome experiments and write LMDB."""</span>
+<span class="w">        </span><span class="sd">"""Build the 943 per-isolate pan-transcriptome experiments and write LMDB.</span>
+
+<span class="sd">        Every file in ``raw/`` is verified before a row is read: the Caudal zip and the</span>
+<span class="sd">        reference-gene tarball against this module's pins, the presence and copy-number</span>
+<span class="sd">        matrices against the genomes tier's manifest (the pin ``resolve`` checks in</span>
+<span class="sd">        ``download``). A mismatch raises ``RawSha256MismatchError``.</span>
+<span class="sd">        """</span>
         <span class="n">data_root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_root</span><span class="p">()</span>
+        <span class="n">peter</span> <span class="o">=</span> <span class="n">load_genome_manifest</span><span class="p">(</span><span class="n">PETER2018_1011</span><span class="p">,</span> <span class="n">data_root</span><span class="p">)</span>
+        <span class="n">verify_raw_files</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span>
+            <span class="p">{</span>
+                <span class="n">CAUDAL_ZIP_BASENAME</span><span class="p">:</span> <span class="n">CAUDAL_ZIP_SHA256</span><span class="p">,</span>
+                <span class="n">REFGENE_TAR_NAME</span><span class="p">:</span> <span class="n">REFGENE_TAR_SHA256</span><span class="p">,</span>
+                <span class="n">PRESENCE_NAME</span><span class="p">:</span> <span class="n">peter</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">PRESENCE_NAME</span><span class="p">)</span><span class="o">.</span><span class="n">sha256</span><span class="p">,</span>
+                <span class="n">COPYNUMBER_NAME</span><span class="p">:</span> <span class="n">peter</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">COPYNUMBER_NAME</span><span class="p">)</span><span class="o">.</span><span class="n">sha256</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="c1"># 1. Peter presence/absence + copy-number matrices -&gt; core/accessory + ORF maps.</span>
@@ -707,9 +730,9 @@
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_content_perturbations</span><span class="p">(</span>
         <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">presence_row</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">copynumber_row</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">s288c_mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">presence_row</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">copynumber_row</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">s288c_mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
         <span class="n">orf_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
         <span class="n">s288c_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>

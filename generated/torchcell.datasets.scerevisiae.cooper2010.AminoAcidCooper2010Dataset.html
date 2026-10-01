@@ -166,6 +166,8 @@ its sha256) is the only source; an absent mirror raises with the manual recipe.<
 <dt class="sig sig-object py" id="torchcell.datasets.scerevisiae.cooper2010.AminoAcidCooper2010Dataset.process">
 <span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/datasets/scerevisiae/cooper2010.html#AminoAcidCooper2010Dataset.process"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datasets.scerevisiae.cooper2010.AminoAcidCooper2010Dataset.process" title="Link to this definition"></a></dt>
 <dd><p>Parse Table 4, apply the retention rules, write the LMDB and the ledgers.</p>
+<p>Table 4 in <code class="docutils literal notranslate"><span class="pre">raw/</span></code> is verified against its sha256 pin before any row is read;
+a mismatch raises <code class="docutils literal notranslate"><span class="pre">RawSha256MismatchError</span></code> and no store is written.</p>
 </dd></dl>
 
 <dl class="py method">

@@ -243,7 +243,13 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ExperimentDataset</span><span class="p">,</span>
+    <span class="n">link_verified</span><span class="p">,</span>
+    <span class="n">post_process</span><span class="p">,</span>
+    <span class="n">verify_raw_files</span><span class="p">,</span>
+    <span class="n">verify_sha256</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.experiment_dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_interned</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">SC</span><span class="p">,</span> <span class="n">dropout</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -744,17 +750,16 @@
     <span class="n">sums</span> <span class="o">=</span> <span class="n">_read_sha256sums</span><span class="p">(</span><span class="n">source</span> <span class="o">/</span> <span class="n">SHA256SUMS_NAME</span><span class="p">)</span>
     <span class="n">root</span> <span class="o">=</span> <span class="n">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
     <span class="n">files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArtifactRecord</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># Every staged file is verified before anything is written, so a refusal leaves</span>
+    <span class="c1"># no mirror directory and no partial deposit behind.</span>
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">_RAW_FILES</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">sums</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">!=</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"sha256"</span><span class="p">]:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">SHA256SUMS_NAME</span><span class="si">}</span><span class="s2"> lists </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> as </span><span class="si">{</span><span class="n">sums</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="si">}</span><span class="s2">, pinned </span><span class="si">{</span><span class="n">spec</span><span class="p">[</span><span class="s1">'sha256'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
+        <span class="n">verify_sha256</span><span class="p">(</span><span class="n">source</span> <span class="o">/</span> <span class="n">name</span><span class="p">,</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"sha256"</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">_RAW_FILES</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">staged</span> <span class="o">=</span> <span class="n">source</span> <span class="o">/</span> <span class="n">name</span>
-        <span class="n">digest</span> <span class="o">=</span> <span class="n">sha256_file</span><span class="p">(</span><span class="n">staged</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">digest</span> <span class="o">!=</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"sha256"</span><span class="p">]:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">staged</span><span class="si">}</span><span class="s2"> sha256 </span><span class="si">{</span><span class="n">digest</span><span class="si">}</span><span class="s2"> != pinned </span><span class="si">{</span><span class="n">spec</span><span class="p">[</span><span class="s1">'sha256'</span><span class="p">]</span><span class="si">}</span><span class="s2">; refusing to deposit"</span>
-            <span class="p">)</span>
         <span class="n">dest</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"relpath"</span><span class="p">]</span>
         <span class="n">dest</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">dest</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
@@ -1219,13 +1224,7 @@
                 <span class="sa">f</span><span class="s2">"raw mirror file </span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2"> is absent and the source is not scriptable; "</span>
                 <span class="sa">f</span><span class="s2">"deposit it with deposit_raw_mirror(). Recipe: </span><span class="si">{</span><span class="n">MANUAL_RECIPE</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
-        <span class="n">digest</span> <span class="o">=</span> <span class="n">sha256_file</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">digest</span> <span class="o">!=</span> <span class="n">TABLE4_SHA256</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"raw mirror </span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2"> sha256 mismatch: got </span><span class="si">{</span><span class="n">digest</span><span class="si">}</span><span class="s2">, expected "</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">TABLE4_SHA256</span><span class="si">}</span><span class="s2">"</span>
-            <span class="p">)</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+        <span class="n">link_verified</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">TABLE4_SHA256</span><span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Linked </span><span class="si">%s</span><span class="s2"> from the raw mirror (sha256 verified)"</span><span class="p">,</span> <span class="n">TABLE4_NAME</span><span class="p">)</span></div>
 
 
@@ -1300,7 +1299,12 @@
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.cooper2010.AminoAcidCooper2010Dataset.html#torchcell.datasets.scerevisiae.cooper2010.AminoAcidCooper2010Dataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Parse Table 4, apply the retention rules, write the LMDB and the ledgers."""</span>
+<span class="w">        </span><span class="sd">"""Parse Table 4, apply the retention rules, write the LMDB and the ledgers.</span>
+
+<span class="sd">        Table 4 in ``raw/`` is verified against its sha256 pin before any row is read;</span>
+<span class="sd">        a mismatch raises ``RawSha256MismatchError`` and no store is written.</span>
+<span class="sd">        """</span>
+        <span class="n">verify_raw_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">TABLE4_NAME</span><span class="p">:</span> <span class="n">TABLE4_SHA256</span><span class="p">})</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
 
         <span class="n">load_dotenv</span><span class="p">()</span>

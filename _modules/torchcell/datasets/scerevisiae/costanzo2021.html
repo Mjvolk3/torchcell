@@ -214,7 +214,6 @@
 <span class="sd">61,430 records.</span>
 <span class="sd">"""</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
@@ -230,7 +229,13 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ExperimentDataset</span><span class="p">,</span>
+    <span class="n">copy_verified</span><span class="p">,</span>
+    <span class="n">post_process</span><span class="p">,</span>
+    <span class="n">verify_raw_files</span><span class="p">,</span>
+    <span class="n">verify_sha256</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolved_compound</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">SGA_DM_SELECTION</span><span class="p">,</span> <span class="n">SGA_DM_SELECTION_GALACTOSE</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -629,12 +634,8 @@
 <span class="sd">    """</span>
     <span class="n">root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">))</span>
     <span class="n">dest</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="n">_S1_RAW_RELPATH</span>
+    <span class="n">verify_sha256</span><span class="p">(</span><span class="n">source_xlsx</span><span class="p">,</span> <span class="n">_S1_SHA256</span><span class="p">)</span>
     <span class="n">dest</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">digest</span> <span class="o">=</span> <span class="n">sha256_file</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">source_xlsx</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">digest</span> <span class="o">!=</span> <span class="n">_S1_SHA256</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">source_xlsx</span><span class="si">}</span><span class="s2"> sha256 </span><span class="si">{</span><span class="n">digest</span><span class="si">}</span><span class="s2"> != pinned </span><span class="si">{</span><span class="n">_S1_SHA256</span><span class="si">}</span><span class="s2">; refusing to deposit"</span>
-        <span class="p">)</span>
     <span class="k">if</span> <span class="n">dest</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">sha256_file</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span> <span class="o">!=</span> <span class="n">_S1_SHA256</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dest</span><span class="si">}</span><span class="s2"> exists with a different sha256; refusing"</span><span class="p">)</span>
@@ -733,13 +734,7 @@
                     <span class="s2">"https://www.science.org/doi/10.1126/science.abf8424 into the raw "</span>
                     <span class="s2">"mirror with deposit_raw_mirror(), then rebuild (sha256 verified)."</span>
                 <span class="p">)</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">mirror</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="n">dest</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">out</span><span class="p">:</span>
-                <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
-        <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">dest</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">digest</span> <span class="o">!=</span> <span class="n">_S1_SHA256</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_S1_FILENAME</span><span class="si">}</span><span class="s2"> sha256 mismatch: got </span><span class="si">{</span><span class="n">digest</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">_S1_SHA256</span><span class="si">}</span><span class="s2">"</span>
-            <span class="p">)</span></div>
+            <span class="n">copy_verified</span><span class="p">(</span><span class="n">mirror</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">_S1_SHA256</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Environment</span><span class="p">:</span>
@@ -859,7 +854,12 @@
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.costanzo2021.EnvChemgenCostanzo2021Dataset.html#torchcell.datasets.scerevisiae.costanzo2021.EnvChemgenCostanzo2021Dataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Parse the differential-fitness sheet into records; write LMDB + the drop log."""</span>
+<span class="w">        </span><span class="sd">"""Parse the differential-fitness sheet into records; write LMDB + the drop log.</span>
+
+<span class="sd">        Data File S1 in ``raw/`` is verified against its sha256 pin first; a mismatch</span>
+<span class="sd">        raises ``RawSha256MismatchError`` before any row is read or any store opened.</span>
+<span class="sd">        """</span>
+        <span class="n">verify_raw_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">_S1_FILENAME</span><span class="p">:</span> <span class="n">_S1_SHA256</span><span class="p">})</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                 <span class="s2">"EnvChemgenCostanzo2021Dataset requires a genome for R64 ORF "</span>

@@ -226,7 +226,13 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ExperimentDataset</span><span class="p">,</span>
+    <span class="n">link_verified</span><span class="p">,</span>
+    <span class="n">post_process</span><span class="p">,</span>
+    <span class="n">verify_raw_files</span><span class="p">,</span>
+    <span class="n">verify_sha256</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">resolve_compound_identity</span><span class="p">,</span>
     <span class="n">resolved_compound</span><span class="p">,</span>
@@ -451,15 +457,15 @@
 <span class="sd">    """</span>
     <span class="n">root</span> <span class="o">=</span> <span class="n">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
     <span class="n">files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArtifactRecord</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">source</span><span class="p">,</span> <span class="n">relpath</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">expected</span> <span class="ow">in</span> <span class="p">(</span>
+    <span class="n">deposits</span> <span class="o">=</span> <span class="p">(</span>
         <span class="p">(</span><span class="n">effect_path</span><span class="p">,</span> <span class="n">EFFECT_REL</span><span class="p">,</span> <span class="n">EFFECT_FILENAME</span><span class="p">,</span> <span class="n">EFFECT_SHA256</span><span class="p">),</span>
         <span class="p">(</span><span class="n">guide_path</span><span class="p">,</span> <span class="n">GUIDE_REL</span><span class="p">,</span> <span class="n">GUIDE_FILENAME</span><span class="p">,</span> <span class="n">GUIDE_SHA256</span><span class="p">),</span>
-    <span class="p">):</span>
-        <span class="n">got</span> <span class="o">=</span> <span class="n">_sha256</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">got</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2"> sha256 mismatch: got </span><span class="si">{</span><span class="n">got</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2">"</span>
-            <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="c1"># Both workbooks are verified before anything is written, so a refusal leaves no</span>
+    <span class="c1"># mirror directory and no partial deposit behind.</span>
+    <span class="k">for</span> <span class="n">source</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">expected</span> <span class="ow">in</span> <span class="n">deposits</span><span class="p">:</span>
+        <span class="n">verify_sha256</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">expected</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">source</span><span class="p">,</span> <span class="n">relpath</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">expected</span> <span class="ow">in</span> <span class="n">deposits</span><span class="p">:</span>
         <span class="n">dest</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="n">relpath</span>
         <span class="n">dest</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">dest</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
@@ -596,14 +602,7 @@
             <span class="n">src</span> <span class="o">=</span> <span class="n">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span> <span class="o">/</span> <span class="n">relpath</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">src</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"required raw artifact missing from mirror: </span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-            <span class="n">got</span> <span class="o">=</span> <span class="n">_sha256</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">got</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2"> sha256 mismatch: got </span><span class="si">{</span><span class="n">got</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2">"</span>
-                <span class="p">)</span>
-            <span class="n">dest</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
-                <span class="n">os</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+            <span class="n">link_verified</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="n">expected</span><span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">"Smith 2016 SI workbooks linked into </span><span class="si">%s</span><span class="s2"> (sha256 verified)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span>
         <span class="p">)</span></div>
@@ -678,6 +677,9 @@
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Build one env x geno -&gt; A record per (pool, guide, drug, condition); write LMDB."""</span>
+        <span class="n">verify_raw_files</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">EFFECT_FILENAME</span><span class="p">:</span> <span class="n">EFFECT_SHA256</span><span class="p">,</span> <span class="n">GUIDE_FILENAME</span><span class="p">:</span> <span class="n">GUIDE_SHA256</span><span class="p">}</span>
+        <span class="p">)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span>
             <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">EFFECT_FILENAME</span><span class="p">),</span> <span class="n">sheet_name</span><span class="o">=</span><span class="n">EFFECT_SHEET</span>
         <span class="p">)</span>

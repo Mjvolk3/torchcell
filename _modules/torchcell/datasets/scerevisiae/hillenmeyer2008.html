@@ -271,7 +271,12 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ExperimentDataset</span><span class="p">,</span>
+    <span class="n">link_verified</span><span class="p">,</span>
+    <span class="n">post_process</span><span class="p">,</span>
+    <span class="n">verify_raw_files</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">resolve_compound_identity</span><span class="p">,</span>
     <span class="n">resolved_compound</span><span class="p">,</span>
@@ -964,15 +969,9 @@
             <span class="n">src</span> <span class="o">=</span> <span class="n">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span> <span class="o">/</span> <span class="n">rel</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">src</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"required raw artifact missing from mirror: </span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-            <span class="n">expected</span> <span class="o">=</span> <span class="n">manifest_sha256</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">rel</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
-            <span class="n">got</span> <span class="o">=</span> <span class="n">_sha256</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">got</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> sha256 mismatch: got </span><span class="si">{</span><span class="n">got</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2">"</span>
-                <span class="p">)</span>
-            <span class="n">dest</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
-                <span class="n">os</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+            <span class="n">link_verified</span><span class="p">(</span>
+                <span class="n">src</span><span class="p">,</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span> <span class="n">manifest_sha256</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">rel</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+            <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">"Hillenmeyer 2008 </span><span class="si">%s</span><span class="s2"> raw files linked into </span><span class="si">%s</span><span class="s2"> (sha256 verified against the "</span>
             <span class="s2">"raw-mirror manifest)"</span><span class="p">,</span>
@@ -1182,14 +1181,14 @@
         <span class="n">sgd_genes</span> <span class="o">=</span> <span class="n">_load_sgd_genes</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
         <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
         <span class="n">rel</span> <span class="o">=</span> <span class="n">raw_relpaths</span><span class="p">()</span>
+        <span class="n">verify_raw_files</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span>
+            <span class="p">{</span>
+                <span class="n">name</span><span class="p">:</span> <span class="n">manifest_sha256</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">rel</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_file_names</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
         <span class="n">matrix_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
-        <span class="n">got</span> <span class="o">=</span> <span class="n">_sha256</span><span class="p">(</span><span class="n">matrix_path</span><span class="p">)</span>
-        <span class="n">expected</span> <span class="o">=</span> <span class="n">manifest_sha256</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">rel</span><span class="p">[</span><span class="n">spec</span><span class="o">.</span><span class="n">filename</span><span class="p">])</span>
-        <span class="k">if</span> <span class="n">got</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">filename</span><span class="si">}</span><span class="s2"> sha256 mismatch at build time: got </span><span class="si">{</span><span class="n">got</span><span class="si">}</span><span class="s2">, expected "</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2">"</span>
-            <span class="p">)</span>
 
         <span class="n">control_sets</span> <span class="o">=</span> <span class="n">read_control_set_map</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">keyfile</span><span class="p">))</span>
         <span class="n">control_sizes</span> <span class="o">=</span> <span class="n">read_control_set_sizes</span><span class="p">(</span>

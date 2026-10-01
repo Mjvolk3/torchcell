@@ -162,6 +162,8 @@ URL – is the source of record.</p>
 <dt class="sig sig-object py" id="torchcell.datasets.scerevisiae.costanzo2021.EnvChemgenCostanzo2021Dataset.process">
 <span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/datasets/scerevisiae/costanzo2021.html#EnvChemgenCostanzo2021Dataset.process"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datasets.scerevisiae.costanzo2021.EnvChemgenCostanzo2021Dataset.process" title="Link to this definition"></a></dt>
 <dd><p>Parse the differential-fitness sheet into records; write LMDB + the drop log.</p>
+<p>Data File S1 in <code class="docutils literal notranslate"><span class="pre">raw/</span></code> is verified against its sha256 pin first; a mismatch
+raises <code class="docutils literal notranslate"><span class="pre">RawSha256MismatchError</span></code> before any row is read or any store opened.</p>
 </dd></dl>
 
 <dl class="py method">

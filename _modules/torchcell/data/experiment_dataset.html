@@ -121,13 +121,15 @@
 <span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/dataset/experiment_dataset</span>
 <span class="c1"># Test file: tests/torchcell/dataset/test_experiment_dataset.py</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Mapping</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
@@ -174,6 +176,98 @@
     <span class="c1"># Parallel processing function for computing reference hash</span>
     <span class="n">reference</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">compute_sha256_hash</span><span class="p">(</span><span class="n">serialize_for_hashing</span><span class="p">(</span><span class="n">reference</span><span class="p">))</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Raw-file sha256 pins (provenance rule: the stored artifact plus its sha256 is</span>
+<span class="c1"># canonical, and every built LMDB traces to an exact, hash-pinned raw version).</span>
+<span class="c1">#</span>
+<span class="c1"># PyG skips ``download()`` whenever ``raw/`` is populated, so a pin checked only in</span>
+<span class="c1"># ``download()`` never sees a file that was copied or edited into ``raw/`` by hand.</span>
+<span class="c1"># Loaders therefore call ``verify_raw_files`` at the start of ``process()``, before</span>
+<span class="c1"># any record is read, and stage files into ``raw/`` (or a mirror) only through</span>
+<span class="c1"># ``copy_verified``/``write_verified``/``link_verified``, which hash first and never</span>
+<span class="c1"># leave unverified bytes at the destination.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">RawSha256MismatchError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A file's bytes do not match the sha256 pin its loader records."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">expected</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">observed</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Record the offending file and both digests in the message."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">expected</span> <span class="o">=</span> <span class="n">expected</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">observed</span> <span class="o">=</span> <span class="n">observed</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"sha256 mismatch for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">: expected </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2">, observed </span><span class="si">{</span><span class="n">observed</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">file_sha256</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">20</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Hex sha256 of a file's bytes (symlinks are followed), read in chunks."""</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">handle</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">chunk_size</span><span class="p">),</span> <span class="sa">b</span><span class="s2">""</span><span class="p">):</span>
+            <span class="n">h</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">h</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">verify_sha256</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">expected</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raise ``RawSha256MismatchError`` unless ``path`` hashes to ``expected``."""</span>
+    <span class="n">observed</span> <span class="o">=</span> <span class="n">file_sha256</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">observed</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">RawSha256MismatchError</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">expected</span><span class="p">,</span> <span class="n">observed</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">verify_raw_files</span><span class="p">(</span><span class="n">raw_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">pins</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Verify every pinned file in ``raw_dir`` (``{file name: sha256}``).</span>
+
+<span class="sd">    Called at the start of a loader's ``process()`` so a file placed in or edited</span>
+<span class="sd">    inside ``raw/`` after ``download()`` never reaches a record unchecked.</span>
+<span class="sd">    """</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">expected</span> <span class="ow">in</span> <span class="n">pins</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">verify_sha256</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span> <span class="n">expected</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">write_verified</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">dest</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">expected</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Write ``data`` to ``dest`` only if it hashes to ``expected``.</span>
+
+<span class="sd">    The digest is checked before anything is written; the bytes go to a sibling</span>
+<span class="sd">    ``.partial`` file that is renamed into place, so ``dest`` never holds a partial</span>
+<span class="sd">    or unverified payload. ``source`` names the origin (a URL) in the error.</span>
+<span class="sd">    """</span>
+    <span class="n">observed</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">observed</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">RawSha256MismatchError</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">expected</span><span class="p">,</span> <span class="n">observed</span><span class="p">)</span>
+    <span class="n">partial</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dest</span><span class="si">}</span><span class="s2">.partial"</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">partial</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">partial</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">copy_verified</span><span class="p">(</span><span class="n">src</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">dest</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">expected</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Copy ``src`` to ``dest`` after verifying ``src`` against ``expected``.</span>
+
+<span class="sd">    The source is hashed before anything is written and the copy goes to a sibling</span>
+<span class="sd">    ``.partial`` file renamed into place, so a refusal leaves ``dest`` as it was. The</span>
+<span class="sd">    copied bytes are re-verified at build time by ``verify_raw_files``.</span>
+<span class="sd">    """</span>
+    <span class="n">verify_sha256</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">expected</span><span class="p">)</span>
+    <span class="n">partial</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dest</span><span class="si">}</span><span class="s2">.partial"</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">partial</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">partial</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">link_verified</span><span class="p">(</span><span class="n">src</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">dest</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">expected</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Symlink ``dest`` to ``src`` after verifying ``src``; an existing link is kept.</span>
+
+<span class="sd">    The link target is re-verified at build time by ``verify_raw_files``, so an</span>
+<span class="sd">    edit to the mirror after linking is still caught before any record is read.</span>
+<span class="sd">    """</span>
+    <span class="n">verify_sha256</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">expected</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">lexists</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
 
 
 <span class="c1"># return reference_indices</span>

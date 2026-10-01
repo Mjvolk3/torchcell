@@ -49,15 +49,16 @@ class DnaSelectionResult(ModelStrict):
             return len(self.seq) <= len(other.seq)
         return NotImplemented
 
-    @model_validator(mode="before")
-    @classmethod
-    def end_leq_start(cls, values: dict[str, Any]) -> dict[str, Any]:
-        """Validate that start is not greater than end."""
-        start: Any = values.get("start")
-        end: Any = values.get("end")
-        if start > end:
+    @model_validator(mode="after")
+    def end_leq_start(self) -> "DnaSelectionResult":
+        """Validate that start is not greater than end.
+
+        Runs after field validation, so a payload missing ``start`` or ``end`` is
+        refused by pydantic's own missing-field error naming the field.
+        """
+        if self.start > self.end:
             raise ValueError("Start must be less than end")
-        return values
+        return self
 
     @field_validator("strand")
     def check_strand(cls, v: str) -> str:
@@ -123,14 +124,13 @@ class GeneSet(SortedSet):  # type: ignore[misc]  # SortedSet is untyped (no stub
                     f"All items in gene_set must be str, got {type(item).__name__}"
                 )
 
-    def __repr__(self) -> str:  # type: ignore[return]  # pre-existing gap: size==3 returns None
+    def __repr__(self) -> str:
         """Return a summary representation showing size and first items."""
         n = len(self)
         limited_items = (self)[:3]
         if len(self) > 3:
             return f"GeneSet(size={n}, items={limited_items}...)"
-        elif len(self) < 3:
-            return f"GeneSet(size={n}, items={limited_items})"
+        return f"GeneSet(size={n}, items={limited_items})"
 
 
 ###########
@@ -291,7 +291,7 @@ def mismatch_positions(seq1: str, seq2: str) -> list[int]:
     return mismatches
 
 
-def get_chr_from_description(description: str) -> int:  # type: ignore[return]  # pre-existing: None for unmatched descriptions
+def get_chr_from_description(description: str) -> int:
     """Extracts the chromosome number from a given description string.
 
     Processes a description string containing either a chromosome
@@ -308,7 +308,9 @@ def get_chr_from_description(description: str) -> int:  # type: ignore[return]  
         int: Chromosome number.  Returns 0 if the location is mitochondrion.
 
     Raises:
-        ValueError: If the Roman numeral conversion fails due to invalid format.
+        ValueError: If the description carries neither a ``[chromosome=...]`` tag
+            nor a ``[location=mitochondrion]`` tag.
+        KeyError: If the chromosome tag is not a Roman numeral.
 
     Example:
         >>> get_chr_from_description("[chromosome=IX] some other info")
@@ -328,6 +330,10 @@ def get_chr_from_description(description: str) -> int:  # type: ignore[return]  
             # we assign mitochondiral DNA to chromosome 0 as convenience
             if part[len("[location=") : -1] == "mitochondrion":
                 return 0
+    raise ValueError(
+        "Description has no [chromosome=...] or [location=mitochondrion] tag: "
+        f"{description!r}"
+    )
 
 
 def roman_to_int(s: str) -> int:
@@ -399,6 +405,7 @@ def calculate_window_undersized(
         tuple[int, int]: The calculated start and end points of the window.
 
     Raises:
+        ValueError: If ``strand`` is neither "+" nor "-".
         AssertionError: If the resulting window size doesn't match the
             specified `window_size`.
 
@@ -417,6 +424,8 @@ def calculate_window_undersized(
     elif strand == "-":
         start_window = end - window_size
         end_window = end
+    else:
+        raise ValueError(f"Strand must be '+' or '-', got {strand!r}")
     assert (end_window - start_window) == window_size, (
         f"Window sizing is incorrect. Window is larger than {window_size}bp"
     )
@@ -442,9 +451,10 @@ def calculate_window_bounds(
         tuple[int, int]: The calculated start and end points of the window.
 
     Raises:
-        ValueError: If the end position is out of bounds of the chromosome,
-            if the start position is greater than or equal to the end position,
-            or if the window size is greater than the chromosome length.
+        ValueError: If the strand is neither "+" nor "-", if the end position is
+            out of bounds of the chromosome, if the start position is greater than
+            or equal to the end position, or if the window size is greater than
+            the chromosome length.
 
     Examples:
         >>> calculate_window_bounds(0, 20, "+", 40, 100)
@@ -456,6 +466,8 @@ def calculate_window_bounds(
         >>> calculate_window_bounds(0, 20, "-", 40, 100)
         (0, 40)
     """
+    if strand not in ("+", "-"):
+        raise ValueError(f"Strand must be '+' or '-', got {strand!r}")
     if end > chromosome_length:
         raise ValueError("End position is out of bounds of chromosome")
     if start >= end:
@@ -502,6 +514,9 @@ def calculate_window_bounds(
         start_window -= 1
     elif abs((end_window - start_window) - window_size) == 1 and strand == "-":
         end_window += 1
+    assert end_window - start_window == window_size, (
+        f"Window is {end_window - start_window} bp, requested {window_size} bp"
+    )
     assert start_window <= start, "Start window must be leq start."
     assert end_window >= end, "End window must be geq end."
     return start_window, end_window
@@ -669,11 +684,19 @@ def compute_codon_frequency(cds_str: str) -> CodonFrequency:
     """Compute relative codon frequencies for a coding sequence.
 
     Args:
-        cds_str: Coding sequence whose length must be a multiple of three.
+        cds_str: Coding sequence whose length must be a positive multiple of three.
 
     Returns:
         A CodonFrequency mapping every codon to its relative frequency.
+
+    Raises:
+        ValueError: If the CDS is empty, its length is not a multiple of three, or
+            it carries a base other than A, T, G, C.
     """
+    if cds_str == "":
+        raise ValueError(
+            "Empty CDS string; a codon frequency needs at least one codon."
+        )
     nucleotides = ["A", "T", "G", "C"]
     all_codons = ["".join(codon) for codon in product(nucleotides, repeat=3)]
     if len(cds_str) % 3 != 0 or not set(cds_str).issubset(set(nucleotides)):

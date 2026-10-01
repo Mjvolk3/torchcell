@@ -568,14 +568,16 @@ def test_gene_ontology_indices_edges_and_counts(
     )
 
 
-def test_gene_ontology_feature_counts_genes_the_base_graph_lacks() -> None:
-    """Finding: ``x`` is ``len(gene_set)`` (``cell_data.py:324``), so GO:C reports 2
-    although only one of its genes is in the base graph and ``term_gene_counts`` says 1.
-    Pinned until the feature counts only indexed genes or is documented as the raw size.
+def test_gene_ontology_feature_counts_only_genes_in_the_base_graph() -> None:
+    """``x`` counts the annotated genes the base graph holds, matching ``term_gene_counts``.
+
+    GO:C is annotated with YAL001C and YZZ999W; only YAL001C is in the base graph, so
+    its feature is 1.0, not the raw set size 2.0 it used to report (issue #538). In
+    sorted order A, B, C, ROOT: 2 genes, none (no ``gene_set``), 1, 3.
     """
     data = to_cell_data(_base_only(), incidence_graphs={"gene_ontology": _go_graph()})
-    assert data["gene_ontology"].x.tolist() == [[2.0], [0.0], [2.0], [3.0]]
-    assert data["gene_ontology"].term_gene_counts[2].item() == 1
+    assert data["gene_ontology"].x.tolist() == [[2.0], [0.0], [1.0], [3.0]]
+    assert data["gene_ontology"].term_gene_counts.tolist() == [2, 0, 1, 3]
 
 
 def test_gene_ontology_strata_and_the_unperturbed_state_table() -> None:
@@ -642,22 +644,21 @@ def test_a_seven_level_chain_prints_five_strata_and_the_remainder(
     assert out[6:] == ["  ... and 2 more strata"]
 
 
-def test_a_descendant_of_a_cycle_shares_the_cycle_stratum(
+def test_a_descendant_of_a_cycle_gets_a_later_stratum(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """Finding: the sink-peeling loop in ``compute_strata`` (``cell_data.py:260-280``) can
-    never assign anything.
+    """The cycle X <-> Y shares one stratum and its descendants follow it, parent-first.
 
-    Every node Kahn's pass leaves unassigned still has an unassigned parent, so the
-    remaining subgraph has no node without an out-edge and the fallback assigns all of it
-    to one stratum at once. Z, a plain child of the cycle X <-> Y, therefore lands in the
-    cycle's stratum 2 instead of after it. Pinned until the fallback orders the acyclic
-    remainder.
+    Kahn's pass assigns ROOT 0 and A 1 and leaves X, Y, Z, W. Every one of them has an
+    unassigned parent, so the old sink-peeling loop never ran and put all four in
+    stratum 2 (issue #538). The fallback now collapses the cycle: {X, Y} at 2, its
+    child Z at 3, Z's child W at 4, so DCell's descending pass reaches W, then Z, then
+    the cycle.
     """
-    graph = nx.DiGraph([("A", "ROOT"), ("X", "Y"), ("Y", "X"), ("Z", "X")])
-    assert compute_strata(graph) == {"ROOT": 0, "A": 1, "X": 2, "Y": 2, "Z": 2}
+    graph = nx.DiGraph([("A", "ROOT"), ("X", "Y"), ("Y", "X"), ("Z", "X"), ("W", "Z")])
+    assert compute_strata(graph) == {"ROOT": 0, "A": 1, "X": 2, "Y": 2, "Z": 3, "W": 4}
     assert capsys.readouterr().out == (
-        "Warning: 3 nodes not assigned to strata due to cycles in the GO graph.\n"
+        "Warning: 4 nodes not assigned to strata due to cycles in the GO graph.\n"
     )
 
 

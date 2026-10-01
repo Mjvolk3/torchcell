@@ -57,6 +57,7 @@ from __future__ import annotations
 
 import csv
 import re
+import shutil
 import sys
 from collections.abc import Callable, Iterator
 from pathlib import Path
@@ -470,6 +471,11 @@ def filter_existing_edges(
     the subset that already exists in the store (``query_existing_edges`` bound to a
     session in production; any callable in tests). Originals are kept under an
     ``unfiltered/`` subdirectory, and a JSON summary is written.
+
+    Idempotent: every run filters the CURRENT part file, never the backup, so a row an
+    earlier run dropped stays dropped. A rerun (e.g. a retried increment job) only drops
+    more. The ``unfiltered/`` copy is written once, by the first run that drops a row of
+    that file, and never overwritten. The summary counts this run's drops only.
     """
     groups = discover_csv_groups(out_dir)
     checked: dict[str, int] = {}
@@ -491,11 +497,11 @@ def filter_existing_edges(
             backup = original.parent / UNFILTERED_DIRNAME / original.name
             backup.parent.mkdir(exist_ok=True)
             if not backup.exists():
-                original.rename(backup)
+                shutil.copyfile(original, backup)
             kept: list[str] = []
             start_index = group.columns.index(":START_ID")
             end_index = group.columns.index(":END_ID")
-            with open(backup, encoding="utf-8", newline="") as handle:
+            with open(original, encoding="utf-8", newline="") as handle:
                 for line in handle:
                     fields = line.rstrip("\n").split(_DELIMITER)
                     pair = (_unquote(fields[start_index]), _unquote(fields[end_index]))

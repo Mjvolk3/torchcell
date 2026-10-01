@@ -13,3 +13,7 @@ created: 1790415109289
 ## 2026.09.27 - The metabolism paths and the edge naming
 
 Six more tests: the exact self-loop order, a `regulatory` graph renamed to `regulatory_interaction` while an unlisted name is kept as is, self loops on and off as exact `edge_index` tensors, two embedding graphs concatenated into an exact `x`, `metabolism_bipartite` with exact `hyperedge_index`, signed stoichiometry, `w_growth` and the gene-reaction association, and `_process_metabolism_hypergraph` called directly. Findings: `to_cell_data` never dispatches `_process_metabolism_hypergraph` (cell_data.py lines 98 to 105), so a hypergraph under `metabolism_hypergraph` is silently ignored; the hypergraph path reports `num_edges = len(unique) + 1`, so two reactions report three (line 171); `_process_metabolism_bipartite` keeps an edge only when networkx reports it reaction-first (line 514), so a bipartite graph whose metabolite nodes were inserted before its reactions produces no `rmr` edge type at all while the GPR block and `w_growth` are still built (the real build works because yeast_GEM builds an `nx.DiGraph` and stores every edge reaction -> metabolite, yeast_GEM.py lines 257 and 406 to 438, so the stored direction satisfies the check). Phase 6 of [[plan.test-suite-buildout.2026.09.25]].
+
+## 2026.09.30 - Cycle strata expectation updated (issue #538)
+
+- `test_compute_strata_places_a_cyclic_component_in_one_stratum_after_the_dag` now expects `{root: 0, x: 1, y: 1, leaf: 2}`: the child of the cycle comes after it instead of sharing stratum 1.

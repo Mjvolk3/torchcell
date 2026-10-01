@@ -15,3 +15,8 @@ Eleven tests: exact padded tensor shapes and values (the originals where present
 Eleven to nineteen tests, 93 to 99 percent. Nested padding, `*edge_index` keys, float64, the legacy shared-storage branches, TensorFrame handling, a real `OnDiskDataset`.
 
 Findings: the recursion drops a custom padding value (lines 190, 204); a real value equal to the pad (-1 or 1e-5) is masked as padding (161); the fallback reads `WITH_PT112`, which torch_geometric does not define, so it raises `AttributeError` (151); the TensorFrame branch raises `AttributeError` because torch_frame is not installed (373).
+
+## 2026.09.30 - Findings retired (issue #538)
+
+- Retired: the recursion dropping custom padding values, the `value != pad` mask, the undefined `WITH_PT112` read, and the collater's TensorFrame `AttributeError`.
+- Now asserted: -7 and 0.5 pads inside dicts and lists; a real -1 id and 1e-5 feature stay True while only the pad row of a shorter graph is False; the worker batch with `WITH_PT20` False equals the main-process batch; both TensorFrame branches raise the same `NotImplementedError`. The two legacy shared-storage parametrizations were removed with the branches they covered. The nested-tensor finding remains pinned.

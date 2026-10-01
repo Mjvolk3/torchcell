@@ -41,12 +41,15 @@ feature falls inside its region. Expected values, derived from the source:
   row: ``+`` 31..45 gives ``CHR_I[30:45]`` = ``GGACTGCAATGTCTA``; ``-`` 5..16 gives
   revcomp(``CHR_II[4:16]`` = ``AATTCATGCATG``) = ``CATGCATGAATT``.
 * Two CDS rows, one Verified (40..45): the Verified one, ``CHR_I[39:45]`` = ``TGTCTA``.
-* A 5' intron with no CDS, or two CDS with none Verified, leaves ``feature`` unbound
-  (UnboundLocalError); a CDS without ``orf_classification`` raises KeyError, which
-  ``__getitem__`` turns into None and the "not found" print (Findings).
-* A ``.`` strand leaves ``seq`` None and every window raises UnboundLocalError (Finding).
+* A 5' intron with no CDS, or two CDS with none Verified, raises ValueError naming the
+  gene; a CDS without ``orf_classification`` raises ValueError naming the gene, the CDS
+  and its coordinates, so it no longer reads as "gene not found" (issue #538).
+* A ``.`` strand is refused at construction with the strand and the gene id (issue #538).
 * ``get_seq`` with an ``id`` supplied: ``-`` on chrI [0, 5) is revcomp(``GATTA``) =
-  ``TAATC``; a string chromosome fails ``DnaSelectionResult`` validation (Finding).
+  ``TAATC``; a FASTA-key chromosome and a ``.`` strand are refused by name before any
+  slicing (issue #538).
+* ``drop_chrmt`` resets the locus index and the GO-to-genes map, so Q0010 resolves as
+  RETIRED and GO:0000002 maps to YAL002W only (issue #538).
 """
 
 import os
@@ -61,7 +64,6 @@ import gffutils
 import pandas as pd
 import pytest
 from gffutils.exceptions import FeatureNotFoundError
-from pydantic import ValidationError
 from sortedcontainers import SortedDict, SortedSet
 
 import torchcell.sequence.genome.scerevisiae.s288c as s288c
@@ -1082,63 +1084,67 @@ def test_two_cds_one_verified_selects_the_verified(
     [[], [_cds(34, 39, "Dubious"), _cds(40, 45, "Dubious")]],
     ids=["no_cds", "no_verified_cds"],
 )
-def test_five_prime_intron_without_a_usable_cds_is_unbound(
+def test_five_prime_intron_without_a_usable_cds_is_refused(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, extra: list[GffRow]
 ) -> None:
-    """Finding: no CDS, or several with none Verified, leaves ``feature`` unbound.
+    """No CDS, or several with none Verified, is refused with a ValueError naming G1.
 
-    s288c.py lines 141 to 161 bind ``feature`` only for one CDS or at least one Verified
-    CDS, so the ``assert isinstance(feature, Feature)`` raises UnboundLocalError. Pinned
-    until the gene row is the fallback or the case is refused by name.
+    These used to leave ``feature`` unbound (UnboundLocalError, issue #538). Refusing
+    rather than falling back to the gene row keeps the 5' UTR intron out of the
+    sequence; no R64-4-1 gene takes either branch (checked on the served data.db).
     """
     genome = _single_gene_genome(
         tmp_path, monkeypatch, [_GENE_PLUS, _INTRON_START, *extra]
     )
-    with pytest.raises(UnboundLocalError, match="'feature'"):
+    message = (
+        "Gene G1 has a five_prime_UTR_intron but no CDS feature"
+        if not extra
+        else "Gene G1 has a five_prime_UTR_intron and 2 CDS features, none Verified"
+    )
+    with pytest.raises(ValueError) as refused:
         genome["G1"]
+    assert str(refused.value) == message
 
 
-def test_cds_without_orf_classification_reads_as_not_found(
+def test_cds_without_orf_classification_names_the_cds(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Finding: a missing ``orf_classification`` is a KeyError that ``__getitem__`` eats.
+    """A CDS missing ``orf_classification`` raises ValueError naming gene, CDS and span.
 
-    s288c.py line 151 indexes the attribute, and line 964 turns every KeyError into
-    None plus the "only systematic names" print, so a malformed CDS reads as an unknown
-    gene id. Pinned until the lookup names the missing attribute.
+    It used to be a KeyError that ``__getitem__`` turned into None plus the "only
+    systematic names" print, so a malformed CDS read as an unknown gene id (issue #538).
+    Nothing is printed now.
     """
     genome = _single_gene_genome(
         tmp_path,
         monkeypatch,
         [_GENE_PLUS, _INTRON_START, _cds(34, 39, None), _cds(40, 45, None)],
     )
-    assert genome["G1"] is None
-    assert capsys.readouterr().out == (
-        "Gene G1 not found in genome, only systematic names (ID) are supported.\n"
+    with pytest.raises(ValueError) as refused:
+        genome["G1"]
+    assert str(refused.value) == (
+        "Gene G1: CDS G1_c34 at 34..39 has no orf_classification attribute"
     )
+    assert capsys.readouterr().out == ""
 
 
-def test_unstranded_gene_has_no_sequence_and_no_windows(
+def test_unstranded_gene_is_refused_at_construction(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: a ``.`` strand builds a gene with ``seq`` None (s288c.py 183 to 188).
+    """A ``.`` strand is refused when the gene is built, naming the strand and the id.
 
-    Every window method then reads an unbound ``seq`` (lines 256, 283, 344). Pinned
-    until an unstranded gene is refused at construction.
+    It used to build a gene with ``seq`` None whose every window raised
+    UnboundLocalError later (issue #538). No R64-4-1 gene is unstranded.
     """
     genome = _single_gene_genome(
         tmp_path, monkeypatch, [("chrI", "gene", 31, 45, ".", "ID=G1;Name=G1")]
     )
-    gene = genome["G1"]
-    assert gene is not None
-    assert gene.strand == "."
-    assert gene.seq is None
-    with pytest.raises(UnboundLocalError, match="'seq'"):
-        gene.window(20)
-    with pytest.raises(UnboundLocalError, match="'seq'"):
-        gene.window_five_prime(3)
-    with pytest.raises(UnboundLocalError, match="'seq'"):
-        gene.window_three_prime(3)
+    with pytest.raises(ValueError) as refused:
+        genome["G1"]
+    assert str(refused.value) == (
+        "Gene G1 has strand '.'; a gene needs '+' or '-' to orient its sequence "
+        "and windows"
+    )
 
 
 def test_get_seq_with_an_id_reverse_complements_and_refuses_a_named_chromosome(
@@ -1147,20 +1153,29 @@ def test_get_seq_with_an_id_reverse_complements_and_refuses_a_named_chromosome(
     """With an ``id`` supplied (the pinned AttributeError is otherwise first):
 
     ``-`` on chrI [0, 5) is revcomp(GATTA) = TAATC; ``+`` on chrII [5, 9) is ATTC. A
-    FASTA key such as ``ref|NC_001133|`` is accepted as ``chr`` but passed on as the
-    ``chromosome`` int field, so validation fails (Finding, s288c.py line 868; pinned
-    until the key is mapped back through ``nc_to_chr``). A ``.`` strand binds no
-    ``seq`` and raises UnboundLocalError (Finding, lines 862 to 865).
+    FASTA key such as ``ref|NC_001133|``, or a chromosome number the genome lacks, is
+    refused by name before slicing, as is a ``.`` strand (both used to fail later, in
+    ``DnaSelectionResult`` validation or on an unbound ``seq``; issue #538).
     """
     vars(genome)["id"] = "S288C"
     assert genome.get_seq(1, 0, 5, "-") == DnaSelectionResult(
         id="S288C", chromosome=1, strand="-", start=0, end=5, seq="TAATC"
     )
     assert genome.get_seq(2, 5, 9, "+").seq == CHR_II[5:9] == "ATTC"
-    with pytest.raises(ValidationError, match="unable to parse string as an integer"):
+    with pytest.raises(ValueError) as fasta_key:
         genome.get_seq("ref|NC_001133|", 0, 5, "+")
-    with pytest.raises(UnboundLocalError, match="'seq'"):
+    assert str(fasta_key.value) == (
+        "Chromosome must be one of the chromosome numbers [0, 1, 2], "
+        "got 'ref|NC_001133|'"
+    )
+    with pytest.raises(ValueError) as absent:
+        genome.get_seq(3, 0, 5, "+")
+    assert str(absent.value) == (
+        "Chromosome must be one of the chromosome numbers [0, 1, 2], got 3"
+    )
+    with pytest.raises(ValueError) as dot:
         genome.get_seq(1, 0, 5, ".")
+    assert str(dot.value) == "Strand must be '+' or '-', got '.'"
 
 
 def test_remove_deprecated_go_terms_drops_an_obsolete_term(
@@ -1207,19 +1222,26 @@ def test_alias_map_is_computed_once(
     assert len(seen) == 6
 
 
-def test_caches_go_stale_after_drop_chrmt(genome: SCerevisiaeGenome) -> None:
-    """Finding: ``drop_chrmt`` clears no cache (s288c.py lines 906 to 922).
+def test_drop_chrmt_rebuilds_the_locus_index_and_go_genes(
+    genome: SCerevisiaeGenome,
+) -> None:
+    """After ``drop_chrmt`` the warm caches are rebuilt without Q0010.
 
-    After the drop, ``feature_index`` still lists Q0010, so the resolver calls it
-    CURRENT, and ``go_genes`` still maps GO:0000002 to Q0010, while the gene set and the
-    database no longer hold it. Pinned until the drops reset the derived caches.
+    Both caches are populated first. They used to survive the drop, so Q0010 resolved
+    as CURRENT and GO:0000002 still mapped to it (issue #538). Now Q0010 resolves as
+    RETIRED (absent from the annotation) and GO:0000002 maps to YAL002W only.
     """
     assert genome.resolve_gene_name("Q0010").status is GeneNameStatus.CURRENT
     assert list(genome.go_genes["GO:0000002"]) == ["Q0010", "YAL002W"]
     genome.drop_chrmt()
     assert "Q0010" not in genome.gene_set
-    assert genome.resolve_gene_name("Q0010").status is GeneNameStatus.CURRENT
-    assert list(genome.go_genes["GO:0000002"]) == ["Q0010", "YAL002W"]
+    resolution = genome.resolve_gene_name("Q0010")
+    assert (resolution.status, resolution.systematic_name) == (
+        GeneNameStatus.RETIRED,
+        "Q0010",
+    )
+    assert "Q0010" not in genome.feature_index["genes"]
+    assert list(genome.go_genes["GO:0000002"]) == ["YAL002W"]
 
 
 def test_drop_chrmt_before_the_gene_set_is_cached(genome: SCerevisiaeGenome) -> None:
@@ -1256,14 +1278,15 @@ class _RecordingGenome:
         self.gene_set = GeneSet(["YAL001C", "YAL002W"])
 
 
-def test_main_builds_under_data_root_with_overwrite_true(
+def test_main_builds_under_data_root_with_overwrite_false(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Finding: ``main`` builds with ``overwrite=True`` (s288c.py line 983).
+    """``main`` reuses the existing ``data.db`` (``overwrite=False``) under DATA_ROOT.
 
     The genome and GO roots are ``$DATA_ROOT/data/sgd/genome`` and ``$DATA_ROOT/data/go``;
-    the repo ``.env`` is not read (``load_dotenv`` stubbed). Pinned until ``main``
-    defaults to ``overwrite=False`` (memory: genome-overwrite-true-rebuild-race).
+    the repo ``.env`` is not read (``load_dotenv`` stubbed). ``overwrite=True`` used to
+    rebuild the shared database every run (issue #538; memory:
+    genome-overwrite-true-rebuild-race).
     """
     monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
@@ -1274,7 +1297,7 @@ def test_main_builds_under_data_root_with_overwrite_true(
         {
             "genome_root": f"{tmp_path}/data/sgd/genome",
             "go_root": f"{tmp_path}/data/go",
-            "overwrite": True,
+            "overwrite": False,
         }
     ]
     assert capsys.readouterr().out == (

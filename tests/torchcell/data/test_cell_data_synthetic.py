@@ -121,11 +121,12 @@ def test_compute_strata_places_a_cyclic_component_in_one_stratum_after_the_dag()
     None
 ):
     """Leaf -> root, leaf -> x, x <-> y: root is the only node that ever reaches in-degree 0
-    in the reversed graph, so it gets stratum 0 and the cycle fallback assigns the whole
-    remaining component (leaf, x, y; no sinks among them) to stratum 1.
+    in the reversed graph, so it gets stratum 0. The cycle fallback collapses {x, y} into
+    stratum 1 and puts leaf, a child of the cycle, after it at 2 (it used to share the
+    cycle's stratum 1; issue #538).
     """
     graph = nx.DiGraph([("leaf", "root"), ("x", "y"), ("y", "x"), ("leaf", "x")])
-    assert compute_strata(graph) == {"root": 0, "leaf": 1, "x": 1, "y": 1}
+    assert compute_strata(graph) == {"root": 0, "x": 1, "y": 1, "leaf": 2}
 
 
 def test_to_cell_data_maps_regulatory_to_its_relation_and_keeps_other_names() -> None:

@@ -23,7 +23,6 @@ from tqdm import tqdm
 
 from torchcell.graph.validation.locus_related.locus import validate_data
 
-load_dotenv()
 log = logging.getLogger(__name__)
 
 
@@ -96,20 +95,33 @@ class Gene:
             raise ValueError("Data fetch failed.")
 
     async def download_data(self) -> None:
-        """Fetch every SGD detail endpoint for the locus and write to disk."""
-        self._data["locus"] = await self.locus()
-        self._data["sequence_details"] = await self.sequence_details()
-        self._data["neighbor_sequence_details"] = await self.neighbor_sequence_details()
-        self._data["posttranslational_details"] = await self.posttranslational_details()
-        self._data[
-            "protein_experiment_details"
-        ] = await self.protein_experiment_details()
-        self._data["protein_domain_details"] = await self.protein_domain_details()
-        self._data["go_details"] = await self.go_details()
-        self._data["phenotype_details"] = await self.phenotype_details()
-        self._data["interaction_details"] = await self.interaction_details()
-        self._data["regulation_details"] = await self.regulation_details()
-        self._data["literature_details"] = await self.literature_details()
+        """Fetch every SGD detail endpoint for the locus and write to disk.
+
+        ``_get_data`` returns None only when an endpoint failed every retry. Any such
+        endpoint aborts the download with a ValueError naming them, and nothing is
+        stored or written: a cached ``<locus>.json`` is skipped by ``download_genes``
+        forever after, so a file of nulls would never be refetched.
+        """
+        fetched: dict[str, dict[Any, Any] | list[Any]] = {
+            "locus": await self.locus(),
+            "sequence_details": await self.sequence_details(),
+            "neighbor_sequence_details": await self.neighbor_sequence_details(),
+            "posttranslational_details": await self.posttranslational_details(),
+            "protein_experiment_details": await self.protein_experiment_details(),
+            "protein_domain_details": await self.protein_domain_details(),
+            "go_details": await self.go_details(),
+            "phenotype_details": await self.phenotype_details(),
+            "interaction_details": await self.interaction_details(),
+            "regulation_details": await self.regulation_details(),
+            "literature_details": await self.literature_details(),
+        }
+        failed = [key for key, value in fetched.items() if value is None]
+        if failed:
+            raise ValueError(
+                f"SGD fetch failed for {self.locusID}: {failed} returned no data "
+                "after every retry; nothing was cached"
+            )
+        self._data = fetched
         self.write()
 
     def write(self) -> None:
@@ -293,10 +305,20 @@ async def download_gene_chunk(
 
 
 def main_get_all_genes() -> None:
-    """Download SGD data for every gene in the S288C genome in chunks."""
+    """Download SGD data for every gene in the S288C genome in chunks.
+
+    The genome is opened under ``$DATA_ROOT`` (``data/sgd/genome``, ``data/go``) with
+    ``overwrite=False``, reusing the existing ``data.db`` rather than rebuilding it.
+    """
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
-    genome = SCerevisiaeGenome()
+    load_dotenv()
+    root = data_root()
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(root, "data/sgd/genome"),
+        go_root=osp.join(root, "data/go"),
+        overwrite=False,
+    )
     locus_ids = list(genome.gene_set)
 
     CHUNK_SIZE = 50  # Adjust this value based on what works best for you

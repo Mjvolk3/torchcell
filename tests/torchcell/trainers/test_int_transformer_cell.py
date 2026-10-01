@@ -142,7 +142,7 @@ def test_forward_is_the_model_forward_on_the_cloned_cell_graph(
 def test_batch_size_is_the_number_of_genotypes(
     cell_graph: HeteroData, batch: HeteroData
 ) -> None:
-    """Perturbation batches count distinct batch indices: 3, not the 6 perturbed genes."""
+    """A perturbation batch is sized by its ``num_graphs``: 3, not the 6 perturbed genes."""
     task = _task(cell_graph)
     assert task._get_batch_size(_labelled(batch, [0.1, -0.2, 0.3])) == 3
     dense = HeteroData()
@@ -254,6 +254,7 @@ def _fixed_batch(
     batch["gene"].perturbation_indices = torch.arange(n)
     batch["gene"].perturbation_indices_batch = torch.arange(n)
     batch["gene"].phenotype_values = values
+    batch.num_graphs = n  # a collated PyG Batch carries it
     if original is not None:
         batch["gene"].phenotype_values_original = torch.tensor(original)
     return batch
@@ -292,9 +293,11 @@ class _LogRecorder:
 
     def __init__(self) -> None:
         self.values: dict[str, float] = {}
+        self.batch_sizes: dict[str, int | None] = {}
 
     def __call__(self, name: str, value: Any, **kwargs: Any) -> None:
         self.values[name] = float(value)
+        self.batch_sizes[name] = kwargs.get("batch_size")
 
 
 def _recording(monkeypatch: pytest.MonkeyPatch, task: RegressionTask) -> _LogRecorder:
@@ -545,6 +548,33 @@ def test_scalar_prediction_and_target_are_lifted_to_one_by_one(
     assert original.tolist() == [[2.0]]
     assert loss.item() == pytest.approx(math.log(math.cosh(1.0)) + 0.25, rel=1e-6)
     assert log.values["train/loss"] == pytest.approx(loss.item())
+
+
+def test_trailing_genotype_without_a_perturbation_is_counted(
+    cell_graph: HeteroData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A last genotype with no perturbed gene is still a row (issue #567).
+
+    Genotype 0 perturbs genes {1, 2}, genotype 1 perturbs {3}, genotype 2 (wild type)
+    perturbs nothing, so ``perturbation_indices_batch`` is [0, 0, 1] and its max + 1 is 2.
+    The batch size is ``num_graphs`` = 3, which is also the number of prediction rows the
+    CGT emits for it, and the profiling step logs 3 with ``batch_size=3``.
+    """
+    wild_type_last = HeteroData()
+    wild_type_last["gene"].perturbation_indices = torch.tensor([1, 2, 3])
+    wild_type_last["gene"].perturbation_indices_batch = torch.tensor([0, 0, 1])
+    wild_type_last["gene"].phenotype_values = torch.tensor([[0.1], [-0.2], [0.3]])
+    wild_type_last.num_graphs = 3
+    task = _task(cell_graph)
+    assert task._get_batch_size(wild_type_last) == 3
+    predictions, _ = task(wild_type_last)
+    assert predictions.shape == (3, 1)
+    profiling = _fixed_task(execution_mode="dataloader_profiling")
+    log = _recording(monkeypatch, profiling)
+    profiling._shared_step(wild_type_last, 0, "val")
+    assert log.values["val/dataloader_profile_batch_size"] == 3.0
+    assert log.batch_sizes["val/dataloader_profile_batch_size"] == 3
+    assert log.batch_sizes["val/dataloader_profile_loss"] == 3
 
 
 def test_batch_size_and_device_fallbacks(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -211,3 +211,7 @@ Which is precisely why `k=0` has to stay the comparable number.
 metabolism arms pick up masking, `traineval/`, `nmse`, `perf/epoch_seconds` and best-by-metric
 checkpointing without a second harness -- `forward` simply threads `observed_values` /
 `observed_mask` through to whichever model class was built.
+
+## 2026.10.01 - Batch size from num_graphs; k = 0 comments corrected (issues #567, #566)
+
+`_batch_size` returns `batch.num_graphs` instead of `max(perturbation_indices_batch) + 1`, so `row_mask` in `_extract_targets_and_masks` has as many rows as `target` (the model's `num_graphs` rows) when the last genotype has no perturbation (issue #567; latent, no served dataset carries a wild-type record). Comments at the masked-label section header, the k = 0 caching in `_masked_step`, and `_cache_epoch_metric` now state that the k = 0 pass is the unconditioned model plus the encoder's `proj([0, 0])` offset on every token, not the unconditioned model (issue #566). No computation changed for #566. Tests: [[tests.torchcell.trainers.test_019_train_cgt_multitask]].

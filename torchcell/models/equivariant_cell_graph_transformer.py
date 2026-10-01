@@ -975,10 +975,11 @@ class ObservedLabelEncoder(nn.Module):
     forces the model to use it. (Measured: the Perceiver alone moved seed 0 by only
     +0.0045 -- a pathway with nothing requiring it.)
 
-    EVALUATION STAYS COMPARABLE. At validation no labels are observed, so the mask is
-    100% and the forward pass is identical to the unconditioned model. The per-feature
-    metric is therefore directly comparable to every other arm -- masking changes the
-    TRAINING signal, not the inference task.
+    A 100%-MASKED FORWARD IS NOT THE UNCONDITIONED MODEL. With no label observed the
+    features are [0, 0], but this module still adds ``gate * proj([0, 0])``, one constant
+    offset, to every gene token (see ``__init__``). Only a call with
+    ``observed_values=None`` skips the encoder and is the unconditioned model, so a metric
+    from an all-masked pass is the unconditioned model plus that offset (issue #566).
     """
 
     def __init__(self, hidden_dim: int, dropout: float = 0.1, gate_mode: str = "on"):

@@ -356,7 +356,14 @@ def main(cfg: DictConfig) -> None:
 
     # CRITICAL: Initialize LazyCollater for batching
     # LazyCollater uses dataset.cell_graph from source_dataset
-    lazy_collater = LazyCollater(dataset)
+    # follow_batch is set on the COLLATER (issue #572): the datamodules do not apply theirs
+    # to a custom collate_fn. This is CellDataModule's default list, which PyG's Collater
+    # applied before PRs #549/#571 (when the datamodules discarded this collater), so the
+    # runs of this script (slurm 074, 075, 077) are reproduced. It builds no
+    # `perturbation_indices_ptr`, so for a batch of more than one genotype the lazy
+    # model's local predictor term is all zeros (batch_assign is None). Adding
+    # "perturbation_indices" enables it and changes what this script computes.
+    lazy_collater = LazyCollater(dataset, follow_batch=["x", "x_pert"])
     print("LazyCollater initialized for zero-copy batching with preprocessed data")
 
     seed = 42

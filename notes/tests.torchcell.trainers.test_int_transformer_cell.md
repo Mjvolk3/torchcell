@@ -22,3 +22,7 @@ Findings: the default ReduceLROnPlateau scheduler cannot finish one epoch, the s
 - `test_point_dist_graph_reg_and_generic_losses_log_components_alike`: both branches log `vec_0`, `vec_1` plus the scalar components identically.
 - `test_inverse_transform_output_shapes`: a list-returning inverse raises the exact `TypeError` and updates no metric.
 - `test_diagnostic_plots_skip_empty_accumulators`: all-empty precision logs one INFO line and makes no plot call; a graph counted only at k = 32 plots `{32: 0.25}`.
+
+## 2026.10.01 - Trailing wild-type genotype (issue #567)
+
+Added `test_trailing_genotype_without_a_perturbation_is_counted`: batch vector [0, 0, 1] with `num_graphs = 3` gives batch size 3 (not 2), 3 CGT prediction rows, and a profiling log of 3.0 under `batch_size=3`. `_LogRecorder` now also records each call's `batch_size`. `_fixed_batch` sets `num_graphs` as a collated batch would; `test_batch_size_is_the_number_of_genotypes` now names `num_graphs` as the contract.

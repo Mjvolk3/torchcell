@@ -110,6 +110,7 @@ def _batch(targets: list[float], original: list[float] | None = None) -> HeteroD
     batch["gene"].perturbation_indices = torch.tensor([0, 1])
     batch["gene"].perturbation_indices_batch = torch.tensor([0, 1])
     batch["gene"].phenotype_values = torch.tensor(targets)
+    batch.num_graphs = 2  # a collated PyG Batch carries it
     if original is not None:
         batch["gene"].phenotype_values_original = torch.tensor(original)
     return batch

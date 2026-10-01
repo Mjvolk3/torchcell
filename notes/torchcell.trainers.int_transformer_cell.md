@@ -16,3 +16,7 @@ Four fixes from issue #534.
 - **The edge recovery precision plot is skipped, with one INFO log line, when no graph has a counted node at any k.** It used to be called with empty inner dicts. Skipping rather than raising because an empty accumulator is a legitimate state and the recall and mass plots already skip it.
 
 Tests in [[tests.torchcell.trainers.test_int_transformer_cell]].
+
+## 2026.10.01 - Batch size reads num_graphs (issue #567)
+
+Previously `_get_batch_size` sized a perturbation batch as `max(perturbation_indices_batch) + 1`. Since PR #560 the CGT sizes its output by `batch.num_graphs`, so a trailing genotype with no perturbed gene (a wild-type record) was dropped from the logged batch size while the model still predicted its row. The perturbation branch now returns `int(batch.num_graphs)`; the ladder below it (perturbed-gene count, value count, 1) is unchanged. Evidence: `test_trailing_genotype_without_a_perturbation_is_counted` in [[tests.torchcell.trainers.test_int_transformer_cell]] (3 genotypes with batch vector [0, 0, 1]: size 3, 3 prediction rows, profiling logs 3 under `batch_size=3`).

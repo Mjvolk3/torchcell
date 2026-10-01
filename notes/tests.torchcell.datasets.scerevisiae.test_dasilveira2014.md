@@ -23,3 +23,7 @@ Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256Mismat
 ## 2026.10.01 - Findings retired (issues #537, #546)
 
 Retired the Phase 16 findings: a lipid no WT row measured and an all-blank mutant row are refused with exact messages and leave no `data.csv` and no store; padded and lowercase systematic names resolve (`ybr001c` -> YBR001C) with the full three-lipid reference.
+
+## 2026.10.01 - Review follow-up on PR #591
+
+The default matrix drops the YAL003W row (a duplicate is now refused, `test_two_rows_resolving_to_one_orf_are_refused_before_anything_is_written`); `test_a_failure_inside_create_experiment_leaves_nothing_behind` monkeypatches a raise inside `create_experiment` and fails if records are built inside the write transaction; every refusal also asserts no `lipid_chebi.csv`.

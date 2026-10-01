@@ -23,3 +23,7 @@ Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256Mismat
 ## 2026.10.01 - Findings retired (issues #537, #546)
 
 Retired the Phase 16 findings: blank ORF rows give a counted warning, two spellings of one strain are refused with no `data.csv` or store, `create_experiment` raises, and a refused WT reference leaves no `processed/lmdb`. The blank-cell-stored-as-0.0 finding stays pinned (not an item of #537).
+
+## 2026.10.01 - Review follow-up on PR #591
+
+Added `test_a_tcv_column_is_a_base_parameter_and_refused_by_the_schema` (fails with `TCV` restored); the refused-WT-reference test also asserts no `data.csv`.

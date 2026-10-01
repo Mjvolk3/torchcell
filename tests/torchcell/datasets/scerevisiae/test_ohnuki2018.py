@@ -425,7 +425,8 @@ def test_a_wt_feature_with_no_numeric_cell_refuses_the_reference(
     """Every WT cell of ACV103_A1B is "n.d.", so its coerced mean is NaN and the reference
     ``CalMorphPhenotype`` refuses it by name. Contract (issue #537): every record is
     built before the store is opened, so the refusal leaves no ``processed/lmdb`` and a
-    retry on the same root refuses again instead of serving 0 records.
+    retry on the same root refuses again instead of serving 0 records; ``data.csv`` is
+    written only after every record is built, so it is absent too.
     """
     root = tmp_path / "nd"
     (root / "raw").mkdir(parents=True)
@@ -449,6 +450,40 @@ def test_a_wt_feature_with_no_numeric_cell_refuses_the_reference(
             )
         ]
         assert not (root / "processed" / "lmdb").exists()
+        assert not (root / "preprocess" / "data.csv").exists()
+
+
+def test_a_tcv_column_is_a_base_parameter_and_refused_by_the_schema(
+    tmp_path: Path,
+) -> None:
+    """Contract (issue #537, #494): CV parameters are prefixed CCV, ACV and DCV only
+    (60 + 33 + 127 = 220 in the pinned matrices; no TCV column exists in either), so a
+    ``TCV101_X`` column is not classed as a CV trait. It falls to the base traits, where
+    the phenotype validator refuses it by name, and no store is written.
+    """
+    assert m._CV_PREFIXES == ("CCV", "ACV", "DCV")
+    root = tmp_path / "tcv"
+    (root / "raw").mkdir(parents=True)
+    _write_tsv(
+        root / "raw" / "ess1112data.tsv",
+        ["ORF", "A101_A", "TCV101_X"],
+        [["YAL001C", "1.0", "0.1"]],
+    )
+    _write_tsv(
+        root / "raw" / "wt114data.tsv",
+        ["NAME", "A101_A", "TCV101_X"],
+        [["w1", "1.0", "0.3"]],
+    )
+    with pytest.raises(pydantic.ValidationError) as info:
+        m.ScmdOhnuki2018Dataset(root=str(root), genome=_genome())
+    assert [(e["loc"], e["msg"]) for e in info.value.errors()] == [
+        (
+            ("calmorph",),
+            "Value error, Invalid CalMorph base parameter: TCV101_X. Must be one of "
+            "the 281 base parameters in CALMORPH_LABELS.",
+        )
+    ]
+    assert not (root / "processed" / "lmdb").exists()
 
 
 def test_missing_genome_is_built_once_by_default_genome(

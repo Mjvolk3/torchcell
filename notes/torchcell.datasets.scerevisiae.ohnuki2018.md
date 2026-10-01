@@ -47,3 +47,7 @@ Previous behavior: blank or whitespace-only ORF rows were dropped with no log li
 Fix: blank ORF rows are dropped with a counted warning, duplicate spellings are refused, `create_experiment` raises `NotImplementedError`, every record is built before the store opens, and `TCV` is removed from `_CV_PREFIXES` (as in Ohya 2005, #494). Measured on the pinned matrices (1112 x 501): 0 blank ORFs, 0 duplicate spellings, 0 TCV columns; the built records do not change.
 
 Still pinned, not an item of #537: a blank CalMorph cell is stored as 0.0 (`create_calmorph_experiment`); the pinned matrix has 0 blank cells.
+
+## 2026.10.01 - Review follow-up on PR #591
+
+`data.csv` is written after every record is built, so a refused matrix leaves neither `preprocess/data.csv` nor `processed/lmdb`; on success the bytes are unchanged (`test_side_files`). The TCV removal is pinned by `test_a_tcv_column_is_a_base_parameter_and_refused_by_the_schema`, which fails with `TCV` restored to `_CV_PREFIXES`.

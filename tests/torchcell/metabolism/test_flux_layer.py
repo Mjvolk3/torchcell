@@ -478,12 +478,10 @@ def test_dynamic_box_enzyme_capacity() -> None:
     c = 1: r1 becomes [-3.6, 3.6]. At c = 1/2: the box is halved (r1 [-5, 5]) and the
     ceiling too (1.8). With capacity off the box is only scaled by c.
 
-    Finding: flux_layer.py:631-633 caps a reaction WITHOUT a GPR at ``ub.abs()`` on both
-    sides, so r0's lower bound -10 becomes max(-10, -5) = -5 (an asymmetric box made
-    symmetric about its upper bound) and the reverse-only r2 [-10, 0] collapses to the
-    point 0, carrying no flux at all, though the docstring says capacity enters through
-    kcat and an unannotated reaction keeps availability 1. Pinned until the no-GPR branch
-    leaves ``lb`` alone.
+    Contract (issue #534): capacity bounds ``|v_j| <= cap_j`` and applies only to a
+    reaction with a GPR. A reaction without one keeps its own scaled ``[lb, ub]``, so the
+    asymmetric r0 stays [-10, 5] (not [-5, 5]) and the reverse-only r2 stays [-10, 0]
+    (not the point 0).
     """
     gem = _gem(
         [[1.0, -1.0, 1.0]],
@@ -494,7 +492,7 @@ def test_dynamic_box_enzyme_capacity() -> None:
     )
     layer = FluxLayer(gem, ["g0"], kcat_per_s=torch.tensor([1.0]))
     lb, ub = layer.dynamic_box(torch.tensor([[1.0, 1.0, 1.0], [0.5, 0.5, 0.5]]))
-    assert torch.allclose(lb, torch.tensor([[-5.0, -3.6, 0.0], [-2.5, -1.8, 0.0]]))
+    assert torch.allclose(lb, torch.tensor([[-10.0, -3.6, -10.0], [-5.0, -1.8, -5.0]]))
     assert torch.allclose(ub, torch.tensor([[5.0, 3.6, 0.0], [2.5, 1.8, 0.0]]))
     off = FluxLayer(
         gem,
@@ -667,15 +665,15 @@ def _second_law_layer(r1_lb: float, r1_ub: float, **overrides: Any) -> FluxLayer
 def test_second_law_hinge_and_dissipation_closed_form() -> None:
     """R1 run backwards against Delta_r G = -10 is fully uphill; forwards it is free.
 
-    Enzyme capacity is off (see the dynamic-box Finding: with it on, the reverse-only
-    no-GPR box of R1 collapses to 0). v = (5, -5, 5) on the reversed box. Delta_r G = (RT m, -10, 10 - RT m) with m the
+    Enzyme capacity is on (the default): R1 has no GPR, so its reverse-only box
+    [-10, 0] is kept and carries the nonzero flux -5. v = (5, -5, 5) on the reversed box. Delta_r G = (RT m, -10, 10 - RT m) with m the
     window midpoint, so the drive on R1 is (-5)(-10) = 50 and c_thermo = 1; dissipation
     over the exchanges is 5 RT m + 5 (10 - RT m) = 50, a ratio 50 / 10 - 1 = 4 over a
     10 J/gDW/h limit. The zero-initialized offset gives c_thermo_prior exactly 0.
     """
     rt = 303.15 * 8.314462618e-3
     m = (math.log(1e-7) + math.log(1e-2)) / 2
-    back = _second_law_layer(-10.0, 0.0, g_diss_limit=10.0, use_enzyme_capacity=False)
+    back = _second_law_layer(-10.0, 0.0, g_diss_limit=10.0)
     out = back(torch.zeros(1, 1, 2), torch.zeros(1, 2), *_no_pert())
     assert out["v"].tolist() == [[5.0, -5.0, 5.0]]
     assert torch.allclose(
@@ -822,20 +820,38 @@ def test_gradient_reaches_every_parameter(
         assert float(param.grad.abs().sum()) > 0.0, name
 
 
-def test_nullspace_arm_leaves_the_box_head_untrained() -> None:
-    """Finding: flux_layer.py:483-487 builds ``reaction_embedding`` and ``flux_mlp`` in
-    the nullspace arm too, but :meth:`forward` never reads them there (line 732 uses
-    ``latent_mlp``), so they never receive a gradient and still count toward the
-    parameter total. The availability gate reaches the nullspace flux only through the
-    soft box penalty ``c_box``, so a loss on ``v`` alone leaves it untouched as well.
-    Pinned until the nullspace arm stops constructing the box head.
+def test_each_arm_builds_only_the_modules_it_reads() -> None:
+    """Each parameterization owns exactly the parameters its forward reads (issue #534).
+
+    Contract: the nullspace arm builds ``latent_mlp`` and the availability gate and no box
+    head; the box arm builds ``reaction_embedding`` and ``flux_mlp`` and no latent head.
+    On the toy network (hidden 8, reaction embedding 4, null-space dimension 2, thermo
+    OFF) the counts are: nullspace ``(8*8 + 8) + (8*2 + 2) + (8 + 1) = 99``; box
+    ``4*4 + (12*8 + 8) + (8*1 + 1) + (8 + 1) = 138``. In the nullspace arm the gate
+    reaches the loss only through the soft box penalty, so the loss is ``v.sum() +
+    c_box``; in the box arm ``v.sum()`` reaches every parameter.
     """
     torch.manual_seed(0)
-    layer = _layer(parameterization="nullspace", thermo_mode=ThermoMode.OFF)
-    out = layer(*_inputs())
-    out["v"].sum().backward()
-    untouched = sorted(n for n, p in layer.named_parameters() if p.grad is None)
-    assert untouched == [
+    null = _layer(parameterization="nullspace", thermo_mode=ThermoMode.OFF)
+    assert null.n_latent == 2
+    assert sorted(n for n, _ in null.named_parameters()) == [
+        "availability.bias",
+        "availability.weight",
+        "latent_mlp.0.bias",
+        "latent_mlp.0.weight",
+        "latent_mlp.2.bias",
+        "latent_mlp.2.weight",
+    ]
+    assert sum(p.numel() for p in null.parameters()) == 99
+    out = null(*_inputs())
+    assert float(out["c_box"]) > 0.0
+    (out["v"].sum() + out["c_box"]).backward()
+    for name, param in null.named_parameters():
+        assert param.grad is not None, name
+        assert float(param.grad.abs().sum()) > 0.0, name
+
+    box = _layer(thermo_mode=ThermoMode.OFF)
+    assert sorted(n for n, _ in box.named_parameters()) == [
         "availability.bias",
         "availability.weight",
         "flux_mlp.0.bias",
@@ -844,6 +860,8 @@ def test_nullspace_arm_leaves_the_box_head_untrained() -> None:
         "flux_mlp.2.weight",
         "reaction_embedding.weight",
     ]
-    for name in ("latent_mlp.0.weight", "latent_mlp.2.weight"):
-        grad = dict(layer.named_parameters())[name].grad
-        assert grad is not None and float(grad.abs().sum()) > 0.0
+    assert sum(p.numel() for p in box.parameters()) == 138
+    box(*_inputs())["v"].sum().backward()
+    for name, param in box.named_parameters():
+        assert param.grad is not None, name
+        assert float(param.grad.abs().sum()) > 0.0, name

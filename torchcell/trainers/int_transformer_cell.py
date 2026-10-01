@@ -23,6 +23,9 @@ from torchcell.viz.visual_regression import Visualization
 
 log = logging.getLogger(__name__)
 
+#: The metric the default ReduceLROnPlateau scheduler is stepped on.
+PLATEAU_MONITOR = "val/gene_interaction/MSE"
+
 
 class RegressionTask(L.LightningModule):
     """Lightning module training the transformer cell model on gene interactions."""
@@ -144,6 +147,35 @@ class RegressionTask(L.LightningModule):
             # Last resort fallback
             return 1
 
+    def _log_loss_components(
+        self, stage: str, loss_dict: dict[str, Any], batch_size: int
+    ) -> None:
+        """Log every loss component the same way for every loss function.
+
+        A one-element tensor or a Python number is logged as ``{stage}/{key}``; a
+        multi-element tensor is logged element by element as ``{stage}/{key}_{i}``
+        over its flattened values; an empty tensor and any other value are skipped.
+        """
+        for key, value in loss_dict.items():
+            if isinstance(value, torch.Tensor):
+                if value.numel() == 1:
+                    self.log(
+                        f"{stage}/{key}",
+                        value.item(),
+                        batch_size=batch_size,
+                        sync_dist=True,
+                    )
+                elif value.numel() > 1:
+                    for i, element in enumerate(value.reshape(-1)):
+                        self.log(
+                            f"{stage}/{key}_{i}",
+                            element.item(),
+                            batch_size=batch_size,
+                            sync_dist=True,
+                        )
+            elif isinstance(value, (int, float)):
+                self.log(f"{stage}/{key}", value, batch_size=batch_size, sync_dist=True)
+
     def reset_edge_recovery_accumulators(self) -> None:
         """Reset accumulators for edge recovery metrics."""
         self.edge_recovery_accumulators: dict[str, Any] = {}
@@ -163,15 +195,17 @@ class RegressionTask(L.LightningModule):
                     acc["sum_recall_deg"] / acc["count_nodes_deg"]
                 )
 
-        # Prepare precision metrics
+        # Prepare precision metrics; a graph with no counted node at any k has
+        # nothing to plot and is left out rather than passed as an empty dict.
         precision_metrics: dict[str, dict[int, float]] = {}
         for metric_key, acc in self.edge_recovery_accumulators.items():
-            precision_metrics[metric_key] = {}
-            for k in self.edge_recovery_ks:
-                if acc["count_nodes_prec"][k] > 0:
-                    precision_metrics[metric_key][k] = (
-                        acc["sum_prec"][k] / acc["count_nodes_prec"][k]
-                    )
+            per_k = {
+                k: acc["sum_prec"][k] / acc["count_nodes_prec"][k]
+                for k in self.edge_recovery_ks
+                if acc["count_nodes_prec"][k] > 0
+            }
+            if per_k:
+                precision_metrics[metric_key] = per_k
 
         # Prepare edge-mass alignment metrics
         edge_mass_metrics = {}
@@ -194,6 +228,12 @@ class RegressionTask(L.LightningModule):
                 self.current_epoch,
                 None,
                 stage="val",
+            )
+        else:
+            log.info(
+                "Skipping the edge recovery precision plot at epoch %d: no graph "
+                "has a counted node at any k.",
+                self.current_epoch,
             )
 
         if edge_mass_metrics:
@@ -860,22 +900,7 @@ class RegressionTask(L.LightningModule):
 
             # Log all loss components
             if isinstance(loss_dict, dict):
-                for key, value in loss_dict.items():
-                    if isinstance(value, torch.Tensor):
-                        if value.numel() == 1:
-                            self.log(
-                                f"{stage}/{key}",
-                                value.item(),
-                                batch_size=batch_size,
-                                sync_dist=True,
-                            )
-                    elif isinstance(value, (int, float)):
-                        self.log(
-                            f"{stage}/{key}",
-                            value,
-                            batch_size=batch_size,
-                            sync_dist=True,
-                        )
+                self._log_loss_components(stage, loss_dict, batch_size)
         else:
             # For ICLoss or other custom losses that might use z_p
             # Check if loss function accepts epoch parameter (for MleDistSupCR and MleWassSupCR)
@@ -901,35 +926,7 @@ class RegressionTask(L.LightningModule):
 
                 # Log additional loss components if available
                 if isinstance(loss_dict, dict):
-                    for key, value in loss_dict.items():
-                        if isinstance(value, torch.Tensor):
-                            # Handle multi-dimensional tensors
-                            if value.numel() == 1:
-                                # Single element tensor - log as scalar
-                                self.log(
-                                    f"{stage}/{key}",
-                                    value.item(),
-                                    batch_size=batch_size,
-                                    sync_dist=True,
-                                )
-                            elif value.numel() > 1:
-                                # Multi-element tensor - log each element separately
-                                for i in range(value.numel()):
-                                    self.log(
-                                        f"{stage}/{key}_{i}",
-                                        value[i].item(),
-                                        batch_size=batch_size,
-                                        sync_dist=True,
-                                    )
-                            # Skip empty tensors
-                        elif isinstance(value, (int, float)):
-                            # Handle scalar values
-                            self.log(
-                                f"{stage}/{key}",
-                                value,
-                                batch_size=batch_size,
-                                sync_dist=True,
-                            )
+                    self._log_loss_components(stage, loss_dict, batch_size)
             else:
                 loss = loss_output
 
@@ -1013,14 +1010,20 @@ class RegressionTask(L.LightningModule):
             # Extract the inversed predictions
             inv_gene_int = inv_data["gene"]["phenotype_values"]
 
-            # Handle tensor shape
-            if isinstance(inv_gene_int, torch.Tensor):
-                if inv_gene_int.dim() == 0:
-                    inv_predictions = inv_gene_int.unsqueeze(0).unsqueeze(0)
-                elif inv_gene_int.dim() == 1:
-                    inv_predictions = inv_gene_int.unsqueeze(1)
-                else:
-                    inv_predictions = inv_gene_int
+            # A non-tensor here would leave the original-scale metrics computed on the
+            # transformed predictions, so it is refused rather than skipped.
+            if not isinstance(inv_gene_int, torch.Tensor):
+                raise TypeError(
+                    f"inverse_transform {type(self.inverse_transform).__name__} "
+                    "returned phenotype_values of type "
+                    f"{type(inv_gene_int).__name__}; expected torch.Tensor"
+                )
+            if inv_gene_int.dim() == 0:
+                inv_predictions = inv_gene_int.unsqueeze(0).unsqueeze(0)
+            elif inv_gene_int.dim() == 1:
+                inv_predictions = inv_gene_int.unsqueeze(1)
+            else:
+                inv_predictions = inv_gene_int
 
         # Update metrics with original scale values
         mask = ~torch.isnan(gene_interaction_orig)
@@ -1359,19 +1362,10 @@ class RegressionTask(L.LightningModule):
             # Reset the sample containers
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
 
-        # Step the scheduler when using manual optimization
-        sch = self.lr_schedulers()
-        if sch is not None:
-            # Lightning returns a list of schedulers even if there's only one
-            active_sch: LRScheduler | ReduceLROnPlateau
-            if isinstance(sch, list) and len(sch) > 0:
-                active_sch = sch[0]
-            else:
-                active_sch = cast("LRScheduler | ReduceLROnPlateau", sch)
-            # Manual-optimization schedulers stepped here are epoch-interval
-            # LRSchedulers, never ReduceLROnPlateau (which Lightning drives via
-            # its monitor); narrow so step() needs no metric argument.
-            assert not isinstance(active_sch, ReduceLROnPlateau)
+        # Step the scheduler when using manual optimization. A plateau scheduler is
+        # stepped on its monitored metric in on_validation_epoch_end instead.
+        active_sch = self._active_scheduler()
+        if active_sch is not None and not isinstance(active_sch, ReduceLROnPlateau):
             active_sch.step()
 
         # CRITICAL: Clear GPU memory at end of training epoch
@@ -1427,13 +1421,36 @@ class RegressionTask(L.LightningModule):
         # Always clear sample containers for test (test runs only once)
         self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
 
+    def _active_scheduler(self) -> LRScheduler | ReduceLROnPlateau | None:
+        """The configured scheduler, or None (Lightning may wrap it in a list)."""
+        sch = self.lr_schedulers()
+        if sch is None:
+            return None
+        if isinstance(sch, list):
+            return sch[0]
+        return sch
+
     def on_validation_epoch_end(self) -> None:
-        """Log and reset validation metrics and plot validation samples periodically."""
+        """Log and reset validation metrics and plot validation samples periodically.
+
+        Under manual optimization Lightning never steps a scheduler, so a
+        ReduceLROnPlateau scheduler is stepped here, once per (non-sanity) validation
+        epoch, on the value of its monitor ``val/gene_interaction/MSE`` computed just
+        above. Validation runs inside the training epoch, before on_train_epoch_end, so
+        this is the point where the monitor is fresh. Without a validation loop the
+        plateau scheduler is never stepped and the learning rate stays fixed.
+        """
         # Log validation metrics
         computed_metrics = self._compute_metrics_safely(self.val_metrics)
         for name, value in computed_metrics.items():
             self.log(name, value, sync_dist=True)
         self.val_metrics.reset()
+
+        active_sch = self._active_scheduler()
+        if not self.trainer.sanity_checking and isinstance(
+            active_sch, ReduceLROnPlateau
+        ):
+            active_sch.step(computed_metrics[PLATEAU_MONITOR])
 
         # Compute and log transformed metrics
         transformed_metrics = self._compute_metrics_safely(self.val_transformed_metrics)
@@ -1569,7 +1586,7 @@ class RegressionTask(L.LightningModule):
                 "optimizer": optimizer,
                 "lr_scheduler": {
                     "scheduler": scheduler,
-                    "monitor": "val/gene_interaction/MSE",
+                    "monitor": PLATEAU_MONITOR,
                     "interval": "epoch",
                     "frequency": 1,
                 },

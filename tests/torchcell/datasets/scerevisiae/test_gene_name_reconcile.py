@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 from dotenv import load_dotenv
 
+from tests.torchcell.conftest import require_trusted_genome_database
 from torchcell.datasets.scerevisiae.gene_name_reconcile import (
     reconcile_systematic_names,
 )
@@ -27,6 +28,7 @@ pytestmark = pytest.mark.data
 @pytest.fixture(scope="module")
 def genome():
     assert DATA_ROOT is not None
+    require_trusted_genome_database(osp.join(DATA_ROOT, "data/sgd/genome"))
     return SCerevisiaeGenome(
         genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
         go_root=osp.join(DATA_ROOT, "data/go"),

@@ -12,4 +12,4 @@ The data-gated YAL037W `window_five_prime(9, include_start_codon=False)` now exp
 
 ## 2026.10.01 - genome fixture passes overwrite=False
 
-The data-gated `genome` fixture omitted `overwrite`, so under `--data` it rebuilt the shared `$DATA_ROOT/data/sgd/genome/data.db` with the old `True` default. It now passes `overwrite=False` explicitly. On its first `--data` run after this change it migrates a record-less shared database once (kept aside, rebuilt, one WARNING).
+The data-gated `genome` fixture omitted `overwrite`, so under `--data` it rebuilt the shared `$DATA_ROOT/data/sgd/genome/data.db` with the old `True` default. It now passes `overwrite=False` explicitly and first calls `require_trusted_genome_database`, so under `--data` a record-less or modified real database fails the module by name instead of being migrated by a test.

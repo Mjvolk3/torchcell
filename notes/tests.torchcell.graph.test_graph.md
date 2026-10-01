@@ -20,3 +20,7 @@ Findings: only the last evidence row per gene and term is kept, so the IGI filte
 
 - Retired: `main` building the genome with `overwrite=True`; `test_main_opens_the_genome_with_overwrite_false` asserts `overwrite=False`.
 - Still pinned: the last-evidence-row finding (`test_two_evidence_rows_for_one_term_keep_only_the_last`), now with the measured real-data impact in its docstring.
+
+## 2026.10.01 - Real genome only when its database is trusted
+
+The data-gated genome construction now first calls `require_trusted_genome_database` (see [[tests.torchcell.conftest]]): when the real `data.db` would be built or migrated, the test fails by name instead of migrating the shared root.

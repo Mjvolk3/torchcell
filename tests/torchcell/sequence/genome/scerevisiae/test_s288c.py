@@ -6,6 +6,7 @@ import os.path as osp
 import pytest
 from dotenv import load_dotenv
 
+from tests.torchcell.conftest import require_trusted_genome_database
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 load_dotenv()
@@ -28,6 +29,7 @@ def genome():
     # DATA_ROOT, so it only runs where that dataset is present. Narrow the env
     # lookup to str so the osp.join calls below type-check under strict mypy.
     assert DATA_ROOT is not None, "DATA_ROOT must be set to run the S288C genome tests"
+    require_trusted_genome_database(osp.join(DATA_ROOT, "data/sgd/genome"))
     genome = SCerevisiaeGenome(
         genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
         go_root=osp.join(DATA_ROOT, "data/go"),

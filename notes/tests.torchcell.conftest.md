@@ -28,3 +28,7 @@ Two fixtures for the loader pin check (issues #518, #524, #528, #537). `raw_pin_
 
 - New `pinned_loaders` fixture. The `PINNED_LOADERS` comment now says that a new pinned module is patched and parametrized automatically, but is asserted only once it has a `_pins_from_constants` row (`KeyError` until then).
 - The `restore_real_pins` docstring now states the module-scope limit: a build in a module- or session-scoped fixture is set up before the function-scoped restore and keeps the recorder unless it restores the real check itself. `test_yeastphenome.py`'s module-scoped `dataset` now does this. It was the only such fixture building a pinned loader under `slow`/`data`, found by grepping module- and session-scoped fixtures.
+
+## 2026.10.01 - require_trusted_genome_database
+
+New helper `require_trusted_genome_database(genome_root)`: data-gated tests call it before constructing `SCerevisiaeGenome` on a real root. It reads only (`genome_database_untrusted_reason`) and fails the test by name when a construction would build or migrate the shared `data.db`, so a test never performs the first migration of a real root. Pinned hermetically in `test_s288c_synthetic.py::test_data_gated_helper_refuses_an_untrusted_real_root_by_name`.

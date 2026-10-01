@@ -57,12 +57,15 @@ feature falls inside its region. Expected values, derived from the source:
 
 import gc
 import hashlib
+import json
 import logging
 import os
 import os.path as osp
 import pickle
 import re
+import socket
 import sqlite3
+import subprocess
 import tempfile
 from pathlib import Path
 from types import SimpleNamespace
@@ -76,6 +79,7 @@ from gffutils.exceptions import FeatureNotFoundError
 from sortedcontainers import SortedDict, SortedSet
 
 import torchcell.sequence.genome.scerevisiae.s288c as s288c
+from tests.torchcell.conftest import require_trusted_genome_database
 from torchcell.sequence import DnaSelectionResult, DnaWindowResult
 from torchcell.sequence.data import GeneSet
 from torchcell.sequence.genome.scerevisiae.s288c import (
@@ -1355,10 +1359,12 @@ def test_main_builds_under_data_root_with_overwrite_false(
 
 # --------------------------------------------------------------------------- #
 # 2026.10.01: overwrite defaults to False; data.db is recorded, verified at open,
-# migrated once when untrusted, and never written after it is built.
+# migrated when untrusted (keeping at most one file), and never written after it is
+# built; writes go to a private, swept, replayable copy.
 # --------------------------------------------------------------------------- #
 
 GFF_NAME = f"saccharomyces_cerevisiae_{VERSION}.gff"
+HOST = socket.gethostname()
 #: Rows per featuretype of the fixture GFF (one feature per row, see GFF_ROWS) and the
 #: relations gffutils derives from its Parent chains (direct and grandparent links).
 FIXTURE_COUNTS = {
@@ -1372,6 +1378,7 @@ FIXTURE_COUNTS = {
 }
 FIXTURE_RELATIONS = 8
 ALL_GENES = ["Q0010", "YAL001C", "YAL002W", "YBL001W", "YBL002W", "YCL001W"]
+NO_CHRMT = ["YAL001C", "YAL002W", "YBL001W", "YBL002W", "YCL001W"]
 
 
 def _expected_source(release: dict[str, str]) -> GenomeDatabaseSource:
@@ -1386,11 +1393,19 @@ def _expected_source(release: dict[str, str]) -> GenomeDatabaseSource:
     )
 
 
-def _expected_record(release: dict[str, str]) -> GenomeDatabaseRecord:
-    return GenomeDatabaseRecord(
+def _header_counter(path: Path) -> int:
+    return int.from_bytes(path.read_bytes()[24:28], "big")
+
+
+def _assert_recorded(release: dict[str, str], db_path: Path) -> None:
+    """The record names the fixture source, its exact counts, and the file's own
+    change counter (the record transaction was the last write).
+    """
+    assert s288c.read_genome_database_record(str(db_path)) == GenomeDatabaseRecord(
         source=_expected_source(release),
         featuretype_counts=FIXTURE_COUNTS,
         relations_count=FIXTURE_RELATIONS,
+        change_counter=_header_counter(db_path),
     )
 
 
@@ -1410,13 +1425,48 @@ def _rebuild_call(release: dict[str, str]) -> str:
     )
 
 
-def _legacy_db(release: dict[str, str]) -> Path:
-    """A data.db built by plain gffutils, as every pre-2026.10.01 build was."""
-    genome_root = Path(release["__genome_root__"])
-    genome_root.mkdir()
-    db_path = genome_root / "data.db"
-    gffutils.create_db(release[GFF_NAME], dbfn=str(db_path), **s288c.CREATE_DB_KWARGS)
+def _root(release: dict[str, str]) -> Path:
+    root = Path(release["__genome_root__"])
+    root.mkdir(exist_ok=True)
+    return root
+
+
+def _old_code_rebuild(release: dict[str, str]) -> Path:
+    """What main's default ``overwrite=True`` did: create_db(force=True) in place."""
+    db_path = _root(release) / "data.db"
+    gffutils.create_db(
+        release[GFF_NAME], dbfn=str(db_path), force=True, **s288c.CREATE_DB_KWARGS
+    )
     return db_path
+
+
+def _old_code_delete(db_path: Path, feature_id: str) -> None:
+    """What main's drop_chrmt did to the shared file: a delete in place."""
+    conn = sqlite3.connect(db_path)
+    conn.execute("DELETE FROM features WHERE id = ?", (feature_id,))
+    conn.commit()
+    conn.close()
+
+
+def _construct(release: dict[str, str], **kwargs: Any) -> SCerevisiaeGenome:
+    return SCerevisiaeGenome(
+        genome_root=release["__genome_root__"], go_root=release["__go_root__"], **kwargs
+    )
+
+
+def _dead_pid() -> int:
+    proc = subprocess.Popen(["true"])
+    proc.wait()
+    return proc.pid
+
+
+@pytest.fixture
+def private_tmp(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """A private temp dir for the private copies (``tempfile.gettempdir()``)."""
+    d = tmp_path / "private_tmp"
+    d.mkdir()
+    monkeypatch.setattr(tempfile, "tempdir", str(d))
+    return d
 
 
 def test_overwrite_defaults_to_false() -> None:
@@ -1427,36 +1477,53 @@ def test_overwrite_defaults_to_false() -> None:
 def test_default_builds_an_absent_database_once_then_reuses_it(
     release: dict[str, str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """No data.db: the first default construction builds it (one create_db call, the
-    record inside, mode 0644, no temporary left); the second opens the same file.
+    """An existing root without data.db: the first default construction builds it in
+    a temporary file inside the root (one create_db call, the record inside, mode
+    0644, no temporary left); the second opens the same file.
     """
-    create_calls: list[str] = []
+    create_calls: list[tuple[str, str]] = []
     real_create_db = gffutils.create_db
 
     def recording_create_db(data: str, dbfn: str, **kwargs: Any) -> Any:
-        create_calls.append(data)
+        create_calls.append((data, osp.dirname(dbfn)))
         return real_create_db(data, dbfn=dbfn, **kwargs)
 
     monkeypatch.setattr(gffutils, "create_db", recording_create_db)
-    genome_root = Path(release["__genome_root__"])
+    genome_root = _root(release)
     db_path = genome_root / "data.db"
 
-    first = SCerevisiaeGenome(
-        genome_root=str(genome_root), go_root=release["__go_root__"]
-    )
+    first = _construct(release)
     assert first.overwrite is False
-    assert create_calls == [release[GFF_NAME]]
+    assert create_calls == [(release[GFF_NAME], str(genome_root))]
     assert os.listdir(genome_root) == ["data.db"]
     assert db_path.stat().st_mode & 0o777 == 0o644
-    assert s288c.read_genome_database_record(str(db_path)) == _expected_record(release)
+    _assert_recorded(release, db_path)
     built = _identity(db_path)
 
-    second = SCerevisiaeGenome(
-        genome_root=str(genome_root), go_root=release["__go_root__"]
-    )
-    assert create_calls == [release[GFF_NAME]]
+    second = _construct(release)
+    assert len(create_calls) == 1
     assert _identity(db_path) == built
     assert list(second.gene_set) == ALL_GENES
+
+
+def test_missing_genome_root_is_refused_unless_asked_to_build(
+    release: dict[str, str],
+) -> None:
+    """A genome_root that does not exist (a wrong or relative path) is refused by
+    name and nothing is created; ``overwrite=True`` creates it and builds.
+    """
+    genome_root = Path(release["__genome_root__"])
+    with pytest.raises(s288c.GenomeRootNotFoundError) as exc:
+        _construct(release)
+    assert str(exc.value) == (
+        f"genome_root {str(genome_root)!r} does not exist. Pass the existing genome "
+        "cache directory, or build a new one deliberately: "
+        f"{_rebuild_call(release)}"
+    )
+    assert not genome_root.exists()
+    genome = _construct(release, overwrite=True)
+    assert os.listdir(genome_root) == ["data.db"]
+    assert list(genome.gene_set) == ALL_GENES
 
 
 def test_overwrite_true_rebuilds_atomically(release: dict[str, str]) -> None:
@@ -1467,86 +1534,114 @@ def test_overwrite_true_rebuilds_atomically(release: dict[str, str]) -> None:
     db_path = Path(release["__genome_root__"]) / "data.db"
     before = db_path.stat().st_ino
     old_reader = sqlite3.connect(db_path)
-    SCerevisiaeGenome(
-        genome_root=release["__genome_root__"],
-        go_root=release["__go_root__"],
-        overwrite=True,
-    )
+    _construct(release, overwrite=True)
     assert db_path.stat().st_ino != before
     assert old_reader.execute("SELECT COUNT(*) FROM features").fetchone() == (16,)
     old_reader.close()
     assert os.listdir(release["__genome_root__"]) == ["data.db"]
-    assert s288c.read_genome_database_record(str(db_path)) == _expected_record(release)
+    _assert_recorded(release, db_path)
 
 
-def test_legacy_database_is_migrated_once(
+def test_legacy_database_with_fresh_rows_is_replaced_and_nothing_kept(
     release: dict[str, str], caplog: pytest.LogCaptureFixture
 ) -> None:
-    """A record-less data.db is kept as data.db.untrusted-<UTC>-<pid> (same inode, so
-    an open reader keeps it), replaced by a recorded build, and logged once; the next
-    construction opens the migrated file without touching it.
+    """A record-less data.db whose rows equal a fresh build (every pre-change build,
+    every old-code rebuild) is replaced and not kept, with one WARNING; an open
+    reader keeps the old inode; the next construction opens the migrated file.
     """
-    db_path = _legacy_db(release)
-    legacy_ino, legacy_sha = db_path.stat().st_ino, _sha(db_path)
+    db_path = _old_code_rebuild(release)
     old_reader = sqlite3.connect(db_path)
     with caplog.at_level(logging.WARNING, logger=s288c.__name__):
-        genome = SCerevisiaeGenome(
-            genome_root=release["__genome_root__"], go_root=release["__go_root__"]
-        )
-    names = sorted(os.listdir(release["__genome_root__"]))
-    assert len(names) == 2 and names[0] == "data.db"
-    assert re.fullmatch(
-        rf"data\.db\.untrusted-\d{{8}}T\d{{6}}\.\d{{6}}Z-{os.getpid()}", names[1]
-    )
-    aside = Path(release["__genome_root__"]) / names[1]
-    assert (aside.stat().st_ino, _sha(aside)) == (legacy_ino, legacy_sha)
+        genome = _construct(release)
+    assert os.listdir(release["__genome_root__"]) == ["data.db"]
     assert old_reader.execute("SELECT COUNT(*) FROM features").fetchone() == (16,)
     old_reader.close()
-    assert s288c.read_genome_database_record(str(db_path)) == _expected_record(release)
+    _assert_recorded(release, db_path)
     assert [(r.levelname, r.getMessage()) for r in caplog.records] == [
         (
             "WARNING",
             f"genome database {db_path} was not trusted (it carries no "
-            f"torchcell_genome_db_source record); kept it as {aside} and installed "
-            "a fresh build from the pinned GFF",
+            "torchcell_genome_db_source record); its rows equal a fresh build, so it "
+            "was replaced by the recorded build and nothing was kept",
         )
     ]
     assert list(genome.gene_set) == ALL_GENES
     migrated = _identity(db_path)
-    SCerevisiaeGenome(
-        genome_root=release["__genome_root__"], go_root=release["__go_root__"]
-    )
+    _construct(release)
     assert _identity(db_path) == migrated
-    assert len(os.listdir(release["__genome_root__"])) == 2
 
 
-def test_rows_deleted_in_place_are_detected_and_migrated(
+def test_rows_deleted_in_place_are_kept_once_and_migrated(
     release: dict[str, str], caplog: pytest.LogCaptureFixture
 ) -> None:
-    """Old code's ``drop_chrmt`` deleted rows from the shared file in place: the
-    counts no longer match the record, so the file is kept aside and rebuilt.
+    """Old code deleted a row in place: the counts differ from the record, so the file
+    is copied to data.db.untrusted and replaced, with one WARNING naming the case.
     """
     build_db(release[GFF_NAME], Path(release["__genome_root__"]))
     db_path = Path(release["__genome_root__"]) / "data.db"
+    _old_code_delete(db_path, "Q0010")
+    damaged = _sha(db_path)
+    with caplog.at_level(logging.WARNING, logger=s288c.__name__):
+        genome = _construct(release)
+    kept = Path(release["__genome_root__"]) / "data.db.untrusted"
+    assert sorted(os.listdir(release["__genome_root__"])) == [
+        "data.db",
+        "data.db.untrusted",
+    ]
+    assert _sha(kept) == damaged
+    assert [r.getMessage() for r in caplog.records] == [
+        f"genome database {db_path} was not trusted (its row counts differ from its "
+        "record (features 15 vs 16 recorded, relations 8 vs 8 recorded)); its rows "
+        f"differ from a fresh build, so it was kept as {kept} (replacing any earlier "
+        "one) and replaced by the recorded build"
+    ]
+    assert list(genome.gene_set) == ALL_GENES
+
+
+def test_count_preserving_rewrite_in_place_is_detected_by_the_change_counter(
+    release: dict[str, str], caplog: pytest.LogCaptureFixture
+) -> None:
+    """Old code rewrote an attribute in place (every count unchanged): the sqlite
+    change counter moved past the recorded one, so the file is migrated.
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    db_path = Path(release["__genome_root__"]) / "data.db"
+    recorded = _header_counter(db_path)
     conn = sqlite3.connect(db_path)
-    conn.execute("DELETE FROM features WHERE id = 'Q0010'")
+    conn.execute("UPDATE features SET attributes = '{}' WHERE id = 'YAL002W'")
     conn.commit()
     conn.close()
     with caplog.at_level(logging.WARNING, logger=s288c.__name__):
-        genome = SCerevisiaeGenome(
-            genome_root=release["__genome_root__"], go_root=release["__go_root__"]
+        genome = _construct(release)
+    assert (
+        caplog.records[0]
+        .getMessage()
+        .startswith(
+            f"genome database {db_path} was not trusted (it was written in place after "
+            f"its build (sqlite change counter {recorded + 1}, {recorded} recorded)); its "
+            "rows differ from a fresh build"
         )
-    aside = next(
-        Path(release["__genome_root__"]) / n
-        for n in os.listdir(release["__genome_root__"])
-        if n != "data.db"
     )
-    assert [r.getMessage() for r in caplog.records] == [
-        f"genome database {db_path} was not trusted (its row counts differ from its "
-        "record (features 15 vs 16 recorded, relations 8 vs 8 recorded)); kept it "
-        f"as {aside} and installed a fresh build from the pinned GFF"
-    ]
-    assert list(genome.gene_set) == ALL_GENES
+    assert genome.db["YAL002W"].attributes["Ontology_term"] == ["GO:0000002"]
+
+
+@pytest.mark.parametrize(
+    ("damage", "kept"), [(False, []), (True, ["data.db.untrusted"])]
+)
+def test_old_code_ping_pong_never_accumulates_kept_files(
+    release: dict[str, str], damage: bool, kept: list[str]
+) -> None:
+    """Eight cycles of an old-code rebuild in place (optionally followed by an old-code
+    delete) and a new-code open: nothing is kept when the rows equal a fresh build, and
+    at most one file when they differ.
+    """
+    for _ in range(8):
+        db_path = _old_code_rebuild(release)
+        if damage:
+            _old_code_delete(db_path, "Q0010")
+        genome = _construct(release)
+        assert list(genome.gene_set) == ALL_GENES
+    assert sorted(os.listdir(release["__genome_root__"])) == ["data.db", *kept]
 
 
 def test_database_built_from_a_different_gff_is_refused(
@@ -1569,9 +1664,7 @@ def test_database_built_from_a_different_gff_is_refused(
         f"it: {_rebuild_call(release)}"
     )
     with pytest.raises(GenomeDatabaseSourceError) as exc:
-        SCerevisiaeGenome(
-            genome_root=release["__genome_root__"], go_root=release["__go_root__"]
-        )
+        _construct(release)
     assert str(exc.value) == message
     assert _identity(db_path) == before
     assert os.listdir(release["__genome_root__"]) == ["data.db"]
@@ -1592,38 +1685,183 @@ def test_source_table_with_two_rows_is_refused(release: dict[str, str]) -> None:
     )
 
 
-def test_two_interleaved_migrations_both_end_on_a_valid_database(
-    release: dict[str, str], caplog: pytest.LogCaptureFixture
+@pytest.mark.parametrize(
+    ("damage", "kept"), [(False, []), (True, ["data.db.untrusted"])]
+)
+def test_interleaved_migrations_end_on_one_database(
+    release: dict[str, str],
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    damage: bool,
+    kept: list[str],
 ) -> None:
-    """Two processes find the same legacy file untrusted and both build (distinct
-    temporary names). The first installs and keeps the legacy file aside; the second
-    finds data.db trusted again and discards its own build. One aside file, no
-    temporaries left, one WARNING, and both genomes open the installed database.
+    """Process B migrates completely while process A is between its build and its
+    install: A then finds data.db trusted and discards its own build. One installed
+    database, at most one kept file, no temporaries, one WARNING.
     """
-    db_path = _legacy_db(release)
-    genome_root = release["__genome_root__"]
-    source = _expected_source(release)
-    call = _rebuild_call(release)
-    reason = s288c.untrusted_reason(str(db_path), source, call)
-    assert reason == "it carries no torchcell_genome_db_source record"
-    tmp_a = s288c.write_genome_database(release[GFF_NAME], genome_root, source)
-    tmp_b = s288c.write_genome_database(release[GFF_NAME], genome_root, source)
-    assert tmp_a != tmp_b
+    db_path = _old_code_rebuild(release)
+    if damage:
+        _old_code_delete(db_path, "Q0010")
+    real_write = s288c.write_genome_database
+    calls: list[str] = []
+
+    def interleaving_write(gff: str, db_dir: str, source: GenomeDatabaseSource) -> str:
+        tmp = real_write(gff, db_dir, source)
+        calls.append(tmp)
+        if len(calls) == 1:  # A built; B runs its whole migration now
+            reason = s288c.untrusted_reason(str(db_path), source, "call")
+            assert reason is not None
+            s288c.migrate_genome_database(gff, str(db_path), source, "call", reason)
+        return tmp
+
+    monkeypatch.setattr(s288c, "write_genome_database", interleaving_write)
     with caplog.at_level(logging.WARNING, logger=s288c.__name__):
-        s288c.install_genome_database(tmp_a, str(db_path), source, call, reason)
-        installed = _identity(db_path)
-        s288c.install_genome_database(tmp_b, str(db_path), source, call, reason)
-    assert _identity(db_path) == installed
-    names = sorted(os.listdir(genome_root))
-    assert names[0] == "data.db" and names[1].startswith("data.db.untrusted-")
-    assert len(names) == 2
+        genome = _construct(release)
+    assert len(calls) == 2 and calls[0] != calls[1]
+    assert sorted(os.listdir(release["__genome_root__"])) == ["data.db", *kept]
     assert len(caplog.records) == 1
-    for _ in range(2):
-        genome = SCerevisiaeGenome(
-            genome_root=genome_root, go_root=release["__go_root__"]
-        )
-        assert list(genome.gene_set) == ALL_GENES
-    assert _identity(db_path) == installed
+    _assert_recorded(release, db_path)
+    assert list(genome.gene_set) == ALL_GENES
+
+
+def test_read_only_root_refuses_an_untrusted_database_by_name(
+    release: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A legacy data.db in a directory this process cannot write: a named refusal
+    stating why it must be rebuilt and how; no build is attempted and the file is
+    never opened by gffutils.
+    """
+    db_path = _old_code_rebuild(release)
+    root = Path(release["__genome_root__"])
+    opened: list[str] = []
+    monkeypatch.setattr(s288c, "GffutilsConnectionManager", lambda p: opened.append(p))
+    root.chmod(0o555)
+    try:
+        with pytest.raises(s288c.GenomeRootNotWritableError) as exc:
+            _construct(release)
+    finally:
+        root.chmod(0o755)
+    assert str(exc.value) == (
+        f"{db_path} must be built (it carries no torchcell_genome_db_source record), "
+        f"but {root} is not writable by this process, so the database is not opened "
+        f"or built here. Construct SCerevisiaeGenome(genome_root={str(root)!r}, "
+        f"go_root={release['__go_root__']!r}) once from a process that can write "
+        "that directory."
+    )
+    assert opened == []
+    assert os.listdir(root) == ["data.db"]
+
+
+def test_read_only_root_refuses_a_missing_database_by_name(
+    release: dict[str, str],
+) -> None:
+    """No data.db in a directory this process cannot write: refused by name."""
+    root = _root(release)
+    root.chmod(0o555)
+    try:
+        with pytest.raises(s288c.GenomeRootNotWritableError) as exc:
+            _construct(release)
+    finally:
+        root.chmod(0o755)
+    assert str(exc.value).startswith(
+        f"{root / 'data.db'} must be built (it does not exist), but {root} is not "
+        "writable"
+    )
+
+
+def test_trusted_database_in_a_read_only_root_still_works(
+    release: dict[str, str], private_tmp: Path
+) -> None:
+    """A recorded data.db in a read-only directory opens and drops still work (the
+    private copy lives in the temp dir).
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    root = Path(release["__genome_root__"])
+    root.chmod(0o555)
+    try:
+        genome = _construct(release)
+        genome.drop_chrmt()
+        assert list(genome.gene_set) == NO_CHRMT
+    finally:
+        root.chmod(0o755)
+    assert os.listdir(root) == ["data.db"]
+
+
+def test_failed_build_leaves_no_temporary(
+    release: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """create_db dies after creating the temporary file: it is removed and the error
+    propagates.
+    """
+    root = _root(release)
+
+    def dying_create_db(data: str, dbfn: str, **kwargs: Any) -> None:
+        Path(dbfn).write_bytes(b"partial")
+        raise OSError("disk full")
+
+    monkeypatch.setattr(gffutils, "create_db", dying_create_db)
+    with pytest.raises(OSError, match="^disk full$"):
+        _construct(release)
+    assert os.listdir(root) == []
+
+
+def test_failure_between_build_and_install_leaves_no_temporary(
+    release: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The migration fails after its build (here the content digest): the build is
+    removed, and the untrusted data.db is left as it was.
+    """
+    db_path = _old_code_rebuild(release)
+    before = _sha(db_path)
+
+    def failing_digest(path: str) -> str:
+        raise OSError("read error")
+
+    monkeypatch.setattr(s288c, "database_content_digest", failing_digest)
+    with pytest.raises(OSError, match="^read error$"):
+        _construct(release)
+    assert os.listdir(release["__genome_root__"]) == ["data.db"]
+    assert _sha(db_path) == before
+
+
+def test_construction_sweeps_dead_build_temporaries(release: dict[str, str]) -> None:
+    """Build temporaries of a dead pid on this host are removed at construction; a
+    live pid's and another host's are left.
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    root = Path(release["__genome_root__"])
+    dead = f"data.db.{HOST}.{_dead_pid()}.abc123.building"
+    dead_copy = f"data.db.untrusted.{HOST}.{_dead_pid()}.x_9.building"
+    live = f"data.db.{HOST}.{os.getpid()}.def456.building"
+    other = "data.db.otherhost.1.ghi789.building"
+    for name in (dead, dead_copy, live, other):
+        (root / name).write_bytes(b"x")
+    _construct(release)
+    assert sorted(os.listdir(root)) == sorted(["data.db", live, other])
+
+
+def test_private_copy_creation_sweeps_dead_copies(
+    release: dict[str, str], private_tmp: Path
+) -> None:
+    """A private copy is named torchcell-genome-<host>-<pid>-<random>.db; creating one
+    removes this host's copies of dead pids and leaves a live pid's and another
+    host's.
+    """
+    dead = f"torchcell-genome-{HOST}-{_dead_pid()}-abc123.db"
+    live = f"torchcell-genome-{HOST}-{os.getpid()}-def456.db"
+    other = "torchcell-genome-otherhost-1-ghi789.db"
+    for name in (dead, live, other):
+        (private_tmp / name).write_bytes(b"x")
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    genome = _construct(release)
+    genome.drop_chrmt()
+    path = genome._private_db_path
+    assert path is not None
+    assert re.fullmatch(
+        rf"torchcell-genome-{re.escape(HOST)}-{os.getpid()}-[a-z0-9_]+\.db",
+        osp.basename(path),
+    )
+    assert sorted(os.listdir(private_tmp)) == sorted([live, other, osp.basename(path)])
 
 
 def test_unpickling_an_overwrite_true_genome_does_not_rebuild(
@@ -1632,11 +1870,7 @@ def test_unpickling_an_overwrite_true_genome_does_not_rebuild(
     """A genome built with ``overwrite=True`` and sent to a worker by pickle opens the
     parent's database (same inode and mtime); ``overwrite`` itself round-trips.
     """
-    genome = SCerevisiaeGenome(
-        genome_root=release["__genome_root__"],
-        go_root=release["__go_root__"],
-        overwrite=True,
-    )
+    genome = _construct(release, overwrite=True)
     db_path = Path(release["__genome_root__"]) / "data.db"
     built = _identity(db_path)
     restored = pickle.loads(pickle.dumps(genome))
@@ -1645,16 +1879,16 @@ def test_unpickling_an_overwrite_true_genome_does_not_rebuild(
     assert list(restored.gene_set) == ALL_GENES
 
 
-def test_drops_never_write_the_shared_database(release: dict[str, str]) -> None:
+def test_drops_never_write_the_shared_database(
+    release: dict[str, str], private_tmp: Path
+) -> None:
     """``drop_chrmt``, ``drop_empty_go`` and ``remove_deprecated_go_terms`` act on this
-    instance only: the shared data.db keeps its bytes, inode and mtime, no
-    data.db.bak is written, and a second genome on the same root built after the
-    drops sees every feature. The private copy is removed with the instance.
+    instance only: the shared data.db keeps its bytes, inode and mtime, no .bak is
+    written anywhere, and a second genome on the same root built after the drops sees
+    every feature. The private copy is removed with the instance.
     """
     build_db(release[GFF_NAME], Path(release["__genome_root__"]))
-    genome = SCerevisiaeGenome(
-        genome_root=release["__genome_root__"], go_root=release["__go_root__"]
-    )
+    genome = _construct(release)
     db_path = Path(release["__genome_root__"]) / "data.db"
     before = (_identity(db_path), _sha(db_path))
     genome.drop_chrmt()
@@ -1670,11 +1904,10 @@ def test_drops_never_write_the_shared_database(release: dict[str, str]) -> None:
     assert (_identity(db_path), _sha(db_path)) == before
     assert os.listdir(release["__genome_root__"]) == ["data.db"]
     private = genome._private_db_path
-    assert private is not None and osp.dirname(private) == tempfile.gettempdir()
+    assert private is not None
+    assert os.listdir(private_tmp) == [osp.basename(private)]
 
-    second = SCerevisiaeGenome(
-        genome_root=release["__genome_root__"], go_root=release["__go_root__"]
-    )
+    second = _construct(release)
     assert list(second.gene_set) == ALL_GENES
     assert sorted(f.id for f in second.db.features_of_type("gene")) == ALL_GENES
     assert second.db["YAL002W"].attributes["Ontology_term"] == ["GO:0000002"]
@@ -1682,32 +1915,195 @@ def test_drops_never_write_the_shared_database(release: dict[str, str]) -> None:
 
     del genome
     gc.collect()
-    assert not osp.exists(private)
+    assert os.listdir(private_tmp) == []
+
+
+def test_remove_deprecated_go_terms_as_the_first_write_stays_private(
+    release: dict[str, str], private_tmp: Path
+) -> None:
+    """``remove_deprecated_go_terms`` before any drop: the shared file is untouched,
+    the private copy drops the obsolete GO:0000002 from YAL002W.
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    genome = _construct(release)
+    db_path = Path(release["__genome_root__"]) / "data.db"
+    before = (_identity(db_path), _sha(db_path))
+    genome.remove_deprecated_go_terms()
+    assert (_identity(db_path), _sha(db_path)) == before
+    assert genome._private_db_path is not None
+    assert "Ontology_term" not in genome.db["YAL002W"].attributes
+    assert os.listdir(private_tmp) == [osp.basename(genome._private_db_path)]
+
+
+def test_forked_child_collection_keeps_the_parents_copy(
+    release: dict[str, str], private_tmp: Path
+) -> None:
+    """A forked child that collects the instance it inherited must not delete the
+    parent's private copy (the finalizer is pid-guarded).
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    genome = _construct(release)
+    genome.drop_chrmt()
+    private = genome._private_db_path
+    assert private is not None
+    pid = os.fork()
+    if pid == 0:  # child
+        del genome
+        gc.collect()
+        os._exit(0)
+    os.waitpid(pid, 0)
+    assert osp.exists(private)
 
 
 def test_pickled_dropped_genome_keeps_its_drops_and_copies_on_write(
-    genome: SCerevisiaeGenome,
+    release: dict[str, str], private_tmp: Path
 ) -> None:
     """A dropped genome sent to a worker reads the parent's private copy (the drops
     persist); a write in the restored instance goes to a copy of its own.
     """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    genome = _construct(release)
     genome.drop_chrmt()
     parent_copy = genome._private_db_path
     restored = pickle.loads(pickle.dumps(genome))
     assert restored._db_connection_manager.db_path == parent_copy
-    assert sorted(f.id for f in restored.db.features_of_type("gene")) == [
-        "YAL001C",
-        "YAL002W",
-        "YBL001W",
-        "YBL002W",
-        "YCL001W",
-    ]
+    assert sorted(f.id for f in restored.db.features_of_type("gene")) == NO_CHRMT
     restored.drop_empty_go()
     assert restored._private_db_path not in (None, parent_copy)
-    assert sorted(f.id for f in genome.db.features_of_type("gene")) == [
-        "YAL001C",
-        "YAL002W",
-        "YBL001W",
-        "YBL002W",
-        "YCL001W",
+    assert sorted(f.id for f in genome.db.features_of_type("gene")) == NO_CHRMT
+
+
+def test_unpickled_genome_rebuilds_its_copy_after_the_parent_is_collected(
+    release: dict[str, str], private_tmp: Path
+) -> None:
+    """The parent that wrote is collected (its private copy deleted) before the
+    unpickled instance first reads: the read makes a copy of the shared file and
+    replays the logged drops, so the instance still sees them.
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    genome = _construct(release)
+    genome.drop_chrmt()
+    genome.remove_deprecated_go_terms()
+    parent_copy = genome._private_db_path
+    restored = pickle.loads(pickle.dumps(genome))
+    del genome
+    gc.collect()
+    assert parent_copy is not None and not osp.exists(parent_copy)
+    assert sorted(f.id for f in restored.db.features_of_type("gene")) == NO_CHRMT
+    assert "Ontology_term" not in restored.db["YAL002W"].attributes
+    assert restored._private_db_path not in (None, parent_copy)
+    assert restored._db_writes == [
+        ("delete", ["Q0010"]),
+        ("remove_deprecated_go_terms", []),
     ]
+
+
+def test_genome_database_untrusted_reason_reads_only(release: dict[str, str]) -> None:
+    """The read-only probe the data-gated tests use: missing, untrusted and trusted,
+    without building or migrating anything.
+    """
+    root = _root(release)
+    assert s288c.genome_database_untrusted_reason(str(root)) == "it does not exist"
+    db_path = _old_code_rebuild(release)
+    before = _identity(db_path)
+    assert (
+        s288c.genome_database_untrusted_reason(str(root))
+        == "it carries no torchcell_genome_db_source record"
+    )
+    assert _identity(db_path) == before
+    db_path.unlink()
+    build_db(release[GFF_NAME], root)
+    assert s288c.genome_database_untrusted_reason(str(root)) is None
+
+
+def test_data_gated_helper_refuses_an_untrusted_real_root_by_name(
+    release: dict[str, str],
+) -> None:
+    """``require_trusted_genome_database`` fails the test, by name, when a
+    construction would migrate the root, and passes a trusted root; it never builds.
+    """
+    root = _root(release)
+    db_path = _old_code_rebuild(release)
+    before = _identity(db_path)
+    with pytest.raises(pytest.fail.Exception) as exc:
+        require_trusted_genome_database(str(root))
+    assert str(exc.value) == (
+        f"refusing to build or migrate the real genome database {db_path} from a "
+        "test: it carries no torchcell_genome_db_source record. Construct "
+        f"SCerevisiaeGenome(genome_root={str(root)!r}, ...) once outside the tests, "
+        "then rerun."
+    )
+    assert _identity(db_path) == before
+    db_path.unlink()
+    build_db(release[GFF_NAME], root)
+    require_trusted_genome_database(str(root))
+
+
+def test_pid_alive_treats_another_users_process_as_alive() -> None:
+    """Pid 1 belongs to root: signalling it raises PermissionError, which means alive;
+    a reaped child's pid is dead.
+    """
+    assert s288c._pid_alive(1) is True
+    assert s288c._pid_alive(_dead_pid()) is False
+
+
+def test_sweep_leaves_another_users_dead_copy(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A dead pid's private copy owned by another uid is not this user's to remove."""
+    name = f"torchcell-genome-{HOST}-{_dead_pid()}-abc123.db"
+    (tmp_path / name).write_bytes(b"x")
+    monkeypatch.setattr(os, "getuid", lambda: os.stat(tmp_path).st_uid + 1)
+    assert s288c._sweep_dead(str(tmp_path), s288c._PRIVATE_COPY) == []
+    assert os.listdir(tmp_path) == [name]
+
+
+def test_record_transaction_must_advance_the_change_counter_once(
+    release: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """If the record transaction did not leave the counter the record names, the
+    build is refused by name and its temporary file removed.
+    """
+    root = _root(release)
+    monkeypatch.setattr(s288c, "_change_counter", lambda path: 7)
+    with pytest.raises(RuntimeError) as exc:
+        s288c.write_genome_database(
+            release[GFF_NAME], str(root), _expected_source(release)
+        )
+    assert re.fullmatch(
+        rf"{re.escape(str(root))}/data\.db\.{re.escape(HOST)}\.{os.getpid()}\.[a-z0-9_]+"
+        r"\.building: the record transaction left the sqlite change counter at 7, "
+        "not 8",
+        str(exc.value),
+    )
+    assert os.listdir(root) == []
+
+
+def test_record_from_an_older_schema_is_migrated(
+    release: dict[str, str], caplog: pytest.LogCaptureFixture
+) -> None:
+    """A record without ``change_counter`` (written by an earlier draft of this
+    change) does not validate: the database is untrusted and migrated, never opened
+    on a record it cannot read.
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    db_path = Path(release["__genome_root__"]) / "data.db"
+    conn = sqlite3.connect(db_path)
+    (raw,) = conn.execute("SELECT record FROM torchcell_genome_db_source").fetchone()
+    old = json.loads(raw)
+    del old["change_counter"]
+    conn.execute("UPDATE torchcell_genome_db_source SET record = ?", (json.dumps(old),))
+    conn.commit()
+    conn.close()
+    with caplog.at_level(logging.WARNING, logger=s288c.__name__):
+        genome = _construct(release)
+    assert (
+        caplog.records[0]
+        .getMessage()
+        .startswith(
+            f"genome database {db_path} was not trusted (its torchcell_genome_db_source "
+            "record does not validate as the current GenomeDatabaseRecord (1 errors)); "
+        )
+    )
+    _assert_recorded(release, db_path)
+    assert list(genome.gene_set) == ALL_GENES

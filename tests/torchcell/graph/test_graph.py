@@ -60,6 +60,7 @@ import pytest
 from dotenv import load_dotenv
 from tqdm import tqdm
 
+from tests.torchcell.conftest import require_trusted_genome_database
 from torchcell.graph import SCerevisiaeGraph, filter_by_date, filter_go_IGI
 from torchcell.graph.graph import (
     SCEREVISIAE_GENE_GRAPH_MAP,
@@ -704,6 +705,7 @@ def get_sample_graph() -> nx.DiGraph:
     # The skipif above guarantees this only runs with DATA_ROOT set; narrow it to
     # str so the os.path.join calls below type-check under strict mypy.
     assert DATA_ROOT is not None
+    require_trusted_genome_database(os.path.join(DATA_ROOT, "data/sgd/genome"))
     genome = SCerevisiaeGenome(
         genome_root=os.path.join(DATA_ROOT, "data/sgd/genome"),
         go_root=os.path.join(DATA_ROOT, "data/go"),

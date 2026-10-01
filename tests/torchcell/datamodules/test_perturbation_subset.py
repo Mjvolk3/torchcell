@@ -316,31 +316,54 @@ def test_val_test_all_and_cell_module_loaders_cover_their_datasets(
     assert parent_test[0].x.squeeze(-1).tolist() == [18.0, 19.0]
 
 
-def test_collate_fn_is_stored_but_discarded_by_the_pyg_loader(tmp_path: Path) -> None:
-    """Finding: a caller's ``collate_fn`` never reaches the batches.
+def test_custom_collate_fn_is_honored_through_a_torch_loader(tmp_path: Path) -> None:
+    """A caller's ``collate_fn`` collates every batch (issue #553).
 
-    ``_get_dataloader`` forwards it (``perturbation_subset.py:427-428``) but PyG's
-    ``DataLoader.__init__`` pops ``collate_fn`` from its kwargs and installs its own
-    ``Collater``, so the loader collates with PyG and ``my_collate`` is never called. The
-    ``follow_batch`` list, by contrast, does reach the collater.
+    PyG's ``DataLoader`` pops any ``collate_fn`` and installs its own ``Collater``, so
+    experiment 006's ``LazyCollater`` was silently replaced. With a ``collate_fn`` the
+    module now builds the plain torch ``DataLoader`` around it, keeping the worker options;
+    it receives each batch's records and its return value is the batch. On the parent's
+    two-record test split [18, 19] at batch size 1 that is two batches, one record each.
     """
-    calls: list[int] = []
+    calls: list[list[float]] = []
 
-    def my_collate(items: list[Any]) -> list[Any]:
-        calls.append(len(items))
-        return items
+    def my_collate(items: list[Data]) -> tuple[str, list[float]]:
+        values = [item.x.item() for item in items]
+        calls.append(values)
+        return ("batch", values)
 
-    dm = _module(tmp_path, collate_fn=my_collate, follow_batch=["x"], batch_size=7)
+    dm = _module(tmp_path, collate_fn=my_collate, follow_batch=["x"], batch_size=1)
     dm.setup()
-    loader = dm.train_dataloader()
-    assert dm.collate_fn is my_collate
-    assert isinstance(loader, TorchDataLoader)
-    assert isinstance(loader.collate_fn, Collater)
-    assert loader.collate_fn is not my_collate
-    assert loader.collate_fn.follow_batch == ["x"]
-    first = next(iter(loader))
-    assert calls == []
-    assert first.x_batch.tolist() == [0, 1, 2, 3, 4, 5, 6]
+    loader = dm.test_cell_module_dataloader()
+    assert type(loader) is TorchDataLoader
+    assert loader.collate_fn is my_collate
+    assert (loader.batch_size, loader.num_workers, loader.pin_memory) == (1, 0, False)
+    assert list(loader) == [("batch", [18.0]), ("batch", [19.0])]
+    assert calls == [[18.0], [19.0]]
+    pair = _module(tmp_path, collate_fn=my_collate, batch_size=2)
+    pair.setup()
+    assert list(pair.test_cell_module_dataloader()) == [("batch", [18.0, 19.0])]
+
+
+def test_without_a_collate_fn_the_pyg_loader_applies_follow_batch(
+    tmp_path: Path,
+) -> None:
+    """No ``collate_fn`` keeps PyG's loader, whose ``Collater`` gets ``follow_batch``.
+
+    ``x_batch`` then maps each of the two records [18, 19] to its graph. The default
+    ``follow_batch`` is ``["x", "x_pert"]``.
+    """
+    dm = _module(tmp_path, follow_batch=["x"], batch_size=2)
+    dm.setup()
+    loader = dm.test_cell_module_dataloader()
+    assert type(loader) is DataLoader
+    collater = loader.collate_fn
+    assert isinstance(collater, Collater)
+    assert type(collater) is Collater
+    assert collater.follow_batch == ["x"]
+    (batch,) = list(loader)
+    assert batch.x.squeeze(-1).tolist() == [18.0, 19.0]
+    assert batch.x_batch.tolist() == [0, 1]
     assert _module(tmp_path).follow_batch == ["x", "x_pert"]
 
 

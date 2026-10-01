@@ -8,10 +8,12 @@ import json
 import os
 import os.path as osp
 import random
+from collections.abc import Callable
 from typing import Any
 
 import lightning as L
 import torch
+from torch.utils.data import DataLoader as TorchDataLoader
 from torch.utils.data import Subset
 from torch_geometric.loader import DataLoader, PrefetchLoader
 from tqdm import tqdm
@@ -45,7 +47,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         gene_subsets: dict[str, GeneSet] | None = None,
         follow_batch: list[str] | None = None,
         train_shuffle: bool = True,
-        collate_fn: object | None = None,
+        collate_fn: Callable[[list[Any]], Any] | None = None,
         val_batch_size: int | None = None,
     ) -> None:
         """Configure subset size, loader options, and the cache directory."""
@@ -391,11 +393,19 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         dataset: Any,  # dynamic dataset/Subset passed through to the loaders
         shuffle: bool = False,
         batch_size: int | None = None,
-    ) -> DataLoader | DensePaddingDataLoader | PrefetchLoader:
+    ) -> TorchDataLoader[Any] | DensePaddingDataLoader | PrefetchLoader:
+        """Build the loader for ``dataset``: dense padding, PyG's, or torch's for a collate.
+
+        ``dense=True`` gives a ``DensePaddingDataLoader``. Otherwise PyG's ``DataLoader``
+        with ``follow_batch`` is used, unless a ``collate_fn`` is given: PyG's loader pops
+        it and installs its own ``Collater``, so the plain torch ``DataLoader`` is used with
+        that collate instead and ``follow_batch`` is not applied.
+        """
         # Use provided batch_size or fall back to self.batch_size
         if batch_size is None:
             batch_size = self.batch_size
 
+        loader: TorchDataLoader[Any]
         if self.dense:
             loader = DensePaddingDataLoader(
                 dataset,
@@ -411,7 +421,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
                 prefetch_factor=self.prefetch_factor,
             )
         else:
-            dataloader_kwargs = {
+            dataloader_kwargs: dict[str, Any] = {
                 "batch_size": batch_size,
                 "shuffle": shuffle,
                 "num_workers": self.num_workers,
@@ -419,39 +429,52 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
                 if self.num_workers > 0
                 else False,
                 "pin_memory": self.pin_memory,
-                "follow_batch": self.follow_batch,
                 "multiprocessing_context": ("spawn" if self.num_workers > 0 else None),
             }
-
-            # Add collate_fn if provided
+            # PyG's DataLoader pops any `collate_fn` and installs its own `Collater`, so
+            # a caller's collate (experiment 006's `LazyCollater`) only runs through the
+            # plain torch loader; `follow_batch` is not applied there, that collate owns
+            # the batching. Same contract as `CellDataModule._get_dataloader`.
             if self.collate_fn is not None:
-                dataloader_kwargs["collate_fn"] = self.collate_fn
-
-            loader = DataLoader(dataset, **dataloader_kwargs)
+                loader = TorchDataLoader(
+                    dataset, collate_fn=self.collate_fn, **dataloader_kwargs
+                )
+            else:
+                loader = DataLoader(
+                    dataset, follow_batch=self.follow_batch, **dataloader_kwargs
+                )
         if self.prefetch:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             return PrefetchLoader(loader, device=device)
         return loader
 
-    def train_dataloader(self) -> DataLoader | DensePaddingDataLoader | PrefetchLoader:
+    def train_dataloader(
+        self,
+    ) -> TorchDataLoader[Any] | DensePaddingDataLoader | PrefetchLoader:
         """Return the training dataloader over the subset."""
         return self._get_dataloader(self.train_dataset, shuffle=self.train_shuffle)
 
-    def val_dataloader(self) -> DataLoader | DensePaddingDataLoader | PrefetchLoader:
+    def val_dataloader(
+        self,
+    ) -> TorchDataLoader[Any] | DensePaddingDataLoader | PrefetchLoader:
         """Return the validation dataloader over the subset."""
         return self._get_dataloader(self.val_dataset, batch_size=self.val_batch_size)
 
-    def test_dataloader(self) -> DataLoader | DensePaddingDataLoader | PrefetchLoader:
+    def test_dataloader(
+        self,
+    ) -> TorchDataLoader[Any] | DensePaddingDataLoader | PrefetchLoader:
         """Return the test dataloader over the subset."""
         return self._get_dataloader(self.test_dataset)
 
-    def all_dataloader(self) -> DataLoader | DensePaddingDataLoader | PrefetchLoader:
+    def all_dataloader(
+        self,
+    ) -> TorchDataLoader[Any] | DensePaddingDataLoader | PrefetchLoader:
         """Return a dataloader over the full underlying dataset."""
         return self._get_dataloader(self.dataset)
 
     def test_cell_module_dataloader(
         self,
-    ) -> DataLoader | DensePaddingDataLoader | PrefetchLoader:
+    ) -> TorchDataLoader[Any] | DensePaddingDataLoader | PrefetchLoader:
         """Return a dataloader over the parent cell module's test split."""
         return self._get_dataloader(
             Subset(self.dataset, self.cell_data_module.index.test)

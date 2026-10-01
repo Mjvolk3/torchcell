@@ -343,6 +343,21 @@ def test_custom_collate_fn_is_honored_through_a_torch_loader(tmp_path: Path) -> 
     pair = _module(tmp_path, collate_fn=my_collate, batch_size=2)
     pair.setup()
     assert list(pair.test_cell_module_dataloader()) == [("batch", [18.0, 19.0])]
+    workers = _module(
+        tmp_path, collate_fn=my_collate, num_workers=1, pin_memory=True, batch_size=2
+    )
+    workers.setup()
+    built = workers.test_cell_module_dataloader()  # constructed only, never iterated
+    assert type(built) is TorchDataLoader
+    assert built.collate_fn is my_collate
+    context = built.multiprocessing_context
+    assert context is not None
+    assert (
+        built.num_workers,
+        built.persistent_workers,
+        built.pin_memory,
+        context.get_start_method(),
+    ) == (1, True, True, "spawn")
 
 
 def test_without_a_collate_fn_the_pyg_loader_applies_follow_batch(
@@ -373,8 +388,8 @@ def test_dense_selects_the_dense_padding_loader_but_needs_workers(
     """Finding: ``dense=True`` with ``num_workers=0`` is unconstructible.
 
     The dense branch passes ``prefetch_factor`` unconditionally
-    (``perturbation_subset.py:411``) and torch rejects it at ``num_workers=0``, unlike the
-    guarded plain branch. With one worker the loader is a ``DensePaddingDataLoader``
+    (``perturbation_subset.py:421``) and torch rejects it at ``num_workers=0``; the plain
+    branch does not pass ``prefetch_factor`` at all. With one worker the loader is a ``DensePaddingDataLoader``
     carrying the follow_batch list, spawn context and prefetch factor; it is not iterated
     here because that would spawn a worker process.
     """

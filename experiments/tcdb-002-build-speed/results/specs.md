@@ -15,6 +15,7 @@
 | 2998 | r10 | expr-bytes | a0b30e3b | kg_bench_expr | 16 | 64 | 25000 | true | true | 0.02 | 128 |  |  | 256 | 974.3 | 1,031 | 43.6 | 2.7 | 173100 | 12658295605 | COMPLETED |  |
 | 2997 | r10 | expr-inproc | a0b30e3b | kg_bench_expr | 16 | 64 | 25000 | true | true | 0.02 | 128 |  |  |  | 2,320.1 | 2,382 | 26.3 | 1.0 | 173100 | 12658347316 | COMPLETED |  |
 | 3089 | r13 | slimview-g64-48 | 765bdc38 | kg_bench_ladder | 48 | 192 | 25000 | true | true | 0.02 | 128 | 64 | true |  | 327.5 | 515 | 39.4 | 29.3 | 29736985 | 13431701896 | COMPLETED | adapters.pool_memory_fraction=0.8 |
+| 3096 | r14 | noblob-48 | 156fc187 | kg_bench_ladder | 48 | 192 | 25000 | true | true | 0.02 | 128 | 64 | true |  | 342.0 | 492 | 28.2 | 29.4 | 29736985 | 9748498208 | COMPLETED | adapters.pool_memory_fraction=0.8 |
 | 3084 | r12 | profile-parent-48 | f9ec3241 | kg_bench_ladder | 48 | 192 | 25000 | true | true | 0.02 | 128 | 64 | true |  | 452.6 | 560 | 46.8 | 17.6 | 29736985 | 13431706534 | COMPLETED | adapters.pool_memory_fraction=0.8 |
 | 3090 | r13 | slimview-g64-24 | 765bdc38 | kg_bench_ladder | 24 | 96 | 25000 | true | true | 0.02 | 128 | 64 | true |  | 453.6 | 563 | 32.8 | 17.8 | 29736985 | 13431706523 | COMPLETED | adapters.pool_memory_fraction=0.8 |
 | 3083 | r12 | noref-g64-48 | 50da7dc4 | kg_bench_ladder | 48 | 192 | 25000 | true | true | 0.02 | 128 | 64 | true |  | 477.2 | 557 | 47.6 | 19.0 | 29736985 | 13431707091 | COMPLETED | adapters.pool_memory_fraction=0.8 |

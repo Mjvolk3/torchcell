@@ -156,8 +156,10 @@
 <span class="sd">gene-symbol spellings (``MDH1`` / ``mdh1``): of the 46,195 cells with more than one released</span>
 <span class="sd">row, 33,483 contain byte-identical duplicates. Within a cell, two rows sharing a z_score</span>
 <span class="sd">share every other data column too, and no two genuinely distinct datapoints of a cell share</span>
-<span class="sd">a z_score, so the z string IS the datapoint key. After deduplication the screens-per-cell</span>
-<span class="sd">histogram is {1: 412,368, 2: 14,579, 3: 1,617, 4: 7, 5: 2}. ``n_samples`` is therefore the</span>
+<span class="sd">a z_score, so the z value IS the datapoint key. The key is the PARSED value, not the string,</span>
+<span class="sd">so ``-4.0`` and ``-4.00`` are one datapoint (measured: 0 of the 428,573 cells hold two z</span>
+<span class="sd">strings of equal value, so the parsed key and the string key give the same cells). After</span>
+<span class="sd">deduplication the screens-per-cell histogram is {1: 412,368, 2: 14,579, 3: 1,617, 4: 7, 5: 2}. ``n_samples`` is therefore the</span>
 <span class="sd">number of contributing SCREENS with ``sample_unit=screen`` (the independent unit; the two</span>
 <span class="sd">OD reads inside a screen are the technical duplicate the z already averages), and the</span>
 <span class="sd">uncertainty is the sample SD across those screens, or a typed ``ProvenanceGap`` for the</span>
@@ -176,6 +178,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">gzip</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
@@ -540,8 +543,13 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">load_manifest</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Manifest</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Read the raw mirror's ``manifest.json``."""</span>
+<span class="w">    </span><span class="sd">"""Read the raw mirror's ``manifest.json``; refuse, naming the deposit step, if absent."""</span>
     <span class="n">path</span> <span class="o">=</span> <span class="n">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"manifest.json"</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"raw-mirror manifest missing: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">. Deposit the mirror with "</span>
+            <span class="s2">"deposit_raw_mirror() first."</span>
+        <span class="p">)</span>
     <span class="k">return</span> <span class="n">Manifest</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
 
 
@@ -583,15 +591,15 @@
     <span class="n">identity</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">pubchem_cid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
     <span class="n">smiles</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
-    <span class="c1">#: z_score string -&gt; (non-replicate flag, activity outcome, bioactivity), one entry</span>
-    <span class="c1">#: per DISTINCT released datapoint (the z string is the datapoint key; see the</span>
-    <span class="c1">#: module docstring for the measurement behind that).</span>
-    <span class="n">screens</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="c1">#: parsed z_score -&gt; (non-replicate flag, activity outcome, bioactivity), one entry</span>
+    <span class="c1">#: per DISTINCT released datapoint (the z value is the datapoint key, so ``-4.0`` and</span>
+    <span class="c1">#: ``-4.00`` are one; see the module docstring for the measurement behind that).</span>
+    <span class="n">screens</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">z_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""The distinct per-screen z-scores contributing to this cell."""</span>
-        <span class="k">return</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">z</span><span class="p">)</span> <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">screens</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">screens</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">n_screens</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
@@ -618,6 +626,24 @@
             <span class="k">return</span> <span class="n">OUTCOME_CATEGORY</span><span class="p">[(</span><span class="n">outcomes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">activities</span><span class="p">[</span><span class="mi">0</span><span class="p">])],</span> <span class="n">label</span>
         <span class="n">words</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">outcomes</span><span class="p">,</span> <span class="o">*</span><span class="p">[</span><span class="n">bio</span> <span class="k">for</span> <span class="n">bio</span> <span class="ow">in</span> <span class="n">activities</span> <span class="k">if</span> <span class="n">bio</span><span class="p">]]</span>
         <span class="k">return</span> <span class="n">ResponseCategory</span><span class="o">.</span><span class="n">not_determined</span><span class="p">,</span> <span class="s2">" / "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_z</span><span class="p">(</span><span class="n">z_raw</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">identity</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The released z_score as a finite float; refuse, naming the cell, otherwise.</span>
+
+<span class="sd">    A non-finite z would break the datapoint key (``nan != nan``, so two ``nan`` rows</span>
+<span class="sd">    become two screens) and the mean / SD. Measured on the pinned export: 0 of 484,830</span>
+<span class="sd">    strain datapoints are unparseable or non-finite.</span>
+<span class="sd">    """</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">z_raw</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">identity</span><span class="si">}</span><span class="s2">: z_score </span><span class="si">{</span><span class="n">z_raw</span><span class="si">!r}</span><span class="s2"> is not a number"</span>
+        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">identity</span><span class="si">}</span><span class="s2">: z_score </span><span class="si">{</span><span class="n">z_raw</span><span class="si">!r}</span><span class="s2"> is not finite"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">z</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_canonical_common_names</span><span class="p">(</span><span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
@@ -699,7 +725,7 @@
 <span class="w">        </span><span class="sd">"""Read the datapoint CSV; collapse to one cell per (ORF, compound identity).</span>
 
 <span class="sd">        Identity is the PubChem CID when present, else the SID. Repeated releases of the</span>
-<span class="sd">        SAME datapoint (identical z) collapse; distinct screens accumulate. Returns the</span>
+<span class="sd">        SAME datapoint (equal parsed z) collapse; distinct screens accumulate. Returns the</span>
 <span class="sd">        cells plus the strain-row and non-strain-row counts.</span>
 <span class="sd">        """</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">DATA_FILENAME</span><span class="p">)</span>
@@ -736,7 +762,7 @@
                         <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
                     <span class="p">)</span>
                     <span class="n">cells</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">cell</span>
-                <span class="n">cell</span><span class="o">.</span><span class="n">screens</span><span class="p">[</span><span class="n">z_raw</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">cell</span><span class="o">.</span><span class="n">screens</span><span class="p">[</span><span class="n">_parse_z</span><span class="p">(</span><span class="n">z_raw</span><span class="p">,</span> <span class="n">orf</span><span class="p">,</span> <span class="n">identity</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"non replicate"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
                     <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"PUBCHEM_ACTIVITY_OUTCOME"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
                     <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"bioactivity"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
@@ -845,16 +871,9 @@
                     <span class="p">)</span>
                 <span class="p">],</span>
             <span class="p">)</span>
-        <span class="n">dispersion</span> <span class="o">=</span> <span class="n">stdev</span><span class="p">(</span><span class="n">z_values</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">dispersion</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">cell</span><span class="o">.</span><span class="n">orf</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">cell</span><span class="o">.</span><span class="n">n_screens</span><span class="si">}</span><span class="s2"> distinct screens with a "</span>
-                <span class="s2">"sample SD of exactly 0, which the datapoint-key measurement says "</span>
-                <span class="s2">"cannot happen"</span>
-            <span class="p">)</span>
         <span class="k">return</span> <span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
             <span class="o">**</span><span class="n">common</span><span class="p">,</span>
-            <span class="n">environment_response_uncertainty</span><span class="o">=</span><span class="n">dispersion</span><span class="p">,</span>
+            <span class="n">environment_response_uncertainty</span><span class="o">=</span><span class="n">stdev</span><span class="p">(</span><span class="n">z_values</span><span class="p">),</span>
             <span class="n">environment_response_uncertainty_type</span><span class="o">=</span><span class="n">UncertaintyType</span><span class="o">.</span><span class="n">sample_sd</span><span class="p">,</span>
         <span class="p">)</span>
 

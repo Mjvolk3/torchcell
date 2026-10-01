@@ -133,7 +133,9 @@
 <span class="sd">  ``ProteinAbundancePhenotype`` (WS9): ``protein_abundance = {protein_ORF -&gt; mean log</span>
 <span class="sd">  signal}`` with ``measurement_type = "swath_ms_label_free_log_signal_sva"``. The parent</span>
 <span class="sd">  **WT** strain (``KO_ORF == "WT"``) supplies the reference profile. Every protein has</span>
-<span class="sd">  &gt;=2 replicate samples per strain, so the standard error is always defined.</span>
+<span class="sd">  &gt;=2 replicate samples per strain, so the standard error is always defined. A blank or</span>
+<span class="sd">  non-finite value or a repeated (protein, strain, replicate) row refuses the build (none</span>
+<span class="sd">  occurs in the pinned release), since each would make ``n``, the mean or the SE wrong.</span>
 
 <span class="sd">- ``MetaboliteZelezniak2018Dataset`` -- the targeted central-carbon/amino-acid</span>
 <span class="sd">  METABOLOME of the same 95 kinase-KO strains (plus a measured WT) by SRM-MS/MS. The file</span>
@@ -169,6 +171,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 
@@ -276,8 +279,40 @@
 
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_aggregate</span><span class="p">(</span><span class="n">sub</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Aggregate one strain's replicate rows to per-protein mean/se/n dicts."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_aggregate</span><span class="p">(</span><span class="n">sub</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Aggregate one strain's replicate rows to per-protein mean/se/n dicts.</span>
+
+<span class="sd">        ``n`` is the row count per protein, so every row must be one distinct replicate</span>
+<span class="sd">        with a value. A blank value (which pandas would leave out of ``n`` unrecorded)</span>
+<span class="sd">        and a repeated (protein, replicate) id (which would count as an extra replicate</span>
+<span class="sd">        and shrink the SE) both refuse, naming the strain, and so does a non-finite</span>
+<span class="sd">        value (``inf`` passes the blank check but has no mean or SE). Measured on the</span>
+<span class="sd">        pinned release (sha256 ``9ff81ecb...``): 0 blank, 0 non-finite and 0 repeated</span>
+<span class="sd">        (ORF, KO_ORF, replicate) rows of 264,264, so no refusal fires on the real file.</span>
+<span class="sd">        """</span>
+        <span class="n">blank</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[</span><span class="n">sub</span><span class="p">[</span><span class="s2">"value"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">blank</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Zelezniak proteome strain </span><span class="si">{</span><span class="n">strain</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">blank</span><span class="p">)</span><span class="si">}</span><span class="s2"> blank protein "</span>
+                <span class="sa">f</span><span class="s2">"value(s), first </span><span class="si">{</span><span class="n">blank</span><span class="p">[</span><span class="s1">'ORF'</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> replicate "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">blank</span><span class="p">[</span><span class="s1">'replicate'</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">; a blank would drop out of n_replicates "</span>
+                <span class="s2">"unrecorded"</span>
+            <span class="p">)</span>
+        <span class="n">infinite</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">sub</span><span class="p">[</span><span class="s2">"value"</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">"float64"</span><span class="p">))]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">infinite</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Zelezniak proteome strain </span><span class="si">{</span><span class="n">strain</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">infinite</span><span class="p">)</span><span class="si">}</span><span class="s2"> non-finite "</span>
+                <span class="sa">f</span><span class="s2">"protein value(s), first </span><span class="si">{</span><span class="n">infinite</span><span class="p">[</span><span class="s1">'ORF'</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> replicate "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">infinite</span><span class="p">[</span><span class="s1">'replicate'</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">; a non-finite value has no mean or SE"</span>
+            <span class="p">)</span>
+        <span class="n">repeated</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[</span><span class="n">sub</span><span class="o">.</span><span class="n">duplicated</span><span class="p">([</span><span class="s2">"ORF"</span><span class="p">,</span> <span class="s2">"replicate"</span><span class="p">],</span> <span class="n">keep</span><span class="o">=</span><span class="kc">False</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">repeated</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Zelezniak proteome strain </span><span class="si">{</span><span class="n">strain</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">repeated</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows share a "</span>
+                <span class="sa">f</span><span class="s2">"(protein, replicate) id, first </span><span class="si">{</span><span class="n">repeated</span><span class="p">[</span><span class="s1">'ORF'</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> replicate "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">repeated</span><span class="p">[</span><span class="s1">'replicate'</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">; a repeated replicate would count "</span>
+                <span class="s2">"as an extra replicate"</span>
+            <span class="p">)</span>
         <span class="n">grp</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"ORF"</span><span class="p">)[</span><span class="s2">"value"</span><span class="p">]</span><span class="o">.</span><span class="n">agg</span><span class="p">([</span><span class="s2">"mean"</span><span class="p">,</span> <span class="s2">"std"</span><span class="p">,</span> <span class="s2">"count"</span><span class="p">])</span>
         <span class="n">abundance</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">se</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -303,7 +338,7 @@
         <span class="n">wt_rows</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"KO_ORF"</span><span class="p">]</span> <span class="o">==</span> <span class="n">_WT</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">wt_rows</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Zelezniak matrix missing the WT reference strain"</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate</span><span class="p">(</span><span class="n">wt_rows</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate</span><span class="p">(</span><span class="n">wt_rows</span><span class="p">,</span> <span class="n">_WT</span><span class="p">)</span>
 
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">n_bad_orf</span> <span class="o">=</span> <span class="mi">0</span>
@@ -313,7 +348,13 @@
                 <span class="n">n_bad_orf</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="k">continue</span>
             <span class="n">gene</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">sub</span><span class="p">[</span><span class="s2">"KO_gene_name"</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"orf"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">ko_orf</span><span class="p">),</span> <span class="s2">"gene"</span><span class="p">:</span> <span class="n">gene</span><span class="p">,</span> <span class="s2">"agg"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate</span><span class="p">(</span><span class="n">sub</span><span class="p">)})</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"orf"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">ko_orf</span><span class="p">),</span>
+                    <span class="s2">"gene"</span><span class="p">:</span> <span class="n">gene</span><span class="p">,</span>
+                    <span class="s2">"agg"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">ko_orf</span><span class="p">)),</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">"Zelezniak: </span><span class="si">%d</span><span class="s2"> knockout strains, WT reference with </span><span class="si">%d</span><span class="s2"> proteins, "</span>
             <span class="s2">"</span><span class="si">%d</span><span class="s2"> non-systematic KO_ORF skipped"</span><span class="p">,</span>

@@ -192,6 +192,10 @@
 <span class="sd">  RLM2, SBR2 (all three acids), ILM2 (butyric), VPS236 (butyric, octanoic), SIW15</span>
 <span class="sd">  (octanoic) -- 13 records. Resolving them is a flagged follow-up (likely SI typos:</span>
 <span class="sd">  VPS236-&gt;VPS36?, SIW15-&gt;SIW14?, ILM2-&gt;ILM1?, RLM2-&gt;RLM1?).</span>
+<span class="sd">- A score cell outside ``0``, ``+``, ``++`` refuses the build rather than vanishing</span>
+<span class="sd">  uncounted, and so does a sheet with no ``Gene/ORF name`` header row. Neither occurs in</span>
+<span class="sd">  the pinned sheets (scored rows: acetic 331 ``+`` / 46 ``++``, butyric 371 / 51,</span>
+<span class="sd">  octanoic 437 / 53; 0 other symbols).</span>
 
 <span class="sd">Final: acetic 372, butyric 415, octanoic 483 = 1270 records (1289 raw susceptible rows</span>
 <span class="sd">- 3 RNR4 duplicates - 3 EFG1/YGR272C merges - 13 retired-token drops).</span>
@@ -688,8 +692,13 @@
         <span class="n">sheet</span> <span class="o">=</span> <span class="n">workbook</span><span class="p">[</span><span class="n">workbook</span><span class="o">.</span><span class="n">sheetnames</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
         <span class="n">rows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">sheet</span><span class="o">.</span><span class="n">iter_rows</span><span class="p">(</span><span class="n">values_only</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
         <span class="n">header_idx</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
-            <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span> <span class="k">if</span> <span class="n">row</span> <span class="ow">and</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"Gene/ORF name"</span>
+            <span class="p">(</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span> <span class="k">if</span> <span class="n">row</span> <span class="ow">and</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"Gene/ORF name"</span><span class="p">),</span> <span class="kc">None</span>
         <span class="p">)</span>
+        <span class="k">if</span> <span class="n">header_idx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">spec</span><span class="p">[</span><span class="s1">'filename'</span><span class="p">]</span><span class="si">}</span><span class="s2">: no row starts with the 'Gene/ORF name' header "</span>
+                <span class="s2">"in the first sheet"</span>
+            <span class="p">)</span>
         <span class="n">claims</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">dropped</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">n_raw</span> <span class="o">=</span> <span class="mi">0</span>
@@ -698,7 +707,14 @@
                 <span class="k">continue</span>
             <span class="n">token</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"</span><span class="se">\xa0</span><span class="s2">"</span><span class="p">,</span> <span class="s2">" "</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
             <span class="n">score</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">token</span> <span class="ow">or</span> <span class="n">score</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_RANK</span> <span class="ow">or</span> <span class="n">score</span> <span class="o">==</span> <span class="n">_REFERENCE_SYMBOL</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">token</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">score</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_RANK</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">spec</span><span class="p">[</span><span class="s1">'filename'</span><span class="p">]</span><span class="si">}</span><span class="s2">: score </span><span class="si">{</span><span class="n">score</span><span class="si">!r}</span><span class="s2"> for </span><span class="si">{</span><span class="n">token</span><span class="si">!r}</span><span class="s2"> is not one of "</span>
+                    <span class="sa">f</span><span class="s2">"the grade symbols </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_RANK</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">score</span> <span class="o">==</span> <span class="n">_REFERENCE_SYMBOL</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="n">n_raw</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">resolution</span> <span class="o">=</span> <span class="n">resolve</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
@@ -832,6 +848,11 @@
         <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span><span class="n">doi</span><span class="o">=</span><span class="n">DOI</span><span class="p">,</span> <span class="n">doi_url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"https://doi.org/</span><span class="si">{</span><span class="n">DOI</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">pub_dump</span> <span class="o">=</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
 
+        <span class="c1"># Parse every sheet BEFORE the store exists: a refusal (unknown grade symbol,</span>
+        <span class="c1"># missing header) must not leave an empty ``processed/lmdb`` that a retry would</span>
+        <span class="c1"># serve as a built dataset.</span>
+        <span class="n">parsed</span> <span class="o">=</span> <span class="p">[(</span><span class="n">spec</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_acid</span><span class="p">(</span><span class="n">spec</span><span class="p">))</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">_ACID_SPECS</span><span class="p">]</span>
+
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e11</span><span class="p">))</span>
@@ -840,10 +861,9 @@
         <span class="n">dropped_by_token</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DroppedToken</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">merged_all</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MergedGene</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">_ACID_SPECS</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">spec</span><span class="p">,</span> <span class="p">(</span><span class="n">orf_scores</span><span class="p">,</span> <span class="n">dropped</span><span class="p">,</span> <span class="n">merged</span><span class="p">,</span> <span class="n">n_raw</span><span class="p">)</span> <span class="ow">in</span> <span class="n">parsed</span><span class="p">:</span>
                 <span class="n">environment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
                 <span class="n">ref_dump</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
-                <span class="n">orf_scores</span><span class="p">,</span> <span class="n">dropped</span><span class="p">,</span> <span class="n">merged</span><span class="p">,</span> <span class="n">n_raw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_acid</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
                 <span class="n">n_raw_total</span> <span class="o">+=</span> <span class="n">n_raw</span>
                 <span class="n">merged_all</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">merged</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">token</span><span class="p">,</span> <span class="n">status</span> <span class="ow">in</span> <span class="n">dropped</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>

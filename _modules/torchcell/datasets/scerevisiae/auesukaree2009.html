@@ -180,11 +180,12 @@
 <span class="sd">  (poppler; the version used is recorded in the raw mirror's manifest). There is no</span>
 <span class="sd">  separate data deposit -- the data IS the article tables. Each table row declares its</span>
 <span class="sd">  functional-class member count in parentheses (e.g. "Vacuolar function (16)"); the parser</span>
-<span class="sd">  uses these declared counts as per-class self-checksums, so extraction drift is caught at</span>
-<span class="sd">  build time. The MinerU OCR ``paper.md`` in the same mirror is lossy for the TABLES (its</span>
-<span class="sd">  heat Table 4 "Unknown function" cell is truncated by two ORFs, YOR364w and YPL144w), so</span>
-<span class="sd">  the PDF text layer is the source of record for the gene lists while ``paper.md`` is the</span>
-<span class="sd">  anchor for the prose quotes.</span>
+<span class="sd">  uses these declared counts as per-class self-checksums (a class whose parsed count</span>
+<span class="sd">  differs refuses the build), so extraction drift is caught at build time. The MinerU</span>
+<span class="sd">  OCR ``paper.md`` in the same mirror is lossy for the TABLES (its heat Table 4 "Unknown</span>
+<span class="sd">  function" cell is truncated by two ORFs, YOR364w and YPL144w), so the PDF text layer is</span>
+<span class="sd">  the source of record for the gene lists while ``paper.md`` is the anchor for the prose</span>
+<span class="sd">  quotes.</span>
 
 <span class="sd">SOURCE COUNT NOTES (documented, not guessed):</span>
 <span class="sd">- Per-stress listed sensitive genes match the abstract/Figure headline counts EXACTLY for</span>
@@ -526,6 +527,19 @@
     <span class="k">return</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[,\s]+"</span><span class="p">,</span> <span class="n">cell</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">if</span> <span class="n">t</span><span class="p">]</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_class_count</span><span class="p">(</span><span class="n">stress</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">declared</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">parsed</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Refuse a functional class whose parsed gene count differs from its declared (N).</span>
+
+<span class="sd">    ``label`` is empty before the first class row of a table, when there is nothing to</span>
+<span class="sd">    check. Measured on the pinned PDF: all 67 classes of Tables 1-6 match.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">label</span> <span class="ow">and</span> <span class="n">parsed</span> <span class="o">!=</span> <span class="n">declared</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stress</span><span class="si">}</span><span class="s2">: class </span><span class="si">{</span><span class="n">label</span><span class="si">!r}</span><span class="s2"> declares </span><span class="si">{</span><span class="n">declared</span><span class="si">}</span><span class="s2"> genes, parsed </span><span class="si">{</span><span class="n">parsed</span><span class="si">}</span><span class="s2"> "</span>
+            <span class="s2">"(per-class table extraction self-checksum failed)"</span>
+        <span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">poppler_version</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The ``pdftotext`` version string, recorded as extraction provenance."""</span>
     <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
@@ -612,15 +626,30 @@
     <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">CollapsedToken</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A listed token whose ORF an earlier token of the same table already claimed."""</span>
+
+    <span class="n">stress</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">token</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">systematic_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">kept_gene_name</span><span class="p">:</span> <span class="nb">str</span>
+
+
 <span class="k">class</span><span class="w"> </span><span class="nc">DropLog</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""The build's retention accounting, written beside ``processed/``."""</span>
+<span class="w">    </span><span class="sd">"""The build's retention accounting, written beside ``processed/``.</span>
+
+<span class="sd">    Every listed token is exactly one of kept, dropped or collapsed, so</span>
+<span class="sd">    ``n_listed_tokens == n_kept_records + n_dropped_records + n_collapsed_tokens``.</span>
+<span class="sd">    """</span>
 
     <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">rule</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">n_listed_tokens</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">n_kept_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">n_dropped_records</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_collapsed_tokens</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">dropped_tokens</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">collapsed_tokens</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CollapsedToken</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">adjudicated</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AmbiguousAdjudication</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
 
 
@@ -699,6 +728,7 @@
             <span class="n">stress</span> <span class="o">=</span> <span class="n">caption</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
             <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">genes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">cur_label</span> <span class="o">=</span> <span class="s2">""</span>
             <span class="n">cur_declared</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">cur_count</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">):</span>
@@ -707,6 +737,8 @@
                     <span class="k">break</span>
                 <span class="n">class_row</span> <span class="o">=</span> <span class="n">_CLASS_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">class_row</span><span class="p">:</span>
+                    <span class="n">_check_class_count</span><span class="p">(</span><span class="n">stress</span><span class="p">,</span> <span class="n">cur_label</span><span class="p">,</span> <span class="n">cur_declared</span><span class="p">,</span> <span class="n">cur_count</span><span class="p">)</span>
+                    <span class="n">cur_label</span> <span class="o">=</span> <span class="n">line</span><span class="p">[:</span> <span class="n">class_row</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
                     <span class="n">cur_declared</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">class_row</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
                     <span class="n">toks</span> <span class="o">=</span> <span class="n">_tokenize</span><span class="p">(</span><span class="n">class_row</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
                     <span class="n">cur_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">toks</span><span class="p">)</span>
@@ -719,6 +751,7 @@
                     <span class="c1"># not a table row (footer / prose) -&gt; table body ended</span>
                     <span class="k">break</span>
                 <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">_check_class_count</span><span class="p">(</span><span class="n">stress</span><span class="p">,</span> <span class="n">cur_label</span><span class="p">,</span> <span class="n">cur_declared</span><span class="p">,</span> <span class="n">cur_count</span><span class="p">)</span>
             <span class="n">tables</span><span class="p">[</span><span class="n">stress</span><span class="p">]</span> <span class="o">=</span> <span class="n">genes</span>
         <span class="k">return</span> <span class="n">tables</span>
 
@@ -751,8 +784,13 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_stress</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">stress</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tokens</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">"""Resolve one stress's tokens to ``{ORF: stored name}``; checksum + count drops."""</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">CollapsedToken</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Resolve one stress's tokens to ``{ORF: stored name}``; checksum + count drops.</span>
+
+<span class="sd">        A token whose ORF an earlier token of the same table already claimed keeps the</span>
+<span class="sd">        first name and is ledgered as a ``CollapsedToken``. Measured on the pinned PDF:</span>
+<span class="sd">        0 collapses (525 listed tokens, 525 records, 0 dropped).</span>
+<span class="sd">        """</span>
         <span class="n">expected</span> <span class="o">=</span> <span class="n">_EXPECTED_LISTED</span><span class="p">[</span><span class="n">stress</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
@@ -761,22 +799,36 @@
             <span class="p">)</span>
         <span class="n">resolved</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">dropped</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">collapsed</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CollapsedToken</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">:</span>
             <span class="n">hit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_token</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">hit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">dropped</span><span class="p">[</span><span class="n">token</span><span class="p">]</span> <span class="o">=</span> <span class="n">dropped</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
                 <span class="k">continue</span>
             <span class="n">orf</span><span class="p">,</span> <span class="n">stored</span> <span class="o">=</span> <span class="n">hit</span>
-            <span class="n">resolved</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">stored</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">resolved</span><span class="p">:</span>
+                <span class="n">collapsed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">CollapsedToken</span><span class="p">(</span>
+                        <span class="n">stress</span><span class="o">=</span><span class="n">stress</span><span class="p">,</span>
+                        <span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span>
+                        <span class="n">systematic_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                        <span class="n">kept_gene_name</span><span class="o">=</span><span class="n">resolved</span><span class="p">[</span><span class="n">orf</span><span class="p">],</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">resolved</span><span class="p">[</span><span class="n">orf</span><span class="p">]</span> <span class="o">=</span> <span class="n">stored</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Auesukaree2009 </span><span class="si">%s</span><span class="s2">: </span><span class="si">%d</span><span class="s2"> listed -&gt; </span><span class="si">%d</span><span class="s2"> unique-ORF records (dropped </span><span class="si">%d</span><span class="s2">: </span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span>
+            <span class="s2">"Auesukaree2009 </span><span class="si">%s</span><span class="s2">: </span><span class="si">%d</span><span class="s2"> listed -&gt; </span><span class="si">%d</span><span class="s2"> unique-ORF records "</span>
+            <span class="s2">"(dropped </span><span class="si">%d</span><span class="s2">: </span><span class="si">%s</span><span class="s2">; collapsed </span><span class="si">%d</span><span class="s2">: </span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span>
             <span class="n">stress</span><span class="p">,</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">tokens</span><span class="p">),</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">resolved</span><span class="p">),</span>
             <span class="nb">sum</span><span class="p">(</span><span class="n">dropped</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
             <span class="nb">sorted</span><span class="p">(</span><span class="n">dropped</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">collapsed</span><span class="p">),</span>
+            <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">token</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">collapsed</span><span class="p">],</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">resolved</span><span class="p">,</span> <span class="n">dropped</span>
+        <span class="k">return</span> <span class="n">resolved</span><span class="p">,</span> <span class="n">dropped</span><span class="p">,</span> <span class="n">collapsed</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Environment</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Aerobic solid-YPD plate carrying the edit (an added small molecule, or heat)."""</span>
@@ -871,25 +923,34 @@
         <span class="n">pub_dump</span> <span class="o">=</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
         <span class="n">ref_dump</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">()</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
 
+        <span class="c1"># Resolve every table BEFORE the store exists: a refusal (missing table,</span>
+        <span class="c1"># checksum miss, unadjudicated AMBIGUOUS token, missing genome) must not leave an</span>
+        <span class="c1"># empty ``processed/lmdb`` that a retry would serve as a built dataset.</span>
+        <span class="n">resolved_specs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">_STRESS_SPECS</span><span class="p">:</span>
+            <span class="n">stress</span> <span class="o">=</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"stress"</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">stress</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tables</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"stress table not found in PDF: </span><span class="si">{</span><span class="n">stress</span><span class="si">!r}</span><span class="s2"> "</span>
+                    <span class="sa">f</span><span class="s2">"(parsed: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">tables</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
+                <span class="p">)</span>
+            <span class="n">resolved_specs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">spec</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_stress</span><span class="p">(</span><span class="n">stress</span><span class="p">,</span> <span class="n">tables</span><span class="p">[</span><span class="n">stress</span><span class="p">])))</span>
+
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e11</span><span class="p">))</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">n_listed</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">dropped_tokens</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">collapsed_tokens</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CollapsedToken</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">_STRESS_SPECS</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">spec</span><span class="p">,</span> <span class="p">(</span><span class="n">orf_names</span><span class="p">,</span> <span class="n">dropped</span><span class="p">,</span> <span class="n">collapsed</span><span class="p">)</span> <span class="ow">in</span> <span class="n">resolved_specs</span><span class="p">:</span>
                 <span class="n">stress</span> <span class="o">=</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"stress"</span><span class="p">]</span>
-                <span class="k">if</span> <span class="n">stress</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tables</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">"stress table not found in PDF: </span><span class="si">{</span><span class="n">stress</span><span class="si">!r}</span><span class="s2"> "</span>
-                        <span class="sa">f</span><span class="s2">"(parsed: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">tables</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
-                    <span class="p">)</span>
                 <span class="n">environment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
                 <span class="n">n_listed</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tables</span><span class="p">[</span><span class="n">stress</span><span class="p">])</span>
-                <span class="n">orf_names</span><span class="p">,</span> <span class="n">dropped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_stress</span><span class="p">(</span><span class="n">stress</span><span class="p">,</span> <span class="n">tables</span><span class="p">[</span><span class="n">stress</span><span class="p">])</span>
                 <span class="k">for</span> <span class="n">token</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">dropped</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                     <span class="n">dropped_tokens</span><span class="p">[</span><span class="n">token</span><span class="p">]</span> <span class="o">=</span> <span class="n">dropped_tokens</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">count</span>
+                <span class="n">collapsed_tokens</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">collapsed</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">orf</span><span class="p">,</span> <span class="n">gene_name</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">orf_names</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span> <span class="n">desc</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stress</span><span class="si">}</span><span class="s2">"</span><span class="p">):</span>
                     <span class="n">experiment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_experiment</span><span class="p">(</span>
                         <span class="n">orf</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span> <span class="n">gene_name</span><span class="o">=</span><span class="n">gene_name</span><span class="p">,</span> <span class="n">environment</span><span class="o">=</span><span class="n">environment</span>
@@ -913,7 +974,9 @@
             <span class="n">n_listed_tokens</span><span class="o">=</span><span class="n">n_listed</span><span class="p">,</span>
             <span class="n">n_kept_records</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span>
             <span class="n">n_dropped_records</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="n">dropped_tokens</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+            <span class="n">n_collapsed_tokens</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">collapsed_tokens</span><span class="p">),</span>
             <span class="n">dropped_tokens</span><span class="o">=</span><span class="n">dropped_tokens</span><span class="p">,</span>
+            <span class="n">collapsed_tokens</span><span class="o">=</span><span class="n">collapsed_tokens</span><span class="p">,</span>
             <span class="n">adjudicated</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">_AMBIGUOUS_ADJUDICATIONS</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
         <span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="n">_DROPPED_FILENAME</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>

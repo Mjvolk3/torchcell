@@ -49,6 +49,12 @@ the config's ``seed``, so at lr 0 its final metrics are those of ``_tiny(seed)``
 whatever the caller's RNG state; the shipped Wasserstein loss trains and prints its
 own ``weighted_wasserstein`` component; every composite loss saves the final
 components figure.
+
+2026.10.01, issue #540 (last item). ``aggregation_norm`` is an explicit, validated
+argument: null (or absent) builds exactly the module main built (same parameter count,
+same state_dict keys), and any other value raises
+``AggregationNormNotImplementedError`` with an exact message, both from the model and
+from ``main``'s config reader.
 """
 
 import os
@@ -76,6 +82,7 @@ from torchcell.losses.logcosh import LogCoshLoss
 from torchcell.losses.mle_wasserstein import MleWassSupCR
 from torchcell.models.act import act_register
 from torchcell.models.hetero_cell_bipartite_dango_gi import (
+    AggregationNormNotImplementedError,
     AttentionalGraphAggregation,
     AttentionConvWrapper,
     DangoLikeHyperSAGNN,
@@ -1014,27 +1021,26 @@ def test_permuting_the_genotypes_in_a_batch_permutes_the_predictions() -> None:
 
 def test_shipped_006_encoder_flags_reach_the_modules_they_name() -> None:
     """The 006 config sets ``activation: "gelu"``, ``graph_aggregation_config:
-    {aggregation_norm: "layer", dropout: 0.0}`` next to the model ``dropout``.
+    {aggregation_norm: null, dropout: 0.0}`` next to the model ``dropout``.
 
     Contract (issue #540): "gelu" builds GELU in the preprocessor and in every conv
     wrapper; the aggregation config's own ``dropout`` (0.0) wins over the model dropout
     (0.25) in the MultiheadAttention, and without its own key the aggregation inherits
-    the model dropout.
-
-    Finding (left open): ``aggregation_norm`` is read by nothing in this module (only
-    the ``_lazy`` variant builds a norm from it), so the cross_attention model with it
-    has the same 1424 parameters as without it.
+    the model dropout. ``aggregation_norm`` null builds no norm: the cross_attention
+    model has 1424 parameters, the count it had when the key was ignored, and the
+    config's "layer" it shipped until 2026.10.01 is now refused (tested below).
     """
     encoder = {
         "encoder_type": "gin",
         "graph_aggregation_method": "cross_attention",
         "graph_aggregation_config": {
             "num_heads": 2,
-            "aggregation_norm": "layer",
+            "aggregation_norm": None,
             "dropout": 0.0,
         },
     }
     model = _tiny(dropout=0.25, activation="gelu", gene_encoder_config=encoder)
+    assert model.aggregation_norm is None
     wrappers = [m for m in model.modules() if isinstance(m, AttentionConvWrapper)]
     assert [type(m.act) for m in [model.preprocessor, *wrappers]] == [nn.GELU] * 3
     assert model.num_parameters["total"] == 1424
@@ -1046,6 +1052,106 @@ def test_shipped_006_encoder_flags_reach_the_modules_they_name() -> None:
     inherited = _tiny(dropout=0.25, gene_encoder_config=inherit).convs[0].aggregator
     assert isinstance(inherited, SelfAttentionGraphAggregation)
     assert inherited.multihead_attn.dropout == 0.25
+
+
+PAIRWISE_AGGREGATOR_KEYS = {
+    "convs.0.aggregator.attention.0.bias",
+    "convs.0.aggregator.attention.0.weight",
+    "convs.0.aggregator.attention.2.bias",
+    "convs.0.aggregator.attention.2.weight",
+    *(
+        f"convs.0.aggregator.interaction_mlps.{pair}.{layer}.{name}"
+        for pair in (
+            "physical_physical",
+            "physical_regulatory",
+            "regulatory_regulatory",
+        )
+        for layer in (0, 3)
+        for name in ("bias", "weight")
+    ),
+}
+
+
+def _encoder(method: str, **aggregation: Any) -> dict[str, Any]:
+    return {
+        "encoder_type": "gin",
+        "graph_aggregation_method": method,
+        "graph_aggregation_config": aggregation,
+    }
+
+
+def _refusal(value: object) -> str:
+    """The exact refusal message for ``value``, anchored for ``pytest.raises``."""
+    message = (
+        f"aggregation_norm={value!r} is not implemented in "
+        "torchcell.models.hetero_cell_bipartite_dango_gi: its graph aggregators "
+        "build no normalization layer. Set aggregation_norm to null, or use "
+        "torchcell.models.hetero_cell_bipartite_dango_gi_lazy, whose "
+        "pairwise_interaction aggregator builds it."
+    )
+    return f"^{re.escape(message)}$"
+
+
+@pytest.mark.parametrize(
+    ("method", "total", "aggregator_keys"),
+    [("sum", 1120, set()), ("pairwise_interaction", 1765, PAIRWISE_AGGREGATOR_KEYS)],
+)
+def test_null_aggregation_norm_builds_exactly_the_module_main_built(
+    method: str, total: int, aggregator_keys: set[str]
+) -> None:
+    """Contract (issue #540): ``aggregation_norm`` null, and the key absent, build the
+    module of main (8774914fe) exactly: same parameter count, same state_dict keys,
+    and no norm key under ``convs.0.aggregator``.
+
+    Counts on main: "sum" 1120 (module docstring) and "pairwise_interaction"
+    1120 + 645, the 645 being three pair MLPs of Linear(16, 8) 136 + Linear(8, 8) 72
+    (624) and the attention head Linear(8, 2) 18 + Linear(2, 1) 3 (21). The pairwise
+    model's keys are the "sum" model's 56 plus the 16 aggregator keys listed in
+    ``PAIRWISE_AGGREGATOR_KEYS`` (72 in all). Weights built under one seed are equal.
+    """
+    absent = _tiny(gene_encoder_config=_encoder(method))
+    null = _tiny(gene_encoder_config=_encoder(method, aggregation_norm=None))
+    base_keys = set(_tiny(gene_encoder_config=_encoder("sum")).state_dict())
+    assert len(base_keys) == 56
+    for model in (absent, null):
+        assert model.aggregation_norm is None
+        assert sum(p.numel() for p in model.parameters()) == total
+        assert set(model.state_dict()) == base_keys | aggregator_keys
+        assert len(model.state_dict()) == 56 + len(aggregator_keys)
+    for key, tensor in absent.state_dict().items():
+        torch.testing.assert_close(null.state_dict()[key], tensor, rtol=0, atol=0)
+
+
+@pytest.mark.parametrize("value", ["layer", "batch", "none"])
+@pytest.mark.parametrize("method", ["sum", "cross_attention", "pairwise_interaction"])
+def test_a_non_null_aggregation_norm_is_refused_by_name(
+    method: str, value: str
+) -> None:
+    """Contract (issue #540): any value other than null, including the string "none",
+    raises ``AggregationNormNotImplementedError`` (a ValueError) with the exact message
+    naming the value and the ``_lazy`` module that builds the norm, for every
+    aggregation method, from the model and from ``HeteroConvAggregator`` given the
+    value either as its argument or inside its ``aggregation_config``.
+    The caller's config dict is not mutated by the model reading the key.
+    """
+    encoder = _encoder(method, aggregation_norm=value)
+    with pytest.raises(AggregationNormNotImplementedError, match=_refusal(value)):
+        _tiny(gene_encoder_config=encoder)
+    assert encoder["graph_aggregation_config"] == {"aggregation_norm": value}
+    assert issubclass(AggregationNormNotImplementedError, ValueError)
+
+    conv = AttentionConvWrapper(GINConv(nn.Linear(HIDDEN, HIDDEN)), HIDDEN)
+    with pytest.raises(AggregationNormNotImplementedError, match=_refusal(value)):
+        HeteroConvAggregator(
+            {PHYS: conv}, HIDDEN, aggregation_method=method, aggregation_norm=value
+        )
+    with pytest.raises(AggregationNormNotImplementedError, match=_refusal(value)):
+        HeteroConvAggregator(
+            {PHYS: conv},
+            HIDDEN,
+            aggregation_method=method,
+            aggregation_config={"aggregation_norm": value},
+        )
 
 
 # ---------------------------------------------------------------- Phase 17: wrapper edges
@@ -1527,3 +1633,37 @@ def test_main_with_the_shipped_wasserstein_loss_prints_its_own_components(
         "loss_components_evolution_TS.png",
         "final_results_TS.png",
     ]
+
+
+def _pairwise_main_cfg(value: str | None) -> DictConfig:
+    cfg = _main_cfg("logcosh", epochs=1, plot_every=1, lr=0.0)
+    cfg.model.gene_encoder_config = _encoder(
+        "pairwise_interaction", aggregation_norm=value
+    )
+    return cfg
+
+
+def test_main_passes_a_layer_aggregation_norm_through_to_the_refusal(
+    fake_main: dict[str, Any], tmp_path: Path
+) -> None:
+    """Contract (issue #540): ``main`` hands ``model.gene_encoder_config.
+    graph_aggregation_config.aggregation_norm`` to the model unchanged, so the key
+    can never be dropped silently again: "layer" is refused by name, before the plot
+    directory exists and before anything is saved.
+    """
+    with pytest.raises(AggregationNormNotImplementedError, match=_refusal("layer")):
+        dango_module.main(_pairwise_main_cfg("layer"))
+    assert list(tmp_path.iterdir()) == []
+    assert fake_main["saved"] == []
+
+
+def test_main_with_a_null_aggregation_norm_builds_the_main_pairwise_model(
+    fake_main: dict[str, Any], capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Contract (issue #540): with ``aggregation_norm: null`` ``main`` builds the
+    1765-parameter pairwise model of main (no norm module) and trains one epoch,
+    saving the epoch figure and the final figure.
+    """
+    dango_module.main(_pairwise_main_cfg(None))
+    assert "Parameter count: 1765" in capsys.readouterr().out.splitlines()
+    assert fake_main["saved"] == ["training_epoch_0001.png", "final_results_TS.png"]

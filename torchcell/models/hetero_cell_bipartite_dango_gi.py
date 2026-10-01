@@ -192,6 +192,31 @@ class PairwiseGraphAggregation(nn.Module):
         return aggregated, attn_weights
 
 
+class AggregationNormNotImplementedError(ValueError):
+    """An ``aggregation_norm`` other than None was requested from this module.
+
+    No aggregator in this module builds a normalization layer, so every run of it
+    trained without one, whatever its config said. Only the ``_lazy`` variant's
+    ``PairwiseGraphAggregation`` builds a norm from this key.
+    """
+
+    def __init__(self, aggregation_norm: object) -> None:
+        """Name the refused value and the module that does implement the norm."""
+        super().__init__(
+            f"aggregation_norm={aggregation_norm!r} is not implemented in "
+            "torchcell.models.hetero_cell_bipartite_dango_gi: its graph aggregators "
+            "build no normalization layer. Set aggregation_norm to null, or use "
+            "torchcell.models.hetero_cell_bipartite_dango_gi_lazy, whose "
+            "pairwise_interaction aggregator builds it."
+        )
+
+
+def require_no_aggregation_norm(aggregation_norm: str | None) -> None:
+    """Refuse any ``aggregation_norm`` other than None (the only built behavior)."""
+    if aggregation_norm is not None:
+        raise AggregationNormNotImplementedError(aggregation_norm)
+
+
 class HeteroConvAggregator(nn.Module):
     """HeteroConv wrapper with configurable aggregation strategies.
 
@@ -204,8 +229,16 @@ class HeteroConvAggregator(nn.Module):
         hidden_channels: int,
         aggregation_method: str = "cross_attention",
         aggregation_config: dict[str, Any] | None = None,
+        aggregation_norm: str | None = None,
     ):
-        """Store the per-edge-type convs and build the chosen aggregation module."""
+        """Store the per-edge-type convs and build the chosen aggregation module.
+
+        ``aggregation_norm`` must be None: no aggregator here builds a norm, so any
+        other value raises ``AggregationNormNotImplementedError``, as does a non-null
+        ``aggregation_config["aggregation_norm"]`` (so it is never silently ignored).
+        """
+        require_no_aggregation_norm(aggregation_norm)
+        require_no_aggregation_norm((aggregation_config or {}).get("aggregation_norm"))
         super().__init__()
         self.convs = nn.ModuleDict({str(k): v for k, v in convs.items()})
         self.hidden_channels = hidden_channels
@@ -784,9 +817,15 @@ class GeneInteractionDango(nn.Module):
             "graph_aggregation_method",
             "cross_attention",  # Default to cross_attention
         )
-        self.graph_aggregation_config = gene_encoder_config.get(
-            "graph_aggregation_config", {}
+        self.graph_aggregation_config = dict(
+            gene_encoder_config.get("graph_aggregation_config", {})
         )
+        # Absent or null means no norm, the only behavior this module builds; any
+        # other value is refused rather than silently ignored (issue #540).
+        self.aggregation_norm: str | None = self.graph_aggregation_config.pop(
+            "aggregation_norm", None
+        )
+        require_no_aggregation_norm(self.aggregation_norm)
 
         # Store attention weights for visualization
         self.last_layer_attention_weights: list[dict[str, torch.Tensor | None]] = []
@@ -830,6 +869,7 @@ class GeneInteractionDango(nn.Module):
                         "dropout": dropout,
                         **self.graph_aggregation_config,
                     },
+                    aggregation_norm=self.aggregation_norm,
                 )
             )
 

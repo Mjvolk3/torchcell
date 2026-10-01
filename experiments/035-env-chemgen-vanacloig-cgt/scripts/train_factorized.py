@@ -108,6 +108,10 @@ class FactorizedConfig(BaseModel):
     weight_decay: float = 1e-4
     steps: int = 3000
     eval_every: int = 50
+    # epochs, when given, set steps = epochs passes over the strains and the eval
+    # cadence to every eval_epochs passes; one pass is ceil(n_genes / gene_batch) steps
+    epochs: int | None = None
+    eval_epochs: int = 1
     gene_batch: int = 0  # 0 = every gene in one step
     se_weight: float | None = None  # weight 1 / (se^2 + s0^2) with s0 this value
     huber: float | None = None  # Huber delta on the standardized target
@@ -119,6 +123,8 @@ class FactorizedConfig(BaseModel):
     # cgt only
     cgt_lambda: float = 1.0
     cgt_layers: int = 8
+    cgt_heads: int = 9
+    cgt_dim: int = 180  # hidden_channels, must be divisible by cgt_heads
     cgt_lr: float = 5e-4
     identity_skip: bool = False
 
@@ -184,7 +190,7 @@ class Factorized(nn.Module):
             self.table = nn.Embedding(n_genes, cfg.dim)
             nn.init.normal_(self.table.weight, std=0.1)
         else:
-            width = 180 * (2 if cfg.identity_skip else 1)
+            width = cfg.cgt_dim * (2 if cfg.identity_skip else 1)
             self.project = nn.Sequential(nn.LayerNorm(width), nn.Linear(width, cfg.dim))
         self.gene_bias = nn.Embedding(n_genes, 1)
         nn.init.zeros_(self.gene_bias.weight)
@@ -263,11 +269,13 @@ def build_encoder(cfg: FactorizedConfig, cell_graph):
     raw = OmegaConf.load(osp.join(EXPERIMENT, "conf", "default.yaml"))
     raw.pop("hydra")
     model_cfg = OmegaConf.to_container(raw, resolve=True)["model"]  # type: ignore[index]
+    assert cfg.cgt_dim % cfg.cgt_heads == 0, "cgt_dim must be divisible by cgt_heads"
+    model_cfg["learnable_embedding"]["size"] = cfg.cgt_dim
     return CellGraphTransformer(
         gene_num=model_cfg["gene_num"],
-        hidden_channels=model_cfg["hidden_channels"],
+        hidden_channels=cfg.cgt_dim,
         num_transformer_layers=cfg.cgt_layers,
-        num_attention_heads=model_cfg["num_attention_heads"],
+        num_attention_heads=cfg.cgt_heads,
         cell_graph=cell_graph,
         graph_regularization_config=model_cfg["graph_regularization"],
         perturbation_head_config=model_cfg["perturbation_head"],
@@ -335,14 +343,20 @@ def train_seed(
     if encoder is not None:
         groups.append({"params": list(model.encoder.parameters()), "lr": cfg.cgt_lr})
     optimizer = torch.optim.AdamW(groups, weight_decay=cfg.weight_decay)
-    scheduler = torch.optim.lr_scheduler.OneCycleLR(
-        optimizer,
-        max_lr=[g["lr"] for g in groups],
-        total_steps=cfg.steps,
-        pct_start=0.05,
-    )
     n_genes = ctx.y.shape[0]
     gene_batch = cfg.gene_batch or n_genes
+    steps_per_epoch = -(-n_genes // gene_batch)
+    steps, eval_every = cfg.steps, cfg.eval_every
+    if cfg.epochs is not None:
+        steps = cfg.epochs * steps_per_epoch
+        eval_every = cfg.eval_epochs * steps_per_epoch
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(
+        optimizer, max_lr=[g["lr"] for g in groups], total_steps=steps, pct_start=0.05
+    )
+    pool = sorted(train + fold.val)
+    tag = f"fold{fold.fold}_seed{seed}"
+    if device.type == "cuda":
+        torch.cuda.reset_peak_memory_stats(device)
     generator = torch.Generator().manual_seed(seed)
     order = torch.randperm(n_genes, generator=generator)
     cursor = 0
@@ -352,7 +366,7 @@ def train_seed(
     best = (-np.inf, -1)
     best_pred: NDArray[np.float64] | None = None
     started = time.time()
-    for step in range(cfg.steps):
+    for step in range(steps):
         model.train()
         if cursor + gene_batch > n_genes:
             order = torch.randperm(n_genes, generator=generator)
@@ -376,23 +390,48 @@ def train_seed(
         total = loss + (cfg.cgt_lambda * penalty if encoder is not None else 0.0)
         optimizer.zero_grad(set_to_none=True)
         total.backward()
-        nn.utils.clip_grad_norm_(model.parameters(), 10.0)
+        grad_norm = nn.utils.clip_grad_norm_(model.parameters(), 10.0)
         optimizer.step()
         scheduler.step()
 
-        if (step + 1) % cfg.eval_every == 0 or step + 1 == cfg.steps:
+        if (step + 1) % eval_every == 0 or step + 1 == steps:
             full = predict_all(model, ctx, x, device, 256 if encoder else n_genes)
             full = full * y_sd + y_mean
             val = centered_val_score(ctx.y, full, train, fold.val)
-            history.append(
-                {
-                    "step": step + 1,
-                    "train_loss": float(loss),
-                    "penalty": float(penalty),
-                    "val_centered_mean": val,
-                    "seconds": time.time() - started,
+            # the held-out compounds at this step, logged for visibility only; the
+            # selected step is still chosen on the validation compounds
+            test = centered_val_score(ctx.y, full, pool, fold.test)
+            record = {
+                "step": step + 1,
+                "epoch": (step + 1) / steps_per_epoch,
+                "train_loss": float(loss),
+                "penalty": float(penalty),
+                "grad_norm": float(grad_norm),
+                "lr": float(scheduler.get_last_lr()[0]),
+                "val_centered_mean": val,
+                "test_centered_mean": test,
+                "seconds": time.time() - started,
+                "gpu_peak_gb": (
+                    torch.cuda.max_memory_allocated(device) / 2**30
+                    if device.type == "cuda"
+                    else 0.0
+                ),
+            }
+            history.append(record)
+            if wandb.run is not None:
+                measured_mean = np.nanmean(ctx.y[:, train], axis=1)
+                predicted_mean = full[:, train].mean(axis=1)
+                per_compound = {
+                    f"{tag}/val_spearman/{ctx.cells.compounds[j]}": fast_spearman(
+                        full[:, j] - predicted_mean, ctx.y[:, j] - measured_mean
+                    )
+                    for j in fold.val
                 }
-            )
+                wandb.log(
+                    {f"{tag}/{k}": v for k, v in record.items() if k != "step"}
+                    | per_compound
+                    | {"step": step + 1}
+                )
             if np.isfinite(val) and val > best[0]:
                 best = (val, step + 1)
                 best_pred = full
@@ -445,6 +484,9 @@ def run(cfg: FactorizedConfig, sweep: str, device: torch.device) -> pd.DataFrame
         dir=osp.join(DATA_ROOT, "wandb-experiments", "035-env-chemgen-vanacloig-cgt"),
         reinit=True,
     )
+    # every per-fold curve is keyed by the training step, so folds overlay on one page
+    run_wandb.define_metric("step")
+    run_wandb.define_metric("*", step_metric="step")
     folds = make_folds(len(cells.compounds), cfg.n_folds, cfg.n_val, cfg.fold_seed)
     frames, histories = [], []
     for fold in folds:
@@ -491,7 +533,7 @@ def run(cfg: FactorizedConfig, sweep: str, device: torch.device) -> pd.DataFrame
         f"test/{member}_{target}_median": float(g["spearman"].median())
         for (member, target), g in scores.groupby(["member", "target"])
     }
-    wandb.log(summary)
+    run_wandb.summary.update(summary)
     print(f"{cfg.name}: {summary}", flush=True)
     run_wandb.finish()
     return scores

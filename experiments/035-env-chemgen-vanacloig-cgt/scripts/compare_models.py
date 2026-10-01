@@ -79,7 +79,10 @@ def load_scores(ladder_tag: str) -> pd.DataFrame:
         sweep = re.sub(r"^(r\d+)b_", r"\1_", sweep)
         d = pd.read_csv(path)
         # a config repeated per fold seed is named <name>_fs<seed>; pool it under <name>
-        d["name"] = f"{sweep}:" + d["name"].str.replace(r"_fs\d$", "", regex=True)
+        # a config run one fold per process is named <name>_f<fold>; pool it the same way
+        d["name"] = f"{sweep}:" + d["name"].str.replace(
+            r"_fs\d$", "", regex=True
+        ).str.replace(r"_f\d$", "", regex=True)
         d["name"] = d["name"] + ":" + d["member"]
         models.append(d[KEY + ["name", "spearman", "ceiling"]])
     scores = pd.concat(models, ignore_index=True)

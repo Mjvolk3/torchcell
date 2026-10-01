@@ -25,7 +25,9 @@ padded-count filter).
 2026.09.30, issue #570: column padding is opt-in by name. ``square_attrs`` lists the
 per-node ``[N, N]`` attributes; every other node tensor with ``size(0) == N`` is padded
 on its rows only, so a ``[3, 3]`` feature matrix that is NOT listed comes back
-``[4, 3]``. A listed name that is absent or not ``[N, N]`` raises ``ValueError``.
+``[4, 3]``. A listed name that is absent or not ``[N, N]``, or a node type the data
+lacks, raises ``ValueError`` in ``forward``; a reserved name (``x``, ``pos``, ``mask``,
+``num_nodes``, ``node_ids``, a leading underscore) raises at construction.
 """
 
 import pytest
@@ -245,16 +247,48 @@ def test_square_attrs_apply_only_to_their_node_type() -> None:
 
 
 def test_a_listed_attribute_that_is_not_square_is_refused_by_name() -> None:
-    """``pos`` is ``[3, 2]`` and ``missing`` does not exist: each raises with its shape."""
+    """``pair`` listed on a ``[3, 2]`` tensor raises with its shape; ``missing``, which
+    the store does not hold, raises naming the store.
+    """
     with pytest.raises(
         ValueError,
-        match=r"^square attribute gene\.pos must be a tensor of shape \[3, 3, \.\.\.\], "
+        match=r"^square attribute gene\.pair must be a tensor of shape \[3, 3, \.\.\.\], "
         r"got \[3, 2\]$",
     ):
-        HeteroToDenseMask(square_attrs={"gene": ["pos"]})(_edge_case_graph())
+        HeteroToDenseMask(square_attrs={"gene": ["pair"]})(_narrow_pair_graph())
     with pytest.raises(
         ValueError,
-        match=r"^square attribute gene\.missing must be a tensor of shape "
-        r"\[3, 3, \.\.\.\], got <class 'NoneType'>$",
+        match=r"^square attribute gene\.missing is missing from the gene store$",
     ):
         HeteroToDenseMask(square_attrs={"gene": ["missing"]})(_edge_case_graph())
+
+
+def _narrow_pair_graph() -> HeteroData:
+    """``_edge_case_graph`` with ``pair`` replaced by a ``[3, 2]`` tensor."""
+    data = _edge_case_graph()
+    data["gene"].pair = torch.arange(6.0).view(3, 2)
+    return data
+
+
+@pytest.mark.parametrize("name", ["x", "pos", "mask", "num_nodes", "node_ids", "_y"])
+def test_a_reserved_name_in_square_attrs_is_refused_at_construction(name: str) -> None:
+    """The transform pads ``x`` and ``pos`` on rows only and skips the other reserved
+    names, so listing one would silently not be squared; it is refused up front.
+    """
+    with pytest.raises(ValueError) as info:
+        HeteroToDenseMask(square_attrs={"gene": ["pair", name]})
+    assert str(info.value) == (
+        f"square attribute gene.{name} is reserved: the transform handles x, pos, "
+        "mask, num_nodes, node_ids and underscore names itself, never as a square "
+        "matrix"
+    )
+
+
+def test_an_unknown_node_type_in_square_attrs_is_refused() -> None:
+    """``genes`` is not a node type of the data (``gene`` is): refused by name."""
+    with pytest.raises(ValueError) as info:
+        HeteroToDenseMask(square_attrs={"genes": ["pair"]})(_edge_case_graph())
+    assert str(info.value) == (
+        "square_attrs names node types ['genes'] absent from the data; its node "
+        "types are ['gene', 'metabolite', 'reaction']"
+    )

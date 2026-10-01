@@ -26,6 +26,7 @@ reads (no Neo4j). Expected values, derived from the source:
 """
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -534,6 +535,15 @@ def test_filter_existing_edges_crash_before_rename_leaves_the_part_intact(
         g for g in discover_csv_groups(out_dir) if g.label == "ExperimentMemberOf"
     )
     assert group.part_paths == [str(part)]
+    # the neo4j-admin call script reads `<dir>/ExperimentMemberOf-part.*` as a regex
+    # over the entries of out_dir; the staged file is under `unfiltered/`, an entry
+    # that does not match, so only the real part file does
+    assert [
+        p.name
+        for p in sorted(out_dir.iterdir())
+        if re.fullmatch("ExperimentMemberOf-part.*", p.name)
+    ] == ["ExperimentMemberOf-part000.csv"]
+    assert "unfiltered" in {p.name for p in out_dir.iterdir()}
 
     summary = filter_existing_edges(out_dir, lookup)
     assert summary.existing == {"ExperimentMemberOf": 1, "GenomeMemberOf": 0}

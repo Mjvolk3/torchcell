@@ -18,3 +18,4 @@ Eleven to twenty-three tests, 91 to 100 percent. The module has no admission ver
 ## 2026.09.30 - Crash-atomic rewrite asserted (issue #570)
 
 - Added `test_filter_existing_edges_crash_before_rename_leaves_the_part_intact`: with `os.replace` raising once, the part file holds both original rows, `unfiltered/ExperimentMemberOf-part000.csv.filtering` holds the one kept row, and `discover_csv_groups` sees only the part file; the rerun completes the rewrite, removes the staged file and counts one drop.
+- Review follow-up: the crash test also asserts the neo4j-admin property directly: `re.fullmatch("ExperimentMemberOf-part.*", name)` over the output directory's entries matches only `ExperimentMemberOf-part000.csv`.

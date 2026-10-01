@@ -148,7 +148,10 @@ def main() -> None:
         if "scerevisiae_graph" in params:
             kwargs["scerevisiae_graph"] = graph
         dataset = dataset_class(root=root, **kwargs)
-        row = {"dataset": dataset_class.__name__, **census_dataset(dataset, args.samples)}
+        row = {
+            "dataset": dataset_class.__name__,
+            **census_dataset(dataset, args.samples),
+        }
         results.append(row)
         print(
             f"{row['dataset']:<40} n={row['n_records']:>10,} exp={row['exp_bytes']:>8} "
@@ -165,7 +168,12 @@ def main() -> None:
         writer.writerows(results)
     total = {
         k: round(sum(r[k] for r in results), 1)
-        for k in ("inline_gb", "env_pointer_gb", "env_geno_pointer_gb", "inline_zlib_gb")
+        for k in (
+            "inline_gb",
+            "env_pointer_gb",
+            "env_geno_pointer_gb",
+            "inline_zlib_gb",
+        )
     }
     print("TOTAL", total)
     print(f"wrote {args.out}")

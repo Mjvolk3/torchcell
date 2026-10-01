@@ -804,9 +804,9 @@ class CellAdapter:
         The node id is the sha256 of the fully inlined record, as before. The blob
         written to ``serialized_data`` replaces the large sub-objects (environment,
         segregant genotype) with ``{"$ref": <id>}`` pointers and emits each pointed-to
-        constant as an ``interned constant`` node, which the chunk and the sink dedup
-        by id, so a dataset's constant environment is written once instead of once
-        per record (torchcell/datamodels/interned_constant.py).
+        constant as an ``interned constant`` node once per record; the sink dedups
+        nodes by id, so a dataset's constant environment is written once
+        (torchcell/datamodels/interned_constant.py).
         """
         dump = data["experiment"].model_dump()
         experiment_id = hashlib.sha256(json.dumps(dump).encode("utf-8")).hexdigest()

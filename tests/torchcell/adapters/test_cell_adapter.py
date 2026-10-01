@@ -16,7 +16,11 @@ to 2026-09-27 08:30:05 so the start-time payload is a fixed string.
 
 Every node id is the adapter's content address, ``sha256(json.dumps(model_dump()))``
 (``_sha``), except the environment-side ids, which are ``identity_sha256`` of the
-identity projection. Expected nodes and edges are built by hand as ``BioCypherNode`` /
+identity projection, and the ``interned constant`` id, which is the sha256 of the
+constant's exact JSON payload. Only the record-level blobs (experiment, experiment
+reference, interned constant, genome, environment side, publication) carry
+``serialized_data``; sub-object nodes (genotype, perturbation, environment
+perturbation, phenotype) carry only their scalar properties. Expected nodes and edges are built by hand as ``BioCypherNode`` /
 ``BioCypherEdge`` dataclasses and compared by equality, which covers id, label,
 preferred id and the full property dict (BioCypher adds ``id`` and ``preferred_id`` to
 the properties on both sides).
@@ -430,19 +434,49 @@ def test_supported_method_names_are_the_registration_tables_in_order(
 # ------------------------------------------------------------- record node builders
 
 
+def _environment_payload(experiment: s.FitnessExperiment) -> str:
+    """The toy environment's JSON (701 bytes), at or above the 512-byte pointer floor."""
+    payload = json.dumps(experiment.model_dump()["environment"])
+    assert len(payload) == 701
+    return payload
+
+
+def _environment_constant_id(experiment: s.FitnessExperiment) -> str:
+    return hashlib.sha256(_environment_payload(experiment).encode("utf-8")).hexdigest()
+
+
 def test_experiment_genotype_and_publication_nodes_are_content_addressed() -> None:
-    """Genotype names come back sorted by systematic name (YAL001C before YAL002W)."""
+    """The experiment handler returns the experiment node, whose id is the sha256 of
+    the fully inlined record but whose blob holds a ``$ref`` pointer in place of the
+    701-byte environment (floor 512), followed by one ``interned constant`` node
+    carrying that environment. The 922-byte genotype stays inline (floor 8192).
+    Genotype names come back sorted by systematic name (YAL001C before YAL002W);
+    the genotype node carries no ``serialized_data``.
+    """
     experiment = _experiment(0.5)
     data = {"experiment": experiment, "publication": PUBLICATION}
     adapter = _bare()
+    dump = experiment.model_dump()
+    assert len(json.dumps(dump["genotype"])) == 922
+    env_payload = _environment_payload(experiment)
+    env_id = _environment_constant_id(experiment)
+    pointered = {**dump, "environment": {"$ref": env_id, "kind": "environment"}}
     assert _undecorated(CellAdapter._experiment_node)(
         adapter, data, "experiment (chunked)"
-    ) == BioCypherNode(
-        node_id=_sha(experiment),
-        preferred_id="experiment",
-        node_label="experiment",
-        properties={"serialized_data": json.dumps(experiment.model_dump())},
-    )
+    ) == [
+        BioCypherNode(
+            node_id=_sha(experiment),
+            preferred_id="experiment",
+            node_label="experiment",
+            properties={"serialized_data": json.dumps(pointered)},
+        ),
+        BioCypherNode(
+            node_id=env_id,
+            preferred_id="interned constant",
+            node_label="interned constant",
+            properties={"kind": "environment", "serialized_data": env_payload},
+        ),
+    ]
     genotype = experiment.genotype
     assert isinstance(genotype, s.Genotype)
     assert _undecorated(CellAdapter._genotype_node)(
@@ -455,7 +489,6 @@ def test_experiment_genotype_and_publication_nodes_are_content_addressed() -> No
             "systematic_gene_names": ["YAL001C", "YAL002W"],
             "perturbed_gene_names": ["TFC3", "VPS8"],
             "perturbation_types": ["kanmx_deletion", "sga_kanmx_deletion"],
-            "serialized_data": json.dumps(genotype.model_dump()),
         },
     )
     assert _undecorated(CellAdapter._publication_node)(
@@ -493,7 +526,6 @@ def test_perturbation_nodes_read_strain_id_only_where_the_leaf_declares_it() -> 
                 "perturbation_type": "kanmx_deletion",
                 "description": PLAIN_DELETION.description,
                 "strain_id": None,
-                "serialized_data": json.dumps(PLAIN_DELETION.model_dump()),
             },
         ),
         BioCypherNode(
@@ -506,7 +538,6 @@ def test_perturbation_nodes_read_strain_id_only_where_the_leaf_declares_it() -> 
                 "perturbation_type": "sga_kanmx_deletion",
                 "description": SGA_DELETION.description,
                 "strain_id": "YAL002W_dma1",
-                "serialized_data": json.dumps(SGA_DELETION.model_dump()),
             },
         ),
     ]
@@ -551,7 +582,6 @@ def test_segregant_genotype_node_projects_the_cross_and_counts_blocks() -> None:
             "parent_1": "BYa",
             "parent_2": "RMx",
             "n_blocks": 3,
-            "serialized_data": json.dumps(genotype.model_dump()),
         },
     )
     assert CellAdapter._segregant_genotype_node_from(genotype) == expected
@@ -576,7 +606,6 @@ def _env_perturbation_node(perturbation: Any, props: dict[str, Any]) -> BioCyphe
             "perturbation_type": perturbation.perturbation_type,
             "description": perturbation.description,
             **props,
-            "serialized_data": json.dumps(perturbation.model_dump()),
         },
     )
 
@@ -1061,7 +1090,7 @@ def _phenotype_node(
         node_id=_sha(phenotype),
         preferred_id=preferred_id,
         node_label=label,
-        properties={**props, "serialized_data": json.dumps(phenotype.model_dump())},
+        properties=dict(props),
     )
 
 
@@ -1333,9 +1362,14 @@ def test_data_chunker_loads_transforms_and_flattens_in_process(
         ],
     )
     nodes = adapter._experiment_node(dataset, "experiment (chunked)")
-    assert [node.get_id() for node in nodes] == [
-        _sha(_experiment(0.5)),
-        _sha(_experiment(0.25)),
+    # each record contributes [experiment, interned environment]; the chunk does not
+    # dedup the shared environment constant (the writer does)
+    env_id = _environment_constant_id(_experiment(0.5))
+    assert [(node.get_label(), node.get_id()) for node in nodes] == [
+        ("experiment", _sha(_experiment(0.5))),
+        ("interned constant", env_id),
+        ("experiment", _sha(_experiment(0.25))),
+        ("interned constant", env_id),
     ]
     perturbations = adapter._perturbation_node(dataset, "perturbation (chunked)")
     assert [node.get_id() for node in perturbations] == [
@@ -1473,9 +1507,12 @@ def test_get_nodes_routes_a_chunked_method_through_the_pool(
     recorder.logged.clear()
     nodes = list(adapter.get_nodes())
     assert dataset.slices == [(0, 2)]
-    assert [node.get_id() for node in nodes] == [
-        _sha(_experiment(0.5)),
-        _sha(_experiment(0.25)),
+    env_id = _environment_constant_id(_experiment(0.5))
+    assert [(node.get_label(), node.get_id()) for node in nodes] == [
+        ("experiment", _sha(_experiment(0.5))),
+        ("interned constant", env_id),
+        ("experiment", _sha(_experiment(0.25))),
+        ("interned constant", env_id),
     ]
     assert recorder.logged == [
         {"event": 1, "method": "experiment (chunked)", "type": "node"}

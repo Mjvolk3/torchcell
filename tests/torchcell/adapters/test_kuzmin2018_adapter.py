@@ -10,11 +10,15 @@ fitness datasets use ``FitnessPhenotype`` with a 1.0 reference, the interaction 
 ``GeneInteractionPhenotype`` with a 0.0 reference (digenic ``graph_level`` "edge",
 trigenic left at the schema default "hyperedge").
 
-With ``P`` perturbations per record the conf yields ``21 + 2P`` nodes and ``20 + 2P``
-edges: 2 (experiment reference, genome) + 2 experiments + 2 genotypes + 2P perturbations
-+ 2 environments + 1 environment reference + 2 media + 1 media reference +
-2 temperatures + 1 temperature reference + 2 phenotypes + 1 phenotype reference +
-1 dataset + 2 publications = 21 + 2P; edges 1 + 2 + 2 + 2 + 2P + 2 + 1 + 2 + 2 + 2 + 1 +
+With ``P`` perturbations per record the conf yields ``23 + 2P`` nodes and ``20 + 2P``
+edges: 2 (experiment reference, genome) + 2 experiments + 2 interned constants + 2
+genotypes + 2P perturbations + 2 environments + 1 environment reference + 2 media + 1
+media reference + 2 temperatures + 1 temperature reference + 2 phenotypes + 1 phenotype
+reference + 1 dataset + 2 publications = 23 + 2P. The 2 interned constants are the
+environment: its JSON (the SGA selection medium, about 9.5 KB) crosses the 512-byte
+environment floor, so the experiment method emits it after each of the 2 Experiment
+nodes (one distinct id, deduplicated by the sink like the repeated environment node);
+no genotype nears the 8192-byte floor. Edges 1 + 2 + 2 + 2 + 2P + 2 + 1 + 2 + 2 + 2 + 1 +
 1 + 2 = 20 + 2P. The lists are compared element by element against
 ``_sga_adapter_harness.expected_nodes`` / ``expected_edges``. Every chunked method closes
 the LMDB once: 8 chunked node methods (experiment, genotype, perturbation, environment,
@@ -193,7 +197,7 @@ def test_adapter_emits_the_exact_graph_for_its_record_type(
     """Conf ``conf/<slug>_kuzmin2018_adapter.yaml`` enables the 15 fitness (or gene
     interaction) node methods and 13 edge methods with no memory reduction factor; the
     constructor stores the worker sizes, starts wandb once, prints its debug line, and
-    the graph over two records is ``21 + 2P`` nodes and ``20 + 2P`` edges, exactly.
+    the graph over two records is ``23 + 2P`` nodes and ``20 + 2P`` edges, exactly.
     """
     if is_fitness:
         experiments, reference = _fitness(
@@ -243,7 +247,10 @@ def test_adapter_emits_the_exact_graph_for_its_record_type(
     nodes = list(adapter.get_nodes())
     edges = list(adapter.get_edges())
     n_perturbations = len(genotypes[0])
-    assert len(nodes) == 21 + 2 * n_perturbations
+    # One interned constant per record: each Experiment blob points to its environment
+    # (about 9.5 KB of JSON, above the 512-byte floor); the genotype stays inline.
+    n_interned = len(experiments)
+    assert len(nodes) == 21 + n_interned + 2 * n_perturbations
     assert len(edges) == 20 + 2 * n_perturbations
     assert nodes == expected_nodes(dataset_name, experiments, reference, PUBLICATION)
     assert edges == expected_edges(dataset_name, experiments, reference, PUBLICATION)

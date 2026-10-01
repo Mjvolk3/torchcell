@@ -165,10 +165,36 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_exponential_temperature</span><span class="p">(</span>
+    <span class="n">init_temp</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">final_temp</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">max_epochs</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``init * (final / init) ** (epoch / max_epochs)``."""</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">init_temp</span> <span class="o">*</span> <span class="p">(</span><span class="n">final_temp</span> <span class="o">/</span> <span class="n">init_temp</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="n">epoch</span> <span class="o">/</span> <span class="n">max_epochs</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_cosine_temperature</span><span class="p">(</span>
+    <span class="n">init_temp</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">final_temp</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">max_epochs</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``final + 0.5 * (init - final) * (1 + cos(pi * epoch / max_epochs))``."""</span>
+    <span class="k">return</span> <span class="n">final_temp</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">init_temp</span> <span class="o">-</span> <span class="n">final_temp</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span>
+        <span class="mi">1</span> <span class="o">+</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">epoch</span> <span class="o">/</span> <span class="n">max_epochs</span><span class="p">)</span>
+    <span class="p">)</span>
+
+
+<span class="n">TEMPERATURE_SCHEDULES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"cosine"</span><span class="p">:</span> <span class="n">_cosine_temperature</span><span class="p">,</span>
+    <span class="s2">"exponential"</span><span class="p">:</span> <span class="n">_exponential_temperature</span><span class="p">,</span>
+<span class="p">}</span>
+
+
 <div class="viewcode-block" id="TemperatureScheduler">
 <a class="viewcode-back" href="../../../generated/torchcell.losses.mle_dist_supcr.TemperatureScheduler.html#torchcell.losses.mle_dist_supcr.TemperatureScheduler">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TemperatureScheduler</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Manages temperature scheduling for SupCR loss."""</span>
+<span class="w">    </span><span class="sd">"""Manages temperature scheduling for SupCR loss.</span>
+
+<span class="sd">    ``schedule`` must be one of ``TEMPERATURE_SCHEDULES`` ("cosine", "exponential");</span>
+<span class="sd">    any other name raises ``ValueError`` at construction.</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -177,6 +203,11 @@
         <span class="n">schedule</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"exponential"</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Store the initial/final temperatures and schedule type."""</span>
+        <span class="k">if</span> <span class="n">schedule</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">TEMPERATURE_SCHEDULES</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Unknown temperature schedule </span><span class="si">{</span><span class="n">schedule</span><span class="si">!r}</span><span class="s2">; valid schedules: "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">TEMPERATURE_SCHEDULES</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">init_temp</span> <span class="o">=</span> <span class="n">init_temp</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">final_temp</span> <span class="o">=</span> <span class="n">final_temp</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span> <span class="o">=</span> <span class="n">schedule</span>
@@ -185,17 +216,9 @@
 <a class="viewcode-back" href="../../../generated/torchcell.losses.mle_dist_supcr.TemperatureScheduler.html#torchcell.losses.mle_dist_supcr.TemperatureScheduler.get_temperature">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_temperature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">max_epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Get temperature based on training epoch."""</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span> <span class="o">==</span> <span class="s2">"exponential"</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">init_temp</span>
-                <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">final_temp</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_temp</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="n">epoch</span> <span class="o">/</span> <span class="n">max_epochs</span><span class="p">)</span>
-            <span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span> <span class="o">==</span> <span class="s2">"cosine"</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_temp</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">init_temp</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_temp</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span>
-                <span class="mi">1</span> <span class="o">+</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">epoch</span> <span class="o">/</span> <span class="n">max_epochs</span><span class="p">)</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_temp</span></div>
+        <span class="k">return</span> <span class="n">TEMPERATURE_SCHEDULES</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="p">](</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_temp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_temp</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">max_epochs</span>
+        <span class="p">)</span></div>
 </div>
 
 
@@ -326,8 +349,10 @@
 
         <span class="c1"># Check if we have enough samples</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_samples</span><span class="p">:</span>
-            <span class="c1"># Not enough samples yet, return zero loss</span>
-            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="c1"># Not enough samples yet: zero loss and one zero per phenotype dim</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                <span class="n">targets</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span>
+            <span class="p">)</span>
 
         <span class="c1"># Get buffer samples</span>
         <span class="n">buffer_preds</span><span class="p">,</span> <span class="n">buffer_targets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_buffer_samples</span><span class="p">()</span>
@@ -498,8 +523,10 @@
 
         <span class="c1"># Check if we have enough samples</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_samples</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_samples</span><span class="p">:</span>
-            <span class="c1"># Not enough samples yet, return zero loss</span>
-            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="c1"># Not enough samples yet: zero loss and one zero per label dim</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                <span class="n">labels</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span>
+            <span class="p">)</span>
 
         <span class="c1"># Update temperature if provided</span>
         <span class="k">if</span> <span class="n">temperature</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -675,6 +702,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">current_epoch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">epoch</span>
 
         <span class="n">device</span> <span class="o">=</span> <span class="n">predictions</span><span class="o">.</span><span class="n">device</span>
+        <span class="c1"># Width of every per-dimension log, including a switched-off term's zeros</span>
+        <span class="n">num_dims</span> <span class="o">=</span> <span class="n">targets</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 
         <span class="c1"># Initialize loss components</span>
         <span class="n">total_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
@@ -721,7 +750,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># Set to zero for consistency in logging</span>
             <span class="n">mse_val</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
-            <span class="n">mse_dims</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># Assuming 2 dimensions</span>
+            <span class="n">mse_dims</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_dims</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
             <span class="n">loss_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
                 <span class="p">{</span><span class="s2">"mse_loss"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">"mse_dim_losses"</span><span class="p">:</span> <span class="n">mse_dims</span><span class="p">,</span> <span class="s2">"weighted_mse"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
             <span class="p">)</span>
@@ -747,7 +776,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># Set to zero for consistency in logging</span>
             <span class="n">dist_val</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
-            <span class="n">dist_dims</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># Assuming 2 dimensions</span>
+            <span class="n">dist_dims</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_dims</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
             <span class="n">loss_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
                 <span class="p">{</span><span class="s2">"dist_loss"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">"dist_dim_losses"</span><span class="p">:</span> <span class="n">dist_dims</span><span class="p">,</span> <span class="s2">"weighted_dist"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
             <span class="p">)</span>
@@ -783,7 +812,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># Set to zero for consistency in logging</span>
             <span class="n">supcr_val</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
-            <span class="n">supcr_dims</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># Assuming 2 dimensions</span>
+            <span class="n">supcr_dims</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_dims</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
             <span class="n">loss_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
                 <span class="p">{</span>
                     <span class="s2">"supcr_loss"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>

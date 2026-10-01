@@ -139,7 +139,18 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="torchcell.transforms.regression_to_classification.LabelBinningTransform.inverse">
 <span class="sig-name descname"><span class="pre">inverse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.data.HeteroData.html#torch_geometric.data.HeteroData" title="(in pytorch_geometric v2.9.0)"><span class="pre">HeteroData</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.data.HeteroData.html#torch_geometric.data.HeteroData" title="(in pytorch_geometric v2.9.0)"><span class="pre">HeteroData</span></a></span></span><a class="reference internal" href="../_modules/torchcell/transforms/regression_to_classification.html#LabelBinningTransform.inverse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.transforms.regression_to_classification.LabelBinningTransform.inverse" title="Link to this definition"></a></dt>
-<dd><p>Inverse transform to recover continuous values using random sampling within bins.</p>
+<dd><p>Inverse transform from binned predictions back to continuous values.</p>
+<p>Rows containing a NaN map to NaN. The other rows are decoded per label type:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">categorical</span></code>: the softmax argmax bin, then a uniform draw within that bin.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ordinal</span></code>: the number of entries above 0.5 selects the bin, then a uniform
+draw within it.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">soft</span></code>: deterministic, no sampling. The softmax of the row is averaged over
+the bin centers in a five-bin window around its argmax (renormalized within
+the window). When that window would cross the first or last edge, i.e. the
+argmax is within two bins of an edge, the argmax bin center is returned.</p></li>
+</ul>
+<p>The uniform draws come from the global generator reseeded with <code class="docutils literal notranslate"><span class="pre">seed</span></code>.</p>
 </dd></dl>
 
 <dl class="py method">

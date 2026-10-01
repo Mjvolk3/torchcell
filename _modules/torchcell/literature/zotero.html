@@ -299,16 +299,6 @@
     <span class="k">return</span> <span class="n">generate_citation_key</span><span class="p">(</span><span class="n">creators</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"date"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_collection_path</span><span class="p">(</span><span class="n">by_key</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Slash-joined names from the top-level ancestor down to collection ``key``."""</span>
-    <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">cur</span> <span class="o">=</span> <span class="n">key</span>
-    <span class="k">while</span> <span class="n">cur</span> <span class="ow">in</span> <span class="n">by_key</span><span class="p">:</span>
-        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">by_key</span><span class="p">[</span><span class="n">cur</span><span class="p">][</span><span class="s2">"data"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">])</span>
-        <span class="n">cur</span> <span class="o">=</span> <span class="n">by_key</span><span class="p">[</span><span class="n">cur</span><span class="p">][</span><span class="s2">"data"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"parentCollection"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span>
-    <span class="k">return</span> <span class="s2">"/"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">parts</span><span class="p">))</span>
-
-
 <span class="k">class</span><span class="w"> </span><span class="nc">CollectionNode</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""One Zotero collection within a walked tree.</span>
 
@@ -360,16 +350,9 @@
 <div class="viewcode-block" id="ZoteroLibrary.list_collections">
 <a class="viewcode-back" href="../../../generated/torchcell.literature.ZoteroLibrary.html#torchcell.literature.ZoteroLibrary.list_collections">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">list_collections</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">"""Every collection in the library (name + key dicts), across all pages.</span>
-
-<span class="sd">        pyzotero returns at most ``limit=100`` rows per request, so the listing goes</span>
-<span class="sd">        through ``everything(...)``, which follows the API's ``next`` links. Reading</span>
-<span class="sd">        only the first page made ``collection_key`` miss any collection past the</span>
-<span class="sd">        100th, which is how the personal ``torchcell`` root went "missing" from the</span>
-<span class="sd">        nightly bibliography export once the library grew (issue #563).</span>
-<span class="sd">        """</span>
+<span class="w">        </span><span class="sd">"""All collections in the library (name + key dicts)."""</span>
         <span class="n">collections</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">with_zotero_retry</span><span class="p">(</span>
-            <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">zot</span><span class="o">.</span><span class="n">everything</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zot</span><span class="o">.</span><span class="n">collections</span><span class="p">())</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">zot</span><span class="o">.</span><span class="n">collections</span><span class="p">()</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">collections</span></div>
 
@@ -379,42 +362,14 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">collection_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">create_if_missing</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Resolve a collection name to its key, optionally creating it.</span>
 
-<span class="sd">        The name is matched case-insensitively against EVERY collection in the</span>
-<span class="sd">        library (see :meth:`list_collections`), so a name that exists is found no</span>
-<span class="sd">        matter which page it sits on, and ``create_if_missing`` never creates a</span>
-<span class="sd">        duplicate of it.</span>
-
-<span class="sd">        Raises ``ValueError`` naming every candidate's key and parent when two or</span>
-<span class="sd">        more collections share the name (a nested name can repeat across branches;</span>
-<span class="sd">        pass the key instead), and ``ValueError`` listing the available names when</span>
-<span class="sd">        the name is not found and ``create_if_missing`` is False.</span>
+<span class="sd">        Raises ``ValueError`` listing available collections when the name is not</span>
+<span class="sd">        found and ``create_if_missing`` is False.</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">list_collections</span><span class="p">(),</span> <span class="n">name</span><span class="p">,</span> <span class="n">create_if_missing</span><span class="p">)</span></div>
-
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_name</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">collections</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
-        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">create_if_missing</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The key of the one collection in ``collections`` named ``name``."""</span>
         <span class="n">name_lower</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="n">matches</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">collections</span> <span class="k">if</span> <span class="n">c</span><span class="p">[</span><span class="s2">"data"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">name_lower</span><span class="p">]</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">matches</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">matches</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"key"</span><span class="p">])</span>
-        <span class="k">if</span> <span class="n">matches</span><span class="p">:</span>
-            <span class="n">by_key</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="p">[</span><span class="s2">"key"</span><span class="p">]:</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">collections</span><span class="p">}</span>
-            <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">c</span><span class="p">[</span><span class="s1">'key'</span><span class="p">]</span><span class="si">}</span><span class="s2"> under </span><span class="si">{</span><span class="n">_collection_path</span><span class="p">(</span><span class="n">by_key</span><span class="p">,</span><span class="w"> </span><span class="n">parent</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
-                <span class="k">if</span> <span class="p">(</span><span class="n">parent</span> <span class="o">:=</span> <span class="n">c</span><span class="p">[</span><span class="s2">"data"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"parentCollection"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
-                <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">c</span><span class="p">[</span><span class="s1">'key'</span><span class="p">]</span><span class="si">}</span><span class="s2"> at the top level"</span>
-                <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">matches</span>
-            <span class="p">]</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Zotero collection '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' is ambiguous: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">matches</span><span class="p">)</span><span class="si">}</span><span class="s2"> collections "</span>
-                <span class="sa">f</span><span class="s2">"share the name: </span><span class="si">{</span><span class="s1">'; '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span><span class="si">}</span><span class="s2">. Address it by collection key."</span>
-            <span class="p">)</span>
+        <span class="n">collections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_collections</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">coll</span> <span class="ow">in</span> <span class="n">collections</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">coll</span><span class="p">[</span><span class="s2">"data"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">name_lower</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">coll</span><span class="p">[</span><span class="s2">"key"</span><span class="p">])</span>
         <span class="k">if</span> <span class="n">create_if_missing</span><span class="p">:</span>
             <span class="n">resp</span> <span class="o">=</span> <span class="n">with_zotero_retry</span><span class="p">(</span>
                 <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">zot</span><span class="o">.</span><span class="n">create_collections</span><span class="p">([{</span><span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span><span class="p">}])</span>
@@ -423,7 +378,8 @@
         <span class="n">available</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s2">"data"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">collections</span><span class="p">)</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"Zotero collection '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' not found. Available: </span><span class="si">{</span><span class="n">available</span><span class="si">}</span><span class="s2">."</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="ZoteroLibrary.collection_tree">
 <a class="viewcode-back" href="../../../generated/torchcell.literature.ZoteroLibrary.html#torchcell.literature.ZoteroLibrary.collection_tree">[docs]</a>
@@ -433,10 +389,11 @@
 <span class="sd">        ``collection_items`` returns only direct members, so a nested collection such</span>
 <span class="sd">        as ``torchcell/torchcell-topics/microbe-perturb-seq`` is invisible without</span>
 <span class="sd">        walking the tree, which is exactly where new reading is filed. Returned in</span>
-<span class="sd">        depth-first order with the root first. The root is resolved against the same</span>
-<span class="sd">        full, paged listing the tree is built from.</span>
+<span class="sd">        depth-first order with the root first.</span>
 <span class="sd">        """</span>
-        <span class="n">collections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_collections</span><span class="p">()</span>
+        <span class="n">collections</span> <span class="o">=</span> <span class="n">with_zotero_retry</span><span class="p">(</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">zot</span><span class="o">.</span><span class="n">everything</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zot</span><span class="o">.</span><span class="n">collections</span><span class="p">())</span>
+        <span class="p">)</span>
         <span class="n">by_key</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="p">[</span><span class="s2">"key"</span><span class="p">]:</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">collections</span><span class="p">}</span>
         <span class="n">children</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">collections</span><span class="p">:</span>
@@ -444,19 +401,25 @@
                 <span class="n">c</span><span class="p">[</span><span class="s2">"key"</span><span class="p">]</span>
             <span class="p">)</span>
 
+        <span class="k">def</span><span class="w"> </span><span class="nf">path_of</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">cur</span> <span class="o">=</span> <span class="n">key</span>
+            <span class="k">while</span> <span class="n">cur</span> <span class="ow">in</span> <span class="n">by_key</span><span class="p">:</span>
+                <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">by_key</span><span class="p">[</span><span class="n">cur</span><span class="p">][</span><span class="s2">"data"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">])</span>
+                <span class="n">cur</span> <span class="o">=</span> <span class="n">by_key</span><span class="p">[</span><span class="n">cur</span><span class="p">][</span><span class="s2">"data"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"parentCollection"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span>
+            <span class="k">return</span> <span class="s2">"/"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">parts</span><span class="p">))</span>
+
         <span class="k">def</span><span class="w"> </span><span class="nf">walk</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">CollectionNode</span><span class="p">]:</span>
             <span class="n">out</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">CollectionNode</span><span class="p">(</span>
-                    <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
-                    <span class="n">name</span><span class="o">=</span><span class="n">by_key</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s2">"data"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">],</span>
-                    <span class="n">path</span><span class="o">=</span><span class="n">_collection_path</span><span class="p">(</span><span class="n">by_key</span><span class="p">,</span> <span class="n">key</span><span class="p">),</span>
+                    <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">by_key</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s2">"data"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">],</span> <span class="n">path</span><span class="o">=</span><span class="n">path_of</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
                 <span class="p">)</span>
             <span class="p">]</span>
             <span class="k">for</span> <span class="n">kid</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">children</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">[])):</span>
                 <span class="n">out</span> <span class="o">+=</span> <span class="n">walk</span><span class="p">(</span><span class="n">kid</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">out</span>
 
-        <span class="k">return</span> <span class="n">walk</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_resolve_name</span><span class="p">(</span><span class="n">collections</span><span class="p">,</span> <span class="n">root_collection</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="n">walk</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">collection_key</span><span class="p">(</span><span class="n">root_collection</span><span class="p">))</span></div>
 
 
     <span class="c1"># -- items by DOI --------------------------------------------------------</span>

@@ -320,6 +320,31 @@
 
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">AggregationNormNotImplementedError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""An ``aggregation_norm`` other than None was requested from this module.</span>
+
+<span class="sd">    No aggregator in this module builds a normalization layer, so every run of it</span>
+<span class="sd">    trained without one, whatever its config said. Only the ``_lazy`` variant's</span>
+<span class="sd">    ``PairwiseGraphAggregation`` builds a norm from this key.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aggregation_norm</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Name the refused value and the module that does implement the norm."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"aggregation_norm=</span><span class="si">{</span><span class="n">aggregation_norm</span><span class="si">!r}</span><span class="s2"> is not implemented in "</span>
+            <span class="s2">"torchcell.models.hetero_cell_bipartite_dango_gi: its graph aggregators "</span>
+            <span class="s2">"build no normalization layer. Set aggregation_norm to null, or use "</span>
+            <span class="s2">"torchcell.models.hetero_cell_bipartite_dango_gi_lazy, whose "</span>
+            <span class="s2">"pairwise_interaction aggregator builds it."</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">require_no_aggregation_norm</span><span class="p">(</span><span class="n">aggregation_norm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Refuse any ``aggregation_norm`` other than None (the only built behavior)."""</span>
+    <span class="k">if</span> <span class="n">aggregation_norm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">AggregationNormNotImplementedError</span><span class="p">(</span><span class="n">aggregation_norm</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="HeteroConvAggregator">
 <a class="viewcode-back" href="../../../generated/torchcell.models.hetero_cell_bipartite_dango_gi.HeteroConvAggregator.html#torchcell.models.hetero_cell_bipartite_dango_gi.HeteroConvAggregator">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">HeteroConvAggregator</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
@@ -334,8 +359,16 @@
         <span class="n">hidden_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">aggregation_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"cross_attention"</span><span class="p">,</span>
         <span class="n">aggregation_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">aggregation_norm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Store the per-edge-type convs and build the chosen aggregation module."""</span>
+<span class="w">        </span><span class="sd">"""Store the per-edge-type convs and build the chosen aggregation module.</span>
+
+<span class="sd">        ``aggregation_norm`` must be None: no aggregator here builds a norm, so any</span>
+<span class="sd">        other value raises ``AggregationNormNotImplementedError``, as does a non-null</span>
+<span class="sd">        ``aggregation_config["aggregation_norm"]`` (so it is never silently ignored).</span>
+<span class="sd">        """</span>
+        <span class="n">require_no_aggregation_norm</span><span class="p">(</span><span class="n">aggregation_norm</span><span class="p">)</span>
+        <span class="n">require_no_aggregation_norm</span><span class="p">((</span><span class="n">aggregation_config</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"aggregation_norm"</span><span class="p">))</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">convs</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span><span class="p">({</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">convs</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">hidden_channels</span> <span class="o">=</span> <span class="n">hidden_channels</span>
@@ -956,9 +989,15 @@
             <span class="s2">"graph_aggregation_method"</span><span class="p">,</span>
             <span class="s2">"cross_attention"</span><span class="p">,</span>  <span class="c1"># Default to cross_attention</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">graph_aggregation_config</span> <span class="o">=</span> <span class="n">gene_encoder_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-            <span class="s2">"graph_aggregation_config"</span><span class="p">,</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph_aggregation_config</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">gene_encoder_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"graph_aggregation_config"</span><span class="p">,</span> <span class="p">{})</span>
         <span class="p">)</span>
+        <span class="c1"># Absent or null means no norm, the only behavior this module builds; any</span>
+        <span class="c1"># other value is refused rather than silently ignored (issue #540).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aggregation_norm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_aggregation_config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span>
+            <span class="s2">"aggregation_norm"</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="n">require_no_aggregation_norm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aggregation_norm</span><span class="p">)</span>
 
         <span class="c1"># Store attention weights for visualization</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">last_layer_attention_weights</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1002,6 +1041,7 @@
                         <span class="s2">"dropout"</span><span class="p">:</span> <span class="n">dropout</span><span class="p">,</span>
                         <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_aggregation_config</span><span class="p">,</span>
                     <span class="p">},</span>
+                    <span class="n">aggregation_norm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">aggregation_norm</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
 

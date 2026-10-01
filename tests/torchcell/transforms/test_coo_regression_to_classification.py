@@ -844,9 +844,10 @@ def test_unknown_normalization_strategy_is_refused_at_construction() -> None:
     """Contract (issue #521): the strategy is validated when the transform is built, so
     a typo ("zscore") fails there with the bad value and the valid names, not on the
     first normalize. The check runs before the label lookup, so it names the strategy
-    even for a label the dataset lacks.
+    even for a label the dataset lacks: the frame has no `fitness` column, so checking
+    the label first would raise "Label fitness not found in dataset" instead.
     """
-    df = pd.DataFrame({"fitness": [1.0, 2.0]})
+    df = pd.DataFrame({"other": [1.0]})
     message = (
         r"^Unknown normalization strategy 'zscore' for label 'fitness'; "
         r"valid strategies: minmax, robust, standard$"
@@ -1110,6 +1111,30 @@ def test_binning_inverse_passes_unconfigured_labels_through() -> None:
     assert out.phenotype_sample_indices.tolist() == [7, 7, 9]
     assert out.phenotype_types == ["fitness", "gene_interaction"]
 
+    # Binned label FIRST: gene_interaction 0.5 (sample 7), fitness 0.9 (sample 7),
+    # gene_interaction 2.0 (sample 9). Forward: bins are types 0..3, fitness type 4,
+    # each entry expanded in place. Inverse: gene_interaction (type 0) first, samples
+    # 7 then 9 with the seed-42 draws, then fitness 0.9 as type 1.
+    first = _coo([0.5, 0.9, 2.0], [0, 1, 0], [7, 7, 9], ["gene_interaction", "fitness"])
+    forward = t(first)
+    assert forward["gene"].phenotype_type_indices.tolist() == [
+        0, 1, 2, 3, 4, 0, 1, 2, 3
+    ]  # fmt: skip
+    assert forward["gene"].phenotype_types == [
+        "gene_interaction_bin_0",
+        "gene_interaction_bin_1",
+        "gene_interaction_bin_2",
+        "gene_interaction_bin_3",
+        "fitness",
+    ]
+    back = t.inverse(forward)["gene"]
+    torch.testing.assert_close(
+        back.phenotype_values, torch.tensor([SEED42_U0, 2.0 + SEED42_U1, 0.9])
+    )
+    assert back.phenotype_type_indices.tolist() == [0, 0, 1]
+    assert back.phenotype_sample_indices.tolist() == [7, 9, 7]
+    assert back.phenotype_types == ["gene_interaction", "fitness"]
+
 
 def test_binning_forward_continuous_copy_is_optional_and_written_once() -> None:
     """`store_continuous: False` writes no copy; with the default an existing
@@ -1138,7 +1163,7 @@ def test_binning_forward_scalar_and_batched_types() -> None:
     assert ordinal.phenotype_type_indices.tolist() == [0, 1, 2]
 
 
-def test_binning_forward_leaves_data_without_the_label_unchanged() -> None:
+def test_binning_forward_rewrites_the_type_list_only_for_configured_labels() -> None:
     """No phenotype_values: same object back. The configured label absent from the
     types leaves the COO untouched. Present in the types with no entries, its name is
     still rewritten to its bins (the type list depends only on the input type list, so

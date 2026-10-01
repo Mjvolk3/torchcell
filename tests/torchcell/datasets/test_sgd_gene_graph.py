@@ -58,6 +58,7 @@ from torch_geometric.data import Data
 from torchcell.datasets.sgd_gene_graph import (
     ConstantFeatureError,
     GraphEmbeddingDataset,
+    MissingChromosomeError,
 )
 
 _FEATURES = (
@@ -395,3 +396,20 @@ def test_a_constant_feature_is_kept_when_not_normalizing(tmp_path: Path) -> None
     assert torch.equal(
         dataset._data.embeddings["chrom_pathways"], torch.tensor([RAW_ROWS[0]])
     )
+
+
+def test_a_gene_without_a_chromosome_is_refused_by_name(tmp_path: Path) -> None:
+    """A None chromosome raises ``MissingChromosomeError`` naming the gene before any
+    feature file is written, instead of a bare ``TypeError`` from sorting the
+    vocabulary. The cached SGD ``G_gene`` has no gene without a chromosome.
+    """
+    graph = _graph()
+    graph.nodes["YBR001C"]["chromosome"] = None
+    with pytest.raises(MissingChromosomeError) as excinfo:
+        GraphEmbeddingDataset(
+            root=str(tmp_path / "nochrom"), graph=graph, model_name="chrom_pathways"
+        )
+    assert str(excinfo.value) == (
+        "genes ['YBR001C'] have no chromosome; refusing to give them a chromosome index"
+    )
+    assert not (tmp_path / "nochrom" / "processed" / "chrom_pathways.pt").exists()

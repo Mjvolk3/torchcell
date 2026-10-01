@@ -573,9 +573,15 @@ def test_a_blank_systematic_name_is_refused_before_any_store(
 def test_a_whitespace_systematic_name_is_refused_as_blank(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """A name of only spaces is blank after stripping: refused with its sheet row (9),
+    not resolved as an empty string.
+    """
     err = _refused_build(tmp_path, monkeypatch, ("  ", None, None, "dma9", 0.5, None))
     assert type(err.value) is c.BlankSystematicNameError
-    assert str(err.value).startswith("Data File S1 sheet rows [9] have a blank")
+    assert str(err.value) == (
+        "Data File S1 sheet rows [9] have a blank 'Systematic Name'; a row without an "
+        "identifier names no strain, refusing to resolve it"
+    )
 
 
 def test_a_repeated_strain_row_is_refused_naming_both_rows(

@@ -744,9 +744,11 @@ class SharedRecordRules:
     def _gene_containment_results(self, sgd_genes: set[str]) -> list[LevelResult]:
         """L4: the aggregate containment floor, plus the per-record genome membership.
 
-        An empty measured set passes both results vacuously and says so: with no gene
-        perturbation there is no gene to be off the reference, which is the verdict
-        ``current_genome_genes`` already gives the same set.
+        An empty measured set (no record carries a gene perturbation) passes both
+        results vacuously, each saying the set is empty, and adds a FAILING
+        ``measured_genes_present`` result ahead of them: a dataset verified against the
+        SGD gene set that measures no gene fails for that stated reason, not for a
+        fabricated 0.000 overlap.
         """
         measured = set(self._gene_records)
         missing = sorted(measured - sgd_genes)
@@ -774,8 +776,11 @@ class SharedRecordRules:
             name="current_genome_genes",
             passed=not missing,
             message=(
-                f"every one of the {len(measured)} measured systematic names is a gene of "
-                "the current genome"
+                "no measured genes (the measured gene set is empty); genome membership "
+                "holds vacuously"
+                if not measured
+                else f"every one of the {len(measured)} measured systematic names is a "
+                "gene of the current genome"
                 if not missing
                 else f"{len(missing)} systematic names are absent from the current genome "
                 f"over {self._n_records_off_genome} records: "
@@ -791,7 +796,20 @@ class SharedRecordRules:
                 },
             },
         )
-        return [containment, off_genome]
+        if measured:
+            return [containment, off_genome]
+        absent = LevelResult(
+            level=Level.L4,
+            name="measured_genes_present",
+            passed=False,
+            message=(
+                f"no measured genes: none of the {self._census.n_records} records "
+                "carries a gene perturbation outside the background genes, so the "
+                "SGD gene rules have nothing to check"
+            ),
+            details={"n_records": self._census.n_records, "n_measured": 0},
+        )
+        return [absent, containment, off_genome]
 
 
 def _walk_carriers(node: Any) -> Iterable[Mapping[str, Any]]:

@@ -27,6 +27,7 @@ here. Expected values:
 from __future__ import annotations
 
 import hashlib
+import math
 
 import pytest
 from pydantic import ValidationError
@@ -36,6 +37,7 @@ from torchcell.data.data import (
     ExperimentReferenceIndex,
     ReferenceIndex,
     compute_sha256_hash,
+    reference_key,
 )
 from torchcell.datamodels.schema import (
     Environment,
@@ -199,6 +201,39 @@ def test_reference_index_refuses_one_reference_split_over_two_entries() -> None:
         "appear in exactly one entry (merge them with ExperimentReferenceIndex.combine)"
     ]
     assert type(errors[0]["ctx"]["error"]) is DuplicateReferenceError
+
+
+def _nan_reference() -> FitnessExperimentReference:
+    """``_reference("d")`` with a NaN reference fitness, built fresh on every call.
+
+    ``float("nan")`` makes a new NaN object each call, as two separately loaded
+    references would hold; ``math.nan`` is one shared object, which ``==`` would match
+    by identity.
+    """
+    reference = _reference("d")
+    phenotype = reference.phenotype_reference.model_copy(
+        update={"fitness": float("nan")}
+    )
+    return reference.model_copy(update={"phenotype_reference": phenotype})
+
+
+def test_nan_bearing_references_are_refused_together_and_combine_merges_them() -> None:
+    """Two separately built NaN-bearing references are unequal under ``==`` but share
+    ``reference_key``; the container refuses them and the remedy its message names,
+    ``combine``, merges them (issue #541 review).
+    """
+    a = ExperimentReferenceIndex(reference=_nan_reference(), member_indices=[0])
+    b = ExperimentReferenceIndex(reference=_nan_reference(), member_indices=[1])
+    assert a.reference != b.reference
+    assert reference_key(a.reference) == reference_key(b.reference)
+    with pytest.raises(ValidationError) as excinfo:
+        ReferenceIndex(data=[a, b])
+    assert type(excinfo.value.errors()[0]["ctx"]["error"]) is DuplicateReferenceError
+    merged = a.combine(b)
+    assert merged.member_indices == [0, 1]
+    stored = merged.reference.model_dump()["phenotype_reference"]["fitness"]
+    assert math.isnan(stored)
+    assert len(ReferenceIndex(data=[merged])) == 1
 
 
 def test_compute_sha256_hash_hashes_the_utf8_bytes() -> None:

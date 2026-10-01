@@ -23,3 +23,7 @@ Findings: `driver.close()` is not in a `finally`, so a consumer that stops early
 ## 2026.10.01 - Findings retired (issue #541)
 
 Both Findings are retired. An early-closed generator now ends with `close`; an empty query raises `EmptyQueryResultError` with the exact message, leaves only the empty `raw/lmdb` directory, and a second construction re-runs the query (two full driver sequences) and stores two records.
+
+## 2026.10.01 - Review: mid-query failure
+
+A fetch that yields one record then raises leaves an empty `raw/lmdb` and no staging directory; a retry re-runs the query and stores all three records. A leftover `raw/lmdb.partial` is refused by name before any query.

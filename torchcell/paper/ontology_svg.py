@@ -424,7 +424,7 @@ def _card_svg(graph: OntologyGraph, card: Card, compact: bool = False) -> str:
 
 
 def _inheritance_svg(graph: OntologyGraph, layout: Layout) -> str:
-    """UML generalisation: elbow from the child back to the parent's facing edge.
+    """UML generalization: elbow from the child back to the parent's facing edge.
 
     A parent left of the child (the tree layout inside a lane) is reached from the
     child's left edge, turning in the tree gutter ``GAP_X / 2`` right of the parent. A

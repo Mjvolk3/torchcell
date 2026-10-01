@@ -275,13 +275,9 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">serialize_for_hashing</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Return a deterministic JSON string for hashing a reference or object."""</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ExperimentReferenceType</span><span class="p">):</span>
-        <span class="c1"># Convert FitnessExperimentReference to a dictionary</span>
-        <span class="n">obj_dict</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
-        <span class="c1"># Sort the dictionary keys for consistent serialization</span>
-        <span class="n">sorted_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">obj_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
-        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">sorted_dict</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># A model hashes as its dump, with keys sorted at every depth like a dict.</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
@@ -895,7 +891,6 @@
         <span class="n">reference_data</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">]</span>
         <span class="n">publication_data</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s2">"publication"</span><span class="p">]</span>
         <span class="n">experiment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment_class</span><span class="p">(</span><span class="o">**</span><span class="n">experiment_data</span><span class="p">)</span>
-        <span class="n">reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference_class</span><span class="p">(</span><span class="o">**</span><span class="n">reference_data</span><span class="p">)</span>
         <span class="n">reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference_class</span><span class="p">(</span><span class="o">**</span><span class="n">reference_data</span><span class="p">)</span>
         <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span><span class="o">**</span><span class="n">publication_data</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">{</span>

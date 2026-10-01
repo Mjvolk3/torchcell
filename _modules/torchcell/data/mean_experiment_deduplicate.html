@@ -123,9 +123,11 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">t</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">Deduplicator</span>
@@ -181,25 +183,64 @@
     <span class="k">return</span> <span class="n">out</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_rms_pool_float_dict</span><span class="p">(</span>
-    <span class="n">dicts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""RMS-pool per-key stds: sqrt(mean(std^2)) over present values.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_mean_of_variances</span><span class="p">(</span><span class="n">variances</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Pool variances by their arithmetic mean, ``mean(var_i)``."""</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">variances</span><span class="p">))</span>
 
-<span class="sd">    Null-safe: dicts that are ``None`` are skipped; if every entry is ``None`` the</span>
-<span class="sd">    field stays ``None`` (e.g. Mulleder metabolite_level_se is null, n_replicates=1).</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_se_of_mean_of_means</span><span class="p">(</span><span class="n">ses</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Standard error of the mean of ``m`` independent means: ``sqrt(sum(se_i^2)) / m``.</span>
+
+<span class="sd">    This is the SE rule the RMS-pooled SD implies: the pooled SD ``sqrt(mean(sd_i^2))``</span>
+<span class="sd">    over ``m`` records of ``n`` replicates each gives ``SE = pooled_sd / sqrt(m * n)``,</span>
+<span class="sd">    and ``se_i = sd_i / sqrt(n)`` turns that into ``sqrt(sum(se_i^2)) / m``. It keeps the</span>
+<span class="sd">    microarray identity ``variance = SE^2 * n_replicates`` when variances are averaged</span>
+<span class="sd">    and replicate counts summed.</span>
 <span class="sd">    """</span>
-    <span class="n">present</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dicts</span> <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">present</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ses</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">ses</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_pool_over_value_carriers</span><span class="p">(</span>
+    <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+    <span class="n">stats</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span>
+    <span class="n">pool</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]],</span> <span class="nb">float</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Pool a per-key uncertainty dict over the records that averaged into each value.</span>
+
+<span class="sd">    ``values[i]`` and ``stats[i]`` belong to record ``i``. A key's merged value is the</span>
+<span class="sd">    mean over the records whose value dict holds that key, so its uncertainty is pooled</span>
+<span class="sd">    over exactly those records, and only when every one of them carries a statistic</span>
+<span class="sd">    for the key; otherwise the key is left out, because the uncertainty of a mean with</span>
+<span class="sd">    an unreported component is unknown. ``None`` when no key qualifies.</span>
+
+<span class="sd">    ``pool`` is ``_mean_of_variances`` or ``_se_of_mean_of_means``.</span>
+<span class="sd">    """</span>
     <span class="n">keys</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">present</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
         <span class="n">keys</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
     <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">keys</span><span class="p">):</span>
-        <span class="n">vals</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">present</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d</span><span class="p">]</span>
-        <span class="n">out</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)))</span>
-    <span class="k">return</span> <span class="n">out</span>
+        <span class="n">carriers</span> <span class="o">=</span> <span class="p">[</span><span class="n">stat</span> <span class="k">for</span> <span class="n">value</span><span class="p">,</span> <span class="n">stat</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">stats</span><span class="p">)</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">value</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">stat</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">stat</span> <span class="k">for</span> <span class="n">stat</span> <span class="ow">in</span> <span class="n">carriers</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">pool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">cast</span><span class="p">(</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">stat</span><span class="p">)[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">stat</span> <span class="ow">in</span> <span class="n">carriers</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="n">out</span> <span class="ow">or</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_require_all_or_none</span><span class="p">(</span><span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Refuse a microarray merge whose records disagree on carrying ``field``.</span>
+
+<span class="sd">    The microarray validator requires an uncertainty dict to cover every</span>
+<span class="sd">    ``expression_log2_ratio`` key, so a merge where only some records carry it has no</span>
+<span class="sd">    valid result: the merged value covers keys whose uncertainty is unknown.</span>
+<span class="sd">    """</span>
+    <span class="n">carrying</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">stat</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">stat</span> <span class="ow">in</span> <span class="n">stats</span><span class="p">)</span>
+    <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">carrying</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">stats</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Cannot merge microarray duplicates: </span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> is present on </span><span class="si">{</span><span class="n">carrying</span><span class="si">}</span><span class="s2"> of "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">stats</span><span class="p">)</span><span class="si">}</span><span class="s2"> records, and the merged phenotype needs it on every "</span>
+            <span class="s2">"expression_log2_ratio key or on none."</span>
+        <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_sum_int_dict</span><span class="p">(</span><span class="n">dicts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
@@ -281,9 +322,9 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Mean-merge phenotype-family duplicates (expression/morphology/metabolite/etc.).</span>
 
-<span class="sd">        Mirrors the fitness rule: elementwise mean of the per-key value dict, RMS-pooled</span>
-<span class="sd">        std for the uncertainty, MeanDeletionPerturbation genotype, and dataset_name</span>
-<span class="sd">        joined as "a+b+...". The concrete Experiment/ExperimentReference classes are</span>
+<span class="sd">        Mirrors the fitness rule: elementwise mean of the per-key value dict, the</span>
+<span class="sd">        uncertainty pooled by what it is (see ``_merge_phenotype``),</span>
+<span class="sd">        MeanDeletionPerturbation genotype, and dataset_name joined as "a+b+...". The concrete Experiment/ExperimentReference classes are</span>
 <span class="sd">        resolved generically from the type maps so a new family (e.g. Messner protein</span>
 <span class="sd">        abundance) works with no further edits.</span>
 <span class="sd">        """</span>
@@ -332,24 +373,35 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_merge_phenotype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phenotypes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Phenotype</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Phenotype</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Dispatch elementwise merge on the concrete phenotype type.</span>
 
-<span class="sd">        Value fields are averaged elementwise (per gene/feature/metabolite), std/SE</span>
-<span class="sd">        fields are RMS-pooled (null-safe), and per-key replicate counts are summed.</span>
+<span class="sd">        Value fields are averaged elementwise (per gene/feature/metabolite) and per-key</span>
+<span class="sd">        replicate counts are summed. Uncertainty is pooled by the statistic it is: an SE</span>
+<span class="sd">        (``expression_log2_ratio_se``, ``metabolite_level_se``, ``protein_abundance_se``)</span>
+<span class="sd">        becomes the SE of the mean of means, ``sqrt(sum(se_i ** 2)) / m``; a variance</span>
+<span class="sd">        (``expression_log2_ratio_variance``) is averaged; the scalar fitness SD is</span>
+<span class="sd">        RMS-pooled in ``_create_mean_fitness_entry``. A key's uncertainty is kept only</span>
+<span class="sd">        when every record averaged into its value carries one. Microarray records must</span>
+<span class="sd">        all carry an SE (and a variance) or none, since its validator requires full</span>
+<span class="sd">        coverage; a mixed group raises a named ValueError. The metabolite and protein</span>
+<span class="sd">        validators allow an SE on a subset of keys, so an uncovered key is left out.</span>
 <span class="sd">        Non-numeric metadata (measurement_type, ordinal scale, semantics) is taken from</span>
 <span class="sd">        the first record, which is identical across a duplicate group.</span>
 <span class="sd">        """</span>
         <span class="n">first</span> <span class="o">=</span> <span class="n">phenotypes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">MicroarrayExpressionPhenotype</span><span class="p">):</span>
             <span class="n">micro</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="n">MicroarrayExpressionPhenotype</span><span class="p">],</span> <span class="n">phenotypes</span><span class="p">)</span>
+            <span class="n">log2</span> <span class="o">=</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">expression_log2_ratio</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">micro</span><span class="p">]</span>
+            <span class="n">se</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">expression_log2_ratio_se</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">micro</span><span class="p">]</span>
+            <span class="n">variance</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">expression_log2_ratio_variance</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">micro</span><span class="p">]</span>
+            <span class="n">_require_all_or_none</span><span class="p">(</span><span class="s2">"expression_log2_ratio_se"</span><span class="p">,</span> <span class="n">se</span><span class="p">)</span>
+            <span class="n">_require_all_or_none</span><span class="p">(</span><span class="s2">"expression_log2_ratio_variance"</span><span class="p">,</span> <span class="n">variance</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">MicroarrayExpressionPhenotype</span><span class="p">(</span>
-                <span class="n">expression_log2_ratio</span><span class="o">=</span><span class="n">_mean_float_dict</span><span class="p">(</span>
-                    <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">expression_log2_ratio</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">micro</span><span class="p">]</span>
-                <span class="p">),</span>
-                <span class="n">expression_log2_ratio_se</span><span class="o">=</span><span class="n">_rms_pool_float_dict</span><span class="p">(</span>
-                    <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">expression_log2_ratio_se</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">micro</span><span class="p">]</span>
+                <span class="n">expression_log2_ratio</span><span class="o">=</span><span class="n">_mean_float_dict</span><span class="p">(</span><span class="n">log2</span><span class="p">),</span>
+                <span class="n">expression_log2_ratio_se</span><span class="o">=</span><span class="n">_pool_over_value_carriers</span><span class="p">(</span>
+                    <span class="n">log2</span><span class="p">,</span> <span class="n">se</span><span class="p">,</span> <span class="n">_se_of_mean_of_means</span>
                 <span class="p">),</span>
                 <span class="n">expression</span><span class="o">=</span><span class="n">_mean_float_dict</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">expression</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">micro</span><span class="p">]),</span>
-                <span class="n">expression_log2_ratio_variance</span><span class="o">=</span><span class="n">_rms_pool_float_dict</span><span class="p">(</span>
-                    <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">expression_log2_ratio_variance</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">micro</span><span class="p">]</span>
+                <span class="n">expression_log2_ratio_variance</span><span class="o">=</span><span class="n">_pool_over_value_carriers</span><span class="p">(</span>
+                    <span class="n">log2</span><span class="p">,</span> <span class="n">variance</span><span class="p">,</span> <span class="n">_mean_of_variances</span>
                 <span class="p">),</span>
                 <span class="n">n_replicates</span><span class="o">=</span><span class="n">_sum_int_dict</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">n_replicates</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">micro</span><span class="p">]),</span>
             <span class="p">)</span>
@@ -382,8 +434,10 @@
             <span class="p">)</span>
             <span class="k">return</span> <span class="n">MetabolitePhenotype</span><span class="p">(</span>
                 <span class="n">metabolite_level</span><span class="o">=</span><span class="n">_mean_float_dict</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">metabolite_level</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">metab</span><span class="p">]),</span>
-                <span class="n">metabolite_level_se</span><span class="o">=</span><span class="n">_rms_pool_float_dict</span><span class="p">(</span>
-                    <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">metabolite_level_se</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">metab</span><span class="p">]</span>
+                <span class="n">metabolite_level_se</span><span class="o">=</span><span class="n">_pool_over_value_carriers</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">metabolite_level</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">metab</span><span class="p">],</span>
+                    <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">metabolite_level_se</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">metab</span><span class="p">],</span>
+                    <span class="n">_se_of_mean_of_means</span><span class="p">,</span>
                 <span class="p">),</span>
                 <span class="n">n_replicates</span><span class="o">=</span><span class="n">_sum_int_dict</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">n_replicates</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">metab</span><span class="p">]),</span>
                 <span class="n">measurement_type</span><span class="o">=</span><span class="n">first</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
@@ -393,8 +447,10 @@
             <span class="n">prot</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="n">ProteinAbundancePhenotype</span><span class="p">],</span> <span class="n">phenotypes</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">ProteinAbundancePhenotype</span><span class="p">(</span>
                 <span class="n">protein_abundance</span><span class="o">=</span><span class="n">_mean_float_dict</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">protein_abundance</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">prot</span><span class="p">]),</span>
-                <span class="n">protein_abundance_se</span><span class="o">=</span><span class="n">_rms_pool_float_dict</span><span class="p">(</span>
-                    <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">protein_abundance_se</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">prot</span><span class="p">]</span>
+                <span class="n">protein_abundance_se</span><span class="o">=</span><span class="n">_pool_over_value_carriers</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">protein_abundance</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">prot</span><span class="p">],</span>
+                    <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">protein_abundance_se</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">prot</span><span class="p">],</span>
+                    <span class="n">_se_of_mean_of_means</span><span class="p">,</span>
                 <span class="p">),</span>
                 <span class="n">n_replicates</span><span class="o">=</span><span class="n">_sum_int_dict</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">n_replicates</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">prot</span><span class="p">]),</span>
                 <span class="n">measurement_type</span><span class="o">=</span><span class="n">first</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>

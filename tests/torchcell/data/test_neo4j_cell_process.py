@@ -201,7 +201,12 @@ def _stage_classes(calls: list[tuple[Any, ...]]) -> tuple[Any, Any, Any]:
         def __init__(self, root: str) -> None:
             calls.append(("Deduplicator.__init__", root))
 
-        def process(self, input_path: str, output_path: str) -> None:
+        def process(
+            self, input_path: str, output_path: str, grouping: Any = None
+        ) -> None:
+            # ``grouping`` is None here: the fake raw stage streams nothing through
+            # the observers, so the stage runs its own pass 1 as before.
+            assert grouping is None
             calls.append(("Deduplicator.process", input_path, output_path))
             _relabel_copy(input_path, output_path, "+deduplication")
 
@@ -209,7 +214,10 @@ def _stage_classes(calls: list[tuple[Any, ...]]) -> tuple[Any, Any, Any]:
         def __init__(self, root: str) -> None:
             calls.append(("Aggregator.__init__", root))
 
-        def process(self, input_path: str, output_path: str) -> None:
+        def process(
+            self, input_path: str, output_path: str, grouping: Any = None
+        ) -> None:
+            assert grouping is None
             calls.append(("Aggregator.process", input_path, output_path))
             _relabel_copy(input_path, output_path, "+aggregation")
 
@@ -228,12 +236,18 @@ def raw_calls(monkeypatch: pytest.MonkeyPatch) -> list[tuple[Any, ...]]:
         root_dir: str,
         query: str,
         gene_set: GeneSet,
+        record_observers: list[Any],
+        fetch_workers: int,
+        partition_prefix_length: int,
     ) -> SimpleNamespace:
         calls.append(
             ("load_raw", uri, username, password, root_dir, query, list(gene_set))
         )
         _write_lmdb(Path(root_dir) / "raw" / "lmdb", _raw_records("toy"))
-        raw_db = SimpleNamespace(env="open raw env")
+        # The observers never see a record (nothing streamed through them), so the
+        # raw stage reports that it did not run and every grouping stage does its own
+        # pass 1, which is the pre-existing pipeline these tests pin.
+        raw_db = SimpleNamespace(env="open raw env", raw_stage_ran=False)
         calls.append(("raw_db", raw_db))
         return raw_db
 
@@ -319,9 +333,11 @@ def test_process_runs_every_stage_in_order_and_copies_the_last(
         f"{root}/aggregation/lmdb",
     )
     assert stage_calls == [
-        ("Converter.__init__", root, raw_db),
+        # The grouping stages are built before the raw stage (so the first of them
+        # can group records as they stream); the converter needs the raw view.
         ("Deduplicator.__init__", root),
         ("Aggregator.__init__", root),
+        ("Converter.__init__", root, raw_db),
         ("Converter.process", raw, conv),
         ("Deduplicator.process", conv, dedup),
         ("Aggregator.process", dedup, agg),
@@ -357,9 +373,11 @@ def test_process_skips_a_stage_whose_marker_exists(
     raw_db = raw_calls[1][1]
     root = str(tmp_path)
     assert stage_calls == [
-        ("Converter.__init__", root, raw_db),
+        # The grouping stages are built before the raw stage (so the first of them
+        # can group records as they stream); the converter needs the raw view.
         ("Deduplicator.__init__", root),
         ("Aggregator.__init__", root),
+        ("Converter.__init__", root, raw_db),
         (
             "Deduplicator.process",
             f"{root}/conversion/lmdb",
@@ -430,6 +448,9 @@ def test_load_raw_passes_the_query_and_sorted_gene_set_to_neo4j_query_raw(
             "io_workers": 10,
             "num_workers": 10,
             "cypher_kwargs": {"gene_set": ["YAL001C", "YAL002W", "YAL003W", "YAL004W"]},
+            "record_observers": [],
+            "fetch_workers": 0,
+            "partition_prefix_length": 1,
         }
     ]
     assert capsys.readouterr().out == (

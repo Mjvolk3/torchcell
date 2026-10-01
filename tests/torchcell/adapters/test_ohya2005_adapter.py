@@ -33,6 +33,13 @@ deduplicates on write); the CalMorph phenotype nodes carry the base and CV dicti
 as JSON strings, with preferred id ``phenotype_<id>`` per record and ``calmorph phenotype``
 for the reference.
 
+Payloads: genotype, perturbation and phenotype nodes carry no ``serialized_data``;
+experiment, experiment reference, genome, environment, media, temperature and
+publication nodes keep it. The experiment method emits no ``interned constant`` node
+here: the environment's JSON is 315 bytes, under the 512-byte environment floor, and
+the one-deletion genotype is 395 bytes, under the 8192-byte genotype floor
+(``EXPERIMENT_POINTER_MIN_BYTES``), so each Experiment blob stays fully inline.
+
 ``wandb`` is replaced by a recorder bound to the name ``cell_adapter`` imported.
 """
 
@@ -62,6 +69,7 @@ from torchcell.datamodels.identity import (
     media_identity,
     temperature_identity,
 )
+from torchcell.datamodels.interned_constant import EXPERIMENT_POINTER_MIN_BYTES
 from torchcell.datamodels.schema import (
     CalMorphExperiment,
     CalMorphExperimentReference,
@@ -259,7 +267,6 @@ def _calmorph_node(
             "label_statistic_name": "calmorph_coefficient_of_variation",
             "calmorph": json_pair[0],
             "calmorph_coefficient_of_variation": json_pair[1],
-            **_serialized(phenotype),
         },
     )
 
@@ -334,7 +341,6 @@ def _expected_nodes() -> list[BioCypherNode]:
                     "systematic_gene_names": [orf],
                     "perturbed_gene_names": [orf],
                     "perturbation_types": ["kanmx_deletion"],
-                    **_serialized(experiment.genotype),
                 },
             )
             for (orf, _), experiment in zip(RECORDS, EXPERIMENTS, strict=True)
@@ -350,7 +356,6 @@ def _expected_nodes() -> list[BioCypherNode]:
                     "perturbation_type": "kanmx_deletion",
                     "description": "Deletion via KanMX or NatMX gene replacement",
                     "strain_id": None,
-                    **_serialized(_deletion(orf)),
                 },
             )
             for orf, _ in RECORDS
@@ -466,6 +471,16 @@ def test_get_nodes_emits_the_exact_ohya_node_list(
     compared by value (id, label, preferred id and every property). The event log names
     the 15 node methods the conf enables, which is the conf's whole contract.
     """
+    # No interned constant: both pointer candidates sit under their floors.
+    assert len(json.dumps(ENVIRONMENT.model_dump())) == 315
+    assert EXPERIMENT_POINTER_MIN_BYTES["environment"] == 512
+    genotypes = [e.genotype for e in EXPERIMENTS]
+    assert all(isinstance(g, Genotype) for g in genotypes)
+    assert [len(json.dumps(cast(Genotype, g).model_dump())) for g in genotypes] == [
+        395,
+        395,
+    ]
+    assert EXPERIMENT_POINTER_MIN_BYTES["genotype"] == 8192
     adapter = _adapter(_dataset(_build(tmp_path)))
     recorder.logged.clear()
     nodes = list(adapter.get_nodes())

@@ -75,11 +75,10 @@ class SliceQueryRaw(nqr.Neo4jQueryRaw):
     last_stream: Any
 
     def __attrs_post_init__(self) -> None:
-        """Set up paths and open the LMDB for writing, without querying."""
+        """Set up paths without querying; ``process`` opens its own staging store."""
         self.raw_dir = osp.join(self.root_dir, "raw")
         self.lmdb_dir = osp.join(self.raw_dir, "lmdb")
-        os.makedirs(self.lmdb_dir, exist_ok=True)
-        self._init_lmdb(readonly=False)
+        os.makedirs(self.raw_dir, exist_ok=True)
         self.write_s = 0.0
 
     def _write_batch(

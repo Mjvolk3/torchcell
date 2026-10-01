@@ -195,11 +195,35 @@ def _plan(risk: bool) -> SimpleNamespace:
     )
 
 
+class FakeSampler:
+    """Stand-in for ``ResourceSampler``: the real one reads the cgroup v2 memory files,
+    which exist only inside a slurm job's cgroup, and samples in a thread.
+    """
+
+    instances: list[FakeSampler] = []
+
+    def __init__(self, out_dir: Path, interval: float) -> None:
+        """Record where the script would write telemetry and how often."""
+        self.out_dir = out_dir
+        self.interval = interval
+        self.calls: list[str] = []
+        FakeSampler.instances.append(self)
+
+    def start(self) -> None:
+        """Record the start."""
+        self.calls.append("start")
+
+    def stop(self) -> list[Any]:
+        """Record the stop; no phase timings."""
+        self.calls.append("stop")
+        return []
+
+
 @pytest.fixture
 def build(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> SimpleNamespace:
     """Point the script at ``tmp_path``, stage alpha and beta LMDBs, install stand-ins."""
     reset_instances(FakeAlpha, FakeBeta, FakeGamma, FakeAdapterA, FakeAdapterB)
-    reset_instances(FakeAdapterC, FakeGenome, FakeGraph, FakeBioCypher)
+    reset_instances(FakeAdapterC, FakeGenome, FakeGraph, FakeBioCypher, FakeSampler)
     monkeypatch.chdir(tmp_path)
     root = str(tmp_path / "root")
     for name in ("alpha", "beta"):
@@ -230,6 +254,8 @@ def build(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> SimpleNamespace:
 
     monkeypatch.setenv("SLURM_CPUS_PER_TASK", "8")
     monkeypatch.setenv("SLURM_JOB_ID", "99")
+    monkeypatch.delenv("TCDB_TAGS", raising=False)
+    monkeypatch.delenv("TCDB_JOB_TYPE", raising=False)
     monkeypatch.setenv("DATA_ROOT", root)
     monkeypatch.setenv("BIOCYPHER_CONFIG_PATH", str(bc_config))
     monkeypatch.setenv("SCHEMA_CONFIG_PATH", "schema.yaml")
@@ -245,6 +271,7 @@ def build(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> SimpleNamespace:
     monkeypatch.setattr(ks, "SCerevisiaeGenome", FakeGenome)
     monkeypatch.setattr(ks, "SCerevisiaeGraph", FakeGraph)
     monkeypatch.setattr(ks, "BioCypher", FakeBioCypher)
+    monkeypatch.setattr(ks, "ResourceSampler", FakeSampler)
     monkeypatch.setattr(ks, "wandb", wandb)
     monkeypatch.setattr(ks, "datetime", FixedDatetime)
     monkeypatch.setattr(ks, "time", TickingTime())
@@ -302,6 +329,10 @@ def test_full_build_prefilters_caps_skips_and_writes_the_import_call(
             "project": "tcdb-test",
             "config": FULL_CFG,
             "group": f"99_{digest}",
+            # No config tags and no TCDB_TAGS / TCDB_JOB_TYPE in the environment: the
+            # untagged production build.
+            "tags": [],
+            "job_type": "build",
         }
     ]
     assert wandb.run.log_code_calls == [module_dir(ks)]
@@ -362,6 +393,7 @@ def test_full_build_prefilters_caps_skips_and_writes_the_import_call(
         {"FakeBeta_time(s)": 1.0},
         {"FakeBeta_len": 3},
         {"n_adapters": 2, "skipped_datasets": ["FakeGamma"]},
+        {"adapter_index": 0, "current_adapter": "FakeAdapterA"},
         {
             "FakeAdapterA_write_nodes_time(s)": 1.0,
             "FakeAdapterA_n_nodes": 2,
@@ -372,6 +404,7 @@ def test_full_build_prefilters_caps_skips_and_writes_the_import_call(
             "FakeAdapterA_n_edges": 2,
             "total_edges": 2,
         },
+        {"adapter_index": 1, "current_adapter": "FakeAdapterB"},
         {
             "FakeAdapterB_write_nodes_time(s)": 1.0,
             "FakeAdapterB_n_nodes": 3,
@@ -382,9 +415,24 @@ def test_full_build_prefilters_caps_skips_and_writes_the_import_call(
             "FakeAdapterB_n_edges": 3,
             "total_edges": 5,
         },
-        {"total_nodes": 5, "total_edges": 5},
+        {
+            "total_nodes": 5,
+            "total_edges": 5,
+            # The ticking clock advances 1 s per time() call after build_t0: two per
+            # dataset build, two per adapter node pass, two per edge pass, one at the
+            # end: 2 * 2 + 2 * 2 + 2 * 2 + 1.
+            "generation_wall_s": 13.0,
+            # The fake sampler yields no phase timings.
+            "generation_cpu_core_s": 0,
+            "generation_mem_peak_gb": 0.0,
+        },
     ]
     assert wandb.finish_calls == 1
+    (sampler,) = FakeSampler.instances
+    assert sampler.out_dir == Path(
+        osp.join(root, "biocypher-out", TIME_STR, "telemetry")
+    )
+    assert sampler.calls == ["start", "stop"]
     assert build.prepare_calls == []
     assert (build.tmp_path / "biocypher_file_name.txt").read_text() == (
         f"biocypher-out/{TIME_STR}/neo4j-admin-import-call.sh"
@@ -422,6 +470,7 @@ def test_incremental_build_emits_one_dataset_and_prepares_the_increment(
         {"FakeAlpha_time(s)": 1.0},
         {"FakeAlpha_len": 5},
         {"n_adapters": 1, "skipped_datasets": []},
+        {"adapter_index": 0, "current_adapter": "FakeAdapterA"},
         {
             "FakeAdapterA_write_nodes_time(s)": 1.0,
             "FakeAdapterA_n_nodes": 5,
@@ -432,7 +481,14 @@ def test_incremental_build_emits_one_dataset_and_prepares_the_increment(
             "FakeAdapterA_n_edges": 5,
             "total_edges": 5,
         },
-        {"total_nodes": 5, "total_edges": 5},
+        {
+            "total_nodes": 5,
+            "total_edges": 5,
+            # One dataset build, one adapter: 2 + 2 + 2 + 1 ticks after build_t0.
+            "generation_wall_s": 7.0,
+            "generation_cpu_core_s": 0,
+            "generation_mem_peak_gb": 0.0,
+        },
         {
             "increment_n_node_ids": 7,
             "increment_n_external_ids": 1,

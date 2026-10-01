@@ -14,6 +14,15 @@ every content id is ``sha256(json.dumps(model_dump()))`` (``sha``) except the
 environment, media and temperature ids, which are ``identity_sha256`` of the identity
 projection. The node order is the registration-table order of ``CellAdapter.__init__``
 restricted to the conf, and within a chunked method the record order.
+
+Payload layout (torchcell/datamodels/interned_constant.py): every fixture's
+environment is the SGA selection medium at 30 C, whose JSON is about 9.5 KB, above the
+512-byte environment floor, so each Experiment blob carries an environment pointer and
+the experiment method emits the environment as an ``interned constant`` node right
+after its Experiment node. Every fixture genotype (one to three gene perturbations) is
+well under the 8192-byte genotype floor and stays inline. Genotype, perturbation and
+phenotype nodes carry no ``serialized_data``; experiment, experiment reference,
+genome, environment, media, temperature and publication nodes keep it.
 """
 
 from __future__ import annotations
@@ -158,7 +167,6 @@ def _phenotype_props(phenotype: Any) -> dict[str, Any]:
     else:
         props["gene_interaction"] = phenotype.gene_interaction
         props["gene_interaction_p_value"] = phenotype.gene_interaction_p_value
-    props["serialized_data"] = json.dumps(phenotype.model_dump())
     return props
 
 
@@ -225,9 +233,42 @@ def perturbation_node(perturbation: Any) -> BioCypherNode:
             "perturbation_type": perturbation.perturbation_type,
             "description": perturbation.description,
             "strain_id": perturbation.strain_id,
-            "serialized_data": json.dumps(perturbation.model_dump()),
         },
     )
+
+
+ENVIRONMENT_POINTER_MIN_BYTES = 512
+GENOTYPE_POINTER_MIN_BYTES = 8192
+
+
+def experiment_nodes(experiment: Any) -> list[BioCypherNode]:
+    """The experiment method's output for one record: its Experiment node, then the
+    environment as an ``interned constant``.
+
+    The Experiment id is the sha256 of the fully inlined dump; its blob replaces the
+    environment with ``{"$ref": <sha256 of the environment JSON>, "kind":
+    "environment"}``. The genotype stays inline (asserted under its floor).
+    """
+    dump = experiment.model_dump()
+    environment_payload = json.dumps(dump["environment"])
+    assert len(environment_payload) >= ENVIRONMENT_POINTER_MIN_BYTES
+    assert len(json.dumps(dump["genotype"])) < GENOTYPE_POINTER_MIN_BYTES
+    ref = hashlib.sha256(environment_payload.encode("utf-8")).hexdigest()
+    pointered = {**dump, "environment": {"$ref": ref, "kind": "environment"}}
+    return [
+        BioCypherNode(
+            node_id=sha(experiment),
+            preferred_id="experiment",
+            node_label="experiment",
+            properties={"serialized_data": json.dumps(pointered)},
+        ),
+        BioCypherNode(
+            node_id=ref,
+            preferred_id="interned constant",
+            node_label="interned constant",
+            properties={"kind": "environment", "serialized_data": environment_payload},
+        ),
+    ]
 
 
 def expected_nodes(
@@ -242,8 +283,9 @@ def expected_nodes(
     reference, genome, experiment, genotype, perturbation, environment, environment
     reference, media, media reference, temperature, temperature reference, phenotype,
     phenotype reference, dataset, publication. Chunked methods emit one node per record
-    (so the shared environment, media, temperature and publication repeat once per
-    record); the reference collectors emit one node per distinct id.
+    (so the shared environment, its interned constant, media, temperature and
+    publication repeat once per record; the sink dedups them by id); the reference
+    collectors emit one node per distinct id.
     """
     environment = experiments[0].environment
     reference_environment = reference.environment_reference
@@ -265,15 +307,8 @@ def expected_nodes(
             },
         ),
     ]
-    nodes += [
-        BioCypherNode(
-            node_id=sha(experiment),
-            preferred_id="experiment",
-            node_label="experiment",
-            properties={"serialized_data": json.dumps(experiment.model_dump())},
-        )
-        for experiment in experiments
-    ]
+    for experiment in experiments:
+        nodes += experiment_nodes(experiment)
     for experiment in experiments:
         genotype = experiment.genotype
         ordered = sorted(genotype.perturbations, key=lambda p: p.systematic_gene_name)
@@ -286,7 +321,6 @@ def expected_nodes(
                     "systematic_gene_names": [p.systematic_gene_name for p in ordered],
                     "perturbed_gene_names": [p.perturbed_gene_name for p in ordered],
                     "perturbation_types": [p.perturbation_type for p in ordered],
-                    "serialized_data": json.dumps(genotype.model_dump()),
                 },
             )
         )

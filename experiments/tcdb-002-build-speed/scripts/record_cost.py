@@ -44,14 +44,15 @@ def main() -> None:
     exp_cls, ref_cls = ds.experiment_class, ds.reference_class
     env_cls = type(items[0]["experiment"].environment)
     print(f"raw lmdb+pickle {load:.2f} ms | transform_item {rehydrate:.2f} ms")
+    experiment_ms = per_record_ms(raw, lambda r: exp_cls(**r["experiment"]))
+    reference_ms = per_record_ms(raw, lambda r: ref_cls(**r["reference"]))
+    publication_ms = per_record_ms(raw, lambda r: Publication(**r["publication"]))
+    environment_ms = per_record_ms(
+        raw, lambda r: env_cls(**r["experiment"]["environment"])
+    )
     print(
-        "validate alone: experiment %.2f | reference %.2f | publication %.2f | environment %.2f ms"
-        % (
-            per_record_ms(raw, lambda r: exp_cls(**r["experiment"])),
-            per_record_ms(raw, lambda r: ref_cls(**r["reference"])),
-            per_record_ms(raw, lambda r: Publication(**r["publication"])),
-            per_record_ms(raw, lambda r: env_cls(**r["experiment"]["environment"])),
-        )
+        f"validate alone: experiment {experiment_ms:.2f} | reference {reference_ms:.2f} "
+        f"| publication {publication_ms:.2f} | environment {environment_ms:.2f} ms"
     )
     dump = per_record_ms(items, lambda it: json.dumps(it["experiment"].model_dump()))
     hsh = per_record_ms(

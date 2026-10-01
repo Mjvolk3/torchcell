@@ -10,7 +10,7 @@ uncertainty over 17 screens, as the SMF loader records; doubles carry two. Fitne
 datasets use ``FitnessPhenotype`` with a 1.0 reference, the interaction dataset
 ``GeneInteractionPhenotype`` with a 0.0 reference at ``graph_level`` "edge".
 
-With ``P`` perturbations per record the conf yields ``21 + 2P`` nodes and ``20 + 2P``
+With ``P`` perturbations per record the conf yields ``23 + 2P`` nodes and ``20 + 2P``
 edges (derivation in ``test_kuzmin2018_adapter``), compared element by element against
 ``_sga_adapter_harness.expected_nodes`` / ``expected_edges``. The dmf and dmi confs set
 ``memory_reduction_factor: 0.5`` on the publication node and on every chunked edge, so
@@ -196,7 +196,7 @@ def test_adapter_emits_the_exact_graph_for_its_record_type(
     interaction) node methods and 13 edge methods; dmf and dmi halve the publication node
     and every chunked edge (factor 0.5), smf sets no factor (1.0). The constructor stores
     the worker sizes, starts wandb once, prints its debug line, and the graph over two
-    records is ``21 + 2P`` nodes and ``20 + 2P`` edges, exactly.
+    records is ``23 + 2P`` nodes and ``20 + 2P`` edges, exactly.
     """
     if is_fitness:
         experiments, reference = _fitness(
@@ -248,7 +248,10 @@ def test_adapter_emits_the_exact_graph_for_its_record_type(
     nodes = list(adapter.get_nodes())
     edges = list(adapter.get_edges())
     n_perturbations = len(genotypes[0])
-    assert len(nodes) == 21 + 2 * n_perturbations
+    # One interned constant per record: each Experiment blob points to its environment
+    # (about 9.5 KB of JSON, above the 512-byte floor); the genotype stays inline.
+    n_interned = len(experiments)
+    assert len(nodes) == 21 + n_interned + 2 * n_perturbations
     assert len(edges) == 20 + 2 * n_perturbations
     assert nodes == expected_nodes(dataset_name, experiments, reference, PUBLICATION)
     assert edges == expected_edges(dataset_name, experiments, reference, PUBLICATION)

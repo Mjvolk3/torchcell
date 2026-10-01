@@ -49,7 +49,13 @@ def run(inproc: int, single_pass: bool = False) -> tuple[str, str, int, int, flo
         e.get_source_id() + ">" + e.get_target_id() + "|" + e.get_label()
         for e in ad.get_edges()
     )
-    return digest(node_ids), digest(edge_ids), len(node_ids), len(edge_ids), time.time() - t
+    return (
+        digest(node_ids),
+        digest(edge_ids),
+        len(node_ids),
+        len(edge_ids),
+        time.time() - t,
+    )
 
 
 results = {

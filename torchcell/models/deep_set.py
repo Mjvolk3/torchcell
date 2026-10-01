@@ -6,6 +6,16 @@ from torch_scatter import scatter_add, scatter_mean
 
 from torchcell.models.act import act_register
 
+AGGREGATIONS = ("sum", "mean")
+
+
+def _check_aggregation(aggregation: str) -> None:
+    """Raise ``ValueError`` naming an aggregation that is not ``sum`` or ``mean``."""
+    if aggregation not in AGGREGATIONS:
+        raise ValueError(
+            f"Unknown aggregation {aggregation!r}; expected one of {AGGREGATIONS}"
+        )
+
 
 class DeepSet(nn.Module):
     """Permutation-invariant network applying per-node MLPs then set aggregation."""
@@ -38,12 +48,16 @@ class DeepSet(nn.Module):
             skip_node: Whether to add residual connections in node layers.
             skip_set: Whether to add residual connections in set layers.
             aggregation: Set aggregation method ("sum" or "mean").
+
+        Raises:
+            ValueError: ``aggregation`` is not ``sum`` or ``mean`` (checked again in
+                :meth:`forward`, since the attribute can be reassigned).
         """
         super().__init__()
 
         assert norm in ["batch", "instance", "layer"], "Invalid norm type"
         assert activation in act_register.keys(), "Invalid activation type"
-        assert aggregation in ["sum", "mean"], "Invalid aggregation method"
+        _check_aggregation(aggregation)
 
         self.skip_node = skip_node
         self.skip_set = skip_set
@@ -135,7 +149,11 @@ class DeepSet(nn.Module):
 
         Returns:
             A tuple of per-node features and per-set output features.
+
+        Raises:
+            ValueError: ``self.aggregation`` is not ``sum`` or ``mean``.
         """
+        _check_aggregation(self.aggregation)
         if len(self.node_layers) > 0:
             x_node = self.node_layers_forward(x)
         else:
@@ -143,7 +161,7 @@ class DeepSet(nn.Module):
 
         if self.aggregation == "sum":
             x_aggregated = scatter_add(x_node, batch, dim=0)
-        elif self.aggregation == "mean":
+        else:
             x_aggregated = scatter_mean(x_node, batch, dim=0)
 
         x_set = self.set_layers_forward(x_aggregated)
@@ -151,9 +169,11 @@ class DeepSet(nn.Module):
 
 
 def main() -> None:
-    """Run a small DeepSet forward/backward pass on dummy data."""
-    torch.autograd.set_detect_anomaly(True)
+    """Run a small DeepSet forward/backward pass on dummy data.
 
+    Autograd anomaly detection is on only inside this demo's forward/backward
+    (``torch.autograd.detect_anomaly``), so calling ``main`` leaves it off afterwards.
+    """
     # Model configuration
     in_channels = 10
     hidden_channels = 32
@@ -179,26 +199,27 @@ def main() -> None:
     print("x shape:", x.shape)
     batch = torch.cat([torch.full((20,), i, dtype=torch.long) for i in range(5)])
 
-    # Forward pass
-    x_nodes, x_set = model(x, batch)
-    print("x_set shape:", x_set.shape)
-    print("batch shape:", batch.shape)
-    print("batch unique:", torch.unique(batch))
-    print("x_nodes shape:", x_nodes.shape)
+    with torch.autograd.detect_anomaly():
+        # Forward pass
+        x_nodes, x_set = model(x, batch)
+        print("x_set shape:", x_set.shape)
+        print("batch shape:", batch.shape)
+        print("batch unique:", torch.unique(batch))
+        print("x_nodes shape:", x_nodes.shape)
 
-    # Let's assume you want to predict some values for each set.
-    # So, we'll create a dummy target tensor for demonstration purposes.
-    target = torch.rand(5, out_channels)
+        # Let's assume you want to predict some values for each set.
+        # So, we'll create a dummy target tensor for demonstration purposes.
+        target = torch.rand(5, out_channels)
 
-    # Simple mean squared error loss
-    criterion = nn.MSELoss()
-    print(x_set.shape, target.shape)
-    loss = criterion(x_set, target)
-    print("Loss:", loss.item())
+        # Simple mean squared error loss
+        criterion = nn.MSELoss()
+        print(x_set.shape, target.shape)
+        loss = criterion(x_set, target)
+        print("Loss:", loss.item())
 
-    # Backpropagation
-    model.zero_grad()
-    loss.backward()
+        # Backpropagation
+        model.zero_grad()
+        loss.backward()
     print("Gradients computed successfully!")
 
 

@@ -150,10 +150,18 @@ def require_key(
 
 
 def _key_dir(config: LiteratureServerConfig, citation_key: str) -> Path:
-    """Resolve + containment-check a citation-key directory under the mirror root."""
+    """Resolve + containment-check a citation-key directory under the mirror root.
+
+    An underscore-prefixed name is a service directory (``_bib``, ``_sync_reports``),
+    never a citation key, so it answers exactly like an absent key.
+    """
     base = (config.mirror_root / citation_key).resolve()
     root = config.mirror_root.resolve()
-    if not base.is_relative_to(root) or not base.is_dir():
+    if (
+        citation_key.startswith("_")
+        or not base.is_relative_to(root)
+        or not base.is_dir()
+    ):
         raise HTTPException(status_code=404, detail="unknown citation key")
     return base
 
@@ -318,12 +326,14 @@ def create_app(config: LiteratureServerConfig) -> FastAPI:
                 and needle in paper_md.read_text(errors="ignore").lower()
             ):
                 where.append("paper.md")
-            if where:
-                hits.append(SearchHit(citation_key=citation_key, where=where))
-            if len(hits) >= SEARCH_RESULT_CAP:
+            if not where:
+                continue
+            # a hit beyond the cap is what makes the result truncated
+            if len(hits) == SEARCH_RESULT_CAP:
                 truncated = True
                 log.info("search: capped at %d hits for %r", SEARCH_RESULT_CAP, q)
                 break
+            hits.append(SearchHit(citation_key=citation_key, where=where))
         return SearchResult(query=q, hits=hits, truncated=truncated)
 
     @app.get("/bib")
@@ -378,7 +388,7 @@ def main() -> None:
 
     config = LiteratureServerConfig.from_env()
     host = args.host or config.host
-    port = args.port or config.port
+    port = config.port if args.port is None else args.port
     log.info("literature endpoint: serving %s on %s:%d", config.mirror_root, host, port)
     uvicorn.run(create_app(config), host=host, port=port)
 

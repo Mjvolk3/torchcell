@@ -28,3 +28,7 @@ Decisions:
 - The index is re-read on every request, so a new packaging on the host shows up with no restart.
 - `Dockerfile.tc-data` is `python:3.13-slim` with fastapi, uvicorn, pydantic and python-dotenv; it copies the package and blanks `torchcell/datasets/__init__.py` and `torchcell/literature/__init__.py`, whose eager imports pull torch and pyzotero. Verified by copying the package into a scratch tree with those two files emptied and importing `torchcell.datasets.server`: none of torch, torch_geometric, numpy, pandas, lmdb or pyzotero load. Deployment recipe: [[database.tc-data-endpoint]].
 - Tests live in `tests/torchcell/datasets/test_datasets_server.py` (not `test_server.py`, which `tests/torchcell/literature/` already takes under pytest's prepend import mode); the pairing is registered in `[tool.torchcell.test_exceptions.pairs]`.
+
+## 2026.09.30 - --port 0 honored
+
+Issue #534 (fixed in the literature PR for #525, since both servers share the pattern). `main` used `args.port or config.port`, so `--port 0` fell back to `TC_DATA_PORT`. Now `config.port if args.port is None else args.port`, so 0 reaches `uvicorn.run` and binds an ephemeral port. Evidence: `test_main_runs_uvicorn_with_config_or_override_host_and_port` in [[tests.torchcell.datasets.test_datasets_server]] asserts the parsed `args.port` and the `uvicorn.run` stub call.

@@ -39,7 +39,9 @@ averaged parameter cannot be traced back to a measurement:
 2. prefer ``wildtype`` over mutant -- a mutant's k_cat describes a protein we do not have;
 3. minimize ``|T - 30 C|``; entries with no recorded temperature sort last, never first;
 4. break remaining ties on the MEDIAN value, which is deterministic and avoids letting an
-   arbitrary row order decide.
+   arbitrary row order decide. With an even number of tied rows this is the LOWER median
+   (``statistics.median_low``), so the value is always one measured row; rows sharing
+   that value are ordered by their full serialized content, never by input position.
 
 Every resolved value keeps ``n_candidates`` and ``selection_rule`` so a reviewer can see
 how much choice was involved, and the PubMed id of the row it came from.
@@ -303,11 +305,11 @@ def resolve_parameter(
     )
 
     if len(with_value) > 1:
-        values = sorted(float(c.value_for(kind)) for c in with_value)  # type: ignore[arg-type]
-        median = statistics.median(values)
+        values = [float(c.value_for(kind)) for c in with_value]  # type: ignore[arg-type]
+        median = statistics.median_low(values)
         chosen = min(
-            with_value,
-            key=lambda c: abs(float(c.value_for(kind)) - median),  # type: ignore[arg-type]
+            (c for c in with_value if float(c.value_for(kind)) == median),  # type: ignore[arg-type]
+            key=lambda c: c.model_dump_json(),
         )
         rules.append("median_of_ties")
     else:

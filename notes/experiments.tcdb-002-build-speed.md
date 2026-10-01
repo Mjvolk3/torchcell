@@ -825,6 +825,28 @@ pool under `inprocess_max_mb`; about 4 h 30 min becomes about 2 h 15 min. The ne
 real rebuild (the user has a data issue that forces one) measures it; no full build
 is scheduled for benchmarking.
 
+### Round 14 measured: ladder arm 3096 (commit 156fc187, 48 CPUs / 192 GB)
+
+| | job 3089 (r13) | job 3096 (r14, no sub-object blobs) |
+|---|--:|--:|
+| wall | 328 s | 342 s |
+| rows | 29,736,985 | 29,736,985 |
+| all CSVs | 13.43 GB | 9.75 GB |
+| Genotype CSV | 3.79 GB | 0.73 GB |
+| FitnessPhenotype CSV | 1.20 GB | 0.66 GB |
+| GeneInteractionPhenotype CSV | 0.18 GB | 0.12 GB |
+| Experiment CSV | 5.00 GB | 5.00 GB |
+| peak memory | 38.4 GB | 27.4 GB |
+
+<https://wandb.ai/zhao-group/tcdb/runs/tkxju3bd>
+
+Same rows, 27% fewer CSV bytes on the ladder, Genotype 5.2x smaller, and the
+parent's dedup sets and write buffers take 11 GB less. Wall is within the run-to-run
+spread. Projected to the full build (hypothesis, by the ladder's per-label ratios):
+Genotype 30 to about 6 GB, the phenotype classes 30 to about 15 GB, all CSVs 215 to
+about 170 GB, against 578 GB (partial) for the inline layout and a 705 GB served
+store.
+
 ### Query build time, from the 033 build (job 2929)
 
 The user asks whether the query side can be made faster; the recent chemogenomic

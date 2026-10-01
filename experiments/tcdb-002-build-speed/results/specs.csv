@@ -39,3 +39,4 @@ job,round,arm,commit,kg_config,cpus,mem_gb,inprocess_max_records,single_pass,fas
 3084,r12,profile-parent-48,f9ec3241,kg_bench_ladder,48,192.0,25000,true,true,0.02,128,64,true,,adapters.pool_memory_fraction=0.8,452.6133759021759,560.0,46.79269790649414,17.59348255534888,29736985,13431706534,COMPLETED
 3089,r13,slimview-g64-48,765bdc38,kg_bench_ladder,48,192.0,25000,true,true,0.02,128,64,true,,adapters.pool_memory_fraction=0.8,327.5039417743683,515.0,39.35815048217773,29.254222003384463,29736985,13431701896,COMPLETED
 3090,r13,slimview-g64-24,765bdc38,kg_bench_ladder,24,96.0,25000,true,true,0.02,128,64,true,,adapters.pool_memory_fraction=0.8,453.5760247707367,563.0,32.804630279541016,17.76779405089113,29736985,13431706523,COMPLETED
+3096,r14,noblob-48,156fc187,kg_bench_ladder,48,192.0,25000,true,true,0.02,128,64,true,,adapters.pool_memory_fraction=0.8,342.02407693862915,492.0,28.240238189697266,29.44435860083219,29736985,9748498208,COMPLETED

@@ -1067,3 +1067,31 @@ after each block's dataset filter and the build passes `fetch_workers` to
 Kept: experiment, experiment reference, interned constant (the canonical blobs the query loader reads), and genome, environment, media, temperature, publication (environment, media and temperature ids are content identities that merge dumps from different datasets, so their blob is the stating dataset's own copy; genome and publication are not owned by this change).
 
 Measured on full build job 2959 (before): Genotype 1,345 B per row (blob about 1,007 B), EnvironmentResponsePhenotype 1,724 B per row, all phenotype classes 30.1 GB with 6 GB of expression blobs. Measured on the 1,000-record SmfKuzmin2018 subset (JSON size of node properties, scratch `subset_prop_bytes.py`): genotype 853.9 to 226.6 B, perturbation 934.2 to 329.9 B, fitness phenotype 620.6 to 295.7 B per node; 9,007 nodes and 9,004 edges before and after, pool path equal to in-process path. Hypothesis (untested on a full build): Genotype falls to about 340 B per row (about 7.6 GB from 30.2 GB), the phenotype classes lose at least the 6 GB of expression blobs plus about half of the environment response bytes. Changing the property set of served classes means the next graph is a full rebuild, not an incremental admission.
+
+## 2026.10.01 - Query build measured at half the 033 scale: the Hoepfner block builds in 16 min
+
+Two slurm jobs on the served graph, 10 CPUs / 32 GB each, the Hoepfner 2014 block of the 033 query (3,124,319 served records, 13 KB per record with its reference, a 40 GB raw store, so past the job's page cache), the 033 build's gene set. Neither the Vanacloig measurement above nor the in-memory slice checks covered a multi-million-record block, `partition_prefix_length=2`, or the folded passes reading from disk; these do.
+
+**Raw stage, one session against 8 workers at prefix length 2** (`scripts/query_server_rate.py --fetch-workers 8 --prefix-length 2 --cleanup`, `gh_query_fetch_workers_hoepfner.slurm`, job 3137; `results/query_server_rate_fetch_workers_hoepfner.csv`). The arms are compared by a streamed sha256 over the LMDB in cursor order plus the reference-index and gene-set files, equal across the four job 3103 stores before use:
+
+| fetch_workers | prefix length | records/s | seconds | identical | largest worker RSS |
+|--:|--:|--:|--:|--|--:|
+| 0 (one session) | | 1,528 | 2,044 | (baseline) | |
+| 8 | 2 (256 partitions + guard) | 6,623 | 472 | yes | 1.33 GB |
+
+4.3x on this block against 4.5x on Vanacloig. The parent's `ru_maxrss` reads 33.8 GB in both arms, the writer's mapped LMDB pages included (the one-session arm, with no workers at all, reaches the same number), so the partitioning adds nothing measurable to the parent; the job ran under its 32 GB cgroup without being killed. The 256-query cost on the server, unmeasured until now, did not show: 6,623/s here against 7,951/s at 16 partitions on the 20x smaller Vanacloig block.
+
+**Whole `Neo4jCellDataset` build** (`scripts/query_cell_build_rate.py`, `gh_query_cell_build_hoepfner.slurm`, job 3138, run after 3137 so the two never shared the server; `results/query_cell_build_rate_EnvChemgenHoepfner2014Dataset.csv`): the 033 aggregator (`GenotypeEnvironmentAggregator`, imported read-only from the 033-build worktree), no converter, no deduplicator, 8 fetch workers at prefix length 2, `Neo4jCellDataset(partition_prefix_length=2)` added for it. 2,880,165 groups, exactly the 033 build's `dataset_name_index` count for Hoepfner (every 033 group belongs to one dataset, so a one-block build must reproduce it), `label_df` 2,880,165 rows.
+
+| step | seconds | ms per record |
+|--|--:|--:|
+| raw stage (8 workers, with the grouping observer) | 490 | 0.157 |
+| aggregation join pass (pass 1 folded into the raw stage) | 284 | 0.091 |
+| processed copy | 161 | 0.052 |
+| folded index and label-table writer | 12 | 0.004 |
+| grouping `accept` in the parent | 5 | 0.002 |
+| whole build | 959 | 0.307 |
+
+The build is 16 min for half the 033 records. Job 2929 built the 033 store in 7 h 48 min, 4.39 ms per record, of which the raw stage was 1.40 ms and the rest 3.0 ms; here the raw stage is 0.157 ms and the rest 0.15 ms. Against the slice in the page cache (`cell_single_pass_slice_check.csv`) the two disk-bound passes cost 3.6x (join) and 2.2x (copy) more per record, so a 32 GB job reading a 40 GB store is the honest setting. Projection (hypothesis until the 033 re-query runs; Wildenhain's records are 38 KB, not 13): the 6.39M-record build at 0.307 ms per record is about 33 min against 7 h 48 min, 14x.
+
+To use it in the 033 re-query: `{partition}` after each block's dataset filter in `001_env_chemgen_pooled.cql` (each block already ends in `ORDER BY e.id`), and `Neo4jCellDataset(..., fetch_workers=8, partition_prefix_length=2)` in `query.py`; the 033 experiment lives on its own branch (`exp/033-env-chemgen-pooled`, PR #455), so that edit is made there. `measurements_per_entry` in that script is one more pass over the processed store that the grouping already knows (group sizes are the `key_groups` lengths); it was left as is.

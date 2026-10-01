@@ -1,0 +1,7 @@
+dataset,fetch_workers,prefix_length,step,seconds,ms_per_record,records,groups,groups_match_033,parent_peak_gb,worker_peak_gb
+EnvChemgenHoepfner2014Dataset,8,2,_copy_lmdb,161.0,0.0515,3124319,2880165,True,32.6,1.21
+EnvChemgenHoepfner2014Dataset,8,2,_write_folded_indices,12.2,0.0039,3124319,2880165,True,32.6,1.21
+EnvChemgenHoepfner2014Dataset,8,2,aggregator_process,284.1,0.0909,3124319,2880165,True,32.6,1.21
+EnvChemgenHoepfner2014Dataset,8,2,dataset_build_total,959.2,0.307,3124319,2880165,True,32.6,1.21
+EnvChemgenHoepfner2014Dataset,8,2,grouping_accept,5.0,0.0016,3124319,2880165,True,32.6,1.21
+EnvChemgenHoepfner2014Dataset,8,2,raw_stage,490.2,0.1569,3124319,2880165,True,32.6,1.21

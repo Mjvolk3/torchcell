@@ -151,3 +151,11 @@ Shown on `docs/source/datasets/scerevisiae/amino-acid-betaxanthin.md` ([[experim
 Issue #518 (sweep); the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes; PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: no; refused deposit leaving a directory: n/a.
 
 Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `DATA_SHA256`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.
+
+## 2026.10.01 - Ledger counts dropped rows, concentration cells refused by name (issue #528)
+
+- Before: the ledger reported the number of ORFs that collided ("1 ORF collisions deduped" for three dropped rows); a blank concentration cell was served as NaN and a text cell stopped the build with Python's `float()` message.
+- Now: the ledger reads "<n> repeated-ORF rows dropped (<m> ORFs kept at their first row)"; `_concentration` raises `InvalidConcentrationError` ("Mulleder Table S3: <ORF> <amino acid> concentration <cell> is not a finite number") for a blank or non-numeric cell.
+- Record-neutral on the pinned Table S3: 4,678 concentration rows, 0 non-systematic ORFs, 0 repeated ORFs, 0 blank and 0 text cells (all 19 columns float64).
+- Left open: `n_replicates` stays 1 although `data_raw` has two to four rows for 194 ORFs (170 with 2, 20 with 3, 4 with 4; issue #488), the reference count (#489) and `SM_AGAR` (#143).
+- Tests: `test_ledger_counts_dropped_rows_and_their_orfs`, `test_blank_concentration_refuses_the_build_by_name`, `test_text_concentration_refuses_the_build_by_name`.

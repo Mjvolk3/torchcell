@@ -60,3 +60,7 @@ Record 0 is compared to hand-built `SyntheticLethalityExperiment` / `SyntheticLe
 ## 2026.09.30 - Phase 14: aliases, duplicates, the float PMID, downloads
 
 Eight to sixteen tests, 81 to 100 percent. Findings: an alias listed on two genes resolves to the later one silently (line 77); a swapped duplicate pair is stored twice, and a synonym pair is stored as a double deletion of one ORF (157-170); one blank PMID makes pandas read the column as float, so every record stores `"111.0"` and a `.../111.0/` URL while the blank row stores `"nan"` (229); `main` builds both LMDBs under the working directory, not `$DATA_ROOT` (49, 243). Also pinned: `download` for both classes (a plain response, the Drive `download_warning` confirm round trip, an HTTP error writing no file) and the schema classes.
+
+## 2026.10.01 - Retired the PMID float cast and main-under-cwd findings (issue #528)
+
+Retired: every PMID stored as `"111.0"` after one blank, and `main` building under the working directory. Now asserted: PMIDs stored verbatim as text (including `"333;444"`), a blank PMID raising `BlankPubmedIdError` with an exact message for both datasets, and `main` building under `$DATA_ROOT/data/torchcell/synth_{lethality,rescue}_yeast_synth_leth_db` with nothing written to the working directory. The alias last-write-wins and the duplicate and self-pair findings stay pinned (record-changing).

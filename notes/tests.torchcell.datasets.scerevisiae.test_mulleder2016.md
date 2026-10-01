@@ -17,3 +17,7 @@ Six to fifteen tests, 83 to 99 percent (only the `preprocess_raw` passthrough at
 ## 2026.09.30 - Raw sha256 pin enforced at build time
 
 Issues #518, #524, #528, #537. Finding retired: `test_download_trusts_a_present_file_without_hashing` is now `test_download_leaves_a_present_file_to_the_build_check`, plus the build-time refusal test. Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.
+
+## 2026.10.01 - Retired the ledger and NaN-concentration findings (issue #528)
+
+Retired: the ledger counting collided ORFs and a blank cell served as NaN. Now asserted: the exact ledger line "3 repeated-ORF rows dropped (1 ORFs kept at their first row)" and `InvalidConcentrationError` with exact messages for a blank and a text cell, with no LMDB written.

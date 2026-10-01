@@ -28,21 +28,23 @@ at 30 C and two at 26 C.
   the phantom twins: identical but for the temperature.
 - ``_SGA_EDGE_FILES``: a suppressor query against a DAmP array at DMA30 with a blank
   DMF stddev (in ``SGA_ExE.txt``) and a KanMX query against a NatMX array at DMA30
-  (in ``SGA_NxN.txt``; the other two files are header only). DMF: the blank SD is
-  stored as a NaN SE typed ``sample_sd``; the 30 C reference SD is the NaN-skipping
-  mean 0.05, SE 0.05 / sqrt(4) = 0.025. DMI: epsilon 0.1 / p 0.2 and -0.2 / 0.01 with
-  the suppressor, DAmP, KanMX and NatMX classes.
-- A ``TSA22`` row: DMF raises ``UnboundLocalError`` (no reference SD at 22 C), DMI
-  stores it at 22 C. A blank DMF value: DMF refuses with ``Fitness cannot be NaN``.
+  (in ``SGA_NxN.txt``; the other two files are header only). DMI: epsilon 0.1 / p 0.2
+  and -0.2 / 0.01 with the suppressor, DAmP, KanMX and NatMX classes.
+- A ``TSA22`` row: DMI stores it at 22 C.
+
+2026.10.01 (issue #528): DMF refuses a blank stddev or a blank value with
+``BlankDoubleMutantFitnessError``, and SMF and DMF refuse a temperature other than 26
+or 30 C with ``UnsupportedTemperatureError``, each with an exact message. The DMF
+class build uses the edge rows with the suppressor stddev filled in (0.03), so the
+30 C reference SD is (0.03 + 0.05) / 2 = 0.04, SE 0.02. The released Data File S1
+has none of these inputs (0 of 20,705,612 SGA rows), so no stored record changes.
 - ``download``: ``download_url`` is faked to drop a zip with the released
   subdirectory holding the spreadsheet, the four SGA files and a ``readme.txt``. SMF
   keeps only the spreadsheet (every ``.txt`` removed); DMF and DMI keep the four SGA
   files and ``readme.txt`` and remove the spreadsheet; the zip is removed in all three.
 
 Findings pinned: the 26 C and 30 C twins of issue #410 (lines 223-266); a blank SMF
-stddev drops a measured fitness (line 267); a blank DMF stddev passes the ``is not
-None`` guard as NaN (line 730); DMF and SMF crash with ``UnboundLocalError`` at a
-temperature other than 26 or 30 C (lines 377-381 and 742-746).
+stddev drops a measured fitness (line 267).
 """
 
 from __future__ import annotations
@@ -1029,10 +1031,10 @@ def test_smf_blank_stddev_drops_a_measured_fitness(
     ]
 
 
-def test_smf_temperature_other_than_26_or_30_is_unbound() -> None:
-    """Finding: a row at 22 C binds no reference SD (lines 377-381) and raises
-    ``UnboundLocalError`` naming ``phenotype_reference_std``. Pinned until an unknown
-    temperature is refused with a named error.
+def test_smf_temperature_other_than_26_or_30_is_refused_by_name() -> None:
+    """Contract: SMF reference noise exists only at 26 and 30 C, so a row at 22 C raises
+    ``UnsupportedTemperatureError`` naming the strain and the temperature (it used to
+    fall through an if/elif into ``UnboundLocalError``).
     """
     row = pd.Series(
         {
@@ -1045,11 +1047,11 @@ def test_smf_temperature_other_than_26_or_30_is_unbound() -> None:
             "Temperature": 22,
         }
     )
-    with pytest.raises(UnboundLocalError) as excinfo:
+    with pytest.raises(c.UnsupportedTemperatureError) as excinfo:
         c.SmfCostanzo2016Dataset.create_experiment("x", row, 0.02, 0.0225)
     assert str(excinfo.value) == (
-        "cannot access local variable 'phenotype_reference_std' where it is not "
-        "associated with a value"
+        "Costanzo 2016 strain YAL002W_dma1 at 22 C: reference noise is defined only "
+        "at 26 and 30 C"
     )
 
 
@@ -1087,6 +1089,11 @@ _KANMX_X_NATMX = (
 )
 _SGA_EDGE_FILES = dict(
     _SGA_EMPTY, **{"SGA_ExE.txt": [_SUPPRESSOR_X_DAMP], "SGA_NxN.txt": [_KANMX_X_NATMX]}
+)
+_SUPPRESSOR_X_DAMP_SD = (*_SUPPRESSOR_X_DAMP[:10], 0.03)
+_SGA_EDGE_FILES_WITH_SD = dict(
+    _SGA_EMPTY,
+    **{"SGA_ExE.txt": [_SUPPRESSOR_X_DAMP_SD], "SGA_NxN.txt": [_KANMX_X_NATMX]},
 )
 
 
@@ -1134,42 +1141,53 @@ def _dmf_phenotype(fitness: float, std: float) -> FitnessPhenotype:
     )
 
 
-def test_dmf_suppressor_damp_and_natmx_classes_and_a_blank_sd(tmp_path: Path) -> None:
-    """Finding: the blank DMF SD of record 0 passes the ``is not None`` guard as NaN
-    (line 730), so it is stored as a NaN SE typed ``sample_sd`` rather than as a gap.
-    Record 1 (KanMX x NatMX, 0.60 +- 0.05) is compared whole; both share the 30 C
-    reference whose SD is the NaN-skipping mean 0.05 (SE 0.025). Pinned until a blank SD
-    is stored as ``None`` with no uncertainty type.
+def test_dmf_suppressor_damp_and_natmx_classes(tmp_path: Path) -> None:
+    """The suppressor x DAmP row (0.70 +- 0.03) and the KanMX x NatMX row (0.60 +-
+    0.05) at DMA30 are compared whole; both share the 30 C reference whose SD is the
+    mean (0.03 + 0.05) / 2 = 0.04, SE 0.04 / sqrt(4) = 0.02.
     """
     root = tmp_path / "dmf_edge"
-    _write_sga_raw(root, _SGA_EDGE_FILES)
+    _write_sga_raw(root, _SGA_EDGE_FILES_WITH_SD)
     ds = c.DmfCostanzo2016Dataset(root=str(root), io_workers=1, batch_size=2)
     assert len(ds) == 2
     first, second = _edge_pair()
-    blank = ds[0]["experiment"]
-    assert blank["genotype"] == first.model_dump()
-    phenotype = blank["phenotype"]
-    assert phenotype["fitness"] == 0.7
-    assert phenotype["fitness_uncertainty_type"] == UncertaintyType.sample_sd
-    assert math.isnan(phenotype["fitness_std"])
-    assert math.isnan(phenotype["fitness_se"])
-    assert math.isnan(phenotype["fitness_uncertainty"])
-    expected = FitnessExperiment(
-        dataset_name="DmfCostanzo2016Dataset",
-        genotype=second,
-        environment=_environment(30),
-        phenotype=_dmf_phenotype(0.6, 0.05),
-    )
-    assert ds[1]["experiment"] == expected.model_dump()
+    for index, genotype, fitness, std in (
+        (0, first, 0.7, 0.03),
+        (1, second, 0.6, 0.05),
+    ):
+        expected = FitnessExperiment(
+            dataset_name="DmfCostanzo2016Dataset",
+            genotype=genotype,
+            environment=_environment(30),
+            phenotype=_dmf_phenotype(fitness, std),
+        )
+        assert ds[index]["experiment"] == expected.model_dump()
     reference = FitnessExperimentReference(
         dataset_name="DmfCostanzo2016Dataset",
         genome_reference=_GENOME,
         environment_reference=_environment(30),
-        phenotype_reference=_dmf_phenotype(1.0, 0.05),
+        phenotype_reference=_dmf_phenotype(1.0, 0.04),
     ).model_dump()
     assert ds[0]["reference"] == reference
     assert ds[1]["reference"] == reference
-    assert reference["phenotype_reference"]["fitness_se"] == 0.025
+    assert reference["phenotype_reference"]["fitness_se"] == 0.02
+
+
+def test_dmf_blank_sd_refuses_the_build_by_name(tmp_path: Path) -> None:
+    """Contract: a blank ``Double mutant fitness standard deviation`` raises
+    ``BlankDoubleMutantFitnessError`` naming the row count and the first strain pair
+    before any LMDB is written (it used to be stored as a NaN SE typed ``sample_sd``
+    and to be skipped by the reference mean).
+    """
+    root = tmp_path / "dmf_blank_sd"
+    _write_sga_raw(root, _SGA_EDGE_FILES)
+    with pytest.raises(c.BlankDoubleMutantFitnessError) as excinfo:
+        c.DmfCostanzo2016Dataset(root=str(root), io_workers=1, batch_size=2)
+    assert str(excinfo.value) == (
+        "1 Costanzo 2016 DMF row(s) have a blank fitness or standard deviation "
+        "(first: YAL013W_S2 x YAL014C_damp2 at DMA30)"
+    )
+    assert not (root / "processed" / "lmdb").exists()
 
 
 def test_dmi_suppressor_damp_and_natmx_classes(tmp_path: Path) -> None:
@@ -1223,31 +1241,41 @@ _TSA22 = (
 )
 
 
-def test_dmf_row_at_22c_crashes_unbound_while_dmi_stores_it(tmp_path: Path) -> None:
-    """Finding: ``TSA22`` parses to 22 C; DMF has a reference SD only for 26 and 30 C
-    (lines 742-746) and the build raises ``UnboundLocalError`` through the thread pool,
-    while DMI, which carries no reference SD, stores the row at 22 C. Pinned until DMF
-    refuses an unknown temperature by name or computes its reference SD.
+def test_dmf_row_at_22c_is_refused_by_name_while_dmi_stores_it(tmp_path: Path) -> None:
+    """Contract: ``TSA22`` parses to 22 C; DMF has a reference SD only for 26 and 30 C,
+    so the build raises ``UnsupportedTemperatureError`` naming the strain pair (it used
+    to raise ``UnboundLocalError`` through the thread pool), while DMI, which carries no
+    reference SD, stores the row at 22 C.
     """
     files = dict(_SGA_EMPTY, **{"SGA_ExE.txt": [_TSA22]})
     _write_sga_raw(tmp_path / "dmf22", files)
-    with pytest.raises(UnboundLocalError) as excinfo:
+    with pytest.raises(c.UnsupportedTemperatureError) as excinfo:
         c.DmfCostanzo2016Dataset(root=str(tmp_path / "dmf22"), io_workers=1)
-    assert "'phenotype_reference_std'" in str(excinfo.value)
+    assert str(excinfo.value) == (
+        "Costanzo 2016 strain YAL015C_tsa4 x YAL016W_dma3 at 22 C: reference noise is "
+        "defined only at 26 and 30 C"
+    )
     _write_sga_raw(tmp_path / "dmi22", files)
     dmi22 = c.DmiCostanzo2016Dataset(root=str(tmp_path / "dmi22"), io_workers=1)
     assert len(dmi22) == 1
     assert dmi22[0]["experiment"]["environment"] == _environment(22).model_dump()
 
 
-def test_dmf_blank_fitness_refuses_the_whole_build(tmp_path: Path) -> None:
-    """A blank ``Double mutant fitness`` is refused at ``FitnessPhenotype`` with
-    ``Fitness cannot be NaN``; DMF has no ``dropna``, so one blank cell fails the build.
+def test_dmf_blank_fitness_refuses_the_build_by_name(tmp_path: Path) -> None:
+    """Contract: a blank ``Double mutant fitness`` raises
+    ``BlankDoubleMutantFitnessError`` with the row count and the strain pair before any
+    LMDB is written (it used to surface as the phenotype's ``Fitness cannot be NaN``).
     """
     row = _KANMX_X_NATMX[:9] + (None, 0.05)
-    _write_sga_raw(tmp_path / "dmf_nan", dict(_SGA_EMPTY, **{"SGA_NxN.txt": [row]}))
-    with pytest.raises(ValueError, match="Fitness cannot be NaN"):
-        c.DmfCostanzo2016Dataset(root=str(tmp_path / "dmf_nan"), io_workers=1)
+    root = tmp_path / "dmf_nan"
+    _write_sga_raw(root, dict(_SGA_EMPTY, **{"SGA_NxN.txt": [row]}))
+    with pytest.raises(c.BlankDoubleMutantFitnessError) as excinfo:
+        c.DmfCostanzo2016Dataset(root=str(root), io_workers=1)
+    assert str(excinfo.value) == (
+        "1 Costanzo 2016 DMF row(s) have a blank fitness or standard deviation "
+        "(first: YAL015C_dma4 x YAL016W_sn3 at DMA30)"
+    )
+    assert not (root / "processed" / "lmdb").exists()
 
 
 def test_dmi_subset_n_samples_the_same_rows_as_dmf(tmp_path: Path) -> None:

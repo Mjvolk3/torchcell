@@ -37,7 +37,7 @@ the one shared reference is the arithmetic WT mean (1 + 1001) / 2 = 501.0 (a
 geometric or log2 mean would give 31.64 or 4.98), SE = sqrt(((1 - 501)^2 + (1001 -
 501)^2) / 1) / sqrt(2) = 500.0, n 2; the index is [[0, 1]]. Also pinned: the
 drop summary log line on the first fixture (2 strains, 3 reference proteins, 1 skipped
-ORF), a KO protein that no WT sample measured (a bare ``KeyError``, a Finding), a GFF
+ORF), a KO protein that no WT sample measured (refused by name since 2026.10.01), a GFF
 line whose ninth column has no ORF token and a line with two accessions, the three
 ``download`` outcomes against a mirror under ``tmp_path`` (missing, off the pin, copied)
 and the partial-raw case, and ``main``. The sha256 contract (issue #528, fixed):
@@ -47,8 +47,12 @@ refused at build time.
 
 Findings pinned: a numeric filename token is stored as ``perturbed_gene_name`` (issue
 #485, 156 served records); ``duration_hours`` is None although the 8 h culture is
-sourceable (issue #486); a protein a KO measured but no WT sample did raises
-``KeyError`` from ``create_experiment`` (line 360) rather than a named refusal.
+sourceable (issue #486).
+
+2026.10.01 (issue #528): a protein a KO measured but no WT sample did raises
+``MissingWildTypeReferenceError`` naming the sample, its ORF and the protein (it used
+to raise a bare ``KeyError`` from ``create_experiment``). The pinned matrix has no
+such protein (0 of 1,850), so no stored record changes.
 """
 
 import hashlib
@@ -80,6 +84,7 @@ from torchcell.datasets.scerevisiae.messner2023 import (
     MATRIX_FILENAME,
     MEASUREMENT_TYPE,
     METADATA_FILENAME,
+    MissingWildTypeReferenceError,
     ProteomeMessner2023Dataset,
     _gene_from_filename,
     build_uniprot_to_orf_map,
@@ -526,20 +531,24 @@ def test_culture_duration_is_not_recorded_issue_486(
     assert environment["media"] == SM.model_dump()
 
 
-def test_a_ko_protein_no_wt_sample_measured_raises_a_bare_key_error(
+def test_a_ko_protein_no_wt_sample_measured_is_refused_by_name(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: with both WT cells blank, YBR001C is dropped from the reference (``keep``
-    needs n >= 1, line 245) and the first KO that measured it fails the lookup at line
-    360 with ``KeyError('YBR001C')``, not a message naming the strain. Pinned until the
-    build refuses such a protein with a named error.
+    """Contract (issue #528): with both WT cells blank, YBR001C has no reference value,
+    so the first KO sample that measured it raises ``MissingWildTypeReferenceError``
+    naming the sample, its ORF and the protein, before any LMDB is written (it used to
+    fail in ``create_experiment`` with a bare ``KeyError('YBR001C')``).
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
     _write_gff(tmp_path)
     root = _numeric_root(tmp_path, wt=("", ""))
-    with pytest.raises(KeyError) as excinfo:
+    with pytest.raises(MissingWildTypeReferenceError) as excinfo:
         ProteomeMessner2023Dataset(root=str(root))
-    assert excinfo.value.args == ("YBR001C",)
+    assert str(excinfo.value) == (
+        f"Messner: KO sample {KO_SLA1} (YBL007C) measured 1 protein(s) no WT sample "
+        "measured (e.g. ['YBR001C']); the reference has no value for them"
+    )
+    assert not (root / "processed" / "lmdb").exists()
 
 
 def test_the_build_summary_is_logged_exactly(

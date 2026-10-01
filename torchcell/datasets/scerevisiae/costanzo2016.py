@@ -99,6 +99,35 @@ N_SAMPLES_TEMP_30C = 4  # For KanMX deletion mutants
 N_SAMPLES_TEMP_26C = 4  # For TS alleles at semipermissive temperature
 
 
+class UnsupportedTemperatureError(ValueError):
+    """A Costanzo 2016 fitness row at a temperature with no reference noise.
+
+    The SMF spreadsheet and the DMF reference noise exist only at 26 and 30 C; the
+    released Data File S1 has no other temperature (0 of 20,705,612 SGA rows, 0 of
+    20,484 SMF records), so a row elsewhere is refused rather than given a reference.
+    """
+
+
+class BlankDoubleMutantFitnessError(ValueError):
+    """A Costanzo 2016 DMF row with a blank fitness or a blank standard deviation.
+
+    The released Data File S1 has neither (0 of 20,705,612 rows), so a blank cell is
+    refused by name rather than stored as NaN or failing inside the phenotype model.
+    """
+
+
+def _reference_std_at(temperature: Any, std_26: Any, std_30: Any, strain: str) -> Any:
+    """Return the reference noise for ``temperature``, refusing any but 26 and 30 C."""
+    if temperature == 26:
+        return std_26
+    if temperature == 30:
+        return std_30
+    raise UnsupportedTemperatureError(
+        f"Costanzo 2016 strain {strain} at {temperature} C: reference noise is "
+        "defined only at 26 and 30 C"
+    )
+
+
 # ============================================================================
 # Fitness
 @register_dataset
@@ -374,10 +403,12 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
             sample_unit=SampleUnit.screen,
         )
 
-        if row["Temperature"] == 26:
-            phenotype_reference_std = phenotype_reference_std_26
-        elif row["Temperature"] == 30:
-            phenotype_reference_std = phenotype_reference_std_30
+        phenotype_reference_std = _reference_std_at(
+            row["Temperature"],
+            phenotype_reference_std_26,
+            phenotype_reference_std_30,
+            row["Strain ID"],
+        )
 
         # WT reference noise is the mean SMF stddev (an average of bootstrap SEs),
         # so it is likewise a bootstrap SE -> used as-is (no sqrt(n) division).
@@ -481,8 +512,25 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
     ) -> pd.DataFrame:
-        """Concatenate and clean the SGA files into a double-mutant fitness table."""
+        """Concatenate and clean the SGA files into a double-mutant fitness table.
+
+        A blank ``Double mutant fitness`` or ``Double mutant fitness standard
+        deviation`` raises ``BlankDoubleMutantFitnessError`` before any record or
+        reference noise is computed.
+        """
         log.info("Preprocess on raw data...")
+        blank = (
+            df["Double mutant fitness"].isna()
+            | df["Double mutant fitness standard deviation"].isna()
+        )
+        if blank.any():
+            first = df[blank].iloc[0]
+            raise BlankDoubleMutantFitnessError(
+                f"{int(blank.sum())} Costanzo 2016 DMF row(s) have a blank fitness "
+                "or standard deviation (first: "
+                f"{first['Query Strain ID']} x {first['Array Strain ID']} at "
+                f"{first['Arraytype/Temp']})"
+            )
 
         # Function to extract gene name
         def extract_systematic_name(x: pd.Series) -> pd.Series:
@@ -739,10 +787,12 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
             sample_unit=SampleUnit.colony,
         )
 
-        if row["Temperature"] == 26:
-            phenotype_reference_std = phenotype_reference_std_26
-        elif row["Temperature"] == 30:
-            phenotype_reference_std = phenotype_reference_std_30
+        phenotype_reference_std = _reference_std_at(
+            row["Temperature"],
+            phenotype_reference_std_26,
+            phenotype_reference_std_30,
+            f"{row['Query Strain ID']} x {row['Array Strain ID']}",
+        )
 
         # WT/WT reference noise is the mean DMF stddev (an average of colony sample
         # SDs) -> sample_sd over the 4 colonies -> SE = SD/sqrt(4). (Was wrongly

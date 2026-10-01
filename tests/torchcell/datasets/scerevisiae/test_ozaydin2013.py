@@ -22,9 +22,13 @@ pinned in ``test_ozaydin2013_synthetic.py`` and not repeated here. Added:
   request;
 - the build ledger lines (6 ORFs total, 5 usable, 1 text-only, 1 malformed name) and
   the absence of the malformed line when every name is systematic;
-- aggregation Findings: the first row's strain wins for an ORF scored on two strains,
-  the comment flags are OR-ed across replicates, and two equal scores give
-  ``visual_score_min`` equal to the score rather than None;
+- aggregation: the comment flags are OR-ed across replicates, and two equal scores
+  give ``visual_score_min`` equal to the score (the schema documents None only for a
+  single replicate);
+- 2026.10.01 (issue #528): the record's strain is the strain its numeric scores were
+  taken on, and numeric scores on two strains raise ``MixedStrainScoresError`` (the
+  first row's strain used to win). On the pinned SI the per-ORF aggregate is
+  identical before and after (4,975 ORFs);
 - an out-of-scale color (6) refuses the build with the schema's message;
 - the medium as a Finding: a free-text ``SC-URA`` stub with no components, not the
   sourced ``media.SC_URA`` of ``MEDIA_LIBRARY``;
@@ -263,17 +267,12 @@ def test_build_ledger_lines(tmp_path: Path, caplog: pytest.LogCaptureFixture) ->
     ]
 
 
-def test_replicates_keep_the_first_strain_and_or_the_flags(tmp_path: Path) -> None:
-    """YAL001C scored on BY4730 (comment ``petite``, color 1) and then on BY4741
-    (``tiny``, color 3): the aggregate is max 3.0, min 1.0, n 2, flags petite and tiny.
-
-    Finding: ``records.setdefault`` keeps the FIRST row's strain, so the reference
-    genome is BY4730 although the maximum score came from the BY4741 row (source lines
-    251-263); nothing records that the ORF was scored on two backgrounds. Pinned until
-    replicates on different strains are kept apart or refused.
+def test_replicates_on_one_strain_aggregate_and_or_the_flags(tmp_path: Path) -> None:
+    """YAL001C scored twice on BY4741 (comment ``petite``, color 1; then ``tiny``, color
+    3): the aggregate is max 3.0, min 1.0, n 2, flags petite and tiny, on BY4741.
     """
     rows: list[Row] = [
-        ("YAL001C", "BY4730", 1, "petite"),
+        ("YAL001C", "BY4741", 1, "petite"),
         ("YAL001C", "BY4741", 3, "tiny"),
     ]
     dataset = m.CarotenoidOzaydin2013Dataset(root=str(_root(tmp_path, rows)))
@@ -288,7 +287,44 @@ def test_replicates_keep_the_first_strain_and_or_the_flags(tmp_path: Path) -> No
         "flag_petite",
         "flag_tiny",
     }
+    assert dataset[0]["reference"]["genome_reference"]["strain"] == "BY4741"
+
+
+def test_numeric_scores_on_two_strains_refuse_the_build_by_name(tmp_path: Path) -> None:
+    """Contract (issue #528): YAL001C scored 1 on BY4730 and 3 on BY4741 raises
+    ``MixedStrainScoresError`` naming the ORF and both strains, and nothing is written
+    to LMDB (the first row's strain, BY4730, used to label a maximum scored on BY4741).
+    """
+    rows: list[Row] = [
+        ("YAL001C", "BY4730", 1, "petite"),
+        ("YAL001C", "BY4741", 3, "tiny"),
+    ]
+    root = _root(tmp_path, rows)
+    with pytest.raises(m.MixedStrainScoresError) as excinfo:
+        m.CarotenoidOzaydin2013Dataset(root=str(root))
+    assert str(excinfo.value) == (
+        "Ozaydin: YAL001C has numeric color scores on strains ['BY4730', 'BY4741']; "
+        "one record carries one reference genome"
+    )
+    assert not (root / "processed" / "lmdb").exists()
+
+
+def test_the_strain_is_the_one_the_score_was_taken_on(tmp_path: Path) -> None:
+    """Contract (issue #528): a text-only BY4741 row (``pet``) before a BY4730 row
+    scored 1 gives a record on BY4730 with score 1.0 and text ``pet`` (the first row's
+    strain, BY4741, used to win). The released SI lists YML086C this way with the
+    BY4730 row first, so its stored strain is BY4730 either way.
+    """
+    rows: list[Row] = [
+        ("YAL001C", "BY4741", "pet", None),
+        ("YAL001C", "BY4730", 1, None),
+    ]
+    dataset = m.CarotenoidOzaydin2013Dataset(root=str(_root(tmp_path, rows)))
+    assert len(dataset) == 1
     assert dataset[0]["reference"]["genome_reference"]["strain"] == "BY4730"
+    phenotype = dataset[0]["experiment"]["phenotype"]
+    assert (phenotype["visual_score"], phenotype["n_replicates"]) == (1.0, 1)
+    assert phenotype["score_text"] == "pet"
 
 
 def test_equal_replicates_report_a_min_equal_to_the_score(tmp_path: Path) -> None:

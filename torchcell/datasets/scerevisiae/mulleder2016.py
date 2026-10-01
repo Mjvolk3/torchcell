@@ -30,6 +30,8 @@ deferred to a follow-up that sources the ids from YeastGEM (never guessed).
 """
 
 import logging
+import math
+import numbers
 import os
 import os.path as osp
 import pickle
@@ -103,6 +105,25 @@ AMINO_ACIDS = [
 ]
 
 
+class InvalidConcentrationError(ValueError):
+    """A Table S3 concentration cell that is blank or not a finite number.
+
+    The pinned ``intracellular_concentration_mM`` sheet has none (0 of 4,678 x 19
+    cells), so such a cell is refused by name rather than served as NaN or failing in
+    Python's ``float()``.
+    """
+
+
+def _concentration(value: Any, orf: str, amino_acid: str) -> float:
+    """Return one concentration cell as a float, refusing a blank or non-numeric cell."""
+    if isinstance(value, numbers.Real) and math.isfinite(value):
+        return float(value)
+    raise InvalidConcentrationError(
+        f"Mulleder Table S3: {orf} {amino_acid} concentration {value!r} is not a "
+        "finite number"
+    )
+
+
 @register_dataset
 class AminoAcidMulleder2016Dataset(ExperimentDataset):
     """Genome-wide intracellular amino-acid metabolome of the yeast deletion collection."""
@@ -170,6 +191,7 @@ class AminoAcidMulleder2016Dataset(ExperimentDataset):
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         n_bad_orf = 0
+        n_collision_rows = 0
         seen: set[str] = set()
         collisions: set[str] = set()
         rows: list[dict[str, Any]] = []
@@ -179,15 +201,22 @@ class AminoAcidMulleder2016Dataset(ExperimentDataset):
                 n_bad_orf += 1
                 continue
             if orf in seen:
+                n_collision_rows += 1
                 collisions.add(orf)
                 continue
             seen.add(orf)
-            rows.append({"orf": orf, **{aa: float(row[aa]) for aa in AMINO_ACIDS}})
+            rows.append(
+                {
+                    "orf": orf,
+                    **{aa: _concentration(row[aa], orf, aa) for aa in AMINO_ACIDS},
+                }
+            )
         log.info(
             "Mulleder: %d usable ORFs, %d non-systematic ORF names skipped, "
-            "%d ORF collisions deduped",
+            "%d repeated-ORF rows dropped (%d ORFs kept at their first row)",
             len(rows),
             n_bad_orf,
+            n_collision_rows,
             len(collisions),
         )
         pd.DataFrame(rows).to_csv(

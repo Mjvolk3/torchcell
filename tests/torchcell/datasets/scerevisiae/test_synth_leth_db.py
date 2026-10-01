@@ -17,20 +17,25 @@ name-less ORF, and a NaN score); the SR fixture has two rows (one NaN score).
 ``SHARED`` is listed on BOTH YAL001C and YAL002W (the later feature wins the dict
 write), with five rows: ``TFC3,VPS8,0.2,111``; the same pair swapped
 (``VPS8,TFC3,0.2,111``); a synonym self-pair ``TFC3,TSV115,0.7,222`` (both YAL001C);
-``TFC3,SHARED,0.4,333``; and ``TFC3,VPS8,0.5,`` with a blank PMID. Expected: five
-records, the swapped pair stored as an identical second record (the genotype sorts its
-perturbations), the self-pair stored as a double deletion of YAL001C, ``SHARED``
-resolved to YAL002W, and, because one blank cell makes pandas read the PMID column as
-float, every record's ``pubmed_id`` is ``"111.0"``-shaped and the blank one ``"nan"``.
-One reference covers [0..4]; the gene set is [YAL001C, YAL002W]. Also pinned: both
-``download`` methods against a fake ``requests.Session`` (the plain response, the
-``download_warning`` confirm round trip, and an HTTP error that writes no file) with
-their exact Google Drive URLs, and ``main`` against a stub genome.
+``TFC3,SHARED,0.4,333``; and ``TFC3,VPS8,0.5,333;444`` citing two PMIDs (as one row
+of the released ``Yeast_SL.csv`` does). Expected: five records, the swapped pair stored
+as an identical second record (the genotype sorts its perturbations), the self-pair
+stored as a double deletion of YAL001C, ``SHARED`` resolved to YAL002W, and every PMID
+stored verbatim as text. One reference covers [0..4]; the gene set is [YAL001C,
+YAL002W]. Also pinned: both ``download`` methods against a fake ``requests.Session``
+(the plain response, the ``download_warning`` confirm round trip, and an HTTP error
+that writes no file) with their exact Google Drive URLs, and ``main`` against a stub
+genome.
 
-Findings pinned: the PMID float cast (line 229), the stored duplicate and self-pair
-(no deduplication in ``process``, lines 157-170), the alias last-write-wins (line 77),
-and ``main`` building both datasets under the working directory (the default relative
-roots, lines 49 and 243) while the genome is read from ``$DATA_ROOT``.
+2026.10.01 (issue #528): the PMID column is read as text and a blank PMID is refused
+with ``BlankPubmedIdError`` (it used to turn every PMID into ``"111.0"`` and the blank
+one into ``"nan"``); ``main`` builds both datasets under ``$DATA_ROOT`` at the
+dev-tree directories the knowledge-graph configs read. Neither changes a stored record
+of the pinned raw files (0 blank PMIDs in 14,000 SL and 6,948 SR rows).
+
+Findings pinned: the stored duplicate and self-pair (no deduplication in ``process``),
+and the alias last-write-wins in ``_build_gene_name_mapping``. Both change stored
+records of the pinned raw files and stay open on issue #528.
 """
 
 from __future__ import annotations
@@ -416,7 +421,7 @@ _EDGE_ROWS = [
     "VPS8,TFC3,0.2,111\n",
     "TFC3,TSV115,0.7,222\n",
     "TFC3,SHARED,0.4,333\n",
-    "TFC3,VPS8,0.5,\n",
+    "TFC3,VPS8,0.5,333;444\n",
 ]
 
 
@@ -490,21 +495,45 @@ def test_a_swapped_duplicate_pair_is_stored_twice_and_a_synonym_pair_as_a_self_p
         assert json.load(f) == ["YAL001C", "YAL002W"]
 
 
-def test_one_blank_pmid_turns_every_pmid_into_a_float_string(
+def test_pmids_are_stored_verbatim_as_text(
     edge_sl: s.SynthLethalityYeastSynthLethDbDataset,
 ) -> None:
-    """Finding: the blank PMID in row 4 makes ``pd.read_csv`` type the column float, and
-    ``str(row["r.pubmed_id"])`` (line 229) then stores ``"111.0"`` and the URL
-    ``.../111.0/`` for EVERY row, and ``"nan"`` for the blank one. Pinned until the PMID
-    column is read as a string and a blank PMID is refused.
+    """Contract: ``r.pubmed_id`` is read as text, so each record stores the cell
+    verbatim, including the two-PMID cell ``"333;444"``, and the URL is built from it.
     """
     assert [edge_sl[i]["publication"] for i in range(len(edge_sl))] == [
-        _publication(p).model_dump()
-        for p in ["111.0", "111.0", "222.0", "333.0", "nan"]
+        _publication(p).model_dump() for p in ["111", "111", "222", "333", "333;444"]
     ]
     assert edge_sl[0]["publication"]["pubmed_url"] == (
-        "https://pubmed.ncbi.nlm.nih.gov/111.0/"
+        "https://pubmed.ncbi.nlm.nih.gov/111/"
     )
+
+
+@pytest.mark.parametrize(
+    ("cls", "filename"),
+    [
+        (s.SynthLethalityYeastSynthLethDbDataset, "Yeast_SL.csv"),
+        (s.SynthRescueYeastSynthLethDbDataset, "Yeast_SR.csv"),
+    ],
+)
+def test_a_blank_pmid_refuses_the_build_by_name(
+    tmp_path: Path,
+    cls: type[s.SynthLethalityYeastSynthLethDbDataset]
+    | type[s.SynthRescueYeastSynthLethDbDataset],
+    filename: str,
+) -> None:
+    """Contract: a blank PMID in row 1 raises ``BlankPubmedIdError`` naming the file,
+    the count and the first blank row, before any LMDB is written (it used to make
+    pandas read the column as float and store ``"111.0"`` and ``"nan"``).
+    """
+    root = tmp_path / "blank_pmid"
+    _write_raw(root, filename, ["TFC3,VPS8,0.2,111\n", "SSA1,VPS8,0.5,\n"])
+    with pytest.raises(s.BlankPubmedIdError) as excinfo:
+        cls(root=str(root), genome=_genome())
+    assert str(excinfo.value) == (
+        f"{root / 'raw' / filename}: 1 row(s) with a blank r.pubmed_id (first at row 1)"
+    )
+    assert not (root / "processed" / "lmdb").exists()
 
 
 class _Response:
@@ -609,13 +638,13 @@ def test_download_raises_on_an_http_error_before_writing(
     assert os.listdir(tmp_path / "raw") == []
 
 
-def test_main_builds_both_datasets_under_the_working_directory(
+def test_main_builds_both_datasets_under_data_root(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Finding: ``main`` reads the genome from ``$DATA_ROOT`` but builds both datasets at
-    their default RELATIVE roots (lines 49 and 243), so the LMDBs land under the current
-    working directory, not under ``$DATA_ROOT``. Pinned until ``main`` joins the roots
-    onto ``$DATA_ROOT``.
+    """Contract: ``main`` reads the genome from ``$DATA_ROOT`` and builds both datasets
+    under ``$DATA_ROOT/data/torchcell/synth_{lethality,rescue}_yeast_synth_leth_db``,
+    the directories the knowledge-graph configs read; nothing is written under the
+    working directory (the default relative roots used to put the LMDBs there).
     """
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
@@ -628,9 +657,12 @@ def test_main_builds_both_datasets_under_the_working_directory(
             super().__init__()
 
     monkeypatch.setattr(s, "SCerevisiaeGenome", _MainGenome)
+    sl_root = data_root / "data/torchcell/synth_lethality_yeast_synth_leth_db"
+    sr_root = data_root / "data/torchcell/synth_rescue_yeast_synth_leth_db"
+    _write_raw(sl_root, "Yeast_SL.csv", _SL_ROWS)
+    _write_raw(sr_root, "Yeast_SR.csv", _SR_ROWS)
     cwd = tmp_path / "cwd"
-    _write_raw(cwd / "data/torchcell/syn_leth_db_yeast", "Yeast_SL.csv", _SL_ROWS)
-    _write_raw(cwd / "data/torchcell/syn_rescue_db_yeast", "Yeast_SR.csv", _SR_ROWS)
+    cwd.mkdir()
     monkeypatch.chdir(cwd)
     s.main()
     assert genome_kwargs == [
@@ -643,9 +675,9 @@ def test_main_builds_both_datasets_under_the_working_directory(
     lines = capsys.readouterr().out.splitlines()
     assert "SynthLethalityYeastSynthLethDbDataset(5)" in lines
     assert "SynthRescueYeastSynthLethDbDataset(2)" in lines
-    assert (cwd / "data/torchcell/syn_leth_db_yeast/processed/lmdb").is_dir()
-    assert (cwd / "data/torchcell/syn_rescue_db_yeast/processed/lmdb").is_dir()
-    assert not data_root.exists()
+    assert (sl_root / "processed/lmdb").is_dir()
+    assert (sr_root / "processed/lmdb").is_dir()
+    assert os.listdir(cwd) == []
 
 
 def test_lethality_items_retype_through_the_lethality_classes(

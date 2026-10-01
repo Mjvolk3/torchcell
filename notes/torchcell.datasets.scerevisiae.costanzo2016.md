@@ -428,3 +428,10 @@ TS_ALLELE_PROBLEMATIC = {
     "sec39-1",
 }
 ```
+
+## 2026.10.01 - Named refusals for unsupported temperatures and blank DMF cells (issue #528)
+
+- Before: SMF and DMF chose the reference noise with an if/elif on 26 and 30 C and no else, so any other temperature (DMF on a `TSA22` row) fell through to `UnboundLocalError`. A blank DMF stddev passed the `is not None` guard as NaN and was stored as a NaN SE typed `sample_sd` (and skipped by the reference mean); a blank DMF value surfaced as the phenotype's `Fitness cannot be NaN`.
+- Now: `_reference_std_at` returns the 26 or 30 C noise or raises `UnsupportedTemperatureError` ("Costanzo 2016 strain <id> at <T> C: reference noise is defined only at 26 and 30 C"); DMF `preprocess_raw` raises `BlankDoubleMutantFitnessError` with the blank-row count and the first strain pair before any record or reference noise is computed.
+- Record-neutral, measured on the pinned raw files (`b4-costanzo2016/classify_costanzo.py` in the fix scratchpad): 20,705,612 SGA rows, `Arraytype/Temp` only DMA30 14,576,634, TSA26 3,141,356, DMA26 2,937,915, TSA30 49,707; 0 rows at 22 C, 0 blank DMF values, 0 blank DMF stddevs. SMF assigns 26 and 30 C itself (20,484 records, 10,260 at 26 C and 10,224 at 30 C), so no real row reaches the refusal.
+- Tests: `test_smf_temperature_other_than_26_or_30_is_refused_by_name`, `test_dmf_row_at_22c_is_refused_by_name_while_dmi_stores_it`, `test_dmf_blank_sd_refuses_the_build_by_name`, `test_dmf_blank_fitness_refuses_the_build_by_name`, `test_dmf_suppressor_damp_and_natmx_classes`.

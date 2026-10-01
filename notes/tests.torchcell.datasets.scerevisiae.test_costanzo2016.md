@@ -67,3 +67,7 @@ Both loaders are built with `io_workers=1, batch_size=2` (`io_workers=0` is impo
 Eighteen to thirty tests, 81 to 99 percent (two branches left, an unknown query suffix in DMF and DMI). The issue #410 deletion twins as whole records 0 (26 C) and 3 (30 C) differing only in temperature, each with its own reference (0.02, 0.0225); a DAmP twin pair beside a TS allele with different values; a blank SMF stddev dropping a measured fitness (`dropna`, line 267) with the reference index [0..2] and [3..6]; DMF with a suppressor query, DAmP array and NatMX array, a blank DMF SD stored as a NaN SE typed `sample_sd` (730), the full KanMX x NatMX record and the shared 30 C reference; DMI whole records; `subset_n=2` keeping the same rows as DMF under seed 42; all three `download` paths on a faked archive; `main`'s seven roots.
 
 Findings: SMF at 22 C raises `UnboundLocalError` (377-381); DMF raises the same on a `TSA22` row (742-746) while DMI stores that row at 22 C; a blank DMF value refuses the whole build with "Fitness cannot be NaN".
+
+## 2026.10.01 - Retired the UnboundLocalError and blank-SD findings (issue #528)
+
+Retired: the SMF 22 C and DMF `TSA22` `UnboundLocalError` findings and the blank DMF SD stored as a NaN SE. Now asserted: `UnsupportedTemperatureError` and `BlankDoubleMutantFitnessError` with exact messages and no LMDB written; the DMF class build uses the edge rows with the suppressor SD filled (0.03), so the 30 C reference SD is 0.04 and its SE 0.02.

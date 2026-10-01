@@ -1008,3 +1008,118 @@ def test_a_citing_dot_directory_is_refused_by_name(tmp_path: Path) -> None:
         ValueError, match=re.escape("illegal bibliography name: '.draft'")
     ):
         discover_bib_specs(tmp_path, group_library_id="6582362", user_library_id="1")
+
+
+# --- delta review of PR #589: damaged manifest, atomic write, stamp, retire -- #
+
+
+def test_full_export_over_a_truncated_manifest_succeeds(
+    tmp_path: Path, canned_pull: Canned
+) -> None:
+    """A full export re-exports every declared spec, carries nothing, and never reads
+    the previous manifest: over a manifest truncated mid-JSON it succeeds and writes
+    a manifest that validates and lists all three bibliographies, leaving no
+    ``manifest.json.tmp`` behind.
+    """
+    specs = _three_served(tmp_path, canned_pull)
+    store = bib_store_dir(tmp_path)
+    manifest_path = store / BIB_STORE_MANIFEST
+    manifest_path.write_text(manifest_path.read_text()[:40])
+    after = export_bib_store(
+        tmp_path, specs, NO_LIB, NO_LIB, declared=specs, generated_at=T1
+    )
+    assert load_bib_store(tmp_path) == after
+    assert [b.name for b in after.bibs] == ["paper", "eqtl-data-model", "pilot"]
+    assert [b.generated_at for b in after.bibs] == [T1, T1, T1]
+    assert sorted(p.name for p in store.iterdir()) == [
+        "eqtl-data-model.bib",
+        "manifest.json",
+        "paper.bib",
+        "pilot.bib",
+    ]
+
+
+def test_subset_export_over_a_truncated_manifest_is_refused(
+    tmp_path: Path, canned_pull: Canned
+) -> None:
+    """A subset run must read the previous manifest to carry records forward; over a
+    truncated one it refuses with the exact message naming the manifest and the
+    remedy, before any pull, and the damaged bytes stay as they were.
+    """
+    specs = _three_served(tmp_path, canned_pull)
+    manifest_path = bib_store_dir(tmp_path) / BIB_STORE_MANIFEST
+    damaged = manifest_path.read_text()[:40]
+    manifest_path.write_text(damaged)
+    canned_pull["W46ATS7B"] = []  # a pull would raise a different error
+    with pytest.raises(ValueError) as excinfo:
+        export_bib_store(
+            tmp_path, specs[:1], NO_LIB, NO_LIB, declared=specs, generated_at=T1
+        )
+    assert str(excinfo.value) == (
+        f"cannot carry bibliographies forward: the previous manifest "
+        f"{manifest_path} does not validate; run a full export"
+    )
+    assert manifest_path.read_text() == damaged
+
+
+def test_failed_manifest_write_leaves_the_previous_manifest_byte_identical(
+    tmp_path: Path, canned_pull: Canned, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The manifest is written to ``manifest.json.tmp`` and swapped in with
+    ``os.replace``; an ``OSError`` injected into that temporary write propagates and
+    the served ``manifest.json`` keeps its previous bytes.
+    """
+    specs = _three_served(tmp_path, canned_pull)
+    manifest_path = bib_store_dir(tmp_path) / BIB_STORE_MANIFEST
+    before = manifest_path.read_bytes()
+    real_write_text = Path.write_text
+
+    def failing_write_text(self: Path, data: str, *args: Any, **kwargs: Any) -> int:
+        if self.name == "manifest.json.tmp":
+            raise OSError("disk full")
+        return real_write_text(self, data, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", failing_write_text)
+    with pytest.raises(OSError, match="^disk full$"):
+        export_bib_store(
+            tmp_path, specs, NO_LIB, NO_LIB, declared=specs, generated_at=T1
+        )
+    assert manifest_path.read_bytes() == before
+
+
+def test_an_impossible_date_in_the_right_shape_is_refused(
+    tmp_path: Path, canned_pull: Canned
+) -> None:
+    """``2026-13-99T99:99:99+00:00`` has the exporter's shape but is not a date;
+    ``datetime.fromisoformat`` rejects it, so it is refused with the exact message.
+    """
+    specs = _three_served(tmp_path, canned_pull)
+    stamp = "2026-13-99T99:99:99+00:00"
+    with pytest.raises(ValueError) as excinfo:
+        export_bib_store(
+            tmp_path, specs, NO_LIB, NO_LIB, declared=specs, generated_at=stamp
+        )
+    assert str(excinfo.value) == (
+        "generated_at must be a UTC ISO timestamp "
+        f"(YYYY-MM-DDTHH:MM:SS[.ffffff]+00:00), got {stamp!r}"
+    )
+
+
+def test_retiring_twice_under_one_stamp_never_overwrites(
+    tmp_path: Path, canned_pull: Canned
+) -> None:
+    """Two runs with the same stamp each retire a ``stray.bib`` with different
+    bytes: the first keeps the plain name, the second gets ``stray.bib.1``, and both
+    contents survive.
+    """
+    specs = _three_served(tmp_path, canned_pull)
+    store = bib_store_dir(tmp_path)
+    retired = store / "_retired" / T1
+    for content in ("first", "second"):
+        (store / "stray.bib").write_text(content)
+        export_bib_store(
+            tmp_path, specs, NO_LIB, NO_LIB, declared=specs, generated_at=T1
+        )
+    assert sorted(p.name for p in retired.iterdir()) == ["stray.bib", "stray.bib.1"]
+    assert (retired / "stray.bib").read_text() == "first"
+    assert (retired / "stray.bib.1").read_text() == "second"

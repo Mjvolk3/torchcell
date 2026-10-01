@@ -19,3 +19,7 @@ Retired the four Findings. Now asserted: scope collections are keys by declarati
 ## 2026.10.01 - Review of PR #589: subset carry-forward, stamp, Makefile path
 
 Replaced `test_dropped_spec_is_unserved_and_its_file_is_moved_aside` (it modeled a fewer-spec run as removal, pinning a 404 after a subset) with `test_spec_removed_from_the_repo_is_unserved_and_moved_aside`. Added: a `--name` run over three served bibliographies keeps all three listed, the other two records byte-identical and their files and GET hashes unchanged; a subset run still retires a spec removed from the repo; a missing or edited carried file is refused by name (parametrized) with the store unchanged; an undeclared exported spec is refused; four bad `generated_at` stamps, including `../../escaped`, are refused with no file moved anywhere under the mirror; the exporter's default stamp passes. The two-word Makefile test is now parametrized with a collection name and asserts the message naming the Makefile. Stamps are real UTC ISO timestamps (`T0`, `T1` constants). 25 to 31 test functions (36 collected).
+
+## 2026.10.01 - Delta review of PR #589
+
+Added five tests: a full export over a truncated manifest succeeds and writes a valid one; a subset export over it is refused with the exact message naming the manifest; an `OSError` injected into the `manifest.json.tmp` write leaves the previous manifest byte-identical; `2026-13-99T99:99:99+00:00` is refused; two runs with one stamp retire `stray.bib` and `stray.bib.1` with both contents kept. 31 to 36 test functions (41 collected).

@@ -19,3 +19,7 @@ After the fix in [[torchcell.data.neo4j_query_raw]]: `len` closes the environmen
 Twelve to nineteen tests, 94.5 to 100 percent. `fetch_data` on a fake driver with the real `resolve_database` alias pass-through (the version from the instance, else `TORCHCELL_KG_VERSION`; `fetch_size=1000`; `cypher_kwargs` reaching `run`; the driver closed once); a store built through the real `fetch_data`; `parallel_hash_computation` recomputed with hashlib; `_get_record` on a missing key refusing with `Record not found for key: data_9`; a cached reference index not rewritten after its JSON is deleted.
 
 Findings: `driver.close()` is not in a `finally`, so a consumer that stops early leaves the driver open (line 194); a query that returns no records writes an empty store then fails in the gene-set setter, and the next construction would reuse that store and skip the query (494, 162).
+
+## 2026.10.01 - Findings retired (issue #541)
+
+Both Findings are retired. An early-closed generator now ends with `close`; an empty query raises `EmptyQueryResultError` with the exact message, leaves only the empty `raw/lmdb` directory, and a second construction re-runs the query (two full driver sequences) and stores two records.

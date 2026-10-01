@@ -39,17 +39,25 @@ class NucleotideModel(ABC):
     @staticmethod
     @abstractmethod
     def _check_and_download_model() -> None:
-        pass
+        """Fetch the model weights if absent; every subclass implements it."""
+        raise NotImplementedError(
+            "NucleotideModel._check_and_download_model is abstract; "
+            "implement it in the subclass"
+        )
 
     @abstractmethod
     def load_model(self, model_name: str) -> None:
         """Load the tokenizer and model weights for the given model name."""
-        pass
+        raise NotImplementedError(
+            "NucleotideModel.load_model is abstract; implement it in the subclass"
+        )
 
     @abstractmethod
     def embed(self, sequences: list[str], mean_embedding: bool = False) -> torch.Tensor:
         """Return embeddings for the given sequences."""
-        pass
+        raise NotImplementedError(
+            "NucleotideModel.embed is abstract; implement it in the subclass"
+        )
 
 
 class PeptideModel(ABC):
@@ -79,17 +87,25 @@ class PeptideModel(ABC):
     @staticmethod
     @abstractmethod
     def _check_and_download_model(model_name: str) -> None:
-        pass
+        """Fetch the model weights if absent; every subclass implements it."""
+        raise NotImplementedError(
+            "PeptideModel._check_and_download_model is abstract; "
+            "implement it in the subclass"
+        )
 
     @abstractmethod
     def load_model(self, model_name: str) -> None:
         """Load the tokenizer and model weights for the given model name."""
-        pass
+        raise NotImplementedError(
+            "PeptideModel.load_model is abstract; implement it in the subclass"
+        )
 
     @abstractmethod
     def embed(self, sequences: list[str], mean_embedding: bool = False) -> torch.Tensor:
         """Return embeddings for the given sequences."""
-        pass
+        raise NotImplementedError(
+            "PeptideModel.embed is abstract; implement it in the subclass"
+        )
 
 
 @define

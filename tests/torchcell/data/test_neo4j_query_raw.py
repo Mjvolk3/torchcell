@@ -27,10 +27,10 @@ aliases ``latest`` and ``pinned``, so the real ``resolve_database`` runs its ali
 pass-through with ``probe=False``. The expected call sequence is driver(uri, auth), then
 ``session(database=<resolved>, fetch_size=1000)``, ``run(query, **cypher_kwargs)``, the
 session exit, then ``driver.close()``; the version is the instance's own when set and
-``TORCHCELL_KG_VERSION`` otherwise. A consumer that stops after the first record never
-reaches ``driver.close()`` (a Finding). A construction whose query returns no records
-writes an empty store and an empty reference index, then fails in the gene-set setter
-(a Finding). ``parallel_hash_computation`` returns ``(idx, sha256(json.dumps(ref,
+``TORCHCELL_KG_VERSION`` otherwise. A consumer that stops after the first record still
+closes the driver (the close is in a ``finally``). A construction whose query returns no
+records raises ``EmptyQueryResultError`` before any store file exists, so a retry runs
+the query again (both retired Findings of issue #541). ``parallel_hash_computation`` returns ``(idx, sha256(json.dumps(ref,
 sort_keys=True)))``, recomputed here with ``hashlib``; ``_get_record`` on a missing key
 raises ``Record not found for key: data_9``; and a cached reference index is returned
 without rewriting a deleted JSON file.
@@ -594,13 +594,14 @@ def test_a_query_built_store_uses_the_instance_version_and_cypher_parameters(
     raw.close_lmdb()
 
 
-def test_a_consumer_that_stops_early_leaves_the_driver_open(
+def test_a_consumer_that_stops_early_still_closes_the_driver(
     view: Neo4jQueryRaw, fake_neo4j: _FakeNeo4j
 ) -> None:
-    """Finding: ``driver.close()`` (neo4j_query_raw.py line 194) sits after the ``with``
-    block of the generator, not in a ``finally``, so closing the generator after one
-    record exits the session but never closes the driver. Pinned until the close moves
-    into a ``finally``.
+    """Closing the generator after one record exits the session, then closes the driver.
+
+    Contract (issue #541): ``driver.close()`` sits in a ``finally`` around the session,
+    so an early-stopping consumer gets the same call sequence as a full read, ending in
+    exactly one ``close`` after ``session_exit``.
     """
     records = view.fetch_data()
     assert isinstance(records, types.GeneratorType)
@@ -611,23 +612,24 @@ def test_a_consumer_that_stops_early_leaves_the_driver_open(
         "session",
         "run",
         "session_exit",
+        "close",
     ]
 
 
-def test_a_query_with_no_records_fails_after_writing_an_empty_store(
+def test_a_query_with_no_records_writes_no_store_and_a_retry_reruns_the_query(
     tmp_path: Path, fake_neo4j: _FakeNeo4j
 ) -> None:
-    """Finding: with zero records ``process()`` writes an empty ``data.mdb`` and an empty
-    reference index, then the gene-set setter (line 494) refuses the empty set, so the
-    constructor raises with the store left on disk. The next construction on that root
-    would find ``data.mdb`` and skip the query (line 162). Pinned until an empty result is
-    refused before the store is written. The store is not reopened here: the failed
-    constructor still holds its write handle.
+    """Zero records raise ``EmptyQueryResultError`` before any store file is written.
+
+    Contract (issue #541): the first record is read before the LMDB store is opened, so
+    an empty result leaves only the empty ``raw/lmdb`` directory (no ``data.mdb``, no
+    reference index, no gene set) and the driver is closed. A second construction on the
+    same root therefore runs the query again (a second driver/session/run/close sequence)
+    and, now that the query returns two rows, stores them as ``data_0`` and ``data_1``.
     """
     fake_neo4j.records = []
-    with pytest.raises(
-        ValueError, match="Cannot set an empty or None value for gene_set"
-    ):
+    lmdb_dir = tmp_path / "raw" / "lmdb"
+    with pytest.raises(neo4j_query_raw.EmptyQueryResultError) as excinfo:
         Neo4jQueryRaw(
             uri=URI,
             username="u",
@@ -636,10 +638,31 @@ def test_a_query_with_no_records_fails_after_writing_an_empty_store(
             query=QUERY,
             version="latest",
         )
-    raw = tmp_path / "raw"
-    assert sorted(p.name for p in raw.iterdir()) == [
-        "experiment_reference_index.json",
-        "lmdb",
+    assert str(excinfo.value) == (
+        f"the query returned no records; no store was written at {lmdb_dir}. "
+        f"Query: {QUERY}"
+    )
+    assert sorted(p.name for p in (tmp_path / "raw").iterdir()) == ["lmdb"]
+    assert list(lmdb_dir.iterdir()) == []
+    one_query = [
+        ("driver", URI, ("u", "p")),
+        ("session", {"database": "latest", "fetch_size": 1000}),
+        ("run", QUERY, {}),
+        ("session_exit",),
+        ("close",),
     ]
-    assert (raw / "experiment_reference_index.json").read_text() == "[]"
-    assert (raw / "lmdb" / "data.mdb").is_file()
+    assert fake_neo4j.calls == one_query
+
+    fake_neo4j.records = [_property_shape(RECORDS[0]), _property_shape(RECORDS[2])]
+    raw = Neo4jQueryRaw(
+        uri=URI,
+        username="u",
+        password="p",
+        root_dir=str(tmp_path),
+        query=QUERY,
+        version="latest",
+    )
+    assert fake_neo4j.calls == one_query + one_query
+    assert len(raw) == 2
+    assert raw[0:2] == [RECORDS[0], RECORDS[2]]
+    raw.close_lmdb()

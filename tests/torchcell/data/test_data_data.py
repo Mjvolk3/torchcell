@@ -17,8 +17,9 @@ here. Expected values:
   ``index`` key) instead of letting one format win.
 - ``repr`` shows at most the first five member indices, with ``...`` only past five.
 - ``mask(n)`` with a member index at or beyond ``n`` raises ``IndexError``.
-- ``ReferenceIndex`` indexes and iterates its entries (not pydantic's field tuples), and
-  its partition check reads indices only.
+- ``ReferenceIndex`` indexes and iterates its entries (not pydantic's field tuples),
+  refuses a gap in the partition, and (since issue #541) refuses two entries with equal
+  references by ``DuplicateReferenceError``.
 - ``compute_sha256_hash`` is SHA-256 of the UTF-8 bytes: the FIPS 180-2 test vectors for
   ``""`` and ``"abc"``, and ``"é"`` hashed as its two UTF-8 bytes ``c3 a9``.
 """
@@ -31,6 +32,7 @@ import pytest
 from pydantic import ValidationError
 
 from torchcell.data.data import (
+    DuplicateReferenceError,
     ExperimentReferenceIndex,
     ReferenceIndex,
     compute_sha256_hash,
@@ -172,22 +174,31 @@ def test_reference_index_refuses_a_gap_with_the_exact_message() -> None:
     ]
 
 
-def test_reference_index_accepts_one_reference_split_over_two_entries() -> None:
-    """Finding: two entries carrying EQUAL references pass the partition check.
+def test_reference_index_refuses_one_reference_split_over_two_entries() -> None:
+    """Two entries carrying EQUAL references are refused with ``DuplicateReferenceError``.
 
-    ``ReferenceIndex.validate_data`` (data.py lines 114-119) checks only that the member
-    indices tile ``range(N)``; nothing checks that each reference appears once, although
-    ``combine`` exists precisely to merge such entries. Pinned until the container
-    decides whether a split reference is legal.
+    Contract (issue #541): each reference appears in exactly one entry. The two entries
+    below tile ``range(3)`` (so the partition check alone would pass) and their
+    references are separately built but equal by value, at positions 0 and 2; entry 1
+    is a different reference and is not named. The refusal is a ``ValueError`` subclass,
+    so pydantic wraps it and keeps the exception object in the error context.
+    Evidence the refusal breaks no build: 38 built dev stores under
+    ``$DATA_ROOT/data/torchcell/`` hold no entries with equal references.
     """
-    ri = ReferenceIndex(
-        data=[
-            ExperimentReferenceIndex(reference=_reference("d"), member_indices=[0]),
-            ExperimentReferenceIndex(reference=_reference("d"), member_indices=[1]),
-        ]
-    )
-    assert len(ri) == 2
-    assert ri[0].reference == ri[1].reference
+    with pytest.raises(ValidationError) as excinfo:
+        ReferenceIndex(
+            data=[
+                ExperimentReferenceIndex(reference=_reference("d"), member_indices=[0]),
+                ExperimentReferenceIndex(reference=_reference("e"), member_indices=[1]),
+                ExperimentReferenceIndex(reference=_reference("d"), member_indices=[2]),
+            ]
+        )
+    errors = excinfo.value.errors()
+    assert [e["msg"] for e in errors] == [
+        "Value error, entries 0 and 2 carry equal references; each reference must "
+        "appear in exactly one entry (merge them with ExperimentReferenceIndex.combine)"
+    ]
+    assert type(errors[0]["ctx"]["error"]) is DuplicateReferenceError
 
 
 def test_compute_sha256_hash_hashes_the_utf8_bytes() -> None:

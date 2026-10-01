@@ -16,8 +16,8 @@ downloads weights. What a fake can reach is therefore the whole module:
   ``ValueError("Max size has not been set for this model.")``.
 * Instantiating a subclass that leaves any of the three abstract methods
   unimplemented raises TypeError naming the missing ones, in sorted order.
-* The abstract bodies are ``pass``, so calling them through the base returns None
-  (a Finding: ``super().embed(...)`` gives None, not NotImplementedError).
+* The abstract bodies raise ``NotImplementedError`` naming the base and the method, so
+  ``super().embed(...)`` is an error, never a silent None (issue #541).
 * ``pretrained_LLM`` is an attrs class: positional order (tokenizer, model), value
   equality over both fields, and no validation of the declared ``AutoTokenizer`` /
   ``AutoModelForMaskedLM`` types.
@@ -169,17 +169,30 @@ def test_pretrained_llm_is_a_positional_attrs_pair_with_value_equality() -> None
 @pytest.mark.parametrize(
     ("base", "fake"), [(NucleotideModel, _FakeNucleotide), (PeptideModel, _FakePeptide)]
 )
-def test_the_abstract_bodies_return_none_when_a_subclass_calls_super(
+def test_the_abstract_bodies_raise_when_a_subclass_calls_super(
     base: Any, fake: Any
 ) -> None:
-    """Finding: the three abstract methods have ``pass`` bodies (llm.py:42, 47, 52 and
-    82, 87, 92) rather than raising NotImplementedError, so a subclass that delegates
-    with ``super().embed(...)`` silently receives None instead of an error or a
-    tensor. Pinned until the bodies raise.
+    """Each abstract body raises ``NotImplementedError`` naming the base and the method.
+
+    Contract (issue #541): a subclass that delegates with ``super().embed(...)`` gets an
+    error, never a silent None. The failed calls leave the wrapper as its loader set it.
     """
     wrapper = fake("m", max_size=1)
+    name = base.__name__
     download_args: list[str] = [] if base is NucleotideModel else ["m"]
-    assert base.embed(wrapper, ["ACGT"]) is None
-    assert base.load_model(wrapper, "other") is None
-    assert base._check_and_download_model(*download_args) is None
+    with pytest.raises(NotImplementedError) as embed_error:
+        base.embed(wrapper, ["ACGT"])
+    assert str(embed_error.value) == (
+        f"{name}.embed is abstract; implement it in the subclass"
+    )
+    with pytest.raises(NotImplementedError) as load_error:
+        base.load_model(wrapper, "other")
+    assert str(load_error.value) == (
+        f"{name}.load_model is abstract; implement it in the subclass"
+    )
+    with pytest.raises(NotImplementedError) as download_error:
+        base._check_and_download_model(*download_args)
+    assert str(download_error.value) == (
+        f"{name}._check_and_download_model is abstract; implement it in the subclass"
+    )
     assert wrapper.tokenizer == "tokenizer:m"

@@ -12,6 +12,7 @@ import os
 import os.path as osp
 from collections.abc import Iterator, Sequence
 from concurrent.futures import ProcessPoolExecutor
+from itertools import chain
 from typing import Any, cast
 
 import lmdb
@@ -28,6 +29,14 @@ from torchcell.sequence import GeneSet
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
+
+
+class EmptyQueryResultError(ValueError):
+    """The Cypher query returned no records, so no store is written.
+
+    Refused before the LMDB store is created: an empty ``data.mdb`` would make the next
+    construction on the same root skip the query and reuse the empty store.
+    """
 
 
 def parallel_hash_computation(data: tuple[int, Any]) -> tuple[int, str]:
@@ -160,7 +169,6 @@ class Neo4jQueryRaw:
         os.makedirs(self.lmdb_dir, exist_ok=True)
 
         if not os.path.exists(osp.join(self.lmdb_dir, "data.mdb")):
-            self._init_lmdb(readonly=False)
             self.process()
             self.close_lmdb()
 
@@ -184,14 +192,18 @@ class Neo4jQueryRaw:
             "Connecting to Neo4j (%s -> %s) and executing query...", version, database
         )
         driver = GraphDatabase.driver(self.uri, auth=(self.username, self.password))
-        # 1000 is default
-        with driver.session(database=database, fetch_size=1000) as session:
-            log.info("Running query...")
-            result = session.run(self.query, **self.cypher_kwargs)
-            log.info("Query executed, about to process results...")
-            yield from result
-        log.info("All records processed.")
-        driver.close()
+        # The close is in ``finally`` so a consumer that stops early (closing the
+        # generator) still closes the driver, after the session exits.
+        try:
+            # 1000 is default
+            with driver.session(database=database, fetch_size=1000) as session:
+                log.info("Running query...")
+                result = session.run(self.query, **self.cypher_kwargs)
+                log.info("Query executed, about to process results...")
+                yield from result
+            log.info("All records processed.")
+        finally:
+            driver.close()
 
     def _init_lmdb(self, readonly: bool = True) -> None:
         """Initialize the LMDB environment."""
@@ -212,10 +224,23 @@ class Neo4jQueryRaw:
             txn.put(key, value)
 
     def process(self) -> None:
-        """Stream query results into LMDB and build the reference and gene-set indices."""
+        """Stream query results into LMDB and build the reference and gene-set indices.
+
+        The first record is read before the store is opened for writing: a query that
+        returns none raises ``EmptyQueryResultError`` with no ``data.mdb`` on disk, so a
+        retry on the same root runs the query again.
+        """
         log.info("Processing data...")
+        records = self.fetch_data()
+        first = next(records, None)
+        if first is None:
+            raise EmptyQueryResultError(
+                f"the query returned no records; no store was written at "
+                f"{self.lmdb_dir}. Query: {self.query}"
+            )
+        self._init_lmdb(readonly=False)
         i = -1
-        for i, record in tqdm(enumerate(self.fetch_data())):
+        for i, record in tqdm(enumerate(chain([first], records))):
             # Two record shapes, by what the query RETURNs. Property shape
             # (e_serialized/ref_serialized strings) is REQUIRED at scale: returning
             # whole nodes makes the driver register every hydrated Node in the

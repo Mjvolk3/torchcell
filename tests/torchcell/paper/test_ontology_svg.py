@@ -427,19 +427,30 @@ def test_inheritance_elbow_within_a_lane_is_exact() -> None:
     assert out.count('class="inherit"') == 3
 
 
-def test_a_parent_right_of_its_child_draws_the_elbow_through_both_cards() -> None:
-    """Finding: the elbow assumes the parent is LEFT of the child
-    (ontology_svg.py:435-441, mid = parent right edge + 23). ProvenanceGapMixin sits in
-    column 3 and Phenotype in column 2, as in the real schema, so the path starts at
-    Phenotype's left edge (1058), runs right across Phenotype and past the parent's
-    right edge to 1984 + 23 = 2007, then comes back to 1991. Pinned until the router
-    handles a parent on the right.
+def test_a_parent_right_of_its_child_is_reached_from_the_child_right_edge() -> None:
+    """A parent wholly right of its child is entered on its LEFT edge, head pointing right.
+
+    Contract (issue #541): ProvenanceGapMixin (x 1726, cy 103.5) sits right of Phenotype
+    (x 1058, w 258, cy 116.1), as in the real schema. The elbow leaves Phenotype's right
+    edge 1316, turns at 1726 - LANE_PAD / 2 = 1713 (inside the provenance lane's left
+    pad, which holds no card), and ends at the head base 1726 - 7 = 1719; the head tip
+    is the parent's left edge with ``l-7``. No coordinate of the path lies inside either
+    card's x span except the endpoints on their edges. The left-parent elbow of
+    FitnessPhenotype is unchanged.
     """
     graph = _graph()
     out = svg._inheritance_svg(graph, svg.build_layout(graph))
     assert (
-        '<path class="inherit" d="M1058.0 116.1 H2007.0 V103.5 H1991.0" fill="none" '
+        '<path class="inherit" d="M1316.0 116.1 H1713.0 V103.5 H1719.0" fill="none" '
         'stroke="#9673A6" stroke-width="0.9" stroke-opacity="0.85"/>'
+        '<path class="inherit-head" d="M1726.0 103.5 l-7 -3.4 v6.8 Z" fill="#FFFFFF" '
+        'stroke="#9673A6" stroke-width="0.9"/>'
+    ) in out
+    assert (
+        '<path class="inherit" d="M1362.0 116.1 H1339.0 V116.1 H1323.0" fill="none" '
+        'stroke="#9673A6" stroke-width="0.9" stroke-opacity="0.85"/>'
+        '<path class="inherit-head" d="M1316.0 116.1 l7 -3.4 v6.8 Z" fill="#FFFFFF" '
+        'stroke="#9673A6" stroke-width="0.9"/>'
     ) in out
 
 
@@ -644,7 +655,7 @@ def test_lane_body_lines_reuse_a_repeated_family_and_cap_the_line_count() -> Non
     ]
 
 
-def test_schematic_blocks_arrows_footer_and_the_elbow_overshoot() -> None:
+def test_schematic_blocks_arrows_footer_and_the_elbow_route() -> None:
     """In points: 179 mm = 507.4; columns (507.4 - 20 - 18) / 3 = 156.47 wide at x 10,
     175.47, 340.93. Block height 20 + 7.6 lines + 7: genotype (3 lines) 49.8,
     environment (0) 27, experiment and provenance and enum (1) 34.6, phenotype (2) 42.2.
@@ -655,13 +666,13 @@ def test_schematic_blocks_arrows_footer_and_the_elbow_overshoot() -> None:
 
     The experiment -> phenotype arrow is straight: both centers sit at 78.9, so it is
     "M331.9 78.9 H336.5" (tip 4.4 short of 340.9). The genotype -> experiment arrow is
-    an elbow from (166.5, 60.9) to (175.5, 74.1) with radius min(3, 13.16 / 2, 4.5) = 3.
+    an elbow from (166.47, 60.9) to the head base at 175.47 - 4.4 = 171.07, y 74.1.
 
-    Finding: its last leg runs BACKWARD, from the arc end at mid + r = 174.0 to the tip
-    at 171.1 (the gutter is 9 wide, so mid + 3 = xb - 1.5 is always right of
-    xb - 4.4). The 2.9-unit backtrack lies under the arrowhead and is invisible, but it
-    contradicts "out horizontally, down ... then horizontally into the target"
-    (ontology_svg.py:767-781). Pinned until the tip is clamped to mid + r.
+    Contract (issue #541): the vertical leg sits midway between the source and the head
+    base, mid = (166.47 + 171.07) / 2 = 168.77, with radius min(3, 13.2 / 2, 4.6 / 2)
+    = 2.3, so the first arc starts at mid - r = 166.47 and the last arc ends at
+    mid + r = 171.07, exactly the tip: neither horizontal leg runs backward (before the
+    fix the last leg ran 2.9 units backward under the head, from 174.0 to 171.1).
     """
     document = svg.render_schematic_svg(_graph(), explore_url="https://x")
     root = ET.fromstring(document)
@@ -682,10 +693,10 @@ def test_schematic_blocks_arrows_footer_and_the_elbow_overshoot() -> None:
     ]
     spines = [p.get("d") for p in root.iter(f"{NS}path") if p.get("fill") == "none"]
     assert spines == [
-        "M166.5 60.9 H168.0 A3.0 3.0 0 0 1 171.0 63.9 V71.1 "
-        "A3.0 3.0 0 0 0 174.0 74.1 H171.1",
-        "M166.5 108.3 H168.0 A3.0 3.0 0 0 0 171.0 105.3 V86.7 "
-        "A3.0 3.0 0 0 1 174.0 83.7 H171.1",
+        "M166.5 60.9 H166.5 A2.3 2.3 0 0 1 168.8 63.2 V71.8 "
+        "A2.3 2.3 0 0 0 171.1 74.1 H171.1",
+        "M166.5 108.3 H166.5 A2.3 2.3 0 0 0 168.8 106.0 V86.0 "
+        "A2.3 2.3 0 0 1 171.1 83.7 H171.1",
         "M331.9 78.9 H336.5",
     ]
     texts = [t.text for t in root.iter(f"{NS}text")]
@@ -760,6 +771,9 @@ def test_real_schema_genotype_backbone_edge_is_never_drawn_bold(
     "GenePerturbation") (ontology_svg.py:63) matches no edge: the map draws one faint
     hairline per concrete class instead of the bold genotype-to-perturbation spine the
     legend promises. Pinned until the backbone test accepts a subclass target.
+    Left open by the issue #541 fix: matching every descendant of GenePerturbation was
+    rendered and drew twenty bold curves that bury the genotype lane, so which edge
+    is the genotype spine is a figure-design decision for the author.
     """
     concrete: list[str] = [
         e.target

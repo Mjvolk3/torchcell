@@ -25,3 +25,14 @@ created: 1741660308024
 | `r_4596`     | Zn(2+) exchange    |                       1000.0 | `s_4203`        | Zn(2+)            | `s_4203 <=>`       |
 | `r_4597`     | Mg(2+) exchange    |                       1000.0 | `s_4204`        | Mg(2+)            | `s_4204 <=>`       |
 | `r_4600`     | Ca(2+) exchange    |                       1000.0 | `s_4199`        | Ca(2+)            | `s_4199 <=>`       |
+
+## 2026.09.30 - Memberless reactions refused; transport by compartment
+
+Four fixes from issue #534.
+
+- **A reaction with no metabolites raises `MemberlessReactionError` (a `ValueError`) from both `reaction_map` and `bipartite_graph`.** hypernetx drops a memberless hyperedge, so such a reaction used to vanish from the hypergraph while the bipartite graph kept it as an isolated node, and the two views disagreed on the reaction set. Including it in the hypergraph is not possible, so both views refuse it with the reaction ids in the message. yeast-GEM 9.0.2 has none among its 4,131 reactions (checked against the checkout), so the served graphs are unchanged.
+- **`analyze_reactions_without_genes` classifies transport by compartment.** A gene-free reaction whose metabolites span more than one compartment is transport. The old rule compared id suffixes, which on `s_NNNN` ids called `s_0001 --> s_0002` in one compartment transport.
+- **`main_with_gene_set` passes `induced_gene_set=`**, the field's real name; it used to raise `TypeError` on `gene_set`.
+- **`plot_random_network` raises `ValueError` for an unknown layout**, naming `spring`, `spectral`, `kamada_kawai`; it used to fail with `UnboundLocalError` at the draw call.
+
+Tests: `test_memberless_reaction_is_refused_by_both_graph_views`, `test_transport_rule_reads_compartments_not_id_suffixes`, `test_main_with_gene_set_filters_by_the_induced_gene_set`, `test_plot_random_network_unknown_layout` in [[tests.torchcell.metabolism.test_yeast_GEM]].

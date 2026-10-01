@@ -36,6 +36,7 @@ import lightning as L
 import pytest
 import torch
 from torch import nn
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader, Dataset
 from torch_geometric.data import HeteroData
 
@@ -357,28 +358,81 @@ def test_fast_dev_run_exact_losses_metrics_step_and_cosine_schedule(
     assert calls == []
 
 
-def test_the_default_plateau_scheduler_fails_the_first_epoch_end(tmp_path: Any) -> None:
-    """Finding: ``configure_optimizers`` falls back to ReduceLROnPlateau for any config
-    without a ``type`` (int_transformer_cell.py:1534, 1567), and under manual
-    optimization ``on_train_epoch_end`` asserts the scheduler is NOT a plateau
-    scheduler (line 1374), so the default scheduler config cannot finish one training
-    epoch: the step runs, then the epoch end raises. Pinned until the default is a
-    scheduler the manual step can drive, or the plateau case is stepped on its metric.
+def test_the_default_plateau_scheduler_steps_on_the_validation_mse(
+    tmp_path: Any,
+) -> None:
+    """The default scheduler (no ``type``) is ReduceLROnPlateau on ``val/gene_interaction/MSE``.
+
+    Contract (issue #534): under manual optimization Lightning steps no scheduler, so
+    the plateau scheduler is stepped once per validation epoch on its monitor, which
+    validation computes before ``on_train_epoch_end``; the training epoch end steps only
+    epoch-interval schedulers. With a validation loop, one fast_dev_run epoch steps it
+    once on the val MSE ``((s - 2)^2 + (3s - 5)^2) / 2`` with ``s = 0.9999 + 0.01`` (the
+    scale after the first AdamW step), which becomes its ``best``; one step cannot
+    reduce the rate, so it stays 1e-2. Without a validation loop the epoch completes
+    and the scheduler is never stepped.
     """
     task = _fixed_task(lr_scheduler_config={"factor": 0.5})
-    trainer = L.Trainer(
-        fast_dev_run=True,
-        accelerator="cpu",
-        devices=1,
-        logger=False,
-        enable_checkpointing=False,
-        enable_progress_bar=False,
-        enable_model_summary=False,
-        default_root_dir=tmp_path,
+    trainer = _fdr(tmp_path)
+    trainer.fit(
+        task, train_dataloaders=_fixed_loader(), val_dataloaders=_fixed_loader()
     )
-    with pytest.raises(AssertionError):
-        trainer.fit(task, train_dataloaders=_fixed_loader())
     assert trainer.global_step == 1
+    plateau = trainer.lr_scheduler_configs[0].scheduler
+    assert isinstance(plateau, ReduceLROnPlateau)
+    s = 0.9999 + 0.01
+    val_mse = ((s - 2) ** 2 + (3 * s - 5) ** 2) / 2
+    assert plateau.last_epoch == 1
+    assert float(plateau.best) == pytest.approx(val_mse, rel=1e-5)
+    assert trainer.callback_metrics["val/gene_interaction/MSE"].item() == (
+        pytest.approx(val_mse, rel=1e-5)
+    )
+    assert trainer.optimizers[0].param_groups[0]["lr"] == pytest.approx(1e-2)
+    assert sorted(trainer.callback_metrics) == [
+        "learning_rate",
+        "train/cls_token_norm",
+        "train/gene_interaction/MSE",
+        "train/gene_interaction/Pearson",
+        "train/gene_interaction/RMSE",
+        "train/graph_reg_loss",
+        "train/loss",
+        "train/transformed/gene_interaction/MSE",
+        "train/transformed/gene_interaction/Pearson",
+        "train/transformed/gene_interaction/RMSE",
+        "train/z_p_norm",
+        "val/cls_token_norm",
+        "val/gene_interaction/MSE",
+        "val/gene_interaction/Pearson",
+        "val/gene_interaction/RMSE",
+        "val/graph_reg_loss",
+        "val/loss",
+        "val/residual_update_ratio",
+        "val/transformed/gene_interaction/MSE",
+        "val/transformed/gene_interaction/Pearson",
+        "val/transformed/gene_interaction/RMSE",
+        "val/z_p_norm",
+    ]
+
+    train_only = _fixed_task(lr_scheduler_config={"factor": 0.5})
+    trainer_train_only = _fdr(tmp_path)
+    trainer_train_only.fit(train_only, train_dataloaders=_fixed_loader())
+    assert trainer_train_only.global_step == 1
+    unstepped = trainer_train_only.lr_scheduler_configs[0].scheduler
+    assert isinstance(unstepped, ReduceLROnPlateau)
+    assert unstepped.last_epoch == 0
+    assert sorted(trainer_train_only.callback_metrics) == [
+        "learning_rate",
+        "train/cls_token_norm",
+        "train/gene_interaction/MSE",
+        "train/gene_interaction/Pearson",
+        "train/gene_interaction/RMSE",
+        "train/graph_reg_loss",
+        "train/loss",
+        "train/transformed/gene_interaction/MSE",
+        "train/transformed/gene_interaction/Pearson",
+        "train/transformed/gene_interaction/RMSE",
+        "train/z_p_norm",
+    ]
 
 
 def _fdr(tmp_path: Any) -> L.Trainer:
@@ -597,14 +651,14 @@ def test_validation_accumulates_ratios_and_degree_bias_with_edge_recovery_off(
     assert (acc["count_nodes_deg"], acc["count_batches"]) == (0, 0)
 
 
-def test_point_dist_graph_reg_logs_only_scalar_components(
+def test_point_dist_graph_reg_and_generic_losses_log_components_alike(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Finding: the PointDistGraphReg branch (int_transformer_cell.py:862-878) logs a
-    one-element tensor and a number but silently drops a multi-element tensor, while
-    the generic tuple branch (lines 915-923) logs it as ``_0``, ``_1``. A string is
-    skipped by both; a non-dict second element logs nothing. Pinned until the two
-    branches share one component logger.
+    """Both loss branches share one component logger (issue #534).
+
+    A one-element tensor and a number log as ``{stage}/{key}``; a multi-element tensor
+    logs element by element as ``_0``, ``_1`` (the PointDistGraphReg branch used to drop
+    it); a string is skipped; a non-dict second element logs nothing.
     """
     from torchcell.losses.point_dist_graph_reg import PointDistGraphReg
 
@@ -626,9 +680,15 @@ def test_point_dist_graph_reg_logs_only_scalar_components(
     log = _recording(monkeypatch, task)
     loss, _, _ = task._shared_step(_fixed_batch(), 0, "train")
     assert loss.item() == 0.5  # the graph term is the loss's own, not added again
-    extra = {k: v for k, v in log.values.items() if k in {"train/one", "train/count"}}
-    assert extra == pytest.approx({"train/one": 0.1, "train/count": 3.0})
-    assert [k for k in log.values if "vec" in k or "note" in k] == []
+    component_keys = {"train/one", "train/count", "train/vec_0", "train/vec_1"}
+    extra = {k: v for k, v in log.values.items() if k in component_keys}
+    assert extra == pytest.approx(
+        {"train/one": 0.1, "train/count": 3.0, "train/vec_0": 1.0, "train/vec_1": 2.0}
+    )
+    assert [k for k in log.values if "vec" in k or "note" in k] == [
+        "train/vec_0",
+        "train/vec_1",
+    ]
 
     class _Tuple(nn.Module):
         def forward(self, *args: Any) -> tuple[torch.Tensor, Any]:
@@ -637,7 +697,9 @@ def test_point_dist_graph_reg_logs_only_scalar_components(
     generic = _fixed_task(loss_func=_Tuple())
     generic_log = _recording(monkeypatch, generic)
     generic._shared_step(_fixed_batch(), 0, "train")
-    assert generic_log.values["train/vec_1"] == 2.0
+    assert {k: v for k, v in generic_log.values.items() if k in component_keys} == (
+        extra
+    )
     assert "train/note" not in generic_log.values
 
     bare = _fixed_task(loss_func=_Components(None))
@@ -668,9 +730,9 @@ def test_inverse_transform_output_shapes(monkeypatch: pytest.MonkeyPatch) -> Non
     Predictions [1, 3] invert to [10, 30] against originals [20, 50]: (100 + 400) / 2.
     A single genotype squeezes to 0-dim: 10 against 20 is MSE 100.
 
-    Finding: an inverse whose values are not a tensor (line 1017) is ignored and the
-    ORIGINAL-scale metrics are computed on the transformed predictions [1, 3] against
-    [20, 50]: (19^2 + 47^2) / 2 = 1285, with no warning. Pinned until that case raises.
+    An inverse whose values are not a tensor raises ``TypeError`` naming the transform
+    and the returned type, and updates no original-scale metric (issue #534; it used to
+    be ignored, scoring the transformed [1, 3] against [20, 50] as MSE 1285).
     """
     column = _fixed_task(inverse_transform=_Inverse(lambda v: (v * 10).unsqueeze(1)))
     _recording(monkeypatch, column)
@@ -687,9 +749,13 @@ def test_inverse_transform_output_shapes(monkeypatch: pytest.MonkeyPatch) -> Non
     assert mse.item() == pytest.approx(100.0)
     listed = _fixed_task(inverse_transform=_Inverse(lambda v: (v * 10).tolist()))
     _recording(monkeypatch, listed)
-    listed._shared_step(_fixed_batch([2.0, 5.0], [20.0, 50.0]), 0, "val")
-    mse = listed._compute_metrics_safely(listed.val_metrics)["val/gene_interaction/MSE"]
-    assert mse.item() == pytest.approx(1285.0)
+    with pytest.raises(
+        TypeError,
+        match=r"^inverse_transform _Inverse returned phenotype_values of type list; "
+        r"expected torch\.Tensor$",
+    ):
+        listed._shared_step(_fixed_batch([2.0, 5.0], [20.0, 50.0]), 0, "val")
+    assert listed.val_metrics["MSE"].update_count == 0
 
 
 def test_all_nan_targets_update_no_metric(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -818,16 +884,17 @@ def test_accumulation_schedule_keeps_the_last_threshold_reached(
 
 
 def test_diagnostic_plots_skip_empty_accumulators(
-    tmp_path: Any, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Any, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """Zero counts contribute nothing: no attention plot, no recall, mass or per-graph plot.
+    """Zero counts contribute nothing: no attention, recall, precision, mass or per-graph plot.
 
-    Finding: ``_plot_edge_recovery_metrics`` builds ``precision_metrics[key] = {}``
-    for every accumulator before checking counts (line 169), so the dict is non-empty
-    and the precision plot is still called, with an empty inner dict. Pinned until the
-    empty inner dicts are dropped. With one counted attention layer and an empty
-    residual accumulator, the attention plot gets ``residual_ratios=None`` and
-    ``gradient_norms=None``.
+    A graph with no counted node at any k is left out of the precision metrics, so
+    with every graph empty the precision plot is skipped with one logged INFO line
+    rather than called with an empty inner dict (issue #534). Skipping, not raising:
+    an empty accumulator is a legitimate state (no node reached degree k) and the
+    recall and mass plots already skip it. A graph counted at some k plots only those
+    k. With one counted attention layer and an empty residual accumulator, the
+    attention plot gets ``residual_ratios=None`` and ``gradient_norms=None``.
     """
     calls: list[tuple[str, Any]] = []
 
@@ -860,9 +927,31 @@ def test_diagnostic_plots_skip_empty_accumulators(
             "count_batches": 0,
         }
     }
+    with caplog.at_level("INFO", logger="torchcell.trainers.int_transformer_cell"):
+        task._plot_edge_recovery_metrics()
+    assert calls == []
+    assert [
+        r.getMessage()
+        for r in caplog.records
+        if r.name == "torchcell.trainers.int_transformer_cell"
+    ] == [
+        "Skipping the edge recovery precision plot at epoch 0: no graph has a "
+        "counted node at any k."
+    ]
+    counts = dict.fromkeys(task.edge_recovery_ks, 0)
+    counts[32] = 4
+    task.edge_recovery_accumulators["g_L1_H0"] = {
+        "count_nodes_deg": 0,
+        "count_nodes_prec": counts,
+        "sum_prec": dict.fromkeys(task.edge_recovery_ks, 1.0),
+        "count_batches": 0,
+    }
     task._plot_edge_recovery_metrics()
     assert calls == [
-        ("plot_edge_recovery_precision", ({"g_L0_H0": {}}, [8, 32, 128, 320], 0, None))
+        (
+            "plot_edge_recovery_precision",
+            ({"g_L1_H0": {32: 0.25}}, [8, 32, 128, 320], 0, None),
+        )
     ]
     calls.clear()
     zero = {"count": 0}

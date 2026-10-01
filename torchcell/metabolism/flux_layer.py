@@ -479,12 +479,17 @@ class FluxLayer(nn.Module):
                 nn.Linear(d, d), nn.ReLU(), nn.Linear(d, self.n_latent)
             )
         else:
+            # The box head exists only in the box arm: the nullspace arm reads
+            # ``latent_mlp`` alone, so building these there leaves parameters that never
+            # receive a gradient and inflate the parameter count.
             self.n_latent = 0
-        self.reaction_embedding = nn.Embedding(self.n_reactions, cfg.reaction_embed_dim)
-        z_out = 2 if cfg.stochastic else 1
-        self.flux_mlp = nn.Sequential(
-            nn.Linear(d + cfg.reaction_embed_dim, d), nn.ReLU(), nn.Linear(d, z_out)
-        )
+            self.reaction_embedding = nn.Embedding(
+                self.n_reactions, cfg.reaction_embed_dim
+            )
+            z_out = 2 if cfg.stochastic else 1
+            self.flux_mlp = nn.Sequential(
+                nn.Linear(d + cfg.reaction_embed_dim, d), nn.ReLU(), nn.Linear(d, z_out)
+            )
         # A learned gate on non-deleted genes: dosage, alleles, over-expression. Deleted
         # genes never reach it.
         self.availability = nn.Linear(d, 1)
@@ -628,9 +633,12 @@ class FluxLayer(nn.Module):
                 1, self.unit_reaction, per_unit.unsqueeze(0).expand(c_j.shape[0], -1)
             )
             cap = cap * c_j
-            capped = torch.where(self.has_gpr.unsqueeze(0), cap, ub.abs())
-            ub = torch.minimum(ub, capped)
-            lb = torch.maximum(lb, -capped)
+            # Capacity bounds |v_j| <= cap_j, so it clips both sides symmetrically. A
+            # reaction with no GPR has no enzyme to bound it and keeps its own [lb, ub]:
+            # a reverse-only box [-10, 0] must stay [-10, 0], not collapse to 0.
+            has_gpr = self.has_gpr.unsqueeze(0)
+            ub = torch.where(has_gpr, torch.minimum(ub, cap), ub)
+            lb = torch.where(has_gpr, torch.maximum(lb, -cap), lb)
         return lb, ub
 
     def reaction_potential(

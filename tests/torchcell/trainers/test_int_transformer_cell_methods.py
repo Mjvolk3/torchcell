@@ -752,7 +752,10 @@ def test_train_epoch_end_logs_resets_and_steps_the_scheduler(
 ) -> None:
     """Metrics are logged under both prefixes and reset; the manual scheduler steps once:
     cosine annealing from 1e-2 with T_max 2 lands on 1e-2 * (1 + cos(pi / 2)) / 2 = 5e-3.
-    A ReduceLROnPlateau scheduler is refused by the assertion at line 1374.
+    A ReduceLROnPlateau scheduler is left alone here (issue #534: it is stepped on its
+    monitor in ``on_validation_epoch_end``), so the epoch end completes with its
+    ``last_epoch`` still 0 and the rate unchanged. With two schedulers Lightning returns
+    a list and the first one is the one stepped.
     """
     task, log = _task(monkeypatch)
     _attach_trainer(task, tmp_path)
@@ -774,8 +777,19 @@ def test_train_epoch_end_logs_resets_and_steps_the_scheduler(
 
     plateau = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
     task.trainer.strategy.lr_scheduler_configs = [LRSchedulerConfig(plateau)]
-    with pytest.raises(AssertionError):
-        task.on_train_epoch_end()
+    task.on_train_epoch_end()
+    assert plateau.last_epoch == 0
+    assert optimizer.param_groups[0]["lr"] == pytest.approx(5e-3)
+
+    fresh = torch.optim.SGD(task.parameters(), lr=1e-2)
+    first = torch.optim.lr_scheduler.CosineAnnealingLR(fresh, T_max=2)
+    task.trainer.strategy.lr_scheduler_configs = [
+        LRSchedulerConfig(first),
+        LRSchedulerConfig(plateau),
+    ]
+    task.on_train_epoch_end()
+    assert fresh.param_groups[0]["lr"] == pytest.approx(5e-3)
+    assert plateau.last_epoch == 0
 
 
 def test_train_epoch_end_plots_scheduled_samples(

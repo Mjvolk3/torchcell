@@ -40,6 +40,16 @@ DEFAULT_YEAST_GEM_ROOT = osp.join(
 )
 
 
+class MemberlessReactionError(ValueError):
+    """A reaction with no metabolites, which neither graph view can represent.
+
+    hypernetx drops a hyperedge with no members, so such a reaction would vanish from
+    ``reaction_map`` while ``bipartite_graph`` kept it as an isolated node. Both views
+    refuse it instead, so they always agree on the reaction set. yeast-GEM 9.0.2 has
+    none of its 4,131 reactions in this state.
+    """
+
+
 @define
 class YeastGEM:
     """Download, load, and expose the yeast-GEM genome-scale model."""
@@ -102,9 +112,23 @@ class YeastGEM:
 
         return combinations
 
+    def _refuse_memberless_reactions(self) -> None:
+        """Raise :class:`MemberlessReactionError` naming every reaction without species."""
+        memberless = [r.id for r in self.model.reactions if not r.metabolites]
+        if memberless:
+            raise MemberlessReactionError(
+                f"Reactions with no metabolites cannot be represented in "
+                f"reaction_map or bipartite_graph: {memberless}"
+            )
+
     @property
     def reaction_map(self) -> hnx.Hypergraph:
-        """Create a hypergraph where edges represent reactions with gene combinations."""
+        """Create a hypergraph where edges represent reactions with gene combinations.
+
+        Raises:
+            MemberlessReactionError: if any reaction has no metabolites.
+        """
+        self._refuse_memberless_reactions()
         # Dictionary to store edges for the hypergraph
         edge_dict = {}
         edge_props = {}
@@ -251,8 +275,12 @@ class YeastGEM:
 
         Returns:
             nx.DiGraph: A directed bipartite graph
+
+        Raises:
+            MemberlessReactionError: if any reaction has no metabolites.
         """
         if getattr(self, "_bipartite_graph", None) is None:
+            self._refuse_memberless_reactions()
             # Create directed bipartite graph
             B = nx.DiGraph()
 
@@ -675,6 +703,11 @@ def plot_random_network(
     elif layout == "kamada_kawai":
         layout_kwargs = {}
         layout = kamada_kawai_layout
+    else:
+        raise ValueError(
+            f"Unknown layout {layout!r}; valid layouts are "
+            "'spring', 'spectral', 'kamada_kawai'."
+        )
 
     hnx.draw(
         H_sub,
@@ -913,7 +946,7 @@ def main_with_gene_set() -> None:
     genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
     genome.drop_chrmt()
 
-    yeast_gem = YeastGEM(gene_set=genome.gene_set)  # type: ignore[call-arg]  # demo helper passes nonexistent kwarg (field is `induced_gene_set`); pre-existing runtime bug, left as-is to preserve behavior
+    yeast_gem = YeastGEM(induced_gene_set=genome.gene_set)
     H = yeast_gem.reaction_map
     print(f"H num edges with gene_set edge drop: {len(H.edges)}")
 
@@ -1166,15 +1199,16 @@ def analyze_reactions_without_genes(yeast_gem: YeastGEM) -> dict[str, Any]:
         for r in no_gene_rule
         if len(yeast_gem.model.reactions.get_by_id(r).metabolites) == 1
     ]
+    # Transport moves species across compartments, so it is read from the metabolites'
+    # compartment field. yeast-GEM ids are ``s_NNNN`` with the compartment stored
+    # separately, so comparing id suffixes would call ``s_0001 --> s_0002`` transport.
     transport_rxns = [
         r
         for r in no_gene_rule
-        if any(
-            m1.id[:-1] == m2.id[:-1] and m1.id[-1] != m2.id[-1]
-            for m1 in yeast_gem.model.reactions.get_by_id(r).metabolites
-            for m2 in yeast_gem.model.reactions.get_by_id(r).metabolites
-            if m1 != m2
+        if len(
+            {m.compartment for m in yeast_gem.model.reactions.get_by_id(r).metabolites}
         )
+        > 1
     ]
     other_rxns = [
         r for r in no_gene_rule if r not in exchange_rxns and r not in transport_rxns

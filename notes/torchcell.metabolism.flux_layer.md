@@ -28,3 +28,10 @@ is a uniform rescaling of the box, not an enzyme constraint, and a loss curve ca
 them apart.
 
 Full write-up: [[experiments.026-metabolism-flux.enzyme-constrained-thermodynamic-flux-layer]]
+
+## 2026.09.30 - No-GPR boxes keep their bounds; each arm builds only its own head
+
+Two fixes from issue #534.
+
+- **Enzyme capacity no longer touches a reaction without a GPR.** `dynamic_box` used to cap a no-GPR reaction at `ub.abs()` on both sides, so an asymmetric box [-10, 5] became [-5, 5] and a reverse-only box [-10, 0] collapsed to the point 0 and carried no flux. Capacity is `|v_j| <= cap_j` and applies only where a GPR names an enzyme; a no-GPR reaction now keeps its own (availability-scaled) `[lb, ub]`. Evidence: `test_dynamic_box_enzyme_capacity` asserts the exact boxes, and `test_second_law_hinge_and_dissipation_closed_form` now runs with capacity on and gets `v_R1 = -5` through the reverse-only no-GPR R1.
+- **The nullspace arm no longer builds `reaction_embedding` and `flux_mlp`.** Its forward reads only `latent_mlp`, so those parameters never received a gradient and inflated the parameter count. They are now built only in the box arm. `test_each_arm_builds_only_the_modules_it_reads` asserts the parameter names, the counts (99 nullspace, 138 box on the toy network) and a nonzero gradient on every parameter in each arm. A nullspace checkpoint saved before this change carries the two extra modules and will not load with `strict=True`.

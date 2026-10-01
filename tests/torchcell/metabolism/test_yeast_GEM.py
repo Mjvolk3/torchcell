@@ -9,7 +9,7 @@ when it exists, downloads into a tmp root only under ``--network``, and skips ot
 (a plain ``pytest`` never reaches the network and never writes under ``DATA_ROOT``).
 
 2026.09.30 - hand-built model (Phase 15). The tests after the real-model block run on a
-five-reaction cobra model written to SBML under ``tmp_path`` (``_toy_model`` below; the
+four-reaction cobra model written to SBML under ``tmp_path`` (``_toy_model`` below; the
 three-reaction model of ``test_yeast_GEM_synthetic.py`` covers the OR and reversible GPR
 cases):
 
@@ -19,12 +19,13 @@ cases):
 * ``EX_A_irr: A_c -->`` (irreversible, no GPR): a forward ``noGene`` edge only;
 * ``T_A: A_c <=> A_e`` (reversible, no GPR): ``noGene`` forward and reverse, the
   reverse row negated to (1, -1);
-* ``R_OTHER: B_c --> C_c`` (irreversible, no GPR);
-* ``EMPTY: -->`` (no species): a bipartite reaction node with no edge (isolated), and
-  no hyperedge at all (hypernetx drops an edge with no members).
+* ``R_OTHER: B_c --> C_c`` (irreversible, no GPR).
 
-So the hypergraph has 5 edges on 5 nodes and the bipartite graph 11 edges on 11 nodes
-(6 reaction units, 5 metabolites). No solver runs and no network is reached.
+So the hypergraph has 5 edges on 5 nodes and the bipartite graph 11 edges on 10 nodes
+(5 reaction units, 5 metabolites). ``_toy_model(empty=True)`` adds ``EMPTY: -->`` (no
+species), which both graph views refuse with ``MemberlessReactionError`` (issue #534)
+and which the model-only analysis still counts. No solver runs and no network is
+reached.
 """
 
 import os
@@ -45,6 +46,7 @@ from networkx.drawing.layout import kamada_kawai_layout, spring_layout
 
 import torchcell.metabolism.yeast_GEM as yeast_gem_module
 from torchcell.metabolism.yeast_GEM import (
+    MemberlessReactionError,
     YeastGEM,
     analyze_reactions_without_genes,
     plot_full_network,
@@ -494,7 +496,7 @@ def test_bipartite_graph_edge_properties(yeast_gem):
 # -- Phase 15: a hand-built five-reaction model -----------------------------------
 
 
-def _toy_model() -> cobra.Model:
+def _toy_model(empty: bool = False) -> cobra.Model:
     model = cobra.Model("toy5")
     a = cobra.Metabolite("A_c", name="alpha", formula="C2", compartment="c", charge=0)
     a_e = cobra.Metabolite("A_e", name="alpha", formula="C2", compartment="e", charge=0)
@@ -509,8 +511,11 @@ def _toy_model() -> cobra.Model:
     transport.add_metabolites({a: -1.0, a_e: 1.0})
     other = cobra.Reaction("R_OTHER", lower_bound=0.0, upper_bound=1000.0)
     other.add_metabolites({b: -1.0, c: 1.0})
-    empty = cobra.Reaction("EMPTY", lower_bound=0.0, upper_bound=1000.0)
-    model.add_reactions([big, ex, transport, other, empty])
+    model.add_reactions([big, ex, transport, other])
+    if empty:
+        model.add_reactions(
+            [cobra.Reaction("EMPTY", lower_bound=0.0, upper_bound=1000.0)]
+        )
     big.gene_reaction_rule = "g1 and g2 and g3"
     return model
 
@@ -531,6 +536,37 @@ def toy_root(tmp_path: Path) -> Path:
 @pytest.fixture
 def toy(toy_root: Path) -> YeastGEM:
     return YeastGEM(root=str(toy_root))
+
+
+@pytest.fixture
+def toy_with_empty(tmp_path: Path) -> YeastGEM:
+    root = tmp_path / "gem_empty"
+    _write(root, _toy_model(empty=True))
+    return YeastGEM(root=str(root))
+
+
+def test_memberless_reaction_is_refused_by_both_graph_views(
+    toy_with_empty: YeastGEM,
+) -> None:
+    """A reaction with no metabolites raises the same named error from both views.
+
+    Contract (issue #534): hypernetx cannot hold a memberless hyperedge, so including
+    ``EMPTY`` in ``reaction_map`` is impossible; the bipartite graph used to keep it as
+    an isolated node, so the two views disagreed on the reaction set. Both now refuse,
+    and the bipartite graph is not cached by the failed call.
+    """
+    msg = (
+        "Reactions with no metabolites cannot be represented in reaction_map or "
+        "bipartite_graph: ['EMPTY']"
+    )
+    with pytest.raises(MemberlessReactionError) as hyper:
+        toy_with_empty.reaction_map
+    assert str(hyper.value) == msg
+    with pytest.raises(MemberlessReactionError) as bip:
+        toy_with_empty.bipartite_graph
+    assert str(bip.value) == msg
+    assert isinstance(bip.value, ValueError)
+    assert toy_with_empty._bipartite_graph is None
 
 
 def _edges(gem: YeastGEM) -> dict[str, tuple[list[str], dict[str, Any]]]:
@@ -554,10 +590,8 @@ def test_reaction_map_rows_for_a_complex_and_irreversible_gene_free_reactions(
 ) -> None:
     """Exact hyperedges: a three-subunit AND is one gene set; the row is the signed S column.
 
-    Finding: yeast_GEM.py:138 gives ``EMPTY`` (no species) the member list ``[]`` and
-    hypernetx drops a memberless edge, so the reaction is absent from ``reaction_map``
-    while ``bipartite_graph`` keeps it (see the next test). Pinned until the two views
-    agree on metabolite-free reactions.
+    One hyperedge per reaction direction, the same reaction units the bipartite graph
+    has as reaction nodes (next test).
     """
     assert _edges(toy) == {
         "RBIG_comb0_fwd": (
@@ -645,8 +679,8 @@ def test_reaction_map_rows_for_a_complex_and_irreversible_gene_free_reactions(
     assert sorted(toy.reaction_map.nodes) == ["A_c", "A_e", "B_c", "C_c", "D_e"]
 
 
-def test_bipartite_graph_edges_and_the_isolated_empty_reaction(toy: YeastGEM) -> None:
-    """Exact edge list; the metabolite-free ``EMPTY`` node is kept and isolated.
+def test_bipartite_graph_edges_match_the_hyperedges(toy: YeastGEM) -> None:
+    """Exact edge list; the reaction nodes are exactly the hyperedge ids; no isolates.
 
     Edges carry |coef| (RBIG's B_c is 2.0, D_e 3.0); the reversible transport flips
     reactant and product on its reverse node; D_e and A_e keep compartment ``e``.
@@ -678,18 +712,10 @@ def test_bipartite_graph_edges_and_the_isolated_empty_reaction(toy: YeastGEM) ->
         "reactant",
         "product",
     ]
-    assert list(nx.isolates(graph)) == ["EMPTY_noGene_fwd"]
-    assert graph.nodes["EMPTY_noGene_fwd"] == {
-        "node_type": "reaction",
-        "reaction_id": "EMPTY",
-        "direction": "forward",
-        "genes": set(),
-        "equation": " --> ",
-        "reversibility": False,
-        "reactants": [],
-        "products": [],
-        "subsystem": "",
-    }
+    assert list(nx.isolates(graph)) == []
+    assert sorted(
+        n for n, d in graph.nodes(data=True) if d["node_type"] == "reaction"
+    ) == sorted(_edges(toy))
     assert {
         n: d["compartment"]
         for n, d in graph.nodes(data=True)
@@ -715,7 +741,6 @@ def test_empty_induced_gene_set_keeps_only_gene_free_reactions(toy_root: Path) -
         for n, d in gem.bipartite_graph.nodes(data=True)
         if d["node_type"] == "reaction"
     ) == [
-        "EMPTY_noGene_fwd",
         "EX_A_irr_noGene_fwd",
         "R_OTHER_noGene_fwd",
         "T_A_noGene_fwd",
@@ -763,16 +788,18 @@ def test_download_refuses_a_failed_response(
 
 
 def test_analyze_reactions_without_genes_classifies_and_counts(
-    toy: YeastGEM, capsys: pytest.CaptureFixture[str]
+    toy_with_empty: YeastGEM, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """Four gene-free reactions: one exchange, one transport, two other.
 
-    Exchange = one species (EX_A_irr); transport = two species whose ids differ only in
-    the last character (A_c, A_e); the rest (R_OTHER, EMPTY) are other. 4 / 5 = 80.0%,
+    The analysis reads the cobra model only, so the memberless EMPTY is counted here
+    though both graph views refuse it. Exchange = one species (EX_A_irr); transport =
+    species in more than one compartment (T_A: A_c in c, A_e in e); the rest (R_OTHER,
+    EMPTY) are other. 4 / 5 = 80.0%,
     1 / 4 = 25.0%, 2 / 4 = 50.0%. Species occurrences over gene-free reactions: c is
     A_c (EX_A_irr), A_c (T_A), B_c and C_c (R_OTHER) = 4, e is A_e = 1.
     """
-    assert analyze_reactions_without_genes(toy) == {
+    assert analyze_reactions_without_genes(toy_with_empty) == {
         "total_reactions": 5,
         "no_gene_reactions": ["EX_A_irr", "T_A", "R_OTHER", "EMPTY"],
         "exchange_reactions": ["EX_A_irr"],
@@ -805,42 +832,47 @@ def test_analyze_reactions_without_genes_classifies_and_counts(
     )
 
 
-def test_transport_rule_reads_consecutive_ids_as_one_species(tmp_path: Path) -> None:
-    """Finding: yeast_GEM.py:1173 calls two species a compartment pair when their ids
-    differ only in the last character. yeast-GEM ids are ``s_NNNN`` with the
-    compartment elsewhere, so ``s_0001 --> s_0002`` in one compartment is classified as
-    transport. Pinned until the rule compares compartments rather than id suffixes.
+def test_transport_rule_reads_compartments_not_id_suffixes(tmp_path: Path) -> None:
+    """Transport is a reaction whose species span more than one compartment (issue #534).
+
+    yeast-GEM ids are ``s_NNNN`` with the compartment stored on the metabolite, so the
+    old id-suffix rule called ``s_0001 --> s_0002`` (one compartment) transport. Now
+    ``r_0001`` (both in c) is other, and ``r_0002: s_0001 --> s_0003`` (c to e, ids
+    sharing no suffix pattern) is transport.
     """
     model = cobra.Model("ids")
     s1 = cobra.Metabolite("s_0001", compartment="c")
     s2 = cobra.Metabolite("s_0002", compartment="c")
+    s3 = cobra.Metabolite("s_0003", compartment="e")
     rxn = cobra.Reaction("r_0001", lower_bound=0.0, upper_bound=1000.0)
     rxn.add_metabolites({s1: -1.0, s2: 1.0})
-    model.add_reactions([rxn])
+    move = cobra.Reaction("r_0002", lower_bound=0.0, upper_bound=1000.0)
+    move.add_metabolites({s1: -1.0, s3: 1.0})
+    model.add_reactions([rxn, move])
     _write(tmp_path, model)
     result = analyze_reactions_without_genes(YeastGEM(root=str(tmp_path)))
-    assert result["transport_reactions"] == ["r_0001"]
-    assert result["other_reactions"] == []
+    assert result["transport_reactions"] == ["r_0002"]
+    assert result["other_reactions"] == ["r_0001"]
 
 
-def test_sanity_check_truncates_and_reports_isolated_nodes(
+def test_sanity_check_truncates_and_reports_no_isolated_nodes(
     toy: YeastGEM, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """RBIG has four species, so the sample shows three and names the one left out.
 
-    The metabolite-free EMPTY node is the one isolated node. Totals: 5 reactions,
-    5 metabolites, 3 genes, 5 hyperedges on 5 nodes (EMPTY has none), 11 bipartite
-    edges on 11 nodes; the partition counts are 0 (the ``bipartite`` key Finding in
-    test_yeast_GEM_synthetic.py).
+    Seed 0 samples all four reactions as R_OTHER, EX_A_irr, RBIG, T_A. Totals: 4
+    reactions, 5 metabolites, 3 genes, 5 hyperedges on 5 nodes, 11 bipartite edges on
+    10 nodes; the partition counts are 0 (the ``bipartite`` key Finding in
+    test_yeast_GEM_synthetic.py). With memberless reactions refused, every reaction
+    node has an edge, so no node is isolated.
     """
     random.seed(0)
     sanity_check_metabolic_networks(toy, num_reactions=5)
     out = capsys.readouterr().out
     assert re.findall(r"^REACTION: (\S+)$", out, flags=re.M) == [
         "R_OTHER",
-        "EMPTY",
-        "RBIG",
         "EX_A_irr",
+        "RBIG",
         "T_A",
     ]
     assert (
@@ -851,28 +883,27 @@ def test_sanity_check_truncates_and_reports_isolated_nodes(
     ) in out
     assert out[out.index("===== Overall Statistics =====") :] == (
         "===== Overall Statistics =====\n"
-        "Total reactions in model: 5\n"
+        "Total reactions in model: 4\n"
         "Total metabolites in model: 5\n"
         "Total genes in model: 3\n"
         "Total edges in hypergraph: 5\n"
         "Total nodes in hypergraph: 5\n"
         "Total edges in bipartite graph: 11\n"
-        "Total nodes in bipartite graph: 11\n"
+        "Total nodes in bipartite graph: 10\n"
         "Reaction nodes: 0\n"
         "Metabolite nodes: 0\n"
         "✓ All edges connect reactions to metabolites (bipartite property verified)\n"
-        "WARNING: 1 isolated nodes found!\n"
-        "  1. EMPTY_noGene_fwd (Type: reaction)\n"
+        "✓ No isolated nodes found\n"
     )
 
 
 def test_main_test_bipartite_attributes_seeds_42(
     toy: YeastGEM, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """The entry point seeds 42 and samples 3 of 5: RBIG, EMPTY, T_A, in that order.
+    """The entry point seeds 42 and samples 3 of 4: RBIG, R_OTHER, EX_A_irr, in order.
 
-    RBIG lists three of its four species then "... and 1 more"; EMPTY has no
-    neighbors, so its node prints no "Connected Metabolites" block.
+    RBIG lists three of its four species then "... and 1 more"; R_OTHER lists both of
+    its species with the fixture's name, formula, compartment and charge.
     """
     monkeypatch.setattr(yeast_gem_module, "YeastGEM", lambda: toy)
     yeast_gem_module.main_test_bipartite_attributes()
@@ -882,20 +913,35 @@ def test_main_test_bipartite_attributes_seeds_42(
     )
     assert re.findall(r"^REACTION: (\S+) - $", out, flags=re.M) == [
         "RBIG",
-        "EMPTY",
-        "T_A",
+        "R_OTHER",
+        "EX_A_irr",
     ]
     assert (
         "      Stoichiometry: 1.0\n\n    ... and 1 more metabolites\n"
         "\n==================================================\n"
-        "REACTION: EMPTY - \n"
+        "REACTION: R_OTHER - \n"
         "==================================================\n"
-        "\nReaction Node: EMPTY_noGene_fwd\n"
+        "\nReaction Node: R_OTHER_noGene_fwd\n"
         "  Subsystem: \n"
         "  Direction: forward\n"
         "  Reversibility: False\n"
+        "\n  Connected Metabolites:\n"
+        "\n    Metabolite 1: B_c\n"
+        "      Name: beta\n"
+        "      Composition: C3\n"
+        "      Compartment: c\n"
+        "      Charge: -1\n"
+        "      Edge Type: reactant\n"
+        "      Stoichiometry: 1.0\n"
+        "\n    Metabolite 2: C_c\n"
+        "      Name: gamma\n"
+        "      Composition: C4\n"
+        "      Compartment: c\n"
+        "      Charge: 1\n"
+        "      Edge Type: product\n"
+        "      Stoichiometry: 1.0\n"
         "\n==================================================\n"
-        "REACTION: T_A - \n"
+        "REACTION: EX_A_irr - \n"
     ) in out
 
 
@@ -950,13 +996,15 @@ def test_main_bipartite_writes_the_full_bipartite_network(  # test-quality: allo
     assert calls == [{"output_path": str(tmp_path / "full_bipartite_network.png")}]
 
 
-def test_main_with_gene_set_passes_a_nonexistent_keyword(
+def test_main_with_gene_set_filters_by_the_induced_gene_set(
     toy_root: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Finding: yeast_GEM.py:916 calls ``YeastGEM(gene_set=...)``; the field is
-    ``induced_gene_set``, so the second construction raises ``TypeError`` after the
-    unfiltered count (5 hyperedges) is printed and the genome's mitochondrial
-    chromosome is dropped. Pinned until the call uses ``induced_gene_set``.
+    """The second construction passes the genome's genes as ``induced_gene_set``.
+
+    The genome holds only g1, so RBIG (``g1 and g2 and g3``) keeps its one hyperedge with
+    a partial-overlap warning: 5 hyperedges before and after the drop. The recorded
+    constructor keywords pin that the genome's gene set arrives as ``induced_gene_set``
+    (issue #534; the call used to pass ``gene_set`` and raise ``TypeError``).
     """
     genome_calls: list[str] = []
 
@@ -968,16 +1016,23 @@ def test_main_with_gene_set_passes_a_nonexistent_keyword(
         def drop_chrmt(self) -> None:
             genome_calls.append("drop_chrmt")
 
+    received: list[dict[str, Any]] = []
+
     def make_gem(**kwargs: Any) -> YeastGEM:
+        received.append(kwargs)
         return YeastGEM(root=str(toy_root), **kwargs)
 
     monkeypatch.setattr(yeast_gem_module, "YeastGEM", make_gem)
     monkeypatch.setattr(
         "torchcell.sequence.genome.scerevisiae.s288c.SCerevisiaeGenome", FakeGenome
     )
-    with pytest.raises(TypeError, match="unexpected keyword argument 'gene_set'"):
-        yeast_gem_module.main_with_gene_set()
-    assert capsys.readouterr().out == ("H num edges without gene_set edge drop: 5\n")
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: True)
+    yeast_gem_module.main_with_gene_set()
+    assert received == [{}, {"induced_gene_set": GeneSet(["g1"])}]
+    out = capsys.readouterr().out
+    assert out.startswith("H num edges without gene_set edge drop: 5\n")
+    assert out.endswith("H num edges with gene_set edge drop: 5\n")
+    assert out.count("Warning: Partial gene set overlap for edge RBIG_comb0.") == 1
     assert genome_calls == [
         osp.join(os.environ["DATA_ROOT"], "data/sgd/genome"),
         "drop_chrmt",
@@ -1062,13 +1117,17 @@ def test_plot_random_network_layouts(  # test-quality: allow the plot returns No
 def test_plot_random_network_unknown_layout(
     toy: YeastGEM, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: yeast_GEM.py:669-685 has no ``else`` for an unknown layout name, so
-    ``layout_kwargs`` is unbound at the draw call and the error is an
-    ``UnboundLocalError`` rather than a named refusal. Pinned until the function
-    raises ``ValueError`` for a name it does not know.
+    """An unknown layout name raises ``ValueError`` naming the three valid ones.
+
+    Nothing is drawn and no file is written (issue #534; it used to surface as an
+    ``UnboundLocalError`` on ``layout_kwargs`` at the draw call).
     """
     calls = _record_draw(monkeypatch)
-    with pytest.raises(UnboundLocalError, match="layout_kwargs"):
+    with pytest.raises(
+        ValueError,
+        match=r"^Unknown layout 'circular'; valid layouts are 'spring', 'spectral', "
+        r"'kamada_kawai'\.$",
+    ):
         plot_random_network(
             toy, n_edges=1, output_path=str(tmp_path / "r.png"), layout="circular"
         )

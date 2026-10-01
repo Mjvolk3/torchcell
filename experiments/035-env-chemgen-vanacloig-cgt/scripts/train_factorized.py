@@ -113,6 +113,12 @@ class FactorizedConfig(BaseModel):
     # cadence to every eval_epochs passes; one pass is ceil(n_genes / gene_batch) steps
     epochs: int | None = None
     eval_epochs: int = 1
+    # select "val" keeps the step with the best validation score; "last" keeps the final
+    # step of a fixed budget. fit_on "pool" trains on the validation compounds too (ridge
+    # fits on the whole non-test pool), which only makes sense with select "last"; the
+    # logged validation score is then in-sample.
+    select: Literal["val", "last"] = "val"
+    fit_on: Literal["train", "pool"] = "train"
     gene_batch: int = 0  # 0 = every gene in one step
     se_weight: float | None = None  # weight 1 / (se^2 + s0^2) with s0 this value
     huber: float | None = None  # Huber delta on the standardized target
@@ -423,7 +429,7 @@ def train_seed(
     """The selected full-matrix prediction (response units) and the step history."""
     torch.manual_seed(seed)
     np.random.seed(seed)
-    train = fold.train
+    train = fold.train if cfg.fit_on == "train" else sorted(fold.train + fold.val)
     x_fit = ctx.x_raw[train]
     mu, sd = x_fit.mean(0), x_fit.std(0)
     keep = sd > 1e-8
@@ -547,12 +553,22 @@ def train_seed(
                     )
                     for j in fold.val
                 }
+                pool_mean = np.nanmean(ctx.y[:, pool], axis=1)
+                pool_pred = full[:, pool].mean(axis=1)
+                per_compound |= {
+                    f"{tag}/test_spearman/{ctx.cells.compounds[j]}": fast_spearman(
+                        full[:, j] - pool_pred, ctx.y[:, j] - pool_mean
+                    )
+                    for j in fold.test
+                }
                 wandb.log(
                     {f"{tag}/{k}": v for k, v in record.items() if k != "step"}
                     | per_compound
                     | {"step": step + 1}
                 )
-            if np.isfinite(val) and val > best[0]:
+            if cfg.select == "last":
+                best, best_pred = (val, step + 1), full
+            elif np.isfinite(val) and val > best[0]:
                 best = (val, step + 1)
                 best_pred = full
     assert best_pred is not None, "no finite validation score"

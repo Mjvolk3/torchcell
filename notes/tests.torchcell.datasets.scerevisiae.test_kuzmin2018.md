@@ -16,3 +16,4 @@ Findings: Smf raises `UnboundLocalError` on an unknown array type (lines 336-370
 
 - Retired: Smf `UnboundLocalError` on an unknown array type, blank Dmf SD stored as NaN, repeated digenic cross stored twice by Dmf and Dmi.
 - Now asserted: all five loaders refuse `YCR002C_sn77` with the exact `ValueError` and write no LMDB; a blank SD is stored as `fitness_std` None; Dmf and Dmi refuse a repeated cross naming the pair; Smf still keeps one single per allele.
+- Review follow-up: added `test_tmf_blank_sd_is_stored_as_none`; the repeated cross now differs in fitness, so a full-row duplicate check would fail the test.

@@ -305,6 +305,23 @@ def test_tmf_allele_in_either_query_slot(tmp_path: Path) -> None:
     assert ds[0]["reference"]["phenotype_reference"]["fitness_se"] == 0.015
 
 
+def test_tmf_blank_sd_is_stored_as_none(tmp_path: Path) -> None:
+    """A trigenic row with a blank SD (tm801, 0.3) is stored with ``fitness_std`` None and
+    no uncertainty, not a float NaN; the reference SD is the mean of the one reported SD,
+    0.04 (se 0.02).
+    """
+    name = "TmfKuzmin2018Dataset"
+    blank = [*ROWS[2][:6], None, *ROWS[2][7:]]
+    ds = build(tmp_path, k.TmfKuzmin2018Dataset, [blank, ROWS[3]])
+    experiments = stored(ds, "experiment")
+    assert experiments[0]["phenotype"]["fitness_std"] is None
+    assert experiments == [
+        fitness(name, [cdc28(TM801), PML39_TM801, NTH2_TS], 0.3, None),
+        fitness(name, [NUP60_TM802, cdc28(TM802), GEM1], 0.5, 0.04),
+    ]
+    assert stored(ds, "reference") == [fitness_reference(name, 0.04)] * 2
+
+
 def test_dmi_and_tmi_allele_records(tmp_path: Path) -> None:
     """Dmi stores the two digenic rows as edge-level epsilons (-0.12 p 0.03, 0.04 p 0.4);
     Tmi the two trigenic rows as hyperedge-level taus (-0.2 p 0.001, 0.07 p 0.2); each
@@ -373,12 +390,14 @@ def test_unknown_array_strain_type_refuses_the_build(
 def test_repeated_digenic_cross_is_refused_by_dmf_and_dmi(
     tmp_path: Path, cls: type[Any]
 ) -> None:
-    """The cdc28-4 x gem1 cross listed twice is refused by name, naming the repeated
-    (query strain, array strain) pair, instead of being stored as two records of one
-    cross. No LMDB store is written.
+    """The cdc28-4 x gem1 cross listed twice, the second time with a different combined
+    fitness (0.73 against 0.72), is refused by name, naming the repeated (query strain,
+    array strain) pair: the key is the cross, not the whole row, so two disagreeing
+    measurements of one cross are not both stored. No LMDB store is written.
     """
+    repeat = [*ROWS[1][:5], 0.73, *ROWS[1][6:]]
     with pytest.raises(ValueError) as info:
-        build(tmp_path, cls, [ROWS[1], ROWS[1]])
+        build(tmp_path, cls, [ROWS[1], repeat])
     assert str(info.value) == (
         "Kuzmin 2018 Data S1 lists 1 digenic cross(es) more than once (query strain, "
         "array strain): [('YBR160W+YDL227C_tsq508', 'YAL048C_dma5203')]"

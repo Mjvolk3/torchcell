@@ -7,8 +7,8 @@
 # the nested output tree so <out-dir>/<stem>.md sits next to its figures in
 # <out-dir>/<images-dir>/ (``images`` for paper.pdf, ``images/<stem>`` for every
 # other PDF, chosen by ocr.py), with the markdown and content-list references
-# rewritten to that directory. A PDF's figures directory is its own: a run
-# replaces only it, never a sibling PDF's.
+# rewritten to that directory. A run replaces only the files directly in its own
+# figures directory, never a sibling PDF's directory or a nested one.
 #
 # It prints two facts on stdout for ocr.py's provenance record:
 # ``MINERU_VERSION=<mineru.version.__version__>`` and ``MINERU_DPI=<effective dpi>``.
@@ -95,9 +95,13 @@ def _find_first(root: Path, name: str) -> Path | None:
     return None
 
 
-# A figure reference as MinerU writes it, in the markdown (``![](images/<f>)``)
-# and in ``<stem>_content_list.json`` (``"img_path": "images/<f>"``).
-_IMAGE_REF = re.compile(r"images/([A-Za-z0-9_.-]+\.(?:jpg|jpeg|png))")
+# A figure reference in exactly the forms MinerU writes: the markdown image
+# ``![](images/<f>)``, an HTML table cell ``<img src="images/<f>"``, and the
+# content list's ``"img_path": "images/<f>"``. Anchored to those prefixes so prose
+# such as ``https://example.org/images/logo.png`` is neither rewritten nor checked.
+IMAGE_REF = re.compile(
+    r'(?P<pre>\]\(|<img src="|"img_path": ")images/(?P<name>[^)"\n]+)'
+)
 
 
 class UnresolvedImageRefError(ValueError):
@@ -113,34 +117,38 @@ def _rewrite_image_refs(text: str, produced: set[str], images_rel: str) -> str:
     """
 
     def _sub(match: re.Match[str]) -> str:
-        name = match.group(1)
+        name = match.group("name")
         if name not in produced:
             raise UnresolvedImageRefError(f"references images/{name}, not produced")
-        return f"{images_rel}/{name}"
+        return f"{match.group('pre')}{images_rel}/{name}"
 
-    return _IMAGE_REF.sub(_sub, text)
+    return IMAGE_REF.sub(_sub, text)
 
 
 def _replace_images_dir(images_src: Path | None, dest: Path, stage_root: Path) -> None:
-    """Make ``dest`` hold exactly this run's figures, touching nothing else.
+    """Make the files directly in ``dest`` exactly this run's figures.
 
-    The figures are copied into a fresh staging directory first; only then is the
-    PDF's previous ``dest`` (its own figures from an earlier run) moved aside and the
-    staged directory renamed into place, and the moved-aside copy removed. With no
-    ``images_src`` (MinerU wrote no figures) the previous ``dest`` is removed and
-    none is created. Sibling directories under ``dest.parent`` are never touched.
+    The figures are copied into ``<stage_root>/.images.new`` first; only then are
+    the files directly in ``dest`` (this PDF's own figures from an earlier run) moved
+    into ``<stage_root>/.images.old`` and the staged files moved into ``dest``. The
+    caller removes ``stage_root``. Subdirectories of ``dest`` are never touched: the
+    paper's flat ``images/`` can hold another root PDF's ``images/<stem>/`` (Costanzo
+    2016's ``SOM.pdf``). A ``dest`` left empty (MinerU wrote no figures) is removed.
     """
     staged = stage_root / ".images.new"
     retired = stage_root / ".images.old"
     if images_src is not None:
         shutil.copytree(images_src, staged)
-    if dest.exists():
-        dest.rename(retired)
+    retired.mkdir()
+    if dest.is_dir():
+        for old in sorted(p for p in dest.iterdir() if p.is_file()):
+            old.rename(retired / old.name)
     if images_src is not None:
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        staged.rename(dest)
-    if retired.exists():
-        shutil.rmtree(retired)
+        dest.mkdir(parents=True, exist_ok=True)
+        for new in sorted(staged.iterdir()):
+            new.rename(dest / new.name)
+    if dest.is_dir() and not any(dest.iterdir()):
+        dest.rmdir()
 
 
 def main() -> int:
@@ -171,8 +179,12 @@ def main() -> int:
     print(f"MINERU_VERSION={mineru_version}")
     print(f"MINERU_DPI={args.dpi if args.dpi > 0 else default_dpi}")
 
+    # This PDF's private staging path. A run killed earlier can leave it behind
+    # (half-staged figures), so every run starts from a fresh one.
     scratch = out_dir / f".mineru_scratch_{stem}"
-    scratch.mkdir(parents=True, exist_ok=True)
+    if scratch.exists():
+        shutil.rmtree(scratch)
+    scratch.mkdir(parents=True)
 
     do_parse(
         output_dir=str(scratch),
@@ -205,19 +217,22 @@ def main() -> int:
                     src.read_text(encoding="utf-8"), produced, images_rel
                 )
             except UnresolvedImageRefError as err:
+                shutil.rmtree(scratch)
                 print(f"ERROR: {name} {err}", file=sys.stderr)
                 return 5
 
+    # Figures first, markdown after: a failure in the swap leaves the previous
+    # markdown with the figures it references.
+    _replace_images_dir(
+        images_src if images_src.is_dir() else None, out_dir / images_rel, scratch
+    )
     for name, text in rewritten.items():
         (out_dir / name).write_text(text, encoding="utf-8")
     middle = auto_dir / f"{stem}_middle.json"
     if middle.exists():
         shutil.copy2(middle, out_dir / middle.name)
-    _replace_images_dir(
-        images_src if images_src.is_dir() else None, out_dir / images_rel, scratch
-    )
 
-    shutil.rmtree(scratch, ignore_errors=True)
+    shutil.rmtree(scratch)
     print(f"OK: {pdf_path.name} -> {out_dir}/{stem}.md")
     return 0
 

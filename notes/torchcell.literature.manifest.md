@@ -29,3 +29,7 @@ Review of PR #573. The moved rules were substring matches (`"images/" in rel_pat
 ## 2026.10.01 - Per-PDF SI figures and the OCR processing record (issues #579, #546)
 
 `_MINERU_IMAGE` now fullmatches `(images|si/images|si/images/si*)/<file>.(jpg|jpeg|png)`: the new per-PDF `si/images/<si stem>/<file>` layout is `ocr_image`, and the flat `si/images/<file>` written before the fix stays `ocr_image`, so keys with one SI PDF (and keys like `zhangBiosensorBranchedchainAmino2022` where only one SI PDF has figures) remain valid without a re-OCR. A new role `ocr_provenance` covers `(paper|si/si*)_ocr_provenance.json`, and `build_manifest` attaches that file, parsed as a `ProcessingRecord`, to the `processing` of the MinerU markdown beside it; markdown OCR'd before the record existed keeps `processing` None (absent, not fabricated). Evidence: `test_role_for_per_pdf_si_figures_and_ocr_provenance` and `test_per_pdf_si_figures_and_attached_ocr_provenance` in [[tests.torchcell.literature.test_backfill]].
+
+## 2026.10.01 - Root PDF figure directories
+
+PR #585 review. A non-paper PDF at the key root (`SOM.pdf`, `References_Cited_SOM.pdf`, `thesis.pdf`) writes `images/<stem>/<file>`; that path is now `ocr_image` (was `other`). A read-only scan of the live mirror found 0 files at that depth today, so no recorded role changes.

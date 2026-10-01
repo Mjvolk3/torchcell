@@ -50,8 +50,9 @@ side here).
 2026.10.01 (issue #579, #546): each SI PDF's figures live in their own
 ``si/images/<si stem>/`` (``ocr.images_dir_for``), and those are ``ocr_image``; the
 flat ``si/images/<file>`` of keys OCR'd before the fix stays ``ocr_image`` so they are
-valid without a re-OCR, while ``si/images/Figure/a.png`` (not an ``si*`` stem) and a
-top-level ``images/paper/a.jpg`` are not OCR figures. ``<stem>_ocr_provenance.json``
+valid without a re-OCR, while ``si/images/Figure/a.png`` (not an ``si*`` stem) is not
+an OCR figure. A non-paper PDF at the key root (Costanzo 2016's ``SOM.pdf``) writes
+``images/<stem>/<file>``, which is ``ocr_image`` (PR #585 review). ``<stem>_ocr_provenance.json``
 is ``ocr_provenance`` and ``build_manifest`` attaches it, parsed as a
 ``ProcessingRecord``, to the markdown beside it; markdown with no such file keeps
 ``processing`` None.
@@ -255,8 +256,8 @@ def test_role_for_mineru_sidecars_under_si_are_ocr_roles() -> None:
 def test_role_for_per_pdf_si_figures_and_ocr_provenance() -> None:
     """Issue #579 layout: ``si/images/<si stem>/<file>`` is an OCR figure, the flat
     pre-fix ``si/images/<file>`` still is, and ``<stem>_ocr_provenance.json`` (paper or
-    SI) is ``ocr_provenance``. One directory deeper, a non-``si*`` subdirectory, or a
-    per-PDF directory under the top-level ``images/`` is not a MinerU figure.
+    SI) is ``ocr_provenance``. A root PDF's ``images/<stem>/<file>`` is a figure; one
+    directory deeper or a non-``si*`` subdirectory under ``si/images/`` is not.
     """
     assert _role_for("si/images/si1/ab12.jpg") == "ocr_image"
     assert _role_for("si/images/si12/ab12.png") == "ocr_image"
@@ -267,7 +268,8 @@ def test_role_for_per_pdf_si_figures_and_ocr_provenance() -> None:
     assert _role_for("si/images/si1/deeper/a.png") == "si_data"
     assert _role_for("si/images/si1/a.gif") == "si_data"
     assert _role_for("si/Table_ocr_provenance.json") == "si_data"
-    assert _role_for("images/paper/a.jpg") == "other"
+    assert _role_for("images/SOM/a.jpg") == "ocr_image"
+    assert _role_for("images/SOM/deeper/a.jpg") == "other"
 
 
 def test_captured_key_full_role_table(tmp_path: Path) -> None:

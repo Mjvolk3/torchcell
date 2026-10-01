@@ -76,15 +76,17 @@ def _resolve_dpi(dpi: int | None) -> int:
 def images_dir_for(pdf_path: Path) -> str:
     """Figures directory for one PDF, relative to the PDF's directory.
 
-    ``paper.pdf`` is the only PDF in its directory and keeps the flat ``images/``
-    every mirrored key already has. Any other PDF gets ``images/<stem>/``: all of a
-    key's ``si/si*.pdf`` write into ``si/``, so a shared ``si/images/`` would hold only
-    the last PDF's figures (issue #579).
+    ``paper.pdf`` keeps the flat ``images/`` every mirrored key already has. Any other
+    PDF gets ``images/<stem>/``: all of a key's ``si/si*.pdf`` write into ``si/``, and a
+    key root can hold other PDFs beside ``paper.pdf`` (Costanzo 2016's ``SOM.pdf``,
+    Lopez's ``thesis.pdf``), so a shared directory would hold only the last PDF's
+    figures (issue #579). The runner replaces only the files directly in a PDF's own
+    directory, so the paper's re-run never touches ``images/<stem>/``.
     """
     return "images" if pdf_path.name == "paper.pdf" else f"images/{pdf_path.stem}"
 
 
-def _natural_key(path: Path) -> list[int | str]:
+def natural_key(path: Path) -> list[int | str]:
     """Sort key that orders digit runs numerically: ``si2`` before ``si10``."""
     return [
         int(part) if part.isdigit() else part for part in re.split(r"(\d+)", path.name)
@@ -230,6 +232,6 @@ def ocr_artifact(artifact_dir: str | Path, **kwargs: Any) -> list[Path]:
     produced = [ocr_pdf(paper, **kwargs)]
     si_dir = artifact_dir / "si"
     if si_dir.is_dir():
-        for si_pdf in sorted(si_dir.glob("si*.pdf"), key=_natural_key):
+        for si_pdf in sorted(si_dir.glob("si*.pdf"), key=natural_key):
             produced.append(ocr_pdf(si_pdf, **kwargs))
     return produced

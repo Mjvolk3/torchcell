@@ -13,3 +13,7 @@ This module exists because a scan has no exact text layer to fall back on, so OC
 - `shape_check`: judges completeness by data shape -- either an exact known-schema id set (reports precisely which rows are missing) or a caption-advertised row count.
 - `extract_scanned`: drives the sweep via [[torchcell.literature.ocr]], escalating DPI only until the oracle clears; effective resolution saturates near ~360 DPI (Qwen's pixel budget), so cranking to 600 is wasted.
 - Deliberately scoped to row COVERAGE, not cell-value correctness -- value precision on noisy scans is a separate cross-pass-agreement step.
+
+## 2026.10.01 - Every DPI pass recorded
+
+PR #585 review. Each pass of `extract_scanned` calls `ocr_pdf`, which overwrites `<stem>.md` and `<stem>_ocr_provenance.json`, while the keys come from the union of all passes, so the record described only the last pass. After the sweep the record beside the last markdown is rewritten with `params["passes"]`, the full `ProcessingRecord` of every pass in order (same pydantic record, no new file or role). An empty `dpis` now raises `ValueError`. Evidence: `test_the_record_beside_the_markdown_lists_every_pass` and `test_an_empty_dpi_sweep_is_refused` in [[tests.torchcell.literature.test_scanned]].

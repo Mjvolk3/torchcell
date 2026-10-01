@@ -18,9 +18,16 @@ Contract: an SI PDF run with ``--images-dir images/<stem>`` writes its figures t
 that directory; two SI PDFs sharing ``si/`` both keep their figures. A re-run of one PDF
 leaves exactly its new figures in its own directory and touches no sibling (another PDF's
 directory, or the flat pre-#579 ``si/images/<file>``). ``paper.pdf`` keeps the flat
-``images/`` and its references unchanged. A reference to a figure MinerU did not write
-exits 5 before anything is written. The runner prints ``MINERU_VERSION`` and the
-effective ``MINERU_DPI``.
+``images/`` and its references unchanged, and its re-run never touches another root
+PDF's ``images/<stem>/``. A reference to a figure MinerU did not write exits 5 before
+anything is written and leaves no scratch. The runner prints ``MINERU_VERSION`` and
+the effective ``MINERU_DPI``.
+
+2026.10.01 (PR #585 review): every run starts from a fresh scratch and writes the
+markdown only after the figures are in place, so a crash in the copy or between the
+moves leaves the previous markdown with its figures, and the next run succeeds.
+References are rewritten only in MinerU's three forms (``](images/``,
+``<img src="images/``, ``"img_path": "images/``); prose URLs pass through.
 """
 
 from __future__ import annotations
@@ -259,7 +266,8 @@ def test_a_reference_to_an_unwritten_figure_exits_5_and_writes_nothing(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """The markdown references ``ghost.jpg``, which MinerU did not write: exit 5 with
-    the exact stderr line; the PDF's directory gains no markdown, JSON or figure.
+    the exact stderr line; the PDF's directory gains no markdown, JSON, figure or
+    scratch directory.
     """
     _install(monkeypatch, {"si1": ["a1.jpg"]}, extra_refs=["ghost.jpg"])
     si = tmp_path / "ck" / "si"
@@ -268,24 +276,32 @@ def test_a_reference_to_an_unwritten_figure_exits_5_and_writes_nothing(
     assert capsys.readouterr().err == (
         "ERROR: si1.md references images/ghost.jpg, not produced\n"
     )
-    assert sorted(p.name for p in si.iterdir() if not p.name.startswith(".")) == [
-        "si1.pdf"
-    ]
+    assert sorted(p.name for p in si.iterdir()) == ["si1.pdf"]
 
 
 @pytest.mark.parametrize(
     ("text", "expected"),
     [
-        ("![](images/a.jpg) and images/b.jpeg", "![](x/y/a.jpg) and x/y/b.jpeg"),
+        ("![](images/a.jpg)", "![](x/y/a.jpg)"),
+        ('<td><img src="images/b.jpeg"/></td>', '<td><img src="x/y/b.jpeg"/></td>'),
+        ('{"img_path": "images/a.jpg"}', '{"img_path": "x/y/a.jpg"}'),
+        ("![](images/A B.PNG)", "![](x/y/A B.PNG)"),
+        (
+            "see https://example.org/images/logo.png and images/a.jpg",
+            "see https://example.org/images/logo.png and images/a.jpg",
+        ),
         ("prose images/figures stay", "prose images/figures stay"),
-        ("![](images/a.gif)", "![](images/a.gif)"),
     ],
 )
-def test_rewrite_image_refs_touches_only_figure_files(text: str, expected: str) -> None:
-    """Only ``images/<file>.(jpg|jpeg|png)`` is a figure reference; prose and other
-    extensions pass through.
+def test_rewrite_image_refs_touches_only_mineru_reference_forms(
+    text: str, expected: str
+) -> None:
+    """Only MinerU's markdown image, HTML ``<img src=`` and content-list
+    ``"img_path"`` forms are references, whatever the name's case, spaces or
+    extension; a prose URL or bare ``images/...`` passes through unchecked.
     """
-    assert runner._rewrite_image_refs(text, {"a.jpg", "b.jpeg"}, "x/y") == expected
+    produced = {"a.jpg", "b.jpeg", "A B.PNG"}
+    assert runner._rewrite_image_refs(text, produced, "x/y") == expected
 
 
 def test_rewrite_image_refs_refuses_an_unknown_figure() -> None:
@@ -326,3 +342,94 @@ def test_dpi_patch_reads_module_dicts_and_never_triggers_lazy_attributes(
     assert sys.modules["mineru.utils.pdf_image_tools"].load_images_from_pdf is patched
     patched(b"")
     assert fake.dpis == [350]
+
+
+def test_a_rerun_after_a_failed_copy_succeeds(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """The second run of si1 dies in the figure copy (``OSError``): ``si1.md`` still
+    references the old figure, which is still in place. The third run succeeds with
+    exactly the new figures and matching references, and no scratch is left.
+    """
+    figures = {"si1": ["old.jpg"]}
+    _install(monkeypatch, figures)
+    si = tmp_path / "ck" / "si"
+    si1 = _pdf(si, "si1.pdf")
+    assert _run(monkeypatch, si1, "--images-dir", "images/si1") == 0
+
+    figures["si1"] = ["new1.jpg", "new2.jpg"]
+
+    def broken_copytree(*args: Any, **kwargs: Any) -> None:
+        raise OSError("disk full")
+
+    with monkeypatch.context() as patch:
+        patch.setattr("shutil.copytree", broken_copytree)
+        with pytest.raises(OSError, match="disk full"):
+            _run(monkeypatch, si1, "--images-dir", "images/si1")
+    assert (si / "si1.md").read_text() == "# si1\n![](images/si1/old.jpg)\n"
+    assert _tree(si / "images") == ["si1/old.jpg"]
+
+    assert _run(monkeypatch, si1, "--images-dir", "images/si1") == 0
+    assert _tree(si / "images") == ["si1/new1.jpg", "si1/new2.jpg"]
+    assert (si / "si1.md").read_text() == (
+        "# si1\n![](images/si1/new1.jpg)\n![](images/si1/new2.jpg)\n"
+    )
+    assert sorted(p.name for p in si.iterdir()) == [
+        "images",
+        "si1.md",
+        "si1.pdf",
+        "si1_content_list.json",
+        "si1_middle.json",
+    ]
+
+
+def test_a_rerun_after_a_kill_between_the_moves_succeeds(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """The state a kill between the two moves leaves: the old figure moved into the
+    scratch's ``.images.old``, the new one staged in ``.images.new``, nothing in
+    ``images/si1``. The next run discards that scratch and ends with exactly its
+    figures, references and no scratch.
+    """
+    figures = {"si1": ["old.jpg"]}
+    _install(monkeypatch, figures)
+    si = tmp_path / "ck" / "si"
+    si1 = _pdf(si, "si1.pdf")
+    assert _run(monkeypatch, si1, "--images-dir", "images/si1") == 0
+    scratch = si / ".mineru_scratch_si1"
+    (scratch / ".images.old").mkdir(parents=True)
+    (scratch / ".images.new").mkdir()
+    (si / "images" / "si1" / "old.jpg").rename(scratch / ".images.old" / "old.jpg")
+    (scratch / ".images.new" / "half.jpg").write_bytes(b"half")
+
+    figures["si1"] = ["new.jpg"]
+    assert _run(monkeypatch, si1, "--images-dir", "images/si1") == 0
+    assert _tree(si / "images") == ["si1/new.jpg"]
+    assert (si / "si1.md").read_text() == "# si1\n![](images/si1/new.jpg)\n"
+    assert not scratch.exists()
+
+
+def test_a_paper_rerun_keeps_another_root_pdfs_figures(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Costanzo 2016 shape: ``SOM.pdf`` at the key root writes ``images/SOM/``
+    inside the paper's flat ``images/``. A ``paper.pdf`` run then a re-run replace
+    only the paper's flat files; ``images/SOM/`` is byte for byte untouched.
+    """
+    figures = {"SOM": ["s1.jpg"], "paper": ["p1.jpg"]}
+    _install(monkeypatch, figures)
+    root = tmp_path / "ck"
+    som, paper = _pdf(root, "SOM.pdf"), _pdf(root, "paper.pdf")
+    assert _run(monkeypatch, paper) == 0
+    assert _run(monkeypatch, som, "--images-dir", "images/SOM") == 0
+    figures["paper"] = ["p2.jpg"]
+    assert _run(monkeypatch, paper) == 0
+
+    assert _tree(root / "images") == ["SOM/s1.jpg", "p2.jpg"]
+    assert (root / "images" / "SOM" / "s1.jpg").read_bytes() == b"SOM:s1.jpg"
+    assert (root / "SOM.md").read_text() == "# SOM\n![](images/SOM/s1.jpg)\n"
+    assert (root / "paper.md").read_text() == "# paper\n![](images/p2.jpg)\n"
+
+    figures["paper"] = []
+    assert _run(monkeypatch, paper) == 0
+    assert _tree(root / "images") == ["SOM/s1.jpg"]

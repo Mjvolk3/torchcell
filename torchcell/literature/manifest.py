@@ -185,12 +185,13 @@ class Manifest(BaseModel):
 # What ``_run_mineru.py`` writes beside each PDF ``ocr.ocr_artifact`` OCRs
 # (``paper.pdf`` and ``si/si*.pdf``): its figures, ``<stem>_content_list.json`` /
 # ``<stem>_middle.json`` with ``<stem>`` the PDF stem, and ``ocr.ocr_pdf`` adds
-# ``<stem>_ocr_provenance.json``. Figures: ``images/<file>`` for the paper and
+# ``<stem>_ocr_provenance.json``. Figures: ``images/<file>`` for the paper,
+# ``images/<stem>/<file>`` for another PDF at the key root (``SOM.pdf``) and
 # ``si/images/<si stem>/<file>`` per SI PDF (``ocr.images_dir_for``); the flat
 # ``si/images/<file>`` is the layout written before issue #579 and is still an OCR
 # figure, so keys with one SI PDF stay valid without a re-OCR.
 _MINERU_IMAGE = re.compile(
-    r"(images|si/images|si/images/si[^/]*)/[^/]+\.(jpg|jpeg|png)"
+    r"(images|images/[^/]+|si/images|si/images/si[^/]*)/[^/]+\.(jpg|jpeg|png)"
 )
 _MINERU_LAYOUT = re.compile(r"(paper|si/si[^/]*)_(content_list|middle)\.json")
 _MINERU_PROVENANCE = re.compile(r"(paper|si/si[^/]*)_ocr_provenance\.json")

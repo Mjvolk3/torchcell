@@ -30,7 +30,8 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from torchcell.literature.ocr import ocr_pdf
+from torchcell.literature.manifest import ProcessingRecord
+from torchcell.literature.ocr import ocr_pdf, ocr_provenance_path
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -97,6 +98,11 @@ def extract_scanned(
     text; ``parse_keys`` is applied to the union so coverage only grows. The sweep
     stops early the moment :func:`shape_check` reports complete.
 
+    Every pass rewrites ``<stem>.md`` and its ``<stem>_ocr_provenance.json``, but the
+    keys come from the union of all passes, so after the sweep the record beside the
+    last markdown is rewritten with ``params["passes"]``: the full record of every
+    pass run, in order. An empty ``dpis`` raises ``ValueError``.
+
     Args:
         pdf_path: The scanned PDF (route born-digital PDFs through the text layer).
         parse_keys: Maps OCR text -> the set of keys (e.g. ids) it contains.
@@ -110,12 +116,18 @@ def extract_scanned(
         ``(found_keys, reports)`` where ``reports`` is one ``(dpi, ShapeReport)``
         per pass actually run.
     """
+    if not dpis:
+        raise ValueError("extract_scanned needs at least one DPI")
     pdf_path = Path(pdf_path)
+    passes: list[ProcessingRecord] = []
     accumulated = ""
     found: set[str] = set()
     reports: list[tuple[int, ShapeReport]] = []
     for dpi in dpis:
         md = ocr_pdf(pdf_path, backend=backend, dpi=dpi, **ocr_kwargs)  # type: ignore[arg-type]
+        passes.append(
+            ProcessingRecord.model_validate_json(ocr_provenance_path(md).read_text())
+        )
         accumulated += "\n" + md.read_text()
         found = parse_keys(accumulated)
         report = shape_check(found, expected_keys=expected_keys, expected_n=expected_n)
@@ -129,4 +141,9 @@ def extract_scanned(
         )
         if report.complete:
             break
+    last = passes[-1]
+    union = last.model_copy(
+        update={"params": {**last.params, "passes": [r.model_dump() for r in passes]}}
+    )
+    ocr_provenance_path(md).write_text(union.model_dump_json(indent=2))
     return found, reports

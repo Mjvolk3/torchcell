@@ -21,3 +21,7 @@ Previous behavior: no existence check on the PDF (the runner's exit 2 was the on
 Now: `ocr_pdf` raises `PdfNotFoundError` before starting MinerU; passes `--images-dir` from `images_dir_for` (`images` for `paper.pdf`, `images/<stem>` otherwise); and writes a `ProcessingRecord` (processor `torchcell.literature.ocr.ocr_pdf`, tool `mineru`, version and effective DPI as the runner printed them, `backend`, `lang`, `method`, `device_mode`, `dpi_requested`, `images_dir`, the exact `command`, and the PDF's sha256 as `input_sha256`) to `<stem>_ocr_provenance.json` beside the markdown. A runner that does not print `MINERU_VERSION` and `MINERU_DPI` exactly once raises `RunnerReportError`. `ocr_artifact` runs SI PDFs in natural order and raises `MissingPaperPdfError` when `paper.pdf` is absent; its only caller, `capture.capture_by_doi`, always downloads the article as `paper.pdf` first, so no caller relied on the SI-only result.
 
 Evidence: [[tests.torchcell.literature.test_ocr]].
+
+## 2026.10.01 - natural_key public, images_dir_for docstring
+
+`natural_key` is public (used by `scripts/lit_reocr_si.py`). The `images_dir_for` docstring no longer claims `paper.pdf` is the only PDF in its directory: root PDFs such as `SOM.pdf` get `images/<stem>/` inside the paper's `images/`, which the paper's re-run leaves alone.

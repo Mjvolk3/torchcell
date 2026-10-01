@@ -31,3 +31,7 @@ New `test_role_for_mineru_sidecars_under_si_are_ocr_roles` (sidecars under `si/`
 ## 2026.10.01 - Per-PDF SI figures and attached OCR provenance (issues #579, #546)
 
 Added `test_role_for_per_pdf_si_figures_and_ocr_provenance` (the new `si/images/<si stem>/` figures and the flat legacy layout are `ocr_image`; `_ocr_provenance.json` is `ocr_provenance`; non-`si*` subdirectories, deeper paths, other extensions and top-level `images/paper/` are not OCR figures) and `test_per_pdf_si_figures_and_attached_ocr_provenance` (full role table of a two-SI key, and the `ProcessingRecord` attached to exactly the markdown with a record file beside it).
+
+## 2026.10.01 - Root PDF figures
+
+`images/SOM/a.jpg` is now asserted `ocr_image` (was `other` for `images/paper/a.jpg`); one level deeper stays `other`.

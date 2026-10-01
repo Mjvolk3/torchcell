@@ -126,12 +126,16 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">Batch</span><span class="p">,</span> <span class="n">HeteroData</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseTransform</span><span class="p">,</span> <span class="n">Compose</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.neo4j_cell</span><span class="w"> </span><span class="kn">import</span> <span class="n">Neo4jCellDataset</span>
+
+<span class="n">NORMALIZATION_STRATEGIES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"minmax"</span><span class="p">,</span> <span class="s2">"robust"</span><span class="p">,</span> <span class="s2">"standard"</span><span class="p">)</span>
+<span class="n">LABEL_TYPES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"categorical"</span><span class="p">,</span> <span class="s2">"ordinal"</span><span class="p">,</span> <span class="s2">"soft"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="COOLabelNormalizationTransform">
@@ -191,10 +195,15 @@
                     <span class="sa">f</span><span class="s2">"fit_indices names </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2"> record indices absent from label_df"</span>
                 <span class="p">)</span>
         <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">label_configs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">config</span><span class="p">[</span><span class="s2">"strategy"</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">NORMALIZATION_STRATEGIES</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Unknown normalization strategy </span><span class="si">{</span><span class="n">config</span><span class="p">[</span><span class="s1">'strategy'</span><span class="p">]</span><span class="si">!r}</span><span class="s2"> for label "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="si">!r}</span><span class="s2">; valid strategies: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">NORMALIZATION_STRATEGIES</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
             <span class="k">if</span> <span class="n">label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Label </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> not found in dataset"</span><span class="p">)</span>
 
-            <span class="n">values</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
             <span class="n">stats</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">"mean"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">values</span><span class="p">)),</span>
                 <span class="s2">"std"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">values</span><span class="p">)),</span>
@@ -389,7 +398,7 @@
         <span class="c1"># form is a compatible supertype so subclass overrides do not conflict.</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">compute_bins</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
-        <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
 <span class="w">            </span><span class="sd">"""Compute bin edges and metadata for the binning strategy.</span>
 
 <span class="sd">            Returns:</span>
@@ -414,7 +423,14 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_ordinal_labels</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">bin_edges</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Compute ordinal labels with clamping for out-of-bounds values."""</span>
+<span class="w">        </span><span class="sd">"""Compute ordinal labels with clamping for out-of-bounds values.</span>
+
+<span class="sd">        Threshold ``k`` is 1 when the clamped value is ``&gt;=`` interior edge ``k + 1``,</span>
+<span class="sd">        the same left-closed convention as the one-hot path (bin ``i`` is</span>
+<span class="sd">        ``[edge_i, edge_{i+1})``, as ``torch.bucketize(..., right=True) - 1`` and</span>
+<span class="sd">        ``np.digitize``): the number of ones equals the one-hot bin index, so a value</span>
+<span class="sd">        exactly on an interior edge belongs to the bin that edge opens under both.</span>
+<span class="sd">        """</span>
         <span class="c1"># Move bin_edges to the same device as values</span>
         <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">bin_edges</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
         <span class="n">ordinal_labels</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
@@ -426,7 +442,7 @@
             <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
                 <span class="n">ordinal_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nan</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">ordinal_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">clamped_values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">bin_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+                <span class="n">ordinal_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">clamped_values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">bin_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">ordinal_labels</span></div>
 
 
@@ -439,7 +455,13 @@
         <span class="n">strategy</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"equal_width"</span><span class="p">,</span>
         <span class="n">sigma_scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Compute soft labels with clamping for out-of-bounds values."""</span>
+<span class="w">        </span><span class="sd">"""Compute soft labels with clamping for out-of-bounds values.</span>
+
+<span class="sd">        Each row is a Gaussian on the bin centers normalized to sum to one, computed as</span>
+<span class="sd">        a softmax of the log-weights ``-0.5 * (distance / sigma) ** 2``. The softmax</span>
+<span class="sd">        subtracts the row maximum before exponentiating, so a narrow sigma whose raw</span>
+<span class="sd">        weights would all underflow to 0 still yields a distribution.</span>
+<span class="sd">        """</span>
         <span class="c1"># Move bin_edges to the same device as values</span>
         <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">bin_edges</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
         <span class="n">bin_centers</span> <span class="o">=</span> <span class="p">(</span><span class="n">bin_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="n">bin_edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
@@ -455,11 +477,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># Use clamped value for gaussian computation</span>
                 <span class="n">distances</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">clamped_values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">bin_centers</span><span class="p">)</span>
-                <span class="n">soft_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">distances</span> <span class="o">/</span> <span class="n">sigma</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
-
-                <span class="c1"># Normalize to sum to 1</span>
-                <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">soft_labels</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">soft_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">soft_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">soft_labels</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">soft_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">distances</span> <span class="o">/</span> <span class="n">sigma</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">soft_labels</span></div>
 
@@ -501,8 +519,8 @@
 <div class="viewcode-block" id="EqualWidthStrategy.compute_bins">
 <a class="viewcode-back" href="../../../generated/torchcell.transforms.coo_regression_to_classification.EqualWidthStrategy.html#torchcell.transforms.coo_regression_to_classification.EqualWidthStrategy.compute_bins">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_bins</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">num_bins</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">num_bins</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""Compute equal-width bins."""</span>
         <span class="n">non_nan</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">values</span><span class="p">)]</span>
         <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">non_nan</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">non_nan</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">num_bins</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
@@ -528,8 +546,8 @@
 <div class="viewcode-block" id="EqualFrequencyStrategy.compute_bins">
 <a class="viewcode-back" href="../../../generated/torchcell.transforms.coo_regression_to_classification.EqualFrequencyStrategy.html#torchcell.transforms.coo_regression_to_classification.EqualFrequencyStrategy.compute_bins">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_bins</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">num_bins</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">num_bins</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""Compute equal-frequency (quantile) bins."""</span>
         <span class="n">non_nan</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">values</span><span class="p">)]</span>
         <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">non_nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">num_bins</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
@@ -555,14 +573,16 @@
 <div class="viewcode-block" id="AutoBinStrategy.compute_bins">
 <a class="viewcode-back" href="../../../generated/torchcell.transforms.coo_regression_to_classification.AutoBinStrategy.html#torchcell.transforms.coo_regression_to_classification.AutoBinStrategy.compute_bins">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_bins</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">num_bins</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">num_bins</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""Compute bins based on data std."""</span>
         <span class="n">non_nan</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">values</span><span class="p">)]</span>
         <span class="n">std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">non_nan</span><span class="p">)</span>
         <span class="n">range_width</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">non_nan</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">non_nan</span><span class="p">)</span>
         <span class="n">num_bins</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">range_width</span> <span class="o">/</span> <span class="n">std</span><span class="p">)</span> <span class="k">if</span> <span class="n">num_bins</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">num_bins</span>
-        <span class="k">return</span> <span class="n">EqualWidthStrategy</span><span class="p">()</span><span class="o">.</span><span class="n">compute_bins</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">num_bins</span><span class="p">)</span></div>
+        <span class="n">bin_edges</span><span class="p">,</span> <span class="n">metadata</span> <span class="o">=</span> <span class="n">EqualWidthStrategy</span><span class="p">()</span><span class="o">.</span><span class="n">compute_bins</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">num_bins</span><span class="p">)</span>
+        <span class="n">metadata</span><span class="p">[</span><span class="s2">"strategy"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"auto"</span>
+        <span class="k">return</span> <span class="n">bin_edges</span><span class="p">,</span> <span class="n">metadata</span></div>
 </div>
 
 
@@ -593,6 +613,14 @@
             <span class="s2">"equal_frequency"</span><span class="p">:</span> <span class="n">EqualFrequencyStrategy</span><span class="p">(),</span>
             <span class="s2">"auto"</span><span class="p">:</span> <span class="n">AutoBinStrategy</span><span class="p">(),</span>
         <span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">label_configs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">label_type</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"label_type"</span><span class="p">,</span> <span class="s2">"categorical"</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">label_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">LABEL_TYPES</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Unknown label_type </span><span class="si">{</span><span class="n">label_type</span><span class="si">!r}</span><span class="s2"> for label </span><span class="si">{</span><span class="n">label</span><span class="si">!r}</span><span class="s2">; "</span>
+                    <span class="sa">f</span><span class="s2">"valid label types: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">LABEL_TYPES</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
 
         <span class="c1"># Initialize binning parameters for each label</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">label_metadata</span> <span class="o">=</span> <span class="p">{}</span>
@@ -648,10 +676,30 @@
                     <span class="s2">"gene"</span>
                 <span class="p">][</span><span class="s2">"phenotype_values"</span><span class="p">]</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
 
+<div class="viewcode-block" id="COOLabelBinningTransform.label_width">
+<a class="viewcode-back" href="../../../generated/torchcell.transforms.coo_regression_to_classification.COOLabelBinningTransform.html#torchcell.transforms.coo_regression_to_classification.COOLabelBinningTransform.label_width">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">label_width</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Number of COO entries one value of ``label`` expands into.</span>
+
+<span class="sd">        Categorical and soft labels emit one entry per bin (``num_bins``); ordinal</span>
+<span class="sd">        labels emit one per interior edge (``num_bins - 1`` thresholds).</span>
+<span class="sd">        """</span>
+        <span class="n">num_bins</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">label_metadata</span><span class="p">[</span><span class="n">label</span><span class="p">][</span><span class="s2">"bin_edges"</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">label_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_configs</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"label_type"</span><span class="p">,</span> <span class="s2">"categorical"</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">num_bins</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">label_type</span> <span class="o">==</span> <span class="s2">"ordinal"</span> <span class="k">else</span> <span class="n">num_bins</span></div>
+
+
 <div class="viewcode-block" id="COOLabelBinningTransform.forward">
 <a class="viewcode-back" href="../../../generated/torchcell.transforms.coo_regression_to_classification.COOLabelBinningTransform.html#torchcell.transforms.coo_regression_to_classification.COOLabelBinningTransform.forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">HeteroData</span> <span class="o">|</span> <span class="n">Batch</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HeteroData</span> <span class="o">|</span> <span class="n">Batch</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Transform the data by binning specified labels in COO format."""</span>
+<span class="w">        </span><span class="sd">"""Transform the data by binning specified labels in COO format.</span>
+
+<span class="sd">        The type list is rewritten in its own order: a configured label becomes</span>
+<span class="sd">        ``&lt;label&gt;_bin_0 .. &lt;label&gt;_bin_{w-1}`` (``w`` from ``label_width``) and any other</span>
+<span class="sd">        label passes through under its own name. Each COO entry is replaced in place by</span>
+<span class="sd">        its ``w`` binned entries (configured label) or kept as is (other label), with</span>
+<span class="sd">        type indices taken from that rewritten list.</span>
+<span class="sd">        """</span>
         <span class="c1"># Check if we have phenotype data in COO format</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">],</span> <span class="s2">"phenotype_values"</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">data</span>
@@ -666,35 +714,40 @@
             <span class="c1"># In batch mode, all items should have the same phenotype types</span>
             <span class="n">phenotype_types</span> <span class="o">=</span> <span class="n">phenotype_types</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">label</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_configs</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">phenotype_types</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">data</span>
+
         <span class="c1"># Handle scalar tensors by ensuring at least 1D</span>
         <span class="n">phenotype_values</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_values</span>
         <span class="k">if</span> <span class="n">phenotype_values</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">phenotype_values</span> <span class="o">=</span> <span class="n">phenotype_values</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">type_indices</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_type_indices</span>
+        <span class="n">sample_indices</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_sample_indices</span>
 
-        <span class="c1"># We need to handle the binning differently for COO format</span>
-        <span class="c1"># Since binning changes the dimensionality, we'll need to reorganize the data</span>
+        <span class="c1"># Rewritten type list and the explicit old type index -&gt; new type indices map</span>
+        <span class="n">new_phenotype_types</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">old_to_new</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ptype</span> <span class="ow">in</span> <span class="n">phenotype_types</span><span class="p">:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_phenotype_types</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ptype</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_configs</span><span class="p">:</span>
+                <span class="n">width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_width</span><span class="p">(</span><span class="n">ptype</span><span class="p">)</span>
+                <span class="n">new_phenotype_types</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">ptype</span><span class="si">}</span><span class="s2">_bin_</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">width</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_phenotype_types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ptype</span><span class="p">)</span>
+            <span class="n">old_to_new</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_phenotype_types</span><span class="p">))))</span>
 
-        <span class="c1"># Collect all phenotype data</span>
-        <span class="n">all_values</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">all_type_indices</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">all_sample_indices</span> <span class="o">=</span> <span class="p">[]</span>
-
+        <span class="c1"># Binned rows, keyed by the position of the COO entry they replace</span>
+        <span class="n">binned_rows</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">config</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_configs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">phenotype_types</span><span class="p">:</span>
                 <span class="k">continue</span>
 
-            <span class="c1"># Find indices where this phenotype appears</span>
             <span class="n">label_idx</span> <span class="o">=</span> <span class="n">phenotype_types</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
-            <span class="n">mask</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_type_indices</span> <span class="o">==</span> <span class="n">label_idx</span>
-
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">type_indices</span> <span class="o">==</span> <span class="n">label_idx</span>
             <span class="k">if</span> <span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">continue</span>
 
-            <span class="c1"># Get values and indices for this phenotype</span>
             <span class="n">values</span> <span class="o">=</span> <span class="n">phenotype_values</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
-            <span class="n">sample_indices</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_sample_indices</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
-
-            <span class="c1"># Get binning parameters</span>
             <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">label_metadata</span><span class="p">[</span><span class="n">label</span><span class="p">][</span><span class="s2">"bin_edges"</span><span class="p">])</span>
             <span class="n">strategy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategies</span><span class="p">[</span><span class="n">config</span><span class="p">[</span><span class="s2">"strategy"</span><span class="p">]]</span>
 
@@ -717,37 +770,35 @@
                     <span class="n">strategy</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]  # unused str param; object passed, runtime no-op</span>
                     <span class="n">sigma</span><span class="p">,</span>
                 <span class="p">)</span>
-            <span class="k">elif</span> <span class="n">label_type</span> <span class="o">==</span> <span class="s2">"ordinal"</span><span class="p">:</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># "ordinal"; label_type was validated at construction</span>
                 <span class="n">binned_values</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">compute_ordinal_labels</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">bin_edges</span><span class="p">)</span>
 
-            <span class="c1"># For binned data, we need to expand the indices</span>
-            <span class="n">num_bins</span> <span class="o">=</span> <span class="n">binned_values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)):</span>
-                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_bins</span><span class="p">):</span>
-                    <span class="n">all_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">binned_values</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span>
-                    <span class="n">all_type_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">label_idx</span> <span class="o">*</span> <span class="n">num_bins</span> <span class="o">+</span> <span class="n">j</span><span class="p">)</span>
-                    <span class="n">all_sample_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sample_indices</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">positions</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">row</span><span class="p">,</span> <span class="n">position</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">binned_values</span><span class="p">,</span> <span class="n">positions</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                <span class="n">binned_rows</span><span class="p">[</span><span class="n">position</span><span class="p">]</span> <span class="o">=</span> <span class="n">row</span>
 
-        <span class="c1"># Update the data with binned values</span>
-        <span class="k">if</span> <span class="n">all_values</span><span class="p">:</span>
-            <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">all_values</span><span class="p">)</span>
-            <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_type_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
-                <span class="n">all_type_indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span>
-            <span class="p">)</span>
-            <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_sample_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
-                <span class="n">all_sample_indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span>
-            <span class="p">)</span>
+        <span class="n">all_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">all_type_indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">all_sample_indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">position</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">phenotype_values</span><span class="p">)):</span>
+            <span class="n">new_types</span> <span class="o">=</span> <span class="n">old_to_new</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">type_indices</span><span class="p">[</span><span class="n">position</span><span class="p">])]</span>
+            <span class="n">sample</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sample_indices</span><span class="p">[</span><span class="n">position</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">position</span> <span class="ow">in</span> <span class="n">binned_rows</span><span class="p">:</span>
+                <span class="n">row</span> <span class="o">=</span> <span class="n">binned_rows</span><span class="p">[</span><span class="n">position</span><span class="p">]</span>
+                <span class="n">all_values</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">unbind</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">all_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">phenotype_values</span><span class="p">[</span><span class="n">position</span><span class="p">])</span>
+            <span class="n">all_type_indices</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">new_types</span><span class="p">)</span>
+            <span class="n">all_sample_indices</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">sample</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_types</span><span class="p">))</span>
 
-            <span class="c1"># Update phenotype types to include bin information</span>
-            <span class="n">new_phenotype_types</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">config</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_configs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="k">if</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">phenotype_types</span><span class="p">:</span>
-                    <span class="n">label_type</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"label_type"</span><span class="p">,</span> <span class="s2">"categorical"</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-                    <span class="n">bin_edges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_metadata</span><span class="p">[</span><span class="n">label</span><span class="p">][</span><span class="s2">"bin_edges"</span><span class="p">]</span>
-                    <span class="n">num_bins</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bin_edges</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
-                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_bins</span><span class="p">):</span>
-                        <span class="n">new_phenotype_types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">_bin_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-            <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_types</span> <span class="o">=</span> <span class="n">new_phenotype_types</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">all_values</span><span class="p">)</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_type_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+            <span class="n">all_type_indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span>
+        <span class="p">)</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_sample_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+            <span class="n">all_sample_indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span>
+        <span class="p">)</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_types</span> <span class="o">=</span> <span class="n">new_phenotype_types</span>
 
         <span class="k">return</span> <span class="n">data</span></div>
 
@@ -755,7 +806,14 @@
 <div class="viewcode-block" id="COOLabelBinningTransform.inverse">
 <a class="viewcode-back" href="../../../generated/torchcell.transforms.coo_regression_to_classification.COOLabelBinningTransform.html#torchcell.transforms.coo_regression_to_classification.COOLabelBinningTransform.inverse">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">inverse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">HeteroData</span> <span class="o">|</span> <span class="n">Batch</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HeteroData</span> <span class="o">|</span> <span class="n">Batch</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Inverse transform to recover continuous values from binned COO format."""</span>
+<span class="w">        </span><span class="sd">"""Inverse transform to recover continuous values from binned COO format.</span>
+
+<span class="sd">        Mirrors ``forward``: the ``&lt;label&gt;_bin_&lt;j&gt;`` types of each configured label</span>
+<span class="sd">        collapse back to ``&lt;label&gt;`` at the position of its first bin, and every other</span>
+<span class="sd">        type passes through with its entries unchanged and its type index remapped.</span>
+<span class="sd">        Output entries follow the rewritten type list; a binned label's samples are</span>
+<span class="sd">        decoded in sorted sample order, one seeded draw each where the decode samples.</span>
+<span class="sd">        """</span>
         <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
         <span class="c1"># Check if we have phenotype data in COO format</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">],</span> <span class="s2">"phenotype_values"</span><span class="p">):</span>
@@ -779,27 +837,46 @@
         <span class="k">if</span> <span class="n">phenotype_values</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">phenotype_values</span> <span class="o">=</span> <span class="n">phenotype_values</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
-        <span class="c1"># Group by original phenotype (before binning)</span>
+        <span class="c1"># Group bin types by original phenotype; every other type passes through.</span>
+        <span class="c1"># ``order`` lists the rewritten types: a configured label, or a pass-through</span>
+        <span class="c1"># type with its old type index.</span>
         <span class="n">phenotype_groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">order</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ptype</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">phenotype_types</span><span class="p">):</span>
-            <span class="c1"># Extract original phenotype name from binned name</span>
+            <span class="n">owner</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_configs</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">ptype</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">_bin_"</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="n">label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">phenotype_groups</span><span class="p">:</span>
-                        <span class="n">phenotype_groups</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-                    <span class="n">phenotype_groups</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                    <span class="n">owner</span> <span class="o">=</span> <span class="n">label</span>
                     <span class="k">break</span>
+            <span class="k">if</span> <span class="n">owner</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">order</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">ptype</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">owner</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">phenotype_groups</span><span class="p">:</span>
+                    <span class="n">phenotype_groups</span><span class="p">[</span><span class="n">owner</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="n">order</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">owner</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+                <span class="n">phenotype_groups</span><span class="p">[</span><span class="n">owner</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">phenotype_groups</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">data</span>
 
         <span class="c1"># Reconstruct continuous values</span>
-        <span class="n">new_values</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">new_type_indices</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">new_sample_indices</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">new_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">new_type_indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">new_sample_indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">new_phenotype_types</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
-        <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">config</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_configs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">phenotype_groups</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">old_idx</span> <span class="ow">in</span> <span class="n">order</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">old_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_type_indices</span> <span class="o">==</span> <span class="n">old_idx</span>
+                <span class="n">new_values</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">phenotype_values</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+                <span class="n">new_type_indices</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">new_phenotype_types</span><span class="p">)]</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()))</span>
+                <span class="n">new_sample_indices</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                    <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_sample_indices</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                <span class="p">)</span>
+                <span class="n">new_phenotype_types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
                 <span class="k">continue</span>
 
+            <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_configs</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
             <span class="n">label_type</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"label_type"</span><span class="p">,</span> <span class="s2">"categorical"</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
             <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">label_metadata</span><span class="p">[</span><span class="n">label</span><span class="p">][</span><span class="s2">"bin_edges"</span><span class="p">],</span>
@@ -854,9 +931,11 @@
                         <span class="n">continuous_value</span> <span class="o">=</span> <span class="n">rand_val</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
 
                     <span class="k">elif</span> <span class="n">label_type</span> <span class="o">==</span> <span class="s2">"soft"</span><span class="p">:</span>
-                        <span class="c1"># Use weighted average based on soft labels</span>
+                        <span class="c1"># Soft labels are already probabilities: average the bin</span>
+                        <span class="c1"># centers weighted by them (no softmax) over a window of</span>
+                        <span class="c1"># 2 bins either side of the argmax.</span>
                         <span class="n">window_size</span> <span class="o">=</span> <span class="mi">2</span>
-                        <span class="n">probs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">bin_values_tensor</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+                        <span class="n">probs</span> <span class="o">=</span> <span class="n">bin_values_tensor</span>
                         <span class="n">bin_centers</span> <span class="o">=</span> <span class="p">(</span><span class="n">bin_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="n">bin_edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
                         <span class="c1"># cast for typing only: a 0-d index tensor behaves like an</span>
                         <span class="c1"># int for the slicing/arithmetic below (no runtime change).</span>
@@ -890,19 +969,17 @@
                 <span class="n">new_type_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">new_phenotype_types</span><span class="p">))</span>
                 <span class="n">new_sample_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sample_idx</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">new_phenotype_types</span><span class="p">:</span>
-                <span class="n">new_phenotype_types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+            <span class="n">new_phenotype_types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
 
         <span class="c1"># Update data with reconstructed continuous values</span>
-        <span class="k">if</span> <span class="n">new_values</span><span class="p">:</span>
-            <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">new_values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
-            <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_type_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
-                <span class="n">new_type_indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span>
-            <span class="p">)</span>
-            <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_sample_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
-                <span class="n">new_sample_indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span>
-            <span class="p">)</span>
-            <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_types</span> <span class="o">=</span> <span class="n">new_phenotype_types</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">new_values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_type_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+            <span class="n">new_type_indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span>
+        <span class="p">)</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_sample_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+            <span class="n">new_sample_indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span>
+        <span class="p">)</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype_types</span> <span class="o">=</span> <span class="n">new_phenotype_types</span>
 
         <span class="k">return</span> <span class="n">data</span></div>
 

@@ -43,7 +43,7 @@ With an endpoint URL and a key (see [Downloading datasets](https://mjvolk3.githu
 a loader fetches its archive instead of building:
 
 ```bash
-export TC_DATA_URL=http://127.0.0.1:8724   # the endpoint, or an ssh tunnel to it
+export TC_DATA_URL=http://torchcell-database.ncsa.illinois.edu:8724
 export TC_DATA_API_KEY=<your key>
 ```
 

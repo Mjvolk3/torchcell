@@ -24,6 +24,7 @@ from tqdm import tqdm
 from torchcell.data import ExperimentReferenceIndex, compute_sha256_hash
 from torchcell.datamodels.interned_constant import (
     INTERNED_CONSTANT_NEO4J_LABEL,
+    POINTER_KEY,
     collect_pointers,
     resolve_pointers,
     verified_constant,
@@ -31,6 +32,7 @@ from torchcell.datamodels.interned_constant import (
 from torchcell.datamodels.schema import (
     EXPERIMENT_REFERENCE_TYPE_MAP,
     EXPERIMENT_TYPE_MAP,
+    Environment,
 )
 from torchcell.sequence import GeneSet
 
@@ -153,6 +155,53 @@ def compute_experiment_reference_index(
     return reference_indices_list
 
 
+CONSTANT_CACHE_MAX = 200_000
+"""Entries each validated-constant cache holds before it is emptied.
+
+The caches only save work (a hit and a miss write the same bytes), so emptying one
+bounds memory on a dataset whose references or environments are all distinct without
+changing any output."""
+
+
+def _dumps(obj: Any) -> str:
+    """The raw stage's serializer: ``json.dumps`` with pydantic models dumped."""
+    return json.dumps(obj, default=lambda o: o.model_dump())
+
+
+@define
+class _CachedEnvironment:
+    """A validated environment and the JSON it contributes to an experiment record."""
+
+    model: Environment
+    fragment: str
+
+
+@define
+class _CachedReference:
+    """A validated experiment reference, its stored JSON, and its index hash."""
+
+    model: Any
+    fragment: str
+    index_hash: str
+
+
+@define
+class _StreamState:
+    """What ``process`` carries across batches instead of re-reading the LMDB.
+
+    ``environments`` is keyed by ``("ref", <constant id>)`` on the pointer layout or
+    ``("json", <environment JSON>)`` on the inline one; ``references`` by the raw
+    ``ref_serialized`` string. ``reference_members`` maps each reference-index hash to
+    the record indices that carry it, and ``gene_set`` collects every perturbed gene,
+    both read off the exact dicts that were serialized into the LMDB.
+    """
+
+    environments: dict[tuple[str, str], _CachedEnvironment] = field(factory=dict)
+    references: dict[str, _CachedReference] = field(factory=dict)
+    reference_members: dict[str, list[int]] = field(factory=dict)
+    gene_set: GeneSet = field(factory=GeneSet)
+
+
 @define
 class Neo4jQueryRaw:
     """LMDB-cached, indexable view over the results of a raw Neo4j Cypher query."""
@@ -179,6 +228,7 @@ class Neo4jQueryRaw:
     # TORCHCELL_KG_VERSION), ``pinned``, a release id, or a ``major.minor`` version;
     # resolved to a database name at fetch time by ``releases.resolve_database``.
     version: str | None = None
+    _stream: _StreamState = field(init=False, factory=_StreamState, repr=False)
 
     def __attrs_post_init__(self) -> None:
         """Set up raw/LMDB paths, run the query on first use, and open the LMDB env."""
@@ -272,43 +322,211 @@ class Neo4jQueryRaw:
         with self.env.begin(write=True) as txn:
             txn.put(key, value)
 
-    def _write_batch(
+    @staticmethod
+    def _environment_key(environment: dict[str, Any]) -> tuple[str, str]:
+        """Cache key of a record's environment: its pointer id, else its JSON.
+
+        A pointer (``{"$ref": id}``) is keyed by its id, which is the sha256 of the
+        payload; an inline environment by its JSON. Either key determines the input to
+        validation exactly, so a hit returns what a fresh validation would.
+        """
+        ref = environment.get(POINTER_KEY)
+        return ("ref", ref) if ref is not None else ("json", json.dumps(environment))
+
+    def _environment(
         self,
-        batch: list[tuple[int, dict[str, Any], dict[str, Any]]],
+        key: tuple[str, str],
+        environment: dict[str, Any],
         constants: dict[str, Any],
+    ) -> _CachedEnvironment:
+        """Return the validated environment for a record, building it once per key.
+
+        The input to validation is what ``resolve_pointers`` made of the environment
+        before: a pointer becomes its fetched payload as is, an inline environment
+        has any pointers nested in it resolved.
+        """
+        cache = self._stream.environments
+        hit = cache.get(key)
+        if hit is None:
+            source = (
+                constants[key[1]]
+                if key[0] == "ref"
+                else resolve_pointers(environment, constants)
+            )
+            model = Environment(**source)
+            hit = _CachedEnvironment(model=model, fragment=_dumps(model))
+            cache[key] = hit
+        return hit
+
+    def _reference(
+        self,
+        ref_serialized: str,
+        ref_node_data: dict[str, Any],
+        constants: dict[str, Any],
+    ) -> _CachedReference:
+        """Return the validated reference for a raw ``ref_serialized`` string.
+
+        ``index_hash`` is the hash ``experiment_reference_index`` computes off the STORED
+        reference dict (``json.loads`` of the written fragment, keys sorted).
+        """
+        cache = self._stream.references
+        hit = cache.get(ref_serialized)
+        if hit is None:
+            resolved = resolve_pointers(ref_node_data, constants)
+            model = EXPERIMENT_REFERENCE_TYPE_MAP[
+                resolved["experiment_reference_type"]
+            ](**resolved)
+            fragment = _dumps(model)
+            hit = _CachedReference(
+                model=model,
+                fragment=fragment,
+                index_hash=compute_sha256_hash(
+                    json.dumps(json.loads(fragment), sort_keys=True)
+                ),
+            )
+            cache[ref_serialized] = hit
+        return hit
+
+    @staticmethod
+    def _experiment_json(
+        experiment: Any, environment: _CachedEnvironment
+    ) -> tuple[str, dict[str, Any]]:
+        """``_dumps(experiment)`` with the environment's cached JSON spliced in.
+
+        ``json.dumps`` of a str-keyed dict is ``{`` + ``"k": v`` joined by ``, `` +
+        ``}``, so dumping every field but the environment and inserting the cached
+        fragment at the environment's position reproduces the whole-record bytes. The
+        field order is the model's (Experiment classes declare no computed or excluded
+        fields, which the length check enforces). Returns the JSON and the dump of
+        the other fields, whose ``genotype`` the gene set is read from.
+        """
+        fields = type(experiment).model_fields
+        dump = experiment.model_dump(exclude={"environment"})
+        if len(dump) != len(fields) - 1:
+            raise ValueError(
+                f"{type(experiment).__name__} dumps fields {sorted(dump)}, not its "
+                f"declared fields {list(fields)} without the environment"
+            )
+        parts = [
+            f"{json.dumps(name)}: "
+            + (environment.fragment if name == "environment" else _dumps(dump[name]))
+            for name in fields
+        ]
+        return "{" + ", ".join(parts) + "}", dump
+
+    def _write_batch(
+        self, batch: list[tuple[int, dict[str, Any], str]], constants: dict[str, Any]
     ) -> None:
-        """Resolve a batch's pointers (one fetch for its unseen ids) and write it."""
+        """Resolve a batch's pointers (one fetch for its unseen ids) and write it.
+
+        Each item is ``(index, experiment blob, ref_serialized)``. Only the
+        experiment is validated per record: its environment and the reference come
+        from caches of validated models (``_environment``, ``_reference``), and the
+        written value is byte-identical to
+        ``json.dumps({"experiment": e, "experiment_reference": r}, default=model_dump)``
+        (tests/torchcell/data/test_neo4j_query_raw_single_pass.py). The reference-index
+        hash and the gene set are accumulated in ``self._stream`` as each record is
+        written, which is what lets ``process`` skip both re-reads of the LMDB.
+        """
+        # Caches are emptied only between batches, so every reference this batch
+        # finds cached below stays cached until the batch is written.
+        for cache in (self._stream.environments, self._stream.references):
+            if len(cache) >= CONSTANT_CACHE_MAX:
+                cache.clear()
         refs: set[str] = set()
-        for _, e_node_data, ref_node_data in batch:
-            collect_pointers(e_node_data, refs)
-            collect_pointers(ref_node_data, refs)
+        new_references: dict[str, dict[str, Any]] = {}
+        environment_keys: list[tuple[str, str]] = []
+        for _, e_node_data, ref_serialized in batch:
+            # Walk the record for pointers, but an environment only on a cache miss:
+            # a cached key is content that was walked (and validated) already.
+            for name, value in e_node_data.items():
+                if name != "environment":
+                    collect_pointers(value, refs)
+            environment_key = self._environment_key(e_node_data["environment"])
+            environment_keys.append(environment_key)
+            if environment_key[0] == "ref":
+                refs.add(environment_key[1])
+            elif environment_key not in self._stream.environments:
+                collect_pointers(e_node_data["environment"], refs)
+            if (
+                ref_serialized not in self._stream.references
+                and ref_serialized not in new_references
+            ):
+                ref_node_data = json.loads(ref_serialized)
+                collect_pointers(ref_node_data, refs)
+                new_references[ref_serialized] = ref_node_data
         unseen = sorted(refs - constants.keys())
         if unseen:
             constants.update(self.fetch_constants(unseen))
+        stream = self._stream
         with self.env.begin(write=True) as txn:
-            for i, e_node_data, ref_node_data in batch:
-                e_node_data = resolve_pointers(e_node_data, constants)
-                ref_node_data = resolve_pointers(ref_node_data, constants)
-                experiment_class = EXPERIMENT_TYPE_MAP[e_node_data["experiment_type"]]
-                experiment = experiment_class(
-                    dataset_name=e_node_data["dataset_name"],
-                    genotype=e_node_data["genotype"],
-                    environment=e_node_data["environment"],
-                    phenotype=e_node_data["phenotype"],
+            for (i, e_node_data, ref_serialized), environment_key in zip(
+                batch, environment_keys, strict=True
+            ):
+                environment = self._environment(
+                    environment_key, e_node_data["environment"], constants
                 )
-                experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
-                    ref_node_data["experiment_reference_type"]
-                ]
-                experiment_reference = experiment_reference_class(**ref_node_data)
-                data_dict = {
-                    "experiment": experiment,
-                    "experiment_reference": experiment_reference,
-                }
-                data_json = json.dumps(data_dict, default=lambda o: o.model_dump())
+                experiment = EXPERIMENT_TYPE_MAP[e_node_data["experiment_type"]](
+                    dataset_name=e_node_data["dataset_name"],
+                    genotype=resolve_pointers(e_node_data["genotype"], constants),
+                    environment=environment.model,
+                    phenotype=resolve_pointers(e_node_data["phenotype"], constants),
+                )
+                reference = (
+                    stream.references[ref_serialized]
+                    if ref_serialized in stream.references
+                    else self._reference(
+                        ref_serialized, new_references[ref_serialized], constants
+                    )
+                )
+                experiment_json, dump = self._experiment_json(experiment, environment)
+                data_json = (
+                    '{"experiment": '
+                    + experiment_json
+                    + ', "experiment_reference": '
+                    + reference.fragment
+                    + "}"
+                )
                 txn.put(f"data_{i}".encode(), data_json.encode())
+                stream.reference_members.setdefault(reference.index_hash, []).append(i)
+                for gene_name in self.extract_systematic_gene_names(dump["genotype"]):
+                    stream.gene_set.add(gene_name)
+
+    def _reference_index_from_groups(
+        self, groups: list[list[int]]
+    ) -> list[ExperimentReferenceIndex]:
+        """Build the index from reference-hash groups in LMDB cursor order, and save it.
+
+        ``groups`` (one list of record indices per reference hash) must be ordered,
+        and each list ordered, as a cursor walk of the LMDB meets them: keys are
+        ``data_<i>``, so cursor order is the lexicographic order of the key string,
+        not of ``i``. The stored reference is the re-validated reference of each
+        group's first member in that order, which is what
+        ``self[i]["experiment_reference"]`` returns; it is read here in one
+        transaction without validating the experiment half.
+        """
+        self._init_lmdb(readonly=True)
+        index: list[ExperimentReferenceIndex] = []
+        with self.env.begin() as txn:
+            for indices in groups:
+                stored = json.loads(txn.get(f"data_{indices[0]}".encode()).decode())
+                ref = stored["experiment_reference"]
+                reference = EXPERIMENT_REFERENCE_TYPE_MAP[
+                    ref["experiment_reference_type"]
+                ](**ref)
+                index.append(
+                    ExperimentReferenceIndex(
+                        reference=reference.model_dump(), member_indices=sorted(indices)
+                    )
+                )
+        self._experiment_reference_index = index
+        with open(osp.join(self.raw_dir, "experiment_reference_index.json"), "w") as f:
+            json.dump([eri.model_dump() for eri in self._experiment_reference_index], f)
+        self.close_lmdb()
+        return self._experiment_reference_index
 
     def process(self) -> None:
-        """Stream query results into LMDB and build the reference and gene-set indices.
+        """Stream query results into LMDB and write the reference index and gene set.
 
         The store is written in a staging directory beside the target
         (``raw/lmdb.partial``) and moved into place with ``os.replace`` only once every
@@ -324,6 +542,11 @@ class Neo4jQueryRaw:
         large sub-object (torchcell/datamodels/interned_constant.py); each batch fetches
         the ids it has not seen, verifies them, and splices them back before the
         record is written, so the LMDB holds the same inlined records it always did.
+
+        The reference index and gene set are computed while streaming and written to
+        the files their properties read, so neither property re-reads the LMDB. Both
+        files are the ones the two streaming passes wrote before
+        (tests/torchcell/data/test_neo4j_query_raw_single_pass.py).
         """
         staging_dir = self.lmdb_dir + ".partial"
         if osp.exists(staging_dir):
@@ -355,14 +578,23 @@ class Neo4jQueryRaw:
         os.replace(staging_dir, final_dir)
         log.info(f"Total records processed: {n_records}")
 
-        self.experiment_reference_index
-        self.gene_set = self.compute_gene_set()
+        # Order the groups as the streaming property's cursor walk meets them: keys
+        # are data_<i>, so cursor order is lexicographic in str(i).
+        groups = [
+            sorted(members, key=str)
+            for members in self._stream.reference_members.values()
+        ]
+        groups.sort(key=lambda members: str(members[0]))
+        self._reference_index_from_groups(groups)
+        self.gene_set = self._stream.gene_set
+        self._stream = _StreamState()
 
     def _write_records(self, records: Iterator[Any]) -> int:
         """Write each query record as ``data_<i>``; return the number written."""
         i = -1
         constants: dict[str, Any] = {}
-        batch: list[tuple[int, dict[str, Any], dict[str, Any]]] = []
+        self._stream = _StreamState()
+        batch: list[tuple[int, dict[str, Any], str]] = []
         for i, record in tqdm(enumerate(records)):
             # Two record shapes, by what the query RETURNs. Property shape
             # (e_serialized/ref_serialized strings) is REQUIRED at scale: returning
@@ -378,10 +610,10 @@ class Neo4jQueryRaw:
             else:
                 e_node_data = json.loads(record["e"]["serialized_data"])
             if "ref_serialized" in record.keys():
-                ref_node_data = json.loads(record["ref_serialized"])
+                ref_serialized = record["ref_serialized"]
             else:
-                ref_node_data = json.loads(record["ref"]["serialized_data"])
-            batch.append((i, e_node_data, ref_node_data))
+                ref_serialized = record["ref"]["serialized_data"]
+            batch.append((i, e_node_data, ref_serialized))
             if len(batch) >= PROCESS_BATCH:
                 self._write_batch(batch, constants)
                 batch = []
@@ -518,18 +750,9 @@ class Neo4jQueryRaw:
                     hash_val = compute_sha256_hash(json.dumps(ref_dict, sort_keys=True))
                     hash_to_indices.setdefault(hash_val, []).append(idx)
             self.close_lmdb()
-            self._experiment_reference_index = [
-                ExperimentReferenceIndex(
-                    reference=self[indices[0]]["experiment_reference"].model_dump(),
-                    member_indices=sorted(indices),
-                )
-                for indices in hash_to_indices.values()
-            ]
-            # Serialize each ExperimentReferenceIndex object to dict and save the list of dicts
-            with open(index_file_path, "w") as file:
-                json.dump(
-                    [eri.model_dump() for eri in self._experiment_reference_index], file
-                )
+            self._experiment_reference_index = self._reference_index_from_groups(
+                list(hash_to_indices.values())
+            )
 
         self.close_lmdb()
         return self._experiment_reference_index

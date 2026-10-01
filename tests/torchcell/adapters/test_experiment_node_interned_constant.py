@@ -203,7 +203,7 @@ def test_query_side_batch_resolves_pointers_once_per_id(tmp_path: Any) -> None:
         (
             i,
             json.loads(nodes[0].get_properties()["serialized_data"]),
-            reference.model_dump(),
+            json.dumps(reference.model_dump()),
         )
         for i, nodes in enumerate(emitted)
     ]
@@ -223,4 +223,4 @@ def test_query_side_batch_fails_on_a_missing_constant(tmp_path: Any) -> None:
     query = _query(tmp_path)
     blob = json.loads(nodes[0].get_properties()["serialized_data"])
     with pytest.raises(KeyError, match="missing"):
-        query._write_batch([(0, blob, {})], {})
+        query._write_batch([(0, blob, "{}")], {})

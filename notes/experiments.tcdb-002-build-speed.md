@@ -869,6 +869,52 @@ while streaming would remove about 4 h of the 7 h 48 min, before touching the
 aggregation stage. `scripts/query_build_cost_probe.py` (in progress) measures the
 per-step costs on the 033 build's records.
 
+Correction from the log parse: the 1 h 39 min pass at 1,079 records/s was the
+aggregation's first pass (grouping), not the gene set; the gene-set pass took 36 min
+at 2,949/s. Job 2929 never ran the raw `phenotype_label_index` loop (it reads a
+field the schema does not have); the cell dataset's dict-based index ran instead.
+
+`scripts/query_build_cost_probe.py` (`results/query_build_cost_probe.csv`; 21,184
+records from the 033 build's processed LMDB, best of 5, ms per record, projected to
+6,394,540 records; observed hours from job 2929):
+
+| step | ms per record | projected h | observed h |
+|---|--:|--:|--:|
+| raw stage combined (loads, validate both, dumps, put), inline layout | 0.629 | 1.12 | 2.48 |
+| raw stage combined, pointer layout | 0.531 | 0.94 | |
+| validate experiment / reference / environment alone | 0.336 / 0.247 / 0.233 | | |
+| `model_construct` instead of validation | 0.0065 | 0.01 | |
+| reference index pass | 0.104 | 0.18 | 0.44 |
+| gene set pass | 0.054 | 0.10 | 0.60 |
+| aggregation pass 1 (grouping) | 0.185 | 0.33 | 1.65 |
+| aggregation pass 2 (write) | 0.031 | 0.06 | 0.36 |
+| label_df (validates every record again) | 0.226 | 0.40 | 0.69 |
+| each of the three JSON indices and `measurements_per_entry` | 0.054 | 0.10 | 0.30 |
+
+Validation is 61% of the raw stage's per-record cost, and the store holds only
+6,232 distinct environments and 5,341 distinct references over 6.4M records, so
+validating each distinct constant once costs about 5 s against 0.83 h per record.
+Client CPU totals 2.72 h of the 7.78 h observed; by subtraction 1.36 h of the raw
+stage is server and driver time (not measured: no bolt access from the probe), and
+each LMDB re-read pass carries about 0.2 h of I/O (`readahead=False` cold reads at
+213 MB/s against 2,630 MB/s with readahead; a hypothesis, the disk was not profiled
+in job 2929). The 1.3 h gap in aggregation pass 1 is unexplained.
+
+Single-pass design, prototyped in the probe and byte-identical to the current
+pipeline on all 21,184 slice records (raw values, reference index, gene set, group
+order and membership, the three indices, the label rows): one loop over the Cypher
+stream validates only the experiment with its environment taken from a cache keyed
+by `$ref` id (or by JSON on the inline layout) and references cached by their
+string, writes the inlined JSON, and records the reference hash, genes, aggregation
+key and the label, dataset and perturbation-count values as it goes; a finalize
+step numbers groups in cursor order as `Aggregator.process` does; one re-read gathers
+each group's records straight into `processed/`. Projection: 2.09 h on the pointer
+layout (0.37 h client CPU + the 1.36 h server residual + 0.36 h pass 2) against
+7.78 h, 3.5x; risks are validators that depend on the environment (none known) and
+the index state's memory at 6.4M records (unmeasured). Untested further gains:
+readahead on the re-read, validation across worker processes, parallel Cypher
+partitions against the server residual, and the pointer layout's 4x smaller payload.
+
 ### Duplicate node blobs removed (2026.09.30)
 
 `serialized_data` is gone from genotype, segregant genotype, perturbation, crispr construct, environment perturbation and all 13 phenotype classes (fitness, gene interaction, gene essentiality, synthetic lethality, synthetic rescue, calmorph, microarray / rnaseq / pseudobulk expression, visual score, metabolite, protein abundance, environment response), in `torchcell/adapters/cell_adapter.py` and `biocypher/config/torchcell_schema_config.yaml`. Each is a sub-object of the experiment record, so its full copy is in the Experiment blob or the interned constant it points to; the reference-side phenotype and environment perturbation nodes are sub-objects of the experiment reference blob. Node ids are still sha256 of the sub-object's model_dump, so ids and edges do not change.

@@ -131,6 +131,26 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.embedding</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseEmbeddingDataset</span>
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">ConstantFeatureError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A feature has one value on every gene, so min-max normalization is undefined."""</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_refuse_constant_features</span><span class="p">(</span><span class="n">feature_min_max</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raise ``ConstantFeatureError`` naming every feature whose min equals its max."""</span>
+    <span class="n">constant</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">feature</span><span class="p">:</span> <span class="n">low</span> <span class="k">for</span> <span class="n">feature</span><span class="p">,</span> <span class="p">(</span><span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">)</span> <span class="ow">in</span> <span class="n">feature_min_max</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">low</span> <span class="o">==</span> <span class="n">high</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="n">constant</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ConstantFeatureError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"features </span><span class="si">{</span><span class="n">constant</span><span class="si">}</span><span class="s2"> take one value on every gene; min-max "</span>
+            <span class="s2">"normalization would divide 0 by 0, refusing to store NaN"</span>
+        <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MissingChromosomeError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A gene carries no chromosome, so it has no chromosome index."""</span>
+
+
 <div class="viewcode-block" id="GraphEmbeddingDataset">
 <a class="viewcode-back" href="../../../generated/torchcell.datasets.GraphEmbeddingDataset.html#torchcell.datasets.GraphEmbeddingDataset">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">GraphEmbeddingDataset</span><span class="p">(</span><span class="n">BaseEmbeddingDataset</span><span class="p">):</span>
@@ -182,10 +202,19 @@
 <div class="viewcode-block" id="GraphEmbeddingDataset.process">
 <a class="viewcode-back" href="../../../generated/torchcell.datasets.GraphEmbeddingDataset.html#torchcell.datasets.GraphEmbeddingDataset.process">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Build node feature tensors and save them with categorical metadata."""</span>
+<span class="w">        </span><span class="sd">"""Build node feature tensors and save them with categorical metadata.</span>
+
+<span class="sd">        A feature that is None is filled with that feature's median; a value of 0 is a</span>
+<span class="sd">        value and is kept. Chromosome and pathway indices are positions in the SORTED</span>
+<span class="sd">        vocabulary of every value in the graph, so one category maps to one index and</span>
+<span class="sd">        the indices do not depend on ``PYTHONHASHSEED``. Min-max normalization refuses</span>
+<span class="sd">        a constant feature (``ConstantFeatureError``) rather than storing 0 / 0 = NaN,</span>
+<span class="sd">        and a gene whose chromosome is None raises ``MissingChromosomeError``.</span>
+<span class="sd">        On the cached SGD ``G_gene`` (6,607 genes) no feature has a 0 and none is</span>
+<span class="sd">        constant and none lacks a chromosome (issue #518), so only the categorical</span>
+<span class="sd">        indices differ from the old builds, and no consumer reads them.</span>
+<span class="sd">        """</span>
         <span class="n">data_list</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">unique_chromosomes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="n">unique_pathways</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
 
         <span class="n">normalize_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MODEL_TO_WINDOW</span><span class="p">[</span><span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">)]</span>
 
@@ -220,42 +249,47 @@
             <span class="p">)</span>
             <span class="k">for</span> <span class="n">feature</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">feature_values</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
         <span class="p">}</span>
+        <span class="k">if</span> <span class="n">normalize_data</span><span class="p">:</span>
+            <span class="n">_refuse_constant_features</span><span class="p">(</span><span class="n">feature_min_max</span><span class="p">)</span>
+
+        <span class="n">no_chromosome</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">node_id</span>
+            <span class="k">for</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">node_data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">node_data</span><span class="p">[</span><span class="s2">"chromosome"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">no_chromosome</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">MissingChromosomeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"genes </span><span class="si">{</span><span class="n">no_chromosome</span><span class="si">}</span><span class="s2"> have no chromosome; refusing to give them a "</span>
+                <span class="s2">"chromosome index"</span>
+            <span class="p">)</span>
+        <span class="n">chromosome_vocab</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">node_data</span><span class="p">[</span><span class="s2">"chromosome"</span><span class="p">]</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">node_data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">)}</span>
+        <span class="p">)</span>
+        <span class="n">pathway_vocab</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="n">pathway</span>
+                <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">node_data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">pathway</span> <span class="ow">in</span> <span class="p">(</span><span class="n">node_data</span><span class="p">[</span><span class="s2">"pathways"</span><span class="p">]</span> <span class="ow">or</span> <span class="p">[])</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">chromosome_to_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chromosome_vocab</span><span class="p">)}</span>
+        <span class="n">pathway_to_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pathway_vocab</span><span class="p">)}</span>
 
         <span class="k">for</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">node_data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-            <span class="c1"># Extract node features</span>
-            <span class="n">length</span> <span class="o">=</span> <span class="n">node_data</span><span class="p">[</span><span class="s2">"length"</span><span class="p">]</span> <span class="ow">or</span> <span class="n">feature_medians</span><span class="p">[</span><span class="s2">"length"</span><span class="p">]</span>
-            <span class="n">molecular_weight</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">node_data</span><span class="p">[</span><span class="s2">"molecular_weight"</span><span class="p">]</span> <span class="ow">or</span> <span class="n">feature_medians</span><span class="p">[</span><span class="s2">"molecular_weight"</span><span class="p">]</span>
-            <span class="p">)</span>
-            <span class="n">pi</span> <span class="o">=</span> <span class="n">node_data</span><span class="p">[</span><span class="s2">"pi"</span><span class="p">]</span> <span class="ow">or</span> <span class="n">feature_medians</span><span class="p">[</span><span class="s2">"pi"</span><span class="p">]</span>
-            <span class="n">median_value</span> <span class="o">=</span> <span class="n">node_data</span><span class="p">[</span><span class="s2">"median_value"</span><span class="p">]</span> <span class="ow">or</span> <span class="n">feature_medians</span><span class="p">[</span><span class="s2">"median_value"</span><span class="p">]</span>
-            <span class="n">median_abs_dev_value</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">node_data</span><span class="p">[</span><span class="s2">"median_abs_dev_value"</span><span class="p">]</span>
-                <span class="ow">or</span> <span class="n">feature_medians</span><span class="p">[</span><span class="s2">"median_abs_dev_value"</span><span class="p">]</span>
-            <span class="p">)</span>
-            <span class="n">start</span> <span class="o">=</span> <span class="n">node_data</span><span class="p">[</span><span class="s2">"start"</span><span class="p">]</span> <span class="ow">or</span> <span class="n">feature_medians</span><span class="p">[</span><span class="s2">"start"</span><span class="p">]</span>
-            <span class="n">end</span> <span class="o">=</span> <span class="n">node_data</span><span class="p">[</span><span class="s2">"end"</span><span class="p">]</span> <span class="ow">or</span> <span class="n">feature_medians</span><span class="p">[</span><span class="s2">"end"</span><span class="p">]</span>
+            <span class="c1"># Extract node features; only a missing (None) value takes the median</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">node_data</span><span class="p">[</span><span class="n">feature</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">node_data</span><span class="p">[</span><span class="n">feature</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="n">feature_medians</span><span class="p">[</span><span class="n">feature</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="n">feature_values</span>
+            <span class="p">]</span>
             <span class="n">chromosome</span> <span class="o">=</span> <span class="n">node_data</span><span class="p">[</span><span class="s2">"chromosome"</span><span class="p">]</span>
             <span class="n">pathways</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">node_data</span><span class="p">[</span><span class="s2">"pathways"</span><span class="p">]</span> <span class="k">if</span> <span class="n">node_data</span><span class="p">[</span><span class="s2">"pathways"</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
             <span class="p">)</span>
 
-            <span class="n">unique_chromosomes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">chromosome</span><span class="p">)</span>
-            <span class="n">unique_pathways</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">pathways</span><span class="p">)</span>
-
             <span class="c1"># Create node feature vector</span>
-            <span class="n">node_features</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
-                <span class="p">[</span>
-                    <span class="n">length</span><span class="p">,</span>
-                    <span class="n">molecular_weight</span><span class="p">,</span>
-                    <span class="n">pi</span><span class="p">,</span>
-                    <span class="n">median_value</span><span class="p">,</span>
-                    <span class="n">median_abs_dev_value</span><span class="p">,</span>
-                    <span class="n">start</span><span class="p">,</span>
-                    <span class="n">end</span><span class="p">,</span>
-                <span class="p">],</span>
-                <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="n">node_features</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">normalize_data</span><span class="p">:</span>
                 <span class="c1"># Min-max scaling for each feature type</span>
@@ -267,12 +301,11 @@
 
             <span class="c1"># Get indices for categorical variables</span>
             <span class="n">chromosome_index</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
-                <span class="nb">list</span><span class="p">(</span><span class="n">unique_chromosomes</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">chromosome</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span>
+                <span class="n">chromosome_to_index</span><span class="p">[</span><span class="n">chromosome</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span>
             <span class="p">)</span>
 
             <span class="n">pathways_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
-                <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">unique_pathways</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">pathway</span><span class="p">)</span> <span class="k">for</span> <span class="n">pathway</span> <span class="ow">in</span> <span class="n">pathways</span><span class="p">],</span>
-                <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span>
+                <span class="p">[</span><span class="n">pathway_to_index</span><span class="p">[</span><span class="n">pathway</span><span class="p">]</span> <span class="k">for</span> <span class="n">pathway</span> <span class="ow">in</span> <span class="n">pathways</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span>
             <span class="p">)</span>
 
             <span class="c1"># Create Data object</span>
@@ -285,11 +318,11 @@
         <span class="c1"># Update the categorical_features dictionary with the number of unique values</span>
         <span class="k">if</span> <span class="s2">"chromosome"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span><span class="p">[</span><span class="s2">"chromosome"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span><span class="p">[</span><span class="s2">"chromosome"</span><span class="p">][</span><span class="s2">"num_values"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_chromosomes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span><span class="p">[</span><span class="s2">"chromosome"</span><span class="p">][</span><span class="s2">"num_values"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">chromosome_vocab</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="s2">"pathways"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span><span class="p">[</span><span class="s2">"pathways"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span><span class="p">[</span><span class="s2">"pathways"</span><span class="p">][</span><span class="s2">"num_values"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_pathways</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span><span class="p">[</span><span class="s2">"pathways"</span><span class="p">][</span><span class="s2">"num_values"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pathway_vocab</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">data_list</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pre_transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">data_list</span><span class="p">]</span>

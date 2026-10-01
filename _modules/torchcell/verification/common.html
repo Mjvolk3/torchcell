@@ -755,18 +755,18 @@
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_uncertainty_result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""L2: a labelled dispersion is never exactly 0; unreported ones are counted."""</span>
+<span class="w">        </span><span class="sd">"""L2: a labeled dispersion is never exactly 0; unreported ones are counted."""</span>
         <span class="n">passed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_zero_dispersion</span> <span class="o">==</span> <span class="mi">0</span>
         <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
             <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L2</span><span class="p">,</span>
             <span class="n">name</span><span class="o">=</span><span class="s2">"uncertainty_sanity"</span><span class="p">,</span>
             <span class="n">passed</span><span class="o">=</span><span class="n">passed</span><span class="p">,</span>
             <span class="n">message</span><span class="o">=</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_uncertainty_checked</span><span class="si">}</span><span class="s2"> labelled uncertainties, none a zero "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_uncertainty_checked</span><span class="si">}</span><span class="s2"> labeled uncertainties, none a zero "</span>
                 <span class="sa">f</span><span class="s2">"dispersion; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_unreported_uncertainty</span><span class="si">}</span><span class="s2"> records report "</span>
                 <span class="s2">"n_samples &gt;= 2 with no uncertainty"</span>
                 <span class="k">if</span> <span class="n">passed</span>
-                <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_zero_dispersion</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_uncertainty_checked</span><span class="si">}</span><span class="s2"> labelled "</span>
+                <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_zero_dispersion</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_uncertainty_checked</span><span class="si">}</span><span class="s2"> labeled "</span>
                 <span class="s2">"uncertainties are a sample dispersion of exactly 0 (a pseudocount "</span>
                 <span class="s2">"artifact, not perfect precision)"</span>
             <span class="p">),</span>
@@ -875,10 +875,17 @@
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_gene_containment_results</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sgd_genes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">LevelResult</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""L4: the aggregate containment floor, plus the per-record genome membership."""</span>
+<span class="w">        </span><span class="sd">"""L4: the aggregate containment floor, plus the per-record genome membership.</span>
+
+<span class="sd">        An empty measured set (no record carries a gene perturbation) passes both</span>
+<span class="sd">        results vacuously, each saying the set is empty, and adds a FAILING</span>
+<span class="sd">        ``measured_genes_present`` result ahead of them: a dataset verified against the</span>
+<span class="sd">        SGD gene set that measures no gene fails for that stated reason, not for a</span>
+<span class="sd">        fabricated 0.000 overlap.</span>
+<span class="sd">        """</span>
         <span class="n">measured</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_gene_records</span><span class="p">)</span>
         <span class="n">missing</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">measured</span> <span class="o">-</span> <span class="n">sgd_genes</span><span class="p">)</span>
-        <span class="n">overlap</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">measured</span> <span class="o">&amp;</span> <span class="n">sgd_genes</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">measured</span><span class="p">)</span> <span class="k">if</span> <span class="n">measured</span> <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="n">overlap</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">measured</span> <span class="o">&amp;</span> <span class="n">sgd_genes</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">measured</span><span class="p">)</span> <span class="k">if</span> <span class="n">measured</span> <span class="k">else</span> <span class="mf">1.0</span>
         <span class="n">containment</span> <span class="o">=</span> <span class="n">LevelResult</span><span class="p">(</span>
             <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L4</span><span class="p">,</span>
             <span class="n">name</span><span class="o">=</span><span class="s2">"gene_containment_sgd"</span><span class="p">,</span>
@@ -886,6 +893,9 @@
             <span class="n">message</span><span class="o">=</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">overlap</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">measured</span><span class="p">)</span><span class="si">}</span><span class="s2"> measured genes are S288C reference "</span>
                 <span class="sa">f</span><span class="s2">"genes (&gt;= </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">min_containment</span><span class="si">}</span><span class="s2">)"</span>
+                <span class="k">if</span> <span class="n">measured</span>
+                <span class="k">else</span> <span class="s2">"no measured genes (the measured gene set is empty); containment "</span>
+                <span class="s2">"holds vacuously"</span>
             <span class="p">),</span>
             <span class="n">details</span><span class="o">=</span><span class="p">{</span>
                 <span class="s2">"n_measured"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">measured</span><span class="p">),</span>
@@ -899,8 +909,11 @@
             <span class="n">name</span><span class="o">=</span><span class="s2">"current_genome_genes"</span><span class="p">,</span>
             <span class="n">passed</span><span class="o">=</span><span class="ow">not</span> <span class="n">missing</span><span class="p">,</span>
             <span class="n">message</span><span class="o">=</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"every one of the </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">measured</span><span class="p">)</span><span class="si">}</span><span class="s2"> measured systematic names is a gene of "</span>
-                <span class="s2">"the current genome"</span>
+                <span class="s2">"no measured genes (the measured gene set is empty); genome membership "</span>
+                <span class="s2">"holds vacuously"</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">measured</span>
+                <span class="k">else</span> <span class="sa">f</span><span class="s2">"every one of the </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">measured</span><span class="p">)</span><span class="si">}</span><span class="s2"> measured systematic names is a "</span>
+                <span class="s2">"gene of the current genome"</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">missing</span>
                 <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span><span class="si">}</span><span class="s2"> systematic names are absent from the current genome "</span>
                 <span class="sa">f</span><span class="s2">"over </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_records_off_genome</span><span class="si">}</span><span class="s2"> records: "</span>
@@ -916,7 +929,20 @@
                 <span class="p">},</span>
             <span class="p">},</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">containment</span><span class="p">,</span> <span class="n">off_genome</span><span class="p">]</span></div>
+        <span class="k">if</span> <span class="n">measured</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">containment</span><span class="p">,</span> <span class="n">off_genome</span><span class="p">]</span>
+        <span class="n">absent</span> <span class="o">=</span> <span class="n">LevelResult</span><span class="p">(</span>
+            <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L4</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"measured_genes_present"</span><span class="p">,</span>
+            <span class="n">passed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"no measured genes: none of the </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_census</span><span class="o">.</span><span class="n">n_records</span><span class="si">}</span><span class="s2"> records "</span>
+                <span class="s2">"carries a gene perturbation outside the background genes, so the "</span>
+                <span class="s2">"SGD gene rules have nothing to check"</span>
+            <span class="p">),</span>
+            <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s2">"n_records"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_census</span><span class="o">.</span><span class="n">n_records</span><span class="p">,</span> <span class="s2">"n_measured"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">absent</span><span class="p">,</span> <span class="n">containment</span><span class="p">,</span> <span class="n">off_genome</span><span class="p">]</span></div>
 
 
 

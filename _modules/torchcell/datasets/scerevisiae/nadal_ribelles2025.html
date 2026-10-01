@@ -251,6 +251,18 @@
 <span class="n">_REPLACEMENT_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^(.+?)-\d+$"</span><span class="p">)</span>  <span class="c1"># base-&lt;digits&gt; replacement-strain label</span>
 
 
+<span class="c1">#: The two conditions the paper profiled; ``fcs`` keys and ``ptbs`` names, lower-cased.</span>
+<span class="n">CONDITIONS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"control"</span><span class="p">,</span> <span class="s2">"nacl"</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">RepeatedPtbsLabelError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A ``ptbs`` condition table lists one genotype label on more than one row."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">UnknownConditionError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A table names a condition other than the paper's control and 0.4 M NaCl."""</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_sha256</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">20</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Return the hex sha256 of a file, read in chunks."""</span>
     <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
@@ -386,6 +398,12 @@
 
 <span class="sd">        The genotype label ``assignment_consensus2`` uses a hyphen (``bc-YAL012W``); it is</span>
 <span class="sd">        normalized to the fcs underscore form (``bc_YAL012W``). ``WT`` is left as-is.</span>
+
+<span class="sd">        A label on two rows of one condition raises ``RepeatedPtbsLabelError``: a record</span>
+<span class="sd">        takes ONE row's dispersion and cell count, and the table carries no batch column</span>
+<span class="sd">        that would say which row belongs to the logFC vector. The released</span>
+<span class="sd">        ``ptb_summary.Rdata`` (sha256 ``01c2d54a...``) repeats no label in either</span>
+<span class="sd">        condition (control 3,207 rows, nacl 3,204; issue #541).</span>
 <span class="sd">        """</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">rdata</span>
 
@@ -399,6 +417,13 @@
                 <span class="n">label</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"bc-"</span><span class="p">,</span> <span class="s2">"bc_"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">label</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"bc-"</span><span class="p">)</span> <span class="k">else</span> <span class="n">label</span>
                 <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">labels</span>
             <span class="p">]</span>
+            <span class="n">repeated</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"_geno"</span><span class="p">][</span><span class="n">df</span><span class="p">[</span><span class="s2">"_geno"</span><span class="p">]</span><span class="o">.</span><span class="n">duplicated</span><span class="p">()]))</span>
+            <span class="k">if</span> <span class="n">repeated</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">RepeatedPtbsLabelError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"ptbs condition </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">cond</span><span class="p">)</span><span class="si">!r}</span><span class="s2"> lists genotype label(s) </span><span class="si">{</span><span class="n">repeated</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="s2">"on more than one row; one record takes one row's dispersion and "</span>
+                    <span class="s2">"n_cells, refusing to keep the first"</span>
+                <span class="p">)</span>
             <span class="n">out</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">cond</span><span class="p">)]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">"_geno"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">out</span>
 
@@ -521,10 +546,12 @@
 <span class="w">        </span><span class="sd">"""Return (dispersion=sd_lvscore_scaledFU2, n_cells=cell_number) for a strain."""</span>
         <span class="k">if</span> <span class="n">ptb</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">strain_label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ptb</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
-        <span class="n">rowobj</span> <span class="o">=</span> <span class="n">ptb</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">strain_label</span><span class="p">]</span>
-        <span class="n">row</span> <span class="o">=</span> <span class="n">rowobj</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rowobj</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="k">else</span> <span class="n">rowobj</span>
-        <span class="n">dispersion</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"sd_lvscore_scaledFU2"</span><span class="p">])</span>
-        <span class="n">n_cells</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"cell_number"</span><span class="p">])))</span>
+        <span class="c1"># One float64 Series per column, keyed by the (unique) label: indexing it is a</span>
+        <span class="c1"># scalar for the type checker, where a ``.loc`` row read is ``Any | Series``.</span>
+        <span class="n">dispersions</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">ptb</span><span class="p">[</span><span class="s2">"sd_lvscore_scaledFU2"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"float64"</span><span class="p">)</span>
+        <span class="n">cells</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">ptb</span><span class="p">[</span><span class="s2">"cell_number"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"float64"</span><span class="p">)</span>
+        <span class="n">dispersion</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">dispersions</span><span class="p">[</span><span class="n">strain_label</span><span class="p">])</span>
+        <span class="n">n_cells</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">cells</span><span class="p">[</span><span class="n">strain_label</span><span class="p">])))</span>
         <span class="k">return</span> <span class="n">dispersion</span><span class="p">,</span> <span class="n">n_cells</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_build_reference</span><span class="p">(</span>
@@ -549,7 +576,17 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_environment</span><span class="p">(</span><span class="n">cond</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Environment</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Base YPD (control) or YPD + 0.4 M NaCl for 15 min (osmostress)."""</span>
+<span class="w">        </span><span class="sd">"""Base YPD (control) or YPD + 0.4 M NaCl for 15 min (osmostress).</span>
+
+<span class="sd">        Any other condition raises ``UnknownConditionError`` rather than being stored</span>
+<span class="sd">        with the control environment. The released ``FC_genotype.Rdata`` keys name only</span>
+<span class="sd">        ``Control`` and ``NaCl`` (issue #541).</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">cond</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">CONDITIONS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">UnknownConditionError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"condition </span><span class="si">{</span><span class="n">cond</span><span class="si">!r}</span><span class="s2"> is neither of the profiled conditions "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">CONDITIONS</span><span class="p">)</span><span class="si">}</span><span class="s2">; refusing to store it with the control environment"</span>
+            <span class="p">)</span>
         <span class="n">media</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"YPD"</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="n">temperature</span> <span class="o">=</span> <span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">GROWTH_TEMP_C</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">cond</span> <span class="o">==</span> <span class="s2">"nacl"</span><span class="p">:</span>

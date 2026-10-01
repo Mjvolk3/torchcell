@@ -149,6 +149,15 @@ min-max normalized per the selected <code class="docutils literal notranslate"><
 <dt class="sig sig-object py" id="torchcell.datasets.GraphEmbeddingDataset.process">
 <span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/datasets/sgd_gene_graph.html#GraphEmbeddingDataset.process"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datasets.GraphEmbeddingDataset.process" title="Link to this definition"></a></dt>
 <dd><p>Build node feature tensors and save them with categorical metadata.</p>
+<p>A feature that is None is filled with that feature’s median; a value of 0 is a
+value and is kept. Chromosome and pathway indices are positions in the SORTED
+vocabulary of every value in the graph, so one category maps to one index and
+the indices do not depend on <code class="docutils literal notranslate"><span class="pre">PYTHONHASHSEED</span></code>. Min-max normalization refuses
+a constant feature (<code class="docutils literal notranslate"><span class="pre">ConstantFeatureError</span></code>) rather than storing 0 / 0 = NaN,
+and a gene whose chromosome is None raises <code class="docutils literal notranslate"><span class="pre">MissingChromosomeError</span></code>.
+On the cached SGD <code class="docutils literal notranslate"><span class="pre">G_gene</span></code> (6,607 genes) no feature has a 0 and none is
+constant and none lacks a chromosome (issue #518), so only the categorical
+indices differ from the old builds, and no consumer reads them.</p>
 </dd></dl>
 
 </dd></dl>

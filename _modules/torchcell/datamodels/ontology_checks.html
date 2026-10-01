@@ -397,7 +397,15 @@
     <span class="n">n_with_media_base</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">n_with_temperature</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">n_with_temperature_gap</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">n_with_every_compound_identified</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">n_with_no_compounds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"records whose medium and perturbations name no compound at all"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">n_with_every_compound_identified</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"records naming at least one compound, every one identified; a "</span>
+        <span class="s2">"record with no compound is counted under n_with_no_compounds instead"</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">distinct_genomes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">distinct_media_bases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">distinct_compound_identities</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
@@ -678,12 +686,18 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_dict_keys</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""String keys of a dict literal; a non-literal key makes the site unreadable."""</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_dict_keys</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Sorted string keys of a dict literal, or None (unreadable).</span>
+
+<span class="sd">    A non-literal key (a name, an expression, a ``**`` spread) makes the whole site</span>
+<span class="sd">    unreadable, the same outcome as a properties argument this reader cannot resolve:</span>
+<span class="sd">    ``[]`` would claim the site emits no properties and report every declared property</span>
+<span class="sd">    of its class as never emitted.</span>
+<span class="sd">    """</span>
     <span class="n">keys</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">keys</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)):</span>
-            <span class="k">return</span> <span class="p">[]</span>
+            <span class="k">return</span> <span class="kc">None</span>
         <span class="n">keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
 
@@ -1097,6 +1111,9 @@
             <span class="n">compound</span> <span class="o">=</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"compound"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"agent"</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">compound</span><span class="p">:</span>
                 <span class="n">compounds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">compound</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">compounds</span><span class="p">:</span>
+            <span class="n">census</span><span class="o">.</span><span class="n">n_with_no_compounds</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">continue</span>
         <span class="n">resolved</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">for</span> <span class="n">compound</span> <span class="ow">in</span> <span class="n">compounds</span><span class="p">:</span>
             <span class="n">identity</span> <span class="o">=</span> <span class="n">_compound_identity_from_mapping</span><span class="p">(</span><span class="n">compound</span><span class="p">)</span>

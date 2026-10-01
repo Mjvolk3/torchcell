@@ -15,3 +15,7 @@ Findings: `transform_item` builds the reference twice and discards the first (li
 ## 2026.09.30 - Raw sha256 pin enforced at build time
 
 Issues #518, #524, #528, #537. Five tests for the shared raw-pin helpers: `file_sha256` (chunk size and symlink), `verify_sha256` / `verify_raw_files` (exact message and attributes, first mismatch in mapping order), `write_verified` (nothing written on a refusal), `copy_verified` (source hashed first, destination untouched on a refusal), `link_verified` (no link on a refusal, an existing link kept). Digests use the FIPS `abc` vector.
+
+## 2026.09.30 - Findings Retired (Issue #532)
+
+Both findings are retired. `transform_item` constructs the reference once (count 1). A reference model and its dump serialize to the same string and hash; the fixture's three dict reference ids equal the literal pre-fix hashes, pinning that the index path is unchanged.

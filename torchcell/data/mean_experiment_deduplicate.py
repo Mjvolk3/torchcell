@@ -7,9 +7,11 @@
 
 import hashlib
 import logging
+from collections.abc import Callable
 from typing import Any, cast
 
 import numpy as np
+from numpy.typing import NDArray
 from scipy.stats import t
 
 from torchcell.data import Deduplicator
@@ -65,25 +67,64 @@ def _mean_float_dict(dicts: list[dict[str, float]]) -> dict[str, float]:
     return out
 
 
-def _rms_pool_float_dict(
-    dicts: list[dict[str, float] | None],
-) -> dict[str, float] | None:
-    """RMS-pool per-key stds: sqrt(mean(std^2)) over present values.
+def _mean_of_variances(variances: NDArray[np.float64]) -> float:
+    """Pool variances by their arithmetic mean, ``mean(var_i)``."""
+    return float(np.mean(variances))
 
-    Null-safe: dicts that are ``None`` are skipped; if every entry is ``None`` the
-    field stays ``None`` (e.g. Mulleder metabolite_level_se is null, n_replicates=1).
+
+def _se_of_mean_of_means(ses: NDArray[np.float64]) -> float:
+    """Standard error of the mean of ``m`` independent means: ``sqrt(sum(se_i^2)) / m``.
+
+    This is the SE rule the RMS-pooled SD implies: the pooled SD ``sqrt(mean(sd_i^2))``
+    over ``m`` records of ``n`` replicates each gives ``SE = pooled_sd / sqrt(m * n)``,
+    and ``se_i = sd_i / sqrt(n)`` turns that into ``sqrt(sum(se_i^2)) / m``. It keeps the
+    microarray identity ``variance = SE^2 * n_replicates`` when variances are averaged
+    and replicate counts summed.
     """
-    present = [d for d in dicts if d is not None]
-    if not present:
-        return None
+    return float(np.sqrt(np.sum(ses**2)) / len(ses))
+
+
+def _pool_over_value_carriers(
+    values: list[dict[str, float]],
+    stats: list[dict[str, float] | None],
+    pool: Callable[[NDArray[np.float64]], float],
+) -> dict[str, float] | None:
+    """Pool a per-key uncertainty dict over the records that averaged into each value.
+
+    ``values[i]`` and ``stats[i]`` belong to record ``i``. A key's merged value is the
+    mean over the records whose value dict holds that key, so its uncertainty is pooled
+    over exactly those records, and only when every one of them carries a statistic
+    for the key; otherwise the key is left out, because the uncertainty of a mean with
+    an unreported component is unknown. ``None`` when no key qualifies.
+
+    ``pool`` is ``_mean_of_variances`` or ``_se_of_mean_of_means``.
+    """
     keys: set[str] = set()
-    for d in present:
+    for d in values:
         keys.update(d.keys())
     out: dict[str, float] = {}
     for k in sorted(keys):
-        vals = [d[k] for d in present if k in d]
-        out[k] = float(np.sqrt(np.mean(np.array(vals) ** 2)))
-    return out
+        carriers = [stat for value, stat in zip(values, stats) if k in value]
+        if any(stat is None or k not in stat for stat in carriers):
+            continue
+        out[k] = pool(np.array([cast(dict[str, float], stat)[k] for stat in carriers]))
+    return out or None
+
+
+def _require_all_or_none(field: str, stats: list[dict[str, float] | None]) -> None:
+    """Refuse a microarray merge whose records disagree on carrying ``field``.
+
+    The microarray validator requires an uncertainty dict to cover every
+    ``expression_log2_ratio`` key, so a merge where only some records carry it has no
+    valid result: the merged value covers keys whose uncertainty is unknown.
+    """
+    carrying = sum(stat is not None for stat in stats)
+    if 0 < carrying < len(stats):
+        raise ValueError(
+            f"Cannot merge microarray duplicates: {field} is present on {carrying} of "
+            f"{len(stats)} records, and the merged phenotype needs it on every "
+            "expression_log2_ratio key or on none."
+        )
 
 
 def _sum_int_dict(dicts: list[dict[str, int]]) -> dict[str, int]:
@@ -154,9 +195,9 @@ class MeanExperimentDeduplicator(Deduplicator):
     ) -> dict[str, Any]:
         """Mean-merge phenotype-family duplicates (expression/morphology/metabolite/etc.).
 
-        Mirrors the fitness rule: elementwise mean of the per-key value dict, RMS-pooled
-        std for the uncertainty, MeanDeletionPerturbation genotype, and dataset_name
-        joined as "a+b+...". The concrete Experiment/ExperimentReference classes are
+        Mirrors the fitness rule: elementwise mean of the per-key value dict, the
+        uncertainty pooled by what it is (see ``_merge_phenotype``),
+        MeanDeletionPerturbation genotype, and dataset_name joined as "a+b+...". The concrete Experiment/ExperimentReference classes are
         resolved generically from the type maps so a new family (e.g. Messner protein
         abundance) works with no further edits.
         """
@@ -205,24 +246,35 @@ class MeanExperimentDeduplicator(Deduplicator):
     def _merge_phenotype(self, phenotypes: list[Phenotype]) -> Phenotype:
         """Dispatch elementwise merge on the concrete phenotype type.
 
-        Value fields are averaged elementwise (per gene/feature/metabolite), std/SE
-        fields are RMS-pooled (null-safe), and per-key replicate counts are summed.
+        Value fields are averaged elementwise (per gene/feature/metabolite) and per-key
+        replicate counts are summed. Uncertainty is pooled by the statistic it is: an SE
+        (``expression_log2_ratio_se``, ``metabolite_level_se``, ``protein_abundance_se``)
+        becomes the SE of the mean of means, ``sqrt(sum(se_i ** 2)) / m``; a variance
+        (``expression_log2_ratio_variance``) is averaged; the scalar fitness SD is
+        RMS-pooled in ``_create_mean_fitness_entry``. A key's uncertainty is kept only
+        when every record averaged into its value carries one. Microarray records must
+        all carry an SE (and a variance) or none, since its validator requires full
+        coverage; a mixed group raises a named ValueError. The metabolite and protein
+        validators allow an SE on a subset of keys, so an uncovered key is left out.
         Non-numeric metadata (measurement_type, ordinal scale, semantics) is taken from
         the first record, which is identical across a duplicate group.
         """
         first = phenotypes[0]
         if isinstance(first, MicroarrayExpressionPhenotype):
             micro = cast(list[MicroarrayExpressionPhenotype], phenotypes)
+            log2 = [dict(p.expression_log2_ratio) for p in micro]
+            se = [p.expression_log2_ratio_se for p in micro]
+            variance = [p.expression_log2_ratio_variance for p in micro]
+            _require_all_or_none("expression_log2_ratio_se", se)
+            _require_all_or_none("expression_log2_ratio_variance", variance)
             return MicroarrayExpressionPhenotype(
-                expression_log2_ratio=_mean_float_dict(
-                    [p.expression_log2_ratio for p in micro]
-                ),
-                expression_log2_ratio_se=_rms_pool_float_dict(
-                    [p.expression_log2_ratio_se for p in micro]
+                expression_log2_ratio=_mean_float_dict(log2),
+                expression_log2_ratio_se=_pool_over_value_carriers(
+                    log2, se, _se_of_mean_of_means
                 ),
                 expression=_mean_float_dict([p.expression for p in micro]),
-                expression_log2_ratio_variance=_rms_pool_float_dict(
-                    [p.expression_log2_ratio_variance for p in micro]
+                expression_log2_ratio_variance=_pool_over_value_carriers(
+                    log2, variance, _mean_of_variances
                 ),
                 n_replicates=_sum_int_dict([p.n_replicates for p in micro]),
             )
@@ -255,8 +307,10 @@ class MeanExperimentDeduplicator(Deduplicator):
             )
             return MetabolitePhenotype(
                 metabolite_level=_mean_float_dict([p.metabolite_level for p in metab]),
-                metabolite_level_se=_rms_pool_float_dict(
-                    [p.metabolite_level_se for p in metab]
+                metabolite_level_se=_pool_over_value_carriers(
+                    [p.metabolite_level for p in metab],
+                    [p.metabolite_level_se for p in metab],
+                    _se_of_mean_of_means,
                 ),
                 n_replicates=_sum_int_dict([p.n_replicates for p in metab]),
                 measurement_type=first.measurement_type,
@@ -266,8 +320,10 @@ class MeanExperimentDeduplicator(Deduplicator):
             prot = cast(list[ProteinAbundancePhenotype], phenotypes)
             return ProteinAbundancePhenotype(
                 protein_abundance=_mean_float_dict([p.protein_abundance for p in prot]),
-                protein_abundance_se=_rms_pool_float_dict(
-                    [p.protein_abundance_se for p in prot]
+                protein_abundance_se=_pool_over_value_carriers(
+                    [p.protein_abundance for p in prot],
+                    [p.protein_abundance_se for p in prot],
+                    _se_of_mean_of_means,
                 ),
                 n_replicates=_sum_int_dict([p.n_replicates for p in prot]),
                 measurement_type=first.measurement_type,

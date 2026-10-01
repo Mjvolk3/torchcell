@@ -11,6 +11,11 @@ import yaml
 from biocypher import BioCypher  # type: ignore
 
 
+def _endpoint(value: str | list[str]) -> str:
+    """Render an edge endpoint: one type as is, a list of types joined by `` | ``."""
+    return " | ".join(value) if isinstance(value, list) else value
+
+
 def print_ontology_structure(
     schema_config_path: str = "biocypher/config/torchcell_schema_config.yaml",
     full: bool = False,
@@ -144,7 +149,7 @@ def print_schema_mappings(
         print("TORCHCELL SCHEMA → BIOLINK MAPPINGS")
         print("═" * 80)
 
-        print("\n📦 NODES (16 total)")
+        print(f"\n📦 NODES ({len(nodes)} total)")
         for biolink_parent in sorted(biolink_groups.keys()):
             entities = ", ".join(sorted(biolink_groups[biolink_parent]))
             print(f"  {biolink_parent:25} → {entities}")
@@ -157,7 +162,7 @@ def print_schema_mappings(
             entities = ", ".join(sorted(no_mapping))
             print(f"  {'⚠️  unmapped':25} → {entities}")
 
-        print("\n🔗 EDGES (11 total)")
+        print(f"\n🔗 EDGES ({len(edges)} total)")
         for biolink_parent in sorted(biolink_edge_groups.keys()):
             edge_names = sorted(biolink_edge_groups[biolink_parent])
             edges_str = ", ".join(edge_names)
@@ -231,16 +236,16 @@ def print_schema_mappings(
             print(f"\n  🔗 is_a: {biolink_parent}")
             for edge_name in sorted(biolink_edge_groups[biolink_parent]):
                 edge_config = schema[edge_name]
-                source = edge_config.get("source", "?")
-                target = edge_config.get("target", "?")
+                source = _endpoint(edge_config.get("source", "?"))
+                target = _endpoint(edge_config.get("target", "?"))
                 print(f"      └─ {edge_name}: {source} → {target}")
 
         if no_edge_mapping:
             print("\n  ⚠️  No Biolink mapping:")
             for edge_name in sorted(no_edge_mapping):
                 edge_config = schema[edge_name]
-                source = edge_config.get("source", "?")
-                target = edge_config.get("target", "?")
+                source = _endpoint(edge_config.get("source", "?"))
+                target = _endpoint(edge_config.get("target", "?"))
                 print(f"      └─ {edge_name}: {source} → {target}")
 
         # Enhanced summary for expanded format

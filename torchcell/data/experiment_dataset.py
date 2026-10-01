@@ -159,13 +159,9 @@ def link_verified(src: str | Path, dest: str | Path, expected: str) -> None:
 def serialize_for_hashing(obj: Any) -> str:
     """Return a deterministic JSON string for hashing a reference or object."""
     if isinstance(obj, ExperimentReferenceType):
-        # Convert FitnessExperimentReference to a dictionary
-        obj_dict = obj.model_dump()
-        # Sort the dictionary keys for consistent serialization
-        sorted_dict = dict(sorted(obj_dict.items()))
-        return json.dumps(sorted_dict)
-    else:
-        return json.dumps(obj, sort_keys=True)
+        # A model hashes as its dump, with keys sorted at every depth like a dict.
+        obj = obj.model_dump()
+    return json.dumps(obj, sort_keys=True)
 
 
 # --------------------------------------------------------------------------- #
@@ -730,7 +726,6 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
         reference_data = item["reference"]
         publication_data = item["publication"]
         experiment = self.experiment_class(**experiment_data)
-        reference = self.reference_class(**reference_data)
         reference = self.reference_class(**reference_data)
         publication = Publication(**publication_data)
         return {

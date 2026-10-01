@@ -15,28 +15,32 @@ per-key dict elementwise through ``_create_mean_vector_entry``.
 
 2026.09.30 (Phase 15): every vector family on two or three hand-built duplicates, each
 value worked in closed form in its test. Values are averaged over the key union (a key
-present in one record keeps that record's value), SE and std dicts are RMS-pooled over
-the records that carry them (all absent stays None), replicate and read counts are
+present in one record keeps that record's value), replicate and read counts are
 summed, the CalMorph CV is a plain mean, the visual score takes the minimum of the
 present minima and the first present text and comment map, and scalar metadata comes
 from the first record. Context is kept from the FIRST record in input order
 (environment, genome, environment reference) while dataset names are sorted. Three
 digenic interactions (0.1, 0.2, 0.6) give t = sqrt(27 / 7) on 2 df and a two-sided p of
-1 - sqrt(27 / 41) = 0.1884973288, with the ``edge`` level kept. Two Findings are pinned:
-the microarray variance is RMS-pooled like a std, and two valid microarray records whose
-SE is present on fewer genes than their values merge to an invalid phenotype.
+1 - sqrt(27 / 41) = 0.1884973288, with the ``edge`` level kept.
+
+2026.09.30 (issue #532): uncertainty is pooled by the statistic it is. An SE becomes the
+SE of the mean of means, sqrt(sum(se_i^2)) / m, a variance is averaged, the scalar
+fitness std stays RMS-pooled, and a key keeps its uncertainty only when every record
+averaged into its value carries one. Microarray records that disagree on carrying an SE
+or variance are refused with a named ValueError.
 """
 
 import math
 from typing import Any
 
 import pytest
-from pydantic import ValidationError
 
 from torchcell.data.mean_experiment_deduplicate import (
     MeanExperimentDeduplicator,
     _mean_float_dict,
-    _rms_pool_float_dict,
+    _mean_of_variances,
+    _pool_over_value_carriers,
+    _se_of_mean_of_means,
     _sum_int_dict,
 )
 from torchcell.datamodels.schema import (
@@ -130,13 +134,24 @@ def _dedup(tmp_path: Any) -> MeanExperimentDeduplicator:
     return MeanExperimentDeduplicator(root=str(tmp_path))
 
 
-def test_dict_helpers_mean_rms_and_sum_over_the_key_union() -> None:
-    """mean: (1 + 3) / 2 and a lone 5; rms: sqrt((0.09 + 0.16) / 2) = 0.3535533906; sum: 2 + 3."""
+def test_dict_helpers_mean_pool_and_sum_over_the_key_union() -> None:
+    """mean: (1 + 3) / 2 and a lone 5; sum: 2 + 3. Uncertainty pools over the records
+    that averaged into each value: SEs 0.3 and 0.4 of two means give the SE of their
+    mean sqrt(0.09 + 0.16) / 2 = 0.25 (an RMS pool would give 0.3535533906), variances
+    0.3 and 0.4 average to 0.35, and a lone SE 0.2 stays 0.2. Key ``c`` is averaged
+    from two records but only one carries its SE, so the SE of ``c`` is left out;
+    all statistics absent gives None.
+    """
     assert _mean_float_dict([{"a": 1.0, "b": 5.0}, {"a": 3.0}]) == {"a": 2.0, "b": 5.0}
-    pooled = _rms_pool_float_dict([{"a": 0.3}, None, {"a": 0.4}])
-    assert pooled is not None
-    assert pooled["a"] == pytest.approx(math.sqrt((0.09 + 0.16) / 2))
-    assert _rms_pool_float_dict([None, None]) is None
+    values = [{"a": 1.0, "b": 5.0, "c": 0.0}, {"a": 3.0, "c": 1.0}]
+    stats: list[dict[str, float] | None] = [{"a": 0.3, "b": 0.2, "c": 0.1}, {"a": 0.4}]
+    assert _pool_over_value_carriers(values, stats, _se_of_mean_of_means) == (
+        pytest.approx({"a": 0.25, "b": 0.2})
+    )
+    assert _pool_over_value_carriers(values, stats, _mean_of_variances) == (
+        pytest.approx({"a": 0.35, "b": 0.2})
+    )
+    assert _pool_over_value_carriers(values, [None, None], _mean_of_variances) is None
     assert _sum_int_dict([{"a": 2, "b": 1}, {"a": 3}]) == {"a": 5, "b": 1}
 
 
@@ -268,8 +283,8 @@ def _metabolite(
 def test_metabolite_duplicates_merge_elementwise_with_summed_replicates(
     tmp_path: Any,
 ) -> None:
-    """The vector family: levels 1 and 3 -> 2.0, se sqrt((0.09 + 0.16) / 2) = 0.3535533906,
-    replicates 2 + 3 = 5, measurement type from the first record, and the target-id map
+    """The vector family: levels 1 and 3 -> 2.0, SE of the mean of the two means
+    sqrt(0.09 + 0.16) / 2 = 0.25, replicates 2 + 3 = 5, measurement type from the first record, and the target-id map
     from the first record that carries one (here the second).
     """
     data = [
@@ -282,9 +297,7 @@ def test_metabolite_duplicates_merge_elementwise_with_summed_replicates(
     phenotype = experiment.phenotype
     assert phenotype.metabolite_level == {"betaxanthin": pytest.approx(2.0)}
     assert phenotype.metabolite_level_se is not None
-    assert phenotype.metabolite_level_se["betaxanthin"] == pytest.approx(
-        math.sqrt((0.09 + 0.16) / 2)
-    )
+    assert phenotype.metabolite_level_se["betaxanthin"] == pytest.approx(0.25)
     assert phenotype.n_replicates == {"betaxanthin": 5}
     assert phenotype.measurement_type == "cri_spa_corrected_fluorescence_intensity"
     assert phenotype.target_metabolite_ids == {"betaxanthin": "s_9999"}
@@ -355,10 +368,10 @@ def _microarray(
 def test_microarray_duplicates_merge_per_gene_over_the_key_union(tmp_path: Any) -> None:
     """Record 1: log2 {A: 1, B: -1}, se {A: 0.3, B: 0.2}, expression {A: 100, B: 50},
     variance {A: 0.5, B: 0.1}, n {A: 2, B: 2}. Record 2: log2 {A: 3}, se {A: 0.4},
-    expression {A: 300}, no variance, n {A: 3}. Merged: log2 {A: (1 + 3) / 2 = 2, B: -1
-    (one value)}, se {A: sqrt((0.09 + 0.16) / 2) = 0.3535533906, B: 0.2}, expression
-    {A: 200, B: 50}, variance from the one record that has it, n {A: 5, B: 2}; the
-    reference is merged the same way.
+    expression {A: 300}, variance {A: 0.3}, n {A: 3}. Merged: log2 {A: (1 + 3) / 2 = 2,
+    B: -1 (one value)}, se {A: sqrt(0.09 + 0.16) / 2 = 0.25 (SE of the mean of two
+    means), B: 0.2}, expression {A: 200, B: 50}, variance {A: (0.5 + 0.3) / 2 = 0.4,
+    B: 0.1}, n {A: 5, B: 2}; the reference is merged the same way.
     """
     data = [
         _vector_record(
@@ -377,7 +390,7 @@ def test_microarray_duplicates_merge_per_gene_over_the_key_union(tmp_path: Any) 
             MicroarrayExpressionExperiment,
             MicroarrayExpressionExperimentReference,
             "sameith",
-            _microarray({"A": 3.0}, {"A": 0.4}, {"A": 300.0}, None, {"A": 3}),
+            _microarray({"A": 3.0}, {"A": 0.4}, {"A": 300.0}, {"A": 0.3}, {"A": 3}),
         ),
     ]
     entry = _dedup(tmp_path).create_deduplicate_entry(data)
@@ -385,11 +398,11 @@ def test_microarray_duplicates_merge_per_gene_over_the_key_union(tmp_path: Any) 
     assert type(experiment) is MicroarrayExpressionExperiment
     phenotype = experiment.phenotype
     assert dict(phenotype.expression_log2_ratio) == {"A": 2.0, "B": -1.0}
-    assert phenotype.expression_log2_ratio_se == pytest.approx(
-        {"A": math.sqrt((0.09 + 0.16) / 2), "B": 0.2}
-    )
+    assert phenotype.expression_log2_ratio_se == pytest.approx({"A": 0.25, "B": 0.2})
     assert dict(phenotype.expression) == {"A": 200.0, "B": 50.0}
-    assert phenotype.expression_log2_ratio_variance == {"A": 0.5, "B": 0.1}
+    assert phenotype.expression_log2_ratio_variance == pytest.approx(
+        {"A": 0.4, "B": 0.1}
+    )
     assert dict(phenotype.n_replicates) == {"A": 5, "B": 2}
     assert experiment.dataset_name == "kemmeren+sameith"
     reference = entry["experiment_reference"]
@@ -398,49 +411,94 @@ def test_microarray_duplicates_merge_per_gene_over_the_key_union(tmp_path: Any) 
     assert reference.dataset_name == "kemmeren+sameith"
 
 
-def test_microarray_variance_is_rms_pooled_like_a_standard_deviation(
+def test_microarray_variance_is_averaged_and_se_is_the_se_of_the_mean(
     tmp_path: Any,
 ) -> None:
-    """Finding: ``expression_log2_ratio_variance`` goes through ``_rms_pool_float_dict``
-    (mean_experiment_deduplicate.py:224-226), the pooling written for standard deviations,
-    so variances 0.5 and 0.1 merge to sqrt((0.25 + 0.01) / 2) = 0.3605551275 rather than
-    their mean 0.3 (a variance pools by averaging, which is what RMS-pooling the std does).
-    With every SE absent the merged SE stays None. Pinned until variances are averaged.
+    """Each uncertainty is pooled by the statistic it is (issue #532). Variances 0.5 and
+    0.1 average to 0.3 (an RMS pool, the rule for a standard deviation, gave
+    0.3605551275). SEs 0.3 and 0.4 become the SE of the mean of the two means,
+    sqrt(0.09 + 0.16) / 2 = 0.25. Two records without an SE or variance merge their
+    log2 ratios 0 and 2 to 1 and keep both uncertainties None.
     """
     phenotypes = [
-        _microarray({"A": 0.0}, None, {"A": 1.0}, {"A": 0.5}, {"A": 1}),
-        _microarray({"A": 0.0}, None, {"A": 1.0}, {"A": 0.1}, {"A": 1}),
+        _microarray({"A": 0.0}, {"A": 0.3}, {"A": 1.0}, {"A": 0.5}, {"A": 1}),
+        _microarray({"A": 0.0}, {"A": 0.4}, {"A": 1.0}, {"A": 0.1}, {"A": 1}),
     ]
     merged = _dedup(tmp_path)._merge_phenotype(list(phenotypes))
     assert isinstance(merged, MicroarrayExpressionPhenotype)
-    assert merged.expression_log2_ratio_variance == pytest.approx(
-        {"A": math.sqrt((0.25 + 0.01) / 2)}
+    assert merged.expression_log2_ratio_variance == pytest.approx({"A": 0.3})
+    assert merged.expression_log2_ratio_se == pytest.approx({"A": 0.25})
+    bare = _dedup(tmp_path)._merge_phenotype(
+        [
+            _microarray({"A": 0.0}, None, {"A": 1.0}, None, {"A": 1}),
+            _microarray({"A": 2.0}, None, {"A": 1.0}, None, {"A": 1}),
+        ]
     )
-    assert merged.expression_log2_ratio_variance != pytest.approx({"A": 0.3})
-    assert merged.expression_log2_ratio_se is None
+    assert isinstance(bare, MicroarrayExpressionPhenotype)
+    assert dict(bare.expression_log2_ratio) == {"A": 1.0}
+    assert bare.expression_log2_ratio_se is None
+    assert bare.expression_log2_ratio_variance is None
 
 
-def test_microarray_merge_of_two_valid_records_can_fail_validation(
+@pytest.mark.parametrize(
+    ("se", "variance", "field"),
+    [
+        ({"A": 0.4}, {"A": 0.2}, "expression_log2_ratio_se"),
+        (None, {"A": 0.2}, "expression_log2_ratio_variance"),
+    ],
+)
+def test_microarray_merge_refuses_records_that_disagree_on_carrying_an_uncertainty(
     tmp_path: Any,
+    se: dict[str, float] | None,
+    variance: dict[str, float] | None,
+    field: str,
 ) -> None:
-    """Finding: the value dict is merged over the key UNION of every record while the SE
-    dict is merged only over the records that carry one (mean_experiment_deduplicate.py:
-    217-222), so record 1 (genes A and B, no SE) plus record 2 (gene A, SE {A: 0.4})
-    merges to log2 keys {A, B} and SE keys {A}, which the phenotype's own validator
-    rejects: two valid duplicates make the merge raise. Pinned until the SE is either
-    dropped or completed on the union.
+    """Record 1 (genes A and B, no SE, no variance) plus record 2 (gene A, carrying the
+    named field) has no valid merge: the microarray validator requires an SE or variance
+    dict to cover every log2 key, and the merged A averages a record whose uncertainty
+    is unknown. The merge refuses with a named ValueError instead of failing inside the
+    validator (issue #532; the schema documents no partial merge, so no fallback).
     """
     phenotypes = [
         _microarray(
             {"A": 1.0, "B": -1.0}, None, {"A": 1.0, "B": 1.0}, None, {"A": 1, "B": 1}
         ),
-        _microarray({"A": 3.0}, {"A": 0.4}, {"A": 1.0}, None, {"A": 1}),
+        _microarray({"A": 3.0}, se, {"A": 1.0}, variance, {"A": 1}),
     ]
     with pytest.raises(
-        ValidationError,
-        match="expression_log2_ratio_se must have the same keys as expression_log2_ratio",
+        ValueError,
+        match=(
+            f"^Cannot merge microarray duplicates: {field} is present on 1 of 2 "
+            "records, and the merged phenotype needs it on every expression_log2_ratio "
+            "key or on none.$"
+        ),
     ):
         _dedup(tmp_path)._merge_phenotype(list(phenotypes))
+
+
+def test_metabolite_se_is_dropped_where_a_contributing_record_has_none(
+    tmp_path: Any,
+) -> None:
+    """The metabolite validator allows an SE on a subset of keys, so an unknown SE stays
+    unknown: Lopez-style record 1 has no SE (n < 2), Cachera-style record 2 has SE 0.4,
+    the merged level is (1 + 3) / 2 = 2.0 and the merged SE is None (not 0.4 from the
+    one carrier, which is what the RMS pool reported).
+    """
+    first = _metabolite("lopez", 1.0, 0.3, 1)
+    phenotype = first["experiment"].phenotype.model_copy(
+        update={"metabolite_level_se": None}
+    )
+    first["experiment"] = first["experiment"].model_copy(
+        update={"phenotype": phenotype}
+    )
+    entry = _dedup(tmp_path).create_deduplicate_entry(
+        [first, _metabolite("cachera", 3.0, 0.4, 3)]
+    )
+    merged = entry["experiment"].phenotype
+    assert isinstance(merged, MetabolitePhenotype)
+    assert merged.metabolite_level == {"betaxanthin": pytest.approx(2.0)}
+    assert merged.metabolite_level_se is None
+    assert merged.n_replicates == {"betaxanthin": 4}
 
 
 def test_rnaseq_duplicates_average_tpm_and_sum_counts_and_mapped_reads(
@@ -527,8 +585,8 @@ def test_calmorph_duplicates_average_features_and_the_present_cv(tmp_path: Any) 
 
 
 def test_protein_abundance_three_duplicates_in_closed_form(tmp_path: Any) -> None:
-    """Abundance 1, 2, 6 -> 3.0; SE 0.1, 0.2, 0.2 -> sqrt((0.01 + 0.04 + 0.04) / 3) =
-    sqrt(0.03) = 0.1732050808; replicates 2 + 2 + 2 = 6; ``num_duplicates`` 3.
+    """Abundance 1, 2, 6 -> 3.0; SE 0.1, 0.2, 0.2 -> SE of the mean of three means
+    sqrt(0.01 + 0.04 + 0.04) / 3 = 0.3 / 3 = 0.1; replicates 2 + 2 + 2 = 6; ``num_duplicates`` 3.
     """
     data = [
         _vector_record(
@@ -549,7 +607,7 @@ def test_protein_abundance_three_duplicates_in_closed_form(tmp_path: Any) -> Non
     assert type(experiment) is ProteinAbundanceExperiment
     phenotype = experiment.phenotype
     assert phenotype.protein_abundance == {"P1": pytest.approx(3.0)}
-    assert phenotype.protein_abundance_se == pytest.approx({"P1": math.sqrt(0.03)})
+    assert phenotype.protein_abundance_se == pytest.approx({"P1": 0.1})
     assert phenotype.n_replicates == {"P1": 6}
     assert phenotype.measurement_type == "dia_ms_log2"
     assert experiment.dataset_name == "m1+m2+m3"

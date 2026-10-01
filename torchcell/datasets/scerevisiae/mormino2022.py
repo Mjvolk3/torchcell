@@ -438,7 +438,7 @@ def deposit_raw_mirror(
             sha256=PAPER_MD_SHA256,
             source="mineru-ocr",
             processing=ProcessingRecord(
-                processor="torchcell.literature.ocr.run_mineru",
+                processor="torchcell.literature.ocr.ocr_pdf",
                 tool="mineru",
                 version="unrecorded",
                 params={

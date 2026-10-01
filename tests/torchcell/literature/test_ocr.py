@@ -6,16 +6,20 @@
 Fixture: ``ocr.subprocess`` is replaced by a namespace whose ``run`` records every call
 (the command list and its keyword arguments, including a snapshot of the ``env`` it was
 handed) and returns a real ``subprocess.CompletedProcess`` with a scripted return code
-and stderr. On a zero exit the fake writes ``<stem>.md`` next to the PDF, as the
+and stderr. On a zero exit the fake writes ``<stem>.md`` next to the PDF and prints the
+runner's two facts on stdout (``MINERU_VERSION=2.7.6``, ``MINERU_DPI=<n>``), as the
 standalone runner ``_run_mineru.py`` does. MinerU, its conda env, HuggingFace and the
 GPU are never touched; the PDFs are empty files in ``tmp_path``. Every MinerU and HF
 variable is cleared first so the developer's shell cannot leak in.
 
-Expected command (``ocr.py`` lines 93 to 108), for ``<dir>/paper.pdf``::
+Expected command, for ``<dir>/paper.pdf``::
 
     [<mineru python>, <ocr.py dir>/_run_mineru.py,
      --pdf-path <dir>/paper.pdf, --out-dir <dir>,
-     --backend pipeline, --lang en, --method auto, --dpi 0]
+     --backend pipeline, --lang en, --method auto, --dpi 0, --images-dir images]
+
+and ``--images-dir images/<stem>`` for any other PDF (``si/si1.pdf`` ->
+``images/si1``, issue #579).
 
 with ``env`` = the parent environment plus ``MINERU_MODEL_SOURCE=huggingface``,
 ``MINERU_DEVICE_MODE`` (argument, else ``$MINERU_DEVICE_MODE``, else ``cuda``) and
@@ -23,16 +27,20 @@ with ``env`` = the parent environment plus ``MINERU_MODEL_SOURCE=huggingface``,
 ``capture_output=True, text=True, timeout=3600``. DPI: argument, else
 ``$TORCHCELL_MINERU_DPI``, else 0 (MinerU's own 200).
 
-Findings pinned here: no local check that the PDF exists (the refusal is the runner's
-exit 2); nothing records the MinerU version, arguments or DPI (no sidecar, a bare path
-back), against the provenance rule; ``ocr_artifact`` orders SI files lexicographically
-(``si10`` before ``si2``) and returns an empty list for a directory with no PDFs; the
-processor that Mormino 2022's OCR provenance names does not exist in this module.
+2026.10.01 (issue #546): the five findings pinned here are retired. A missing PDF
+raises ``PdfNotFoundError`` before MinerU starts; each OCR writes its
+``ProcessingRecord`` (MinerU version and effective DPI as the runner reported them, the
+arguments, the exact command, the PDF's sha256) to ``<stem>_ocr_provenance.json``, and
+a runner that does not report both facts is refused; ``ocr_artifact`` runs SI files in
+natural order (``si2`` before ``si10``) and refuses a directory with no ``paper.pdf``;
+Mormino 2022's OCR record names ``ocr_pdf``, which resolves.
 """
 
 from __future__ import annotations
 
+import hashlib
 import importlib
+import json
 import logging
 import os
 import re
@@ -68,10 +76,12 @@ class _FakeRun:
         outcomes: dict[str, tuple[int, str]] | None = None,
         write_md: bool = True,
         markdown: str = "# Title\nabc",
+        stdout: str | None = None,
     ) -> None:
         self.outcomes = outcomes or {}
         self.write_md = write_md
         self.markdown = markdown
+        self.stdout = stdout
         self.calls: list[tuple[list[str], dict[str, Any]]] = []
 
     def __call__(
@@ -83,7 +93,15 @@ class _FakeRun:
         returncode, stderr = self.outcomes.get(pdf.name, (0, ""))
         if returncode == 0 and self.write_md:
             pdf.with_suffix(".md").write_text(self.markdown)
-        return subprocess.CompletedProcess(cmd, returncode, stdout="", stderr=stderr)
+        dpi = int(cmd[cmd.index("--dpi") + 1])
+        stdout = (
+            self.stdout
+            if self.stdout is not None
+            else f"MINERU_VERSION=2.7.6\nMINERU_DPI={dpi or 200}\nOK\n"
+        )
+        return subprocess.CompletedProcess(
+            cmd, returncode, stdout=stdout, stderr=stderr
+        )
 
 
 @pytest.fixture(autouse=True)
@@ -105,7 +123,9 @@ def _pdf(directory: Path, name: str = "paper.pdf") -> Path:
     return path
 
 
-def _tail(pdf: Path, backend: str, lang: str, method: str, dpi: str) -> list[str]:
+def _tail(
+    pdf: Path, backend: str, lang: str, method: str, dpi: str, images: str
+) -> list[str]:
     return [
         RUNNER,
         "--pdf-path",
@@ -120,6 +140,8 @@ def _tail(pdf: Path, backend: str, lang: str, method: str, dpi: str) -> list[str
         method,
         "--dpi",
         dpi,
+        "--images-dir",
+        images,
     ]
 
 
@@ -144,7 +166,7 @@ def test_default_call_is_the_exact_command_env_and_timeout(
     ((cmd, kwargs),) = fake.calls
     assert cmd == [
         ocr.DEFAULT_MINERU_PYTHON,
-        *_tail(pdf, "pipeline", "en", "auto", "0"),
+        *_tail(pdf, "pipeline", "en", "auto", "0", "images"),
     ]
     env = kwargs.pop("env")
     assert kwargs == {"capture_output": True, "text": True, "timeout": 3600}
@@ -182,7 +204,7 @@ def test_arguments_reach_the_command_line_and_beat_the_environment(
     ((cmd, kwargs),) = fake.calls
     assert cmd == [
         "/opt/mineru/bin/python",
-        *_tail(pdf, "vlm-auto-engine", "ch", "ocr", "0"),
+        *_tail(pdf, "vlm-auto-engine", "ch", "ocr", "0", "images/si1"),
     ]
     assert kwargs["timeout"] == 60
     assert kwargs["env"]["MINERU_DEVICE_MODE"] == "cpu"
@@ -203,7 +225,7 @@ def test_environment_defaults_apply_when_arguments_are_omitted(
     assert ocr.ocr_pdf(pdf) == tmp_path / "ck" / "paper.md"
 
     ((cmd, kwargs),) = fake.calls
-    assert cmd[-2:] == ["--dpi", "350"]
+    assert cmd[-4:] == ["--dpi", "350", "--images-dir", "images"]
     assert kwargs["env"]["MINERU_DEVICE_MODE"] == "cpu"
     assert kwargs["env"]["HF_HOME"] == "/models/hf"
 
@@ -255,20 +277,23 @@ def test_nonzero_exit_raises_with_the_last_2000_characters_of_stderr(
     assert str(refused.value) == "MinerU failed (exit 3) on paper.pdf:\n" + "B" * 2000
 
 
-def test_a_missing_pdf_is_not_checked_before_the_subprocess(
+def test_a_missing_pdf_is_refused_before_the_subprocess(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    """Finding: ``ocr_pdf`` never checks that the PDF exists (ocr.py lines 82 to 110),
-    so a missing file still costs a MinerU-env interpreter start; the refusal is the
-    runner's exit 2 and its stderr, relayed. Pinned until the driver checks first.
+    """A path that is not a file (absent, or a directory) raises ``PdfNotFoundError``
+    naming it, and MinerU's interpreter is never started.
     """
-    stderr = f"ERROR: PDF not found: {tmp_path}/ck/absent.pdf\n"
-    fake = _install(monkeypatch, _FakeRun(outcomes={"absent.pdf": (2, stderr)}))
+    fake = _install(monkeypatch, _FakeRun())
     absent = tmp_path / "ck" / "absent.pdf"
-    with pytest.raises(RuntimeError) as refused:
+    with pytest.raises(ocr.PdfNotFoundError) as refused:
         ocr.ocr_pdf(absent)
-    assert str(refused.value) == f"MinerU failed (exit 2) on absent.pdf:\n{stderr}"
-    assert [cmd[3] for cmd, _ in fake.calls] == [str(absent)]
+    assert str(refused.value) == f"PDF not found: {absent}"
+    directory = tmp_path / "ck" / "dir.pdf"
+    directory.mkdir(parents=True)
+    with pytest.raises(ocr.PdfNotFoundError) as refused:
+        ocr.ocr_pdf(directory)
+    assert str(refused.value) == f"PDF not found: {directory}"
+    assert fake.calls == []
 
 
 def test_success_without_the_markdown_is_refused(
@@ -324,30 +349,96 @@ def test_log_lines_name_the_device_and_the_markdown_size(
     ]
 
 
-def test_no_version_or_dpi_record_is_written(
+def test_each_ocr_writes_its_processing_record_beside_the_markdown(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    """Finding: CLAUDE.md's provenance rule asks every OCR artifact to record
-    ``mineru_version`` plus the arguments and DPI, but ``ocr_pdf`` returns a bare
-    ``Path`` and writes nothing besides what the runner writes: the directory holds
-    only the PDF and the markdown, and the command carries no version (the MinerU env
-    is whatever the interpreter path resolves to). Pinned until the driver records a
-    ``ProcessingRecord`` itself.
+    """CLAUDE.md's provenance rule: every OCR artifact records ``mineru_version``, the
+    arguments and the DPI. ``si/si2.pdf`` at ``dpi=350`` writes
+    ``si/si2_ocr_provenance.json``, the whole ``ProcessingRecord`` asserted: version
+    2.7.6 and DPI 350 as the runner printed them, the requested DPI, backend, lang,
+    method, device, figures directory ``images/si2``, the exact command list, and the
+    sha256 of the fixture PDF bytes. With ``dpi`` omitted the requested DPI
+    is 0 and the recorded effective DPI is the runner's 200.
     """
-    _install(monkeypatch, _FakeRun())
+    fake = _install(monkeypatch, _FakeRun())
+    pdf = _pdf(tmp_path / "ck" / "si", "si2.pdf")
+
+    assert ocr.ocr_pdf(pdf, dpi=350, device_mode="cpu") == pdf.with_suffix(".md")
+
+    assert sorted(p.name for p in pdf.parent.iterdir()) == [
+        "si2.md",
+        "si2.pdf",
+        "si2_ocr_provenance.json",
+    ]
+    ((cmd, _),) = fake.calls
+    record = json.loads((pdf.parent / "si2_ocr_provenance.json").read_text())
+    assert record == {
+        "processor": "torchcell.literature.ocr.ocr_pdf",
+        "tool": "mineru",
+        "version": "2.7.6",
+        "params": {
+            "backend": "pipeline",
+            "lang": "en",
+            "method": "auto",
+            "device_mode": "cpu",
+            "dpi_requested": 350,
+            "dpi": 350,
+            "images_dir": "images/si2",
+            "command": [
+                ocr.DEFAULT_MINERU_PYTHON,
+                *_tail(pdf, "pipeline", "en", "auto", "350", "images/si2"),
+            ],
+        },
+        "input_sha256": [hashlib.sha256(b"%PDF-1.4\n").hexdigest()],
+    }
+    assert cmd == record["params"]["command"]
+
+    ocr.ocr_pdf(_pdf(tmp_path / "ck"))
+    paper_record = json.loads(
+        (tmp_path / "ck" / "paper_ocr_provenance.json").read_text()
+    )
+    assert (paper_record["params"]["dpi_requested"], paper_record["params"]["dpi"]) == (
+        0,
+        200,
+    )
+    assert paper_record["params"]["images_dir"] == "images"
+
+
+@pytest.mark.parametrize(
+    ("stdout", "wrong"),
+    [
+        ("OK\n", "MINERU_VERSION, MINERU_DPI"),
+        ("MINERU_VERSION=2.7.6\n", "MINERU_DPI"),
+        (
+            "MINERU_VERSION=2.7.6\nMINERU_VERSION=2.7.7\nMINERU_DPI=200\n",
+            "MINERU_VERSION",
+        ),
+    ],
+)
+def test_a_runner_that_does_not_report_its_facts_once_is_refused(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, stdout: str, wrong: str
+) -> None:
+    """Exit 0 without exactly one ``MINERU_VERSION`` and one ``MINERU_DPI`` line is a
+    ``RunnerReportError`` naming the facts with the wrong count, and no record file is
+    written (the markdown the runner wrote stays).
+    """
+    _install(monkeypatch, _FakeRun(stdout=stdout))
     pdf = _pdf(tmp_path / "ck")
-    assert ocr.ocr_pdf(pdf, dpi=350) == tmp_path / "ck" / "paper.md"
+    with pytest.raises(ocr.RunnerReportError) as refused:
+        ocr.ocr_pdf(pdf)
+    assert str(refused.value) == (
+        "MinerU runner on paper.pdf must print each of MINERU_VERSION, MINERU_DPI "
+        f"exactly once; wrong count for {wrong}"
+    )
     assert sorted(p.name for p in (tmp_path / "ck").iterdir()) == [
         "paper.md",
         "paper.pdf",
     ]
 
 
-def test_the_processor_named_by_mormino_2022_does_not_exist() -> None:
-    """Finding: Mormino 2022's OCR ``ProcessingRecord`` (mormino2022.py line 434)
-    names ``torchcell.literature.ocr.run_mineru``; the module's entry points are
-    ``ocr_pdf`` and ``ocr_artifact``, so that dotted path does not resolve. Pinned until
-    the record names ``ocr_pdf``.
+def test_the_processor_named_by_mormino_2022_resolves_to_ocr_pdf() -> None:
+    """Mormino 2022's OCR ``ProcessingRecord`` names the function that OCRs one PDF,
+    ``torchcell.literature.ocr.ocr_pdf``, and that dotted path resolves to it.
     """
     import torchcell.datasets.scerevisiae.mormino2022 as mormino
 
@@ -355,12 +446,9 @@ def test_the_processor_named_by_mormino_2022_does_not_exist() -> None:
     (processor,) = re.findall(
         r'processor="(torchcell\.literature\.ocr\.[^"]+)"', source
     )
+    assert processor == "torchcell.literature.ocr.ocr_pdf"
     module_name, _, attribute = processor.rpartition(".")
-    with pytest.raises(AttributeError) as missing:
-        getattr(importlib.import_module(module_name), attribute)
-    assert str(missing.value) == (
-        "module 'torchcell.literature.ocr' has no attribute 'run_mineru'"
-    )
+    assert getattr(importlib.import_module(module_name), attribute) is ocr.ocr_pdf
 
 
 # ------------------------------------------------------------- ocr_artifact
@@ -377,14 +465,13 @@ def _artifact(root: Path) -> Path:
     return root
 
 
-def test_ocr_artifact_runs_paper_then_si_pdfs_in_lexicographic_order(
+def test_ocr_artifact_runs_paper_then_si_pdfs_in_natural_order(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    """Finding: ``sorted(si_dir.glob("si*.pdf"))`` (ocr.py line 135) is lexicographic,
-    so ``si10`` runs and is returned before ``si2``; the docstring's "si1.md..." reads
-    as numeric. Pinned until the sort is natural. The glob is case-sensitive and not
-    recursive (``SI3.pdf``, ``nested/si4.pdf``, ``table.pdf`` and the top-level
-    ``si5.pdf`` are skipped), and the keywords reach every call (``--dpi 350``).
+    """The SI files run and are returned in natural order, ``si1``, ``si2``, ``si10``.
+    The glob is case-sensitive and not recursive (``SI3.pdf``, ``nested/si4.pdf``,
+    ``table.pdf`` and the top-level ``si5.pdf`` are skipped), the keywords reach every
+    call (``--dpi 350``), and each SI PDF gets its own figures directory.
     """
     fake = _install(monkeypatch, _FakeRun())
     root = _artifact(tmp_path / "ck")
@@ -394,42 +481,50 @@ def test_ocr_artifact_runs_paper_then_si_pdfs_in_lexicographic_order(
     assert produced == [
         root / "paper.md",
         root / "si" / "si1.md",
-        root / "si" / "si10.md",
         root / "si" / "si2.md",
+        root / "si" / "si10.md",
     ]
-    assert [(cmd[3], cmd[5], cmd[7], cmd[-1]) for cmd, _ in fake.calls] == [
-        (str(root / "paper.pdf"), str(root), "vlm-auto-engine", "350"),
-        (str(root / "si" / "si1.pdf"), str(root / "si"), "vlm-auto-engine", "350"),
-        (str(root / "si" / "si10.pdf"), str(root / "si"), "vlm-auto-engine", "350"),
-        (str(root / "si" / "si2.pdf"), str(root / "si"), "vlm-auto-engine", "350"),
+    si = root / "si"
+    assert [(cmd[3], cmd[5], cmd[7], cmd[13], cmd[15]) for cmd, _ in fake.calls] == [
+        (str(root / "paper.pdf"), str(root), "vlm-auto-engine", "350", "images"),
+        (str(si / "si1.pdf"), str(si), "vlm-auto-engine", "350", "images/si1"),
+        (str(si / "si2.pdf"), str(si), "vlm-auto-engine", "350", "images/si2"),
+        (str(si / "si10.pdf"), str(si), "vlm-auto-engine", "350", "images/si10"),
     ]
 
 
-def test_ocr_artifact_without_a_paper_is_silent(
+def test_ocr_artifact_without_a_paper_refuses(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    """Finding: a directory with no ``paper.pdf`` is not refused: an SI-only artifact
-    returns just the SI markdown, and an empty directory (or one whose ``si`` is a
-    file) returns ``[]`` without starting MinerU. Pinned until a missing paper
-    refuses.
+    """A directory with no ``paper.pdf`` raises ``MissingPaperPdfError`` naming it,
+    before any OCR: an SI-only artifact does not OCR its SI, and an empty directory (or
+    one whose ``si`` is a file) does not return ``[]``. The only caller,
+    ``capture.capture_by_doi``, downloads the article as ``paper.pdf`` first, so a
+    missing one is a broken capture.
     """
     fake = _install(monkeypatch, _FakeRun())
     si_only = tmp_path / "si-only"
     _pdf(si_only / "si", "si1.pdf")
-    assert ocr.ocr_artifact(si_only) == [si_only / "si" / "si1.md"]
+    with pytest.raises(ocr.MissingPaperPdfError) as refused:
+        ocr.ocr_artifact(si_only)
+    assert str(refused.value) == f"no paper.pdf in artifact directory {si_only}"
 
     empty = tmp_path / "empty"
     empty.mkdir()
     (empty / "si").write_text("a file, not a directory")
-    assert ocr.ocr_artifact(empty) == []
-    assert [cmd[3] for cmd, _ in fake.calls] == [str(si_only / "si" / "si1.pdf")]
+    with pytest.raises(ocr.MissingPaperPdfError) as refused:
+        ocr.ocr_artifact(empty)
+    assert str(refused.value) == f"no paper.pdf in artifact directory {empty}"
+    assert fake.calls == []
+    assert not (si_only / "si" / "si1.md").exists()
 
 
 def test_ocr_artifact_stops_at_the_first_failure(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    """si1 exits 1: the paper already ran (its markdown is on disk), si1's error is
-    raised, si10 and si2 never start, and the list of what was produced is lost.
+    """si1 exits 1: the paper already ran (its markdown and processing record are on
+    disk), si1's error is raised, si2 and si10 never start, and the list of what was
+    produced is lost.
     """
     fake = _install(monkeypatch, _FakeRun(outcomes={"si1.pdf": (1, "boom")}))
     root = _artifact(tmp_path / "ck")
@@ -438,3 +533,5 @@ def test_ocr_artifact_stops_at_the_first_failure(
     assert str(refused.value) == "MinerU failed (exit 1) on si1.pdf:\nboom"
     assert [Path(cmd[3]).name for cmd, _ in fake.calls] == ["paper.pdf", "si1.pdf"]
     assert (root / "paper.md").read_text() == "# Title\nabc"
+    assert (root / "paper_ocr_provenance.json").is_file()
+    assert not (root / "si" / "si1_ocr_provenance.json").exists()

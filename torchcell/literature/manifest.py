@@ -30,6 +30,10 @@ ROLE_SI_DATA = "si_data"
 ROLE_RAW_DATA = "raw_data"
 ROLE_OCR_IMAGE = "ocr_image"
 ROLE_OCR_LAYOUT = "ocr_layout"
+# ``ocr.ocr_pdf``'s ProcessingRecord for one OCR'd PDF, written beside its markdown
+# as ``<stem>_ocr_provenance.json`` and attached to that markdown's record.
+ROLE_OCR_PROVENANCE = "ocr_provenance"
+OCR_PROVENANCE_SUFFIX = "_ocr_provenance.json"
 # Our own reading notes pulled from Zotero -- the only role not derived from the
 # paper's own bytes, so it is sourced to Zotero rather than to a retrieval URL.
 ROLE_ANNOTATIONS = "annotations"
@@ -48,7 +52,10 @@ class FileRecord(BaseModel):
     """One captured file in an artifact directory."""
 
     path: str = Field(description="Path relative to the artifact directory.")
-    role: str = Field(description="paper_pdf | paper_ocr | si_pdf | si_ocr | si_data")
+    role: str = Field(
+        description="paper_pdf | paper_ocr | si_pdf | si_ocr | si_data | raw_data | "
+        "ocr_image | ocr_layout | ocr_provenance | annotations"
+    )
     bytes: int
     sha256: str
     source: str | None = Field(
@@ -176,10 +183,17 @@ class Manifest(BaseModel):
 
 
 # What ``_run_mineru.py`` writes beside each PDF ``ocr.ocr_artifact`` OCRs
-# (``paper.pdf`` and ``si/si*.pdf``): an ``images/`` directory and
-# ``<stem>_content_list.json`` / ``<stem>_middle.json`` with ``<stem>`` the PDF stem.
-_MINERU_IMAGE = re.compile(r"(si/)?images/[^/]+\.(jpg|jpeg|png)")
+# (``paper.pdf`` and ``si/si*.pdf``): its figures, ``<stem>_content_list.json`` /
+# ``<stem>_middle.json`` with ``<stem>`` the PDF stem, and ``ocr.ocr_pdf`` adds
+# ``<stem>_ocr_provenance.json``. Figures: ``images/<file>`` for the paper and
+# ``si/images/<si stem>/<file>`` per SI PDF (``ocr.images_dir_for``); the flat
+# ``si/images/<file>`` is the layout written before issue #579 and is still an OCR
+# figure, so keys with one SI PDF stay valid without a re-OCR.
+_MINERU_IMAGE = re.compile(
+    r"(images|si/images|si/images/si[^/]*)/[^/]+\.(jpg|jpeg|png)"
+)
 _MINERU_LAYOUT = re.compile(r"(paper|si/si[^/]*)_(content_list|middle)\.json")
+_MINERU_PROVENANCE = re.compile(r"(paper|si/si[^/]*)_ocr_provenance\.json")
 
 
 def _role_for(rel_path: str) -> str:
@@ -200,6 +214,8 @@ def _role_for(rel_path: str) -> str:
         return ROLE_OCR_IMAGE
     if _MINERU_LAYOUT.fullmatch(rel_path):
         return ROLE_OCR_LAYOUT
+    if _MINERU_PROVENANCE.fullmatch(rel_path):
+        return ROLE_OCR_PROVENANCE
     if rel_path.startswith("si/") and rel_path.endswith(".pdf"):
         return ROLE_SI_PDF
     if rel_path.startswith("si/") and rel_path.endswith(".md"):
@@ -257,7 +273,10 @@ def build_manifest(
     """Scan an artifact directory and build its manifest.
 
     Walks every file except ``manifest.json`` itself, computes sha256 and size,
-    and tags each with a role and (when known) a source URL / Zotero md5.
+    and tags each with a role and (when known) a source URL / Zotero md5. A MinerU
+    markdown whose ``<stem>_ocr_provenance.json`` sits beside it (written by
+    ``ocr.ocr_pdf``) carries that ProcessingRecord as ``processing``; markdown
+    OCR'd before the record existed has none.
 
     Args:
         artifact_dir: The ``<...>/<citation_key>/`` directory.
@@ -283,7 +302,14 @@ def build_manifest(
             continue
         rel = str(path.relative_to(artifact_dir))
         role = _role_for(rel)
-        default_source = "mineru-ocr" if _is_mineru_output(rel) else None
+        mineru_output = _is_mineru_output(rel)
+        default_source = "mineru-ocr" if mineru_output else None
+        record_path = path.with_name(f"{path.stem}{OCR_PROVENANCE_SUFFIX}")
+        processing = (
+            ProcessingRecord.model_validate_json(record_path.read_text())
+            if mineru_output and record_path.is_file()
+            else None
+        )
         files.append(
             ArtifactRecord(
                 path=rel,
@@ -292,6 +318,7 @@ def build_manifest(
                 sha256=sha256_file(path),
                 source=sources.get(rel, default_source),
                 zotero_md5=zotero_md5.get(rel),
+                processing=processing,
             )
         )
     return Manifest(

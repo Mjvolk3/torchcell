@@ -536,7 +536,7 @@ def _expected_manifest(
                 sha256=md_sha,
                 source="mineru-ocr",
                 processing=ProcessingRecord(
-                    processor="torchcell.literature.ocr.run_mineru",
+                    processor="torchcell.literature.ocr.ocr_pdf",
                     tool="mineru",
                     version="unrecorded",
                     params={

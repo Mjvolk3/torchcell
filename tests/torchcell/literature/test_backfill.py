@@ -46,6 +46,15 @@ runner's output, not substrings: ``si/Figure_S1_images/a.png`` and
 ``si/`` table is still ``si_data``. The full role table of a captured key is pinned on
 the live layout of ``avsecEffectiveGeneExpression2021`` (one SI PDF, one image per
 side here).
+
+2026.10.01 (issue #579, #546): each SI PDF's figures live in their own
+``si/images/<si stem>/`` (``ocr.images_dir_for``), and those are ``ocr_image``; the
+flat ``si/images/<file>`` of keys OCR'd before the fix stays ``ocr_image`` so they are
+valid without a re-OCR, while ``si/images/Figure/a.png`` (not an ``si*`` stem) and a
+top-level ``images/paper/a.jpg`` are not OCR figures. ``<stem>_ocr_provenance.json``
+is ``ocr_provenance`` and ``build_manifest`` attaches it, parsed as a
+``ProcessingRecord``, to the markdown beside it; markdown with no such file keeps
+``processing`` None.
 """
 
 import hashlib
@@ -73,6 +82,7 @@ from torchcell.literature.backfill import (
 from torchcell.literature.manifest import (
     MANIFEST_FILENAME,
     Manifest,
+    ProcessingRecord,
     _role_for,
     build_manifest,
     sha256_file,
@@ -242,6 +252,24 @@ def test_role_for_mineru_sidecars_under_si_are_ocr_roles() -> None:
     assert _role_for("si/si1.md") == "si_ocr"
 
 
+def test_role_for_per_pdf_si_figures_and_ocr_provenance() -> None:
+    """Issue #579 layout: ``si/images/<si stem>/<file>`` is an OCR figure, the flat
+    pre-fix ``si/images/<file>`` still is, and ``<stem>_ocr_provenance.json`` (paper or
+    SI) is ``ocr_provenance``. One directory deeper, a non-``si*`` subdirectory, or a
+    per-PDF directory under the top-level ``images/`` is not a MinerU figure.
+    """
+    assert _role_for("si/images/si1/ab12.jpg") == "ocr_image"
+    assert _role_for("si/images/si12/ab12.png") == "ocr_image"
+    assert _role_for("si/images/ab12.jpeg") == "ocr_image"
+    assert _role_for("paper_ocr_provenance.json") == "ocr_provenance"
+    assert _role_for("si/si10_ocr_provenance.json") == "ocr_provenance"
+    assert _role_for("si/images/Figure/a.png") == "si_data"
+    assert _role_for("si/images/si1/deeper/a.png") == "si_data"
+    assert _role_for("si/images/si1/a.gif") == "si_data"
+    assert _role_for("si/Table_ocr_provenance.json") == "si_data"
+    assert _role_for("images/paper/a.jpg") == "other"
+
+
 def test_captured_key_full_role_table(tmp_path: Path) -> None:
     """Every file MinerU and capture leave in an avsec-shaped key, with its role and
     default source, in ``build_manifest``'s sorted walk order.
@@ -279,6 +307,70 @@ def test_captured_key_full_role_table(tmp_path: Path) -> None:
         ("si/si1_content_list.json", "ocr_layout", None),
         ("si/si1_middle.json", "ocr_layout", None),
     ]
+
+
+def test_per_pdf_si_figures_and_attached_ocr_provenance(tmp_path: Path) -> None:
+    """A key OCR'd after issue #579 with two SI PDFs: both PDFs' figures are listed
+    as ``ocr_image`` under their own directories, each ``_ocr_provenance.json`` is
+    ``ocr_provenance``, and its ``ProcessingRecord`` is attached to exactly the
+    markdown beside it (``paper.md`` and ``si/si2.md``); ``si/si1.md`` has no record
+    file and keeps ``processing`` None.
+    """
+    key = tmp_path / "leeMappingCellularResponse2014"
+    paper_record = ProcessingRecord(
+        processor="torchcell.literature.ocr.ocr_pdf",
+        tool="mineru",
+        version="2.7.6",
+        params={"dpi": 350, "images_dir": "images"},
+        input_sha256=["aa" * 32],
+    )
+    si2_record = ProcessingRecord(
+        processor="torchcell.literature.ocr.ocr_pdf",
+        tool="mineru",
+        version="2.7.6",
+        params={"dpi": 200, "images_dir": "images/si2"},
+        input_sha256=["bb" * 32],
+    )
+    files = {
+        "images/3a34.jpg": "x",
+        "paper.md": "x",
+        "paper.pdf": "x",
+        "paper_ocr_provenance.json": paper_record.model_dump_json(),
+        "si/images/si1/11aa.jpg": "x",
+        "si/images/si1/11bb.png": "x",
+        "si/images/si2/22aa.jpg": "x",
+        "si/si1.md": "x",
+        "si/si1.pdf": "x",
+        "si/si2.md": "x",
+        "si/si2.pdf": "x",
+        "si/si2_ocr_provenance.json": si2_record.model_dump_json(),
+    }
+    for name, text in files.items():
+        (key / name).parent.mkdir(parents=True, exist_ok=True)
+        (key / name).write_text(text)
+
+    manifest = build_manifest(
+        key, citation_key=key.name, created_at=_FROZEN, provenance_complete=False
+    )
+
+    assert [(r.path, r.role, r.source) for r in manifest.files] == [
+        ("images/3a34.jpg", "ocr_image", None),
+        ("paper.md", "paper_ocr", "mineru-ocr"),
+        ("paper.pdf", "paper_pdf", None),
+        ("paper_ocr_provenance.json", "ocr_provenance", None),
+        ("si/images/si1/11aa.jpg", "ocr_image", None),
+        ("si/images/si1/11bb.png", "ocr_image", None),
+        ("si/images/si2/22aa.jpg", "ocr_image", None),
+        ("si/si1.md", "si_ocr", "mineru-ocr"),
+        ("si/si1.pdf", "si_pdf", None),
+        ("si/si2.md", "si_ocr", "mineru-ocr"),
+        ("si/si2.pdf", "si_pdf", None),
+        ("si/si2_ocr_provenance.json", "ocr_provenance", None),
+    ]
+    processing = {r.path: r.processing for r in manifest.files if r.processing}
+    assert processing == {"paper.md": paper_record, "si/si2.md": si2_record}
+    reloaded = Manifest.model_validate_json(manifest.model_dump_json())
+    assert reloaded.files[1].processing == paper_record
 
 
 def test_backfill_offline_hashes_and_roundtrips(tmp_path: Path) -> None:

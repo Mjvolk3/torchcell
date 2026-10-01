@@ -210,3 +210,7 @@ Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `PDF_S
 ## 2026.09.30 - Module constant is the one pin at download (issue #561)
 
 Before this change, `download()` verified the mirror bytes against the digest recorded in the raw-mirror `manifest.json`, and `process()` verified them against the module constant. Because `deposit_raw_mirror` writes the manifest from the constant, the two were equal by construction, but the loader still carried two pins. Now `download()` verifies the bytes against the module constant, and `check_manifest_pin` refuses a manifest that records any other digest, raising `ManifestPinMismatchError` named by path with both digests. The manifest stays the retrieval record. Built records are unchanged. Tests: `test_download_refuses_a_manifest_digest_off_the_module_pin` in [[tests.torchcell.datasets.scerevisiae.test_raw_pins]].
+
+## 2026.10.01 - OCR processor name resolves
+
+Issue #546. The OCR `ProcessingRecord` written by `deposit_raw_mirror` named `torchcell.literature.ocr.run_mineru`, which does not exist; it now names `torchcell.literature.ocr.ocr_pdf`, the function that OCRs one PDF. Loader records are unchanged (the build reads only the manifest's sha256 values). The raw-mirror `manifest.json` already deposited under `$DATA_ROOT/torchcell-raw/morminoIdentificationAceticAcid2022/` still says `run_mineru` until the next `deposit_raw_mirror`. Evidence: `test_the_processor_named_by_mormino_2022_resolves_to_ocr_pdf` in [[tests.torchcell.literature.test_ocr]].

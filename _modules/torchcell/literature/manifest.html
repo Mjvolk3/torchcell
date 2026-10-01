@@ -123,6 +123,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrEnum</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
@@ -293,6 +294,13 @@
 
 
 
+<span class="c1"># What ``_run_mineru.py`` writes beside each PDF ``ocr.ocr_artifact`` OCRs</span>
+<span class="c1"># (``paper.pdf`` and ``si/si*.pdf``): an ``images/`` directory and</span>
+<span class="c1"># ``&lt;stem&gt;_content_list.json`` / ``&lt;stem&gt;_middle.json`` with ``&lt;stem&gt;`` the PDF stem.</span>
+<span class="n">_MINERU_IMAGE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(si/)?images/[^/]+\.(jpg|jpeg|png)"</span><span class="p">)</span>
+<span class="n">_MINERU_LAYOUT</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(paper|si/si[^/]*)_(content_list|middle)\.json"</span><span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_role_for</span><span class="p">(</span><span class="n">rel_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Infer a file's role from its relative path within the artifact dir."""</span>
     <span class="k">if</span> <span class="n">rel_path</span> <span class="o">==</span> <span class="s2">"paper.pdf"</span><span class="p">:</span>
@@ -303,19 +311,23 @@
         <span class="k">return</span> <span class="n">ROLE_ANNOTATIONS</span>
     <span class="k">if</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"si/si_data/"</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">ROLE_SI_DATA</span>
+    <span class="c1"># MinerU byproducts, for paper and SI alike: ``_run_mineru.py`` copies</span>
+    <span class="c1"># ``&lt;stem&gt;_content_list.json``, ``&lt;stem&gt;_middle.json`` and ``images/`` next</span>
+    <span class="c1"># to every PDF it OCRs, so ``si/si1_middle.json`` and ``si/images/*.jpg`` are</span>
+    <span class="c1"># OCR sidecars and must win over the loose-SI rule below.</span>
+    <span class="k">if</span> <span class="n">_MINERU_IMAGE</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="n">rel_path</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ROLE_OCR_IMAGE</span>
+    <span class="k">if</span> <span class="n">_MINERU_LAYOUT</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="n">rel_path</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ROLE_OCR_LAYOUT</span>
     <span class="k">if</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"si/"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".pdf"</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">ROLE_SI_PDF</span>
     <span class="k">if</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"si/"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".md"</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">ROLE_SI_OCR</span>
-    <span class="c1"># Loose SI files (not a PDF/markdown and not already under si/si_data/) are</span>
-    <span class="c1"># released supplementary data tables, e.g. hoepfner's ``si/Table_S5.xls``.</span>
+    <span class="c1"># Loose SI files (not a PDF/markdown, not an OCR sidecar and not already</span>
+    <span class="c1"># under si/si_data/) are released supplementary data tables, e.g.</span>
+    <span class="c1"># hoepfner's ``si/Table_S5.xls``.</span>
     <span class="k">if</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"si/"</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">ROLE_SI_DATA</span>
-    <span class="c1"># MinerU byproducts: extracted figures and layout JSON, for paper and SI.</span>
-    <span class="k">if</span> <span class="s2">"images/"</span> <span class="ow">in</span> <span class="n">rel_path</span> <span class="ow">and</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s2">".jpg"</span><span class="p">,</span> <span class="s2">".jpeg"</span><span class="p">,</span> <span class="s2">".png"</span><span class="p">)):</span>
-        <span class="k">return</span> <span class="n">ROLE_OCR_IMAGE</span>
-    <span class="k">if</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s2">"_content_list.json"</span><span class="p">,</span> <span class="s2">"_middle.json"</span><span class="p">)):</span>
-        <span class="k">return</span> <span class="n">ROLE_OCR_LAYOUT</span>
     <span class="c1"># Large released quantitative tables kept beside the paper (data-only keys</span>
     <span class="c1"># such as xue2025/lopez, and the ``data/`` companion of captured papers).</span>
     <span class="k">if</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"data/"</span><span class="p">):</span>

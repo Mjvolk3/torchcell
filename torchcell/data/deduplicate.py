@@ -78,7 +78,12 @@ class Deduplicator(ABC):
             self.env.close()
             self.env = None
 
-    def process(self, input_path: str, output_path: str) -> None:
+    def process(
+        self,
+        input_path: str,
+        output_path: str,
+        key_groups: dict[str, list[bytes]] | None = None,
+    ) -> None:
         """Read records from ``input_path``, deduplicate, and write to the output LMDB.
 
         Two streaming passes, never the whole dataset in memory. The previous
@@ -92,19 +97,28 @@ class Deduplicator(ABC):
         through untouched -- they were written by the converter's ``model_dump``,
         so a reconstruct-and-redump would be an identity round trip -- and only
         genuine duplicate groups are reconstructed for ``create_deduplicate_entry``.
+
+        ``key_groups``, when given, IS pass 1's result and pass 1 is not run (same
+        contract as ``Aggregator.process``: groups in the order a cursor walk first
+        meets them, keys in cursor order within each group), computed from
+        ``duplicate_key`` while the raw stage writes the input.
         """
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         self._init_lmdb(readonly=False)  # Initialize LMDB for writing
 
-        env_input = lmdb.open(input_path, readonly=True, readahead=False)
+        # Readahead: both passes read in cursor order (see Aggregator.process).
+        env_input = lmdb.open(input_path, readonly=True, readahead=True)
 
-        # Pass 1: group input keys by the raw-record duplicate hash.
-        key_groups: dict[str, list[bytes]] = {}
-        with env_input.begin() as txn_input:
-            cursor = txn_input.cursor()
-            for key, value in tqdm(cursor, desc="Deduplication pass 1: grouping"):
-                hash_key = self.duplicate_key(json.loads(value.decode("utf-8")))
-                key_groups.setdefault(hash_key, []).append(bytes(key))
+        if key_groups is None:
+            # Pass 1: group input keys by the raw-record duplicate hash.
+            key_groups = {}
+            with env_input.begin() as txn_input:
+                cursor = txn_input.cursor()
+                for key, value in tqdm(cursor, desc="Deduplication pass 1: grouping"):
+                    hash_key = self.duplicate_key(json.loads(value.decode("utf-8")))
+                    key_groups.setdefault(hash_key, []).append(bytes(key))
+        else:
+            log.info("Deduplication pass 1 skipped: grouping computed by the raw stage")
 
         # Pass 2: write one output record per group.
         deduplicated_count = 0

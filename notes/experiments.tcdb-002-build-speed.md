@@ -783,3 +783,66 @@ is worth 23% at 24 CPUs and 21% at 48, and halves peak memory (62 to 36 GB, 104 
 the parent at 0.77 of one core, so the next bound is the parent's single consumer
 (unpickling results, dedup, appends): the next measurement is a py-spy profile of
 the parent on this arm (`PROFILE=1`).
+
+### Round 13: the parent's feeder thread was the ceiling (job 3084 profile)
+
+Per phase, jobs 3082 and 3083 ran Costanzo's node pass at 20 cores for 135 s and
+its edge pass at 22 cores for 160 s on BOTH the 24 and the 48 CPU box, with the parent
+at 0.8 to 0.9 cores: the passes do not scale with workers. py-spy on the parent of
+job 3084 (48 CPUs, r12 stack, `PROFILE=1`, `results/` via `scripts/profile_summary.py`
+and a per-thread pass over `parent.speedscope`): the main thread is busy 174 of
+466 s (62% in `wait`), but the executor's `QueueFeederThread` is busy 292 of 336 s,
+50% pickling tasks (`reduction.dumps`) and 36% sending them. Measured directly
+(scratch, 2M Costanzo subset with row specs, a 6,280-record chunk): a task still
+pickled to 103.5 MB in 205 ms, because the chunk VIEW is a `copy.copy` of the
+dataset and carried `_experiment_reference_index` as well; the r12 fix covered only
+the adapter's own dataset. `ExperimentDataset.__getstate__` now drops it (commit
+765bdc38): the task pickles to 0.048 MB in 0.7 ms. Arms 3089 (48 / 192) and 3090
+(24 / 96) rerun r12's settings on that commit:
+
+| job | box | wall | peak GB | mean cores | Costanzo node pass | Costanzo edge pass | rows |
+|--:|---|--:|--:|--:|---|---|--:|
+| 3083 (r12) | 48 / 192 | 477 s | 47.3 | 19.0 | 135 s at 19.9 cores | 160 s at 22.6 cores | 29,736,985 |
+| 3089 (r13) | 48 / 192 | 328 s | 38.4 | 29.3 | 65 s at 43.7 cores | 85 s at 45.0 cores | 29,736,985 |
+| 3082 (r12) | 24 / 96 | 497 s | 36.4 | 17.2 | 135 s at 20.1 cores | 160 s at 22.2 cores | 29,736,985 |
+| 3090 (r13) | 24 / 96 | 454 s | 32.7 | 17.8 | 115 s at 22.3 cores | 145 s at 22.7 cores | 29,736,985 |
+
+<https://wandb.ai/zhao-group/tcdb/runs/vzqpzbsx>
+<https://wandb.ai/zhao-group/tcdb/runs/oz3okkja>
+
+The Costanzo passes now saturate both boxes (45 of 48 cores, 22.5 of 24) and the
+48-CPU box finally scales: 328 s against the production path's 5,496 s, 16.8x, with
+peak memory 38 GB against 143. What remains of the 24-CPU ladder's 454 s is outside
+the chunked passes: 0.20 of its samples run under 4 cores (dataset instantiation,
+the reference `_get_` methods, the in-process small datasets), which is the
+adapter-level concurrency the user raised on 2026.09.29, bounded at that share.
+
+Extrapolation to the full build (not measured; linear in the Costanzo passes only):
+job 2959's Costanzo dmf and dmi ran 166 min at 18 of 64 cores under the same
+feeder-thread ceiling, so at the 45-of-48 saturation seen here they would take
+roughly 50 to 60 min, and the four one-core expression adapters (39 min) go to the
+pool under `inprocess_max_mb`; about 4 h 30 min becomes about 2 h 15 min. The next
+real rebuild (the user has a data issue that forces one) measures it; no full build
+is scheduled for benchmarking.
+
+### Query build time, from the 033 build (job 2929)
+
+The user asks whether the query side can be made faster; the recent chemogenomic
+query build took days end to end. Job 2929 (16 CPUs / 64 GB, 6,394,540 records,
+7 h 48 min) apportions from its log:
+
+| phase | records/s | wall |
+|---|--:|--:|
+| Cypher fetch + json.loads + pydantic validation + json.dumps + LMDB put, one process | 716 | 2 h 29 min |
+| experiment reference index (second pass over the LMDB) | 4,083 | 26 min |
+| gene set (third pass, json.loads of every record) | 1,079 | 1 h 39 min |
+| aggregation + label DataFrame + phenotype label index (re-validates every record) | | about 3 h 14 min |
+
+Every phase is a single-process loop over all records, and three of them re-read
+and re-parse the same LMDB. Hypothesis (untested): the fetch is client-bound
+(1.4 ms per record of parse + validate + dump + put), not server-bound, so a
+single pass that validates only distinct constants, keeps records as the dicts the
+server sent, and computes the reference index, gene set and phenotype label index
+while streaming would remove about 4 h of the 7 h 48 min, before touching the
+aggregation stage. `scripts/query_build_cost_probe.py` (in progress) measures the
+per-step costs on the 033 build's records.

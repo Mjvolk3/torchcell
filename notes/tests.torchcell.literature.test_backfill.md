@@ -23,3 +23,7 @@ New `test_role_for_mineru_sidecars_under_si_are_ocr_roles` (sidecars under `si/`
 ## 2026.09.30 - Sidecar boundary pinned
 
 `test_role_for_mineru_sidecars_under_si_are_ocr_roles` now also asserts `si/Figure_S1_images/a.png`, `si/Table_middle.json` and `si/Table_content_list.json` stay `si_data`.
+
+## 2026.10.01 - Collection names read through everything (issue #563)
+
+`test_enriched_manifest_carries_zotero_metadata_and_attachment_sources` now expects a trailing `("everything",)` call: `capture._collection_names` reads `ZoteroLibrary.list_collections`, which pages every collection since [[torchcell.literature.zotero]] fixed #563.

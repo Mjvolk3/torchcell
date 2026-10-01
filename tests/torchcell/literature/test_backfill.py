@@ -457,13 +457,15 @@ def test_enriched_manifest_carries_zotero_metadata_and_attachment_sources(
         provenance_complete=True,
     )
     # the paginated index scan, then the attachments (line 103), then the
-    # collection names (line 111): three reads, no write method exists to be called
+    # collection names (line 111): three paged reads (each through ``everything``,
+    # issue #563), no write method exists to be called
     assert zot.calls == [
         ("items", None),
         ("everything",),
         ("children", "ITEM1"),
         ("everything",),
         ("collections",),
+        ("everything",),
     ]
 
 

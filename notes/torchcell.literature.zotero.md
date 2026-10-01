@@ -14,3 +14,13 @@ This module exists to make the Zotero group library (canonical PDFs only) progra
 - Distinguishes main article vs SI attachments so `paper.pdf` and `si/` are populated correctly; citation key is taken from Zotero's own field/`extra` so the directory stays byte-identical to what the user sees (deferring to [[torchcell.literature.citation_keys]] only as a last resort).
 - Retry-hardened against the flaky Zotero web API: transient 5xx / transport errors back off and retry; a 404 is terminal, never silently degraded.
 - Feeds [[torchcell.literature.capture]] and, via per-file sources/md5, [[torchcell.literature.manifest]].
+
+## 2026.10.01 - Every collection listing is paged (issue #563)
+
+Previous behavior: `list_collections` called `zot.collections()` without `everything(...)`, and pyzotero returns at most `limit=100` rows per request, so `collection_key` searched only the first 100 collections. `collection_tree` paged its own listing but resolved its root through that unpaged lookup. When the personal `torchcell` root left the first page on 2026-09-21, the nightly `scripts/lit_bib_store.py` failed with `Zotero collection 'torchcell' not found` (`/tmp/torchcell-lit-bib-store.log` lists exactly 100 names with `torchcell-topics` present and `torchcell` absent), and the same lookup failed the `lit_sync.py` personal roots and the annotations job. With `create_if_missing=True` a name past page one would have been created a second time (no caller passed it).
+
+Fix: `list_collections` reads `everything(collections())`; `collection_key` and `collection_tree` resolve names through one helper, `_resolve_name`, over that full listing (`collection_tree` now makes one paged listing, not two). Two collections sharing a name are now refused with a `ValueError` naming each candidate's key and parent path ("Address it by collection key"), replacing first-match-wins. Every nightly name lookup (group `database`, `paper`, `microbe-perturb-seq`; personal `torchcell`) resolves to exactly one collection in the live check, so the refusal does not change the nightly.
+
+Live read-only check (2026-10-01, paged listings only): group library 4 collections, personal library 122 collections, personal `torchcell` = `ICDCVSL6`; personal `thesis` is not in the library at all (a missing collection, not a paging miss).
+
+Tests: `test_list_collections_reads_every_page`, `test_collection_key_finds_name_past_first_page`, `test_collection_key_create_if_missing_finds_page_two_and_creates_nothing`, `test_collection_key_refuses_ambiguous_name`, `test_collection_tree_root_and_children_past_first_page` in [[tests.torchcell.literature.test_zotero]]; each fails on the previous code.

@@ -171,6 +171,16 @@ def _resolve_citation_key(item: dict[str, Any]) -> str:
     return generate_citation_key(creators, data.get("date", ""), data.get("title", ""))
 
 
+def _collection_path(by_key: dict[str, dict[str, Any]], key: str) -> str:
+    """Slash-joined names from the top-level ancestor down to collection ``key``."""
+    parts: list[str] = []
+    cur = key
+    while cur in by_key:
+        parts.append(by_key[cur]["data"]["name"])
+        cur = by_key[cur]["data"].get("parentCollection") or ""
+    return "/".join(reversed(parts))
+
+
 class CollectionNode(BaseModel):
     """One Zotero collection within a walked tree.
 
@@ -215,23 +225,57 @@ class ZoteroLibrary:
     # -- collections ---------------------------------------------------------
 
     def list_collections(self) -> list[dict[str, Any]]:
-        """All collections in the library (name + key dicts)."""
+        """Every collection in the library (name + key dicts), across all pages.
+
+        pyzotero returns at most ``limit=100`` rows per request, so the listing goes
+        through ``everything(...)``, which follows the API's ``next`` links. Reading
+        only the first page made ``collection_key`` miss any collection past the
+        100th, which is how the personal ``torchcell`` root went "missing" from the
+        nightly bibliography export once the library grew (issue #563).
+        """
         collections: list[dict[str, Any]] = with_zotero_retry(
-            lambda: self.zot.collections()
+            lambda: self.zot.everything(self.zot.collections())
         )
         return collections
 
     def collection_key(self, name: str, create_if_missing: bool = False) -> str:
         """Resolve a collection name to its key, optionally creating it.
 
-        Raises ``ValueError`` listing available collections when the name is not
-        found and ``create_if_missing`` is False.
+        The name is matched case-insensitively against EVERY collection in the
+        library (see :meth:`list_collections`), so a name that exists is found no
+        matter which page it sits on, and ``create_if_missing`` never creates a
+        duplicate of it.
+
+        Raises ``ValueError`` naming every candidate's key and parent when two or
+        more collections share the name (a nested name can repeat across branches;
+        pass the key instead), and ``ValueError`` listing the available names when
+        the name is not found and ``create_if_missing`` is False.
         """
+        return self._resolve_name(self.list_collections(), name, create_if_missing)
+
+    def _resolve_name(
+        self,
+        collections: list[dict[str, Any]],
+        name: str,
+        create_if_missing: bool = False,
+    ) -> str:
+        """The key of the one collection in ``collections`` named ``name``."""
         name_lower = name.lower()
-        collections = self.list_collections()
-        for coll in collections:
-            if coll["data"]["name"].lower() == name_lower:
-                return str(coll["key"])
+        matches = [c for c in collections if c["data"]["name"].lower() == name_lower]
+        if len(matches) == 1:
+            return str(matches[0]["key"])
+        if matches:
+            by_key = {c["key"]: c for c in collections}
+            candidates = [
+                f"{c['key']} under {_collection_path(by_key, parent)}"
+                if (parent := c["data"].get("parentCollection") or "")
+                else f"{c['key']} at the top level"
+                for c in matches
+            ]
+            raise ValueError(
+                f"Zotero collection '{name}' is ambiguous: {len(matches)} collections "
+                f"share the name: {'; '.join(candidates)}. Address it by collection key."
+            )
         if create_if_missing:
             resp = with_zotero_retry(
                 lambda: self.zot.create_collections([{"name": name}])
@@ -248,11 +292,10 @@ class ZoteroLibrary:
         ``collection_items`` returns only direct members, so a nested collection such
         as ``torchcell/torchcell-topics/microbe-perturb-seq`` is invisible without
         walking the tree, which is exactly where new reading is filed. Returned in
-        depth-first order with the root first.
+        depth-first order with the root first. The root is resolved against the same
+        full, paged listing the tree is built from.
         """
-        collections = with_zotero_retry(
-            lambda: self.zot.everything(self.zot.collections())
-        )
+        collections = self.list_collections()
         by_key = {c["key"]: c for c in collections}
         children: dict[str, list[str]] = {}
         for c in collections:
@@ -260,25 +303,19 @@ class ZoteroLibrary:
                 c["key"]
             )
 
-        def path_of(key: str) -> str:
-            parts: list[str] = []
-            cur = key
-            while cur in by_key:
-                parts.append(by_key[cur]["data"]["name"])
-                cur = by_key[cur]["data"].get("parentCollection") or ""
-            return "/".join(reversed(parts))
-
         def walk(key: str) -> list[CollectionNode]:
             out = [
                 CollectionNode(
-                    key=key, name=by_key[key]["data"]["name"], path=path_of(key)
+                    key=key,
+                    name=by_key[key]["data"]["name"],
+                    path=_collection_path(by_key, key),
                 )
             ]
             for kid in sorted(children.get(key, [])):
                 out += walk(kid)
             return out
 
-        return walk(self.collection_key(root_collection))
+        return walk(self._resolve_name(collections, root_collection))
 
     # -- items by DOI --------------------------------------------------------
 

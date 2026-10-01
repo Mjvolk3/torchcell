@@ -41,7 +41,7 @@ class NucleotideTransformer(NucleotideModel):
         else:
             print(f"Downloading {model_name} model to {model_directory}...")
             # tokenizer
-            AutoTokenizer.from_pretrained(model_name, cache_dir=target_directory)  # type: ignore[no-untyped-call]  # transformers from_pretrained is untyped
+            AutoTokenizer.from_pretrained(model_name, cache_dir=target_directory)  # type: ignore[no-untyped-call, unused-ignore]  # AutoTokenizer.from_pretrained is untyped in transformers 4.57 and typed in CI's newer transformers
             # model
             AutoModelForMaskedLM.from_pretrained(model_name, cache_dir=target_directory)
             print("Download finished.")
@@ -58,7 +58,7 @@ class NucleotideTransformer(NucleotideModel):
         self._check_and_download_model(model_name)
 
         # Load the tokenizer and the model
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)  # type: ignore[no-untyped-call]  # transformers from_pretrained is untyped
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)  # type: ignore[no-untyped-call, unused-ignore]  # AutoTokenizer.from_pretrained is untyped in transformers 4.57 and typed in CI's newer transformers
         self.model = AutoModelForMaskedLM.from_pretrained(model_name)
 
         # Move the model to the selected device

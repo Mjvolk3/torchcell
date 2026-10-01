@@ -82,7 +82,7 @@ class FungalUpDownTransformer(NucleotideModel):
         else:
             print(f"Downloading {self.model_name} model to {model_directory}...")
             # tokenizer
-            AutoTokenizer.from_pretrained(  # type: ignore[no-untyped-call]  # transformers from_pretrained is untyped
+            AutoTokenizer.from_pretrained(  # type: ignore[no-untyped-call, unused-ignore]  # AutoTokenizer.from_pretrained is untyped in transformers 4.57 and typed in CI's newer transformers
                 self.hugging_model_dir,
                 revision=self.model_name,
                 cache_dir=target_directory,
@@ -98,7 +98,7 @@ class FungalUpDownTransformer(NucleotideModel):
     def load_model(self, model_name: str = "") -> None:
         r"""Load the model and tokenizer used for embedding sequences."""
         self._check_and_download_model()
-        self.tokenizer = AutoTokenizer.from_pretrained(  # type: ignore[no-untyped-call]  # transformers from_pretrained is untyped
+        self.tokenizer = AutoTokenizer.from_pretrained(  # type: ignore[no-untyped-call, unused-ignore]  # AutoTokenizer.from_pretrained is untyped in transformers 4.57 and typed in CI's newer transformers
             self.hugging_model_dir, revision=self.model_name
         )
         self.model = AutoModelForMaskedLM.from_pretrained(

@@ -564,10 +564,17 @@ def guard_real_genome_root(node: _MarkedNode, data_root: Callable[[], str]) -> N
     require_trusted_genome_database(genome_root)
 
 
-@pytest.fixture(autouse=True)
-def _never_migrate_a_real_genome_root(request: pytest.FixtureRequest) -> None:
+def never_migrate_a_real_genome_root(request: pytest.FixtureRequest) -> None:
     """Every ``data``/``slow`` test first checks the real genome root, so no test can
     build or migrate ``$DATA_ROOT/data/sgd/genome/data.db``, whichever module happens
     to construct the genome first (directly or through a loader).
+
+    A plain function, registered below as the autouse fixture unchanged, so the
+    fixture's body is exactly what the tests call.
     """
     guard_real_genome_root(request.node, lambda: os.environ["DATA_ROOT"])
+
+
+_never_migrate_a_real_genome_root = pytest.fixture(
+    autouse=True, name="_never_migrate_a_real_genome_root"
+)(never_migrate_a_real_genome_root)

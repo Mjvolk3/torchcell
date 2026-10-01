@@ -725,6 +725,11 @@ class EnvChemgenMota2024Dataset(ExperimentDataset):
         publication = Publication(doi=DOI, doi_url=f"https://doi.org/{DOI}")
         pub_dump = publication.model_dump()
 
+        # Parse every sheet BEFORE the store exists: a refusal (unknown grade symbol,
+        # missing header) must not leave an empty ``processed/lmdb`` that a retry would
+        # serve as a built dataset.
+        parsed = [(spec, self._parse_acid(spec)) for spec in _ACID_SPECS]
+
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e11))
@@ -733,10 +738,9 @@ class EnvChemgenMota2024Dataset(ExperimentDataset):
         dropped_by_token: dict[str, DroppedToken] = {}
         merged_all: list[MergedGene] = []
         with env.begin(write=True) as txn:
-            for spec in _ACID_SPECS:
+            for spec, (orf_scores, dropped, merged, n_raw) in parsed:
                 environment = self._environment(spec)
                 ref_dump = self._reference(environment).model_dump()
-                orf_scores, dropped, merged, n_raw = self._parse_acid(spec)
                 n_raw_total += n_raw
                 merged_all.extend(merged)
                 for token, status in dropped.items():

@@ -87,3 +87,5 @@ Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256Mismat
 ## 2026.10.01 - Replicate findings retired (issue #520)
 
 Retired: `test_proteome_repeated_row_counts_twice_and_blank_value_drops_out` and `test_proteome_all_blank_protein_aborts_in_schema_validation`. Now asserted with exact messages: a repeated (ORF, strain, replicate) row refuses (knockout strain and WT), a blank value refuses, and an all-blank protein refuses in the loader rather than in schema validation. `test_proteome_first_gene_name_wins_and_n_counts_distinct_replicates` keeps the first-`KO_gene_name` and n 1 / SE NaN assertions on distinct replicate ids.
+
+Review follow-up (same day): `test_proteome_non_finite_value_refuses` asserts the exact message for `inf` and that no store is left.

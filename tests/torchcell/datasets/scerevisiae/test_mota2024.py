@@ -35,9 +35,10 @@ the sha256 refusals with both digests, ``deposit_raw_mirror`` and its manifest, 
 missing-genome and missing-header refusals.
 
 2026.10.01 (issue #520): a score outside ``0``, ``+``, ``++`` (``+++``, formerly a row of
-the edge acetic table that was skipped uncounted) now refuses with a message naming the
-file, the symbol and the token, and a sheet without the header row refuses with a message
-naming the file instead of a bare ``StopIteration``.
+the edge acetic table that was skipped uncounted; now tested on the octanoic sheet)
+refuses with a message naming the file, the symbol and the token, and a sheet without the header row refuses with a message
+naming the file instead of a bare ``StopIteration``. All three sheets are parsed before
+``processed/lmdb`` is opened, so either refusal leaves no store and a retry refuses again.
 """
 
 from __future__ import annotations
@@ -508,23 +509,40 @@ def test_unknown_grade_symbol_refuses_naming_file_symbol_and_token(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Contract (issue #520): a score cell outside ``0``, ``+``, ``++`` (here ``+++`` on
-    YDL001W in the acetic table) refuses the build instead of being skipped before
-    ``n_raw`` is counted. The pinned sheets carry 0 such cells.
+    YDL001W in the octanoic table, the LAST sheet, after acetic and butyric parse
+    cleanly) refuses the build instead of being skipped before ``n_raw`` is counted. No
+    ``processed/lmdb`` is left and a retry refuses with the same message. The pinned
+    sheets carry 0 such cells.
     """
-    monkeypatch.setitem(
-        _EDGE_ROWS, "acetic", [("TFC3", "+"), ("YDL001W", "+++"), ("EFG1", "+")]
-    )
+    monkeypatch.setitem(_EDGE_ROWS, "octanoic", [("YDL001W", "++"), ("YDL001W", "+++")])
     root = tmp_path / "ds"
     (root / "raw").mkdir(parents=True)
     _write_edge_sheets(root / "raw")
-    with pytest.raises(RuntimeError) as info:
-        m.EnvChemgenMota2024Dataset(
-            root=str(root), genome=cast(SCerevisiaeGenome, _EdgeGenome())
-        )
-    assert str(info.value) == (
-        "12934_2024_2309_MOESM1_ESM.xlsx: score '+++' for 'YDL001W' is not one of the "
-        "grade symbols ['+', '++', '0']"
+    assert (
+        _refuse_twice(root)
+        == [
+            "12934_2024_2309_MOESM3_ESM.xlsx: score '+++' for 'YDL001W' is not one of the "
+            "grade symbols ['+', '++', '0']"
+        ]
+        * 2
     )
+
+
+def _refuse_twice(root: Path) -> list[str]:
+    """Construct twice; return both refusal messages and assert no store was left.
+
+    Every sheet is parsed before ``processed/lmdb`` is opened, so a refusal must leave
+    no store behind; otherwise the retry would serve the empty store as a built dataset.
+    """
+    messages = []
+    for _ in range(2):
+        with pytest.raises(RuntimeError) as info:
+            m.EnvChemgenMota2024Dataset(
+                root=str(root), genome=cast(SCerevisiaeGenome, _EdgeGenome())
+            )
+        messages.append(str(info.value))
+        assert not (root / "processed" / "lmdb").exists()
+    return messages
 
 
 def test_edge_side_files_one_reference_per_acid(
@@ -551,13 +569,13 @@ def test_a_sheet_without_the_header_row_refuses_naming_the_file(tmp_path: Path) 
     root = tmp_path / "ds"
     (root / "raw").mkdir(parents=True)
     _write_edge_sheets(root / "raw", header="Gene name")
-    with pytest.raises(RuntimeError) as info:
-        m.EnvChemgenMota2024Dataset(
-            root=str(root), genome=cast(SCerevisiaeGenome, _EdgeGenome())
-        )
-    assert str(info.value) == (
-        "12934_2024_2309_MOESM1_ESM.xlsx: no row starts with the 'Gene/ORF name' "
-        "header in the first sheet"
+    assert (
+        _refuse_twice(root)
+        == [
+            "12934_2024_2309_MOESM1_ESM.xlsx: no row starts with the 'Gene/ORF name' "
+            "header in the first sheet"
+        ]
+        * 2
     )
 
 

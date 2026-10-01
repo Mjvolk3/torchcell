@@ -44,7 +44,8 @@ proteome edge fixture pins the replicate handling: the first ``KO_gene_name`` of
 strain wins.
 
 2026.10.01 (issue #520): ``n`` is the row count, so the proteome loader now refuses a
-repeated (ORF, strain, replicate) row and a blank value, naming the strain (WT included);
+repeated (ORF, strain, replicate) row, a blank value and a non-finite value, naming the
+strain (WT included);
 an all-blank protein refuses there too instead of in schema validation. Exact messages are
 asserted. The pinned release has 0 of each (264,264 rows), so stored records are unchanged.
 """
@@ -792,6 +793,28 @@ def test_proteome_repeated_replicate_id_in_the_wt_reference_refuses(
         "first YAL001C replicate 3; a repeated replicate would count as an extra "
         "replicate"
     )
+
+
+def test_proteome_non_finite_value_refuses(tmp_path: Path) -> None:
+    """Contract (issue #520 review): ``inf`` is not blank, so it passed the blank check
+    and would give an infinite mean and a NaN SE. It refuses, naming the strain and the
+    first non-finite cell, before the store is opened. The pinned release has 0
+    non-finite values of 264,264.
+    """
+    rows = [
+        ("YAL001C", "WT", "WT", 1, 10.0),
+        ("YAL001C", "WT", "WT", 2, 12.0),
+        ("YAL001C", "YDR003W", "KIN3", 1, 8.0),
+        ("YAL001C", "YDR003W", "KIN3", 2, "inf"),
+    ]
+    root = _proteome_root(tmp_path, rows)
+    with pytest.raises(RuntimeError) as info:
+        ProteomeZelezniak2018Dataset(root=str(root))
+    assert str(info.value) == (
+        "Zelezniak proteome strain YDR003W: 1 non-finite protein value(s), first "
+        "YAL001C replicate 2; a non-finite value has no mean or SE"
+    )
+    assert not (root / "processed" / "lmdb").exists()
 
 
 def test_proteome_blank_value_refuses_instead_of_shrinking_n(tmp_path: Path) -> None:

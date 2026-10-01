@@ -191,3 +191,5 @@ Fix (issue #520): `screens` is keyed by the parsed float, so equal values are on
 Record-neutral, measured on the pinned `1159580.csv.gz`: 484,830 strain datapoint rows, 428,573 cells, 0 cells holding two z strings of equal value, 0 non-finite z. The issue #504 input-audit items (essential genes, background, z reference) are not touched here.
 
 Tests: `test_two_z_strings_of_equal_value_are_one_screen`, `test_download_without_a_manifest_refuses_naming_the_deposit_step`.
+
+Review follow-up (same day): `_parse_z` refuses, naming the cell and the raw string, for an unparseable z ("is not a number") or a non-finite one ("is not finite"). Two `nan` rows would otherwise be two float keys. The refusal fires in `_collapse_matrix`, before the store opens. Measured on the pinned export: 0 unparseable and 0 non-finite z of 484,830. Test: `test_a_non_finite_or_unparseable_z_refuses_naming_the_cell`.

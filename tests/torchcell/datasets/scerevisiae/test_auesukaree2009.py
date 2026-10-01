@@ -37,7 +37,9 @@ a missing genome, a per-stress checksum miss, and a stress table absent from the
 
 2026.10.01 (issue #520): a functional class whose parsed gene count differs from its
 declared (N) refuses (short at table end, over at the next class row), and an in-table
-collapse onto an already-claimed ORF is ledgered as a ``CollapsedToken``.
+collapse onto an already-claimed ORF is ledgered as a ``CollapsedToken``. Every table
+is resolved before ``processed/lmdb`` is opened, so a refusal leaves no store and a retry
+refuses again (asserted on the checksum miss and the missing table).
 """
 
 from __future__ import annotations
@@ -628,20 +630,39 @@ def test_side_files_gene_set_and_one_shared_reference(
     assert layout_built.reference_class is EnvironmentResponseExperimentReference
 
 
+def _refuse_twice(root: Path) -> list[str]:
+    """Construct twice; return both refusal messages and assert no store was left."""
+    messages = []
+    for _ in range(2):
+        with pytest.raises(RuntimeError) as info:
+            a.EnvChemgenAuesukaree2009Dataset(
+                root=str(root), genome=cast(SCerevisiaeGenome, _LayoutGenome())
+            )
+        messages.append(str(info.value))
+        assert not (root / "processed" / "lmdb").exists()
+    return messages
+
+
 def test_per_stress_checksum_miss_refuses_with_both_counts(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """Heat is the fourth stress, so three tables resolve before it fails. Since
+    2026.10.01 (issue #520) every table resolves before the store is opened: no
+    ``processed/lmdb`` is left behind and a retry refuses again, instead of serving the
+    empty store as a built dataset.
+    """
     root = tmp_path / "ds"
     (root / "raw").mkdir(parents=True)
     (root / "raw" / a._PDF_FILENAME).write_bytes(b"%PDF-synthetic")
     monkeypatch.setattr(a, "_EXPECTED_LISTED", {**_EXPECTED_LAYOUT_COUNTS, "heat": 2})
     _fake_subprocess(monkeypatch, _LAYOUT)
-    with pytest.raises(RuntimeError) as info:
-        a.EnvChemgenAuesukaree2009Dataset(
-            root=str(root), genome=cast(SCerevisiaeGenome, _LayoutGenome())
-        )
-    assert str(info.value) == (
-        "heat: parsed 1 listed genes, expected 2 (table extraction self-checksum failed)"
+    assert (
+        _refuse_twice(root)
+        == [
+            "heat: parsed 1 listed genes, expected 2 (table extraction self-checksum "
+            "failed)"
+        ]
+        * 2
     )
 
 
@@ -657,13 +678,13 @@ def test_a_stress_table_absent_from_the_pdf_refuses(
     (root / "raw" / a._PDF_FILENAME).write_bytes(b"%PDF-synthetic")
     monkeypatch.setattr(a, "_EXPECTED_LISTED", _EXPECTED_LAYOUT_COUNTS)
     _fake_subprocess(monkeypatch, text)
-    with pytest.raises(RuntimeError) as info:
-        a.EnvChemgenAuesukaree2009Dataset(
-            root=str(root), genome=cast(SCerevisiaeGenome, _LayoutGenome())
-        )
-    assert str(info.value) == (
-        "stress table not found in PDF: 'heat' (parsed: ['1-propanol', 'H2O2', "
-        "'NaCl', 'cold', 'ethanol', 'methanol'])"
+    assert (
+        _refuse_twice(root)
+        == [
+            "stress table not found in PDF: 'heat' (parsed: ['1-propanol', 'H2O2', "
+            "'NaCl', 'cold', 'ethanol', 'methanol'])"
+        ]
+        * 2
     )
 
 

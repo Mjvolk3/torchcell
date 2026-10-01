@@ -19,3 +19,5 @@ Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256Mismat
 ## 2026.10.01 - Class-count and collapse findings retired (issue #520)
 
 Retired: `test_class_count_gates_continuations_but_is_never_checked` and `test_drop_log_counts_and_the_unledgered_duplicate`. Now asserted: a class short of its declared count refuses at table end and a class over it refuses at the next class row, both with exact messages; the drop log reads 11 listed = 8 kept + 2 dropped + 1 collapsed, with the ethanol YBR127C token ledgered as a `CollapsedToken` keeping VMA2.
+
+Review follow-up (same day): the refusal tests now also assert that no `processed/lmdb` exists after the refusal, and that a second construction refuses with the same exact message.

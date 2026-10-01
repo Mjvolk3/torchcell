@@ -28,8 +28,8 @@ class ProtT5Dataset(BaseEmbeddingDataset):
     MODEL_TO_WINDOW = {
         "prot_t5_xl_uniref50_all": None,
         "prot_t5_xl_uniref50_no_dubious_uncharacterized": [
-            "dubious",
-            "uncharacterized",
+            "Dubious",
+            "Uncharacterized",
         ],
         "prot_t5_xl_uniref50_no_dubious": ["Dubious"],
         "prot_t5_xl_uniref50_no_uncharacterized": ["Uncharacterized"],
@@ -56,9 +56,6 @@ class ProtT5Dataset(BaseEmbeddingDataset):
         #     self.processed_paths[0], map_location=self.device
         # )
         if self.model_name:
-            if not os.path.exists(self.processed_paths[0]):
-                self.transformer = self.initialize_transformer()
-                self.process()
             # HACK we send cpu because all data needs to be on cpu for lightning
             # lightning automatically moves
             self.data, self.slices = torch.load(
@@ -80,11 +77,17 @@ class ProtT5Dataset(BaseEmbeddingDataset):
         return ProtT5("prot_t5_xl_uniref50")
 
     def process(self) -> None:
-        """Compute ProtT5 embeddings for all genes and save the processed data."""
-        # HACK
-        self.transformer = self.initialize_model()
+        """Compute ProtT5 embeddings for all genes and save the processed data.
+
+        Returns before building a backbone when no model is named. Each gene stores
+        a ``[1, hidden]`` float32 CPU tensor, ``hidden`` read from the backbone's
+        config (zeros for an excluded ORF classification), so the collate is one
+        ``[n_genes, hidden]`` tensor.
+        """
         if not self.model_name:
             return
+        self.transformer = self.initialize_model()
+        hidden_size = cast(Any, self.transformer.model).config.hidden_size
 
         data_list = []
 
@@ -102,12 +105,13 @@ class ProtT5Dataset(BaseEmbeddingDataset):
                 and orf_classification in exclude_classifications
             ):
                 print(f"zeros for {gene_id}")
-                embeddings = torch.zeros(1, 1024, dtype=torch.float32).to(self.device)
+                embeddings = torch.zeros(1, hidden_size, dtype=torch.float32)
             else:
-                embeddings = self.transformer.embed(
-                    [protein_sequence], mean_embedding=True
+                embeddings = (
+                    self.transformer.embed([protein_sequence], mean_embedding=True)
+                    .cpu()
+                    .to(torch.float32)
                 )
-                embeddings = embeddings.cpu().numpy()  # Convert to numpy array
 
             protein_data_dict = {self.model_name: protein_sequence}
 

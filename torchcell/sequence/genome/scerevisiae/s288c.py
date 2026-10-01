@@ -276,15 +276,21 @@ class SCerevisiaeGene(Gene):
         include_start_codon: bool = False,
         allow_undersize: bool = False,
     ) -> DnaWindowResult:
-        """Return the sequence window upstream of the gene's 5' start."""
+        """Return the sequence window upstream of the gene's 5' start.
+
+        The window never includes a base of the gene unless ``include_start_codon``
+        is set, in which case it ends with the 3 bases of the start codon. On ``+``
+        it is ``[start0 - w, start0)`` (``[start0 + 3 - w, start0 + 3)`` with the
+        codon), where ``start0 = self.start - 1`` is the 0-based first base; on ``-``
+        it is the reverse complement of ``[end, end + w)`` (``[end - 3, end - 3 + w)``
+        with the codon).
+        """
         # offset for gff file 1
         start = self.start - 1
         chr_id = self.chr_to_nc[self.chromosome]
         if self.strand == "+":
             if include_start_codon:
                 start = start + 3
-            else:
-                start = self.start
             start_window = start - window_size
             end_window = start
             if start_window < 0 and allow_undersize:

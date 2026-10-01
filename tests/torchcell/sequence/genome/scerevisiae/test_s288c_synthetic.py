@@ -546,31 +546,32 @@ def test_five_prime_minus_strand(genome: SCerevisiaeGenome) -> None:
         gene.window_five_prime(40)
 
 
-def test_five_prime_plus_strand_includes_first_cds_base(
+def test_five_prime_plus_strand_ends_before_the_first_cds_base(
     genome: SCerevisiaeGenome,
 ) -> None:
-    """Finding: s288c.py:287 sets ``start = self.start`` (1-based) on ``+``.
+    """On ``+`` the 5' window is [33 - w, 33): it stops before the gene (issue #543).
 
-    The minus strand excludes the gene's own base, but on ``+`` the window
-    [34 - w, 34) ends at 0-based 34, so it includes base 33, the first CDS base: the
-    5-nt window is CHR_I[29:34] = AGGAC whose last C is CDS position 1. With the start
-    codon it is [31, 36). Window 40 starts at -6.
+    YAL002W's first CDS base is 0-based 33 (1-based 34), so the 5-nt window is
+    CHR_I[28:33] = TAGGA and excludes CHR_I[33] = C, matching the minus strand, which
+    also excludes the gene's own bases. With the start codon it is [31, 36), ending
+    with the 3 codon bases. Window 40 starts at 33 - 40 = -7.
     """
     gene = genome["YAL002W"]
     assert gene is not None
     assert gene.seq[0] == CHR_I[33] == "C"
+    assert CHR_I[28:33] == "TAGGA"
     assert gene.window_five_prime(5) == _window(
-        "YAL002W", 1, "+", 34, 45, "AGGAC", 29, 34
+        "YAL002W", 1, "+", 34, 45, "TAGGA", 28, 33
     )
     assert gene.window_five_prime(5, include_start_codon=True) == _window(
         "YAL002W", 1, "+", 34, 45, "GACTG", 31, 36
     )
     assert gene.window_five_prime(40, allow_undersize=True) == _window(
-        "YAL002W", 1, "+", 34, 45, CHR_I[0:34], 0, 34
+        "YAL002W", 1, "+", 34, 45, CHR_I[0:33], 0, 33
     )
     with pytest.raises(
         ValueError,
-        match=re.escape("five prime size (40) too large ('+ strand 6bp outside.)"),
+        match=re.escape("five prime size (40) too large ('+ strand 7bp outside.)"),
     ):
         gene.window_five_prime(40)
 

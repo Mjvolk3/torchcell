@@ -50,15 +50,14 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
         """
         self.genome: SCerevisiaeGenome | ParsedGenome | None = genome
         self.model_name = model_name
+        # LAZY: PyG's InMemoryDataset.__init__ calls process() from inside
+        # super().__init__() when the store is absent, so the backbone is built there
+        # (and only there); a store already on disk is loaded without building it.
+        self.transformer: NucleotideTransformer | None = None
         super().__init__(root, self.model_name, transform, pre_transform)
 
         # Conditionally load the data
         if self.model_name:
-            print(self.processed_paths[0])
-            if not os.path.exists(self.processed_paths[0]):
-                # Initialize the language model
-                self.transformer = self.initialize_model()
-                self.process()
             # TODO me might consider adding this to others
             # only her bc computed on delta.
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -94,6 +93,9 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
         if self.model_name is None:
             return
 
+        if self.transformer is None:
+            self.transformer = self.initialize_model()
+
         data_list = []
         if "five_prime" in self.model_name or "three_prime" in self.model_name:
             window_method, window_size, has_special_codon, allow_undersize = (
@@ -114,8 +116,11 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
             sequence = genome[gene_id]
 
             if "three_prime" in window_method or "five_prime" in window_method:
+                # has_special_codon is include_start_codon for window_five_prime and
+                # include_stop_codon for window_three_prime (the second positional),
+                # the same flag the fungal up/down dataset passes.
                 dna_selection = getattr(sequence, window_method)(
-                    window_size, allow_undersize=allow_undersize
+                    window_size, has_special_codon, allow_undersize=allow_undersize
                 )
             else:
                 dna_selection = getattr(sequence, window_method)(
@@ -132,9 +137,14 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
             batch_embeddings = transformer.embed(batch_sequences, mean_embedding=True)
             embeddings_list.append(batch_embeddings)
 
+        # The backbone's mean embedding is [batch, dim]; the concatenation is
+        # [n_genes, dim] and each gene stores its row as [1, dim], so the collate is
+        # [n_genes, dim] and integer and gene-id lookup both return the gene's [1, dim].
         embeddings = torch.cat(embeddings_list, dim=0)
 
-        for gene_id, dna_selection, embedding in zip(gene_ids, sequences, embeddings):
+        for gene_id, dna_selection, embedding in zip(
+            gene_ids, sequences, embeddings.unsqueeze(1)
+        ):
             # Create or update the dna_window dictionary
             dna_window_dict = {self.model_name: dna_selection}
 

@@ -15,3 +15,7 @@ Forty-two tests on a two-chromosome FASTA and a small GFF under `tmp_path`, buil
 Thirty-four to forty-eight tests, 92 to 97 percent (the data-gated `test_s288c.py` skips whole, so the stub-file file holds these). The CDS-selection branches (a one-bp 5' CDS on each strand, a middle intron, the single Verified CDS); stale caches; `main`'s constructor arguments.
 
 Findings: a 5' intron with no CDS, or with no Verified CDS, raises `UnboundLocalError` (lines 141-161); a CDS missing `orf_classification` reads as "gene not found" (151 with 964); a `.` strand gives `seq` None and every window call and `get_seq` then raises `UnboundLocalError` (183-188, 256, 283, 344, 862-865); `get_seq` accepts a FASTA-key chromosome then fails validation (868); `drop_chrmt` leaves `feature_index` and `go_genes` stale so Q0010 still resolves as CURRENT (906-922); `main` builds with `overwrite=True` (983).
+
+## 2026.09.30 - Plus-strand 5' window (issue #543)
+
+Retired the Finding that the `+` 5' window included the first CDS base. Now asserted: YAL002W `window_five_prime(5)` is `CHR_I[28:33] = TAGGA` at `(28, 33)`, the undersized window is `CHR_I[0:33]`, and window 40 is refused as `7bp outside`.

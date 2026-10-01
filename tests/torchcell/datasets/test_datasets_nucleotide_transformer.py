@@ -9,19 +9,18 @@
 ``HF_HUB_OFFLINE`` / ``TRANSFORMERS_OFFLINE`` are set as a second guard. Every store is
 written under ``tmp_path``.
 
-A fresh build cannot run as shipped: ``process`` reads ``self.transformer``, which
-``__init__`` only assigns after ``super().__init__`` has already called ``process``
-(Finding, first test). The window tests therefore put a stand-in instance on the CLASS
-attribute ``transformer`` (``monkeypatch.setattr(..., raising=False)``, no subclass), so
-``process`` runs the production window code unchanged.
+2026.09.30, issue #543. ``process`` builds the backbone itself (PyG calls it from
+inside ``super().__init__`` only when the store is absent), so a fresh build runs
+unaided and a store on disk is read without building a backbone.
 
 Genome (``tests/torchcell/conftest.py``, chromosome I of 6,100 nt, 0-based half-open
 slices): ``YAL001W`` ``+`` gene ``[100, 112)``; ``YAL002C`` ``-`` ``[20, 32)``;
 ``YAL003W`` ``+`` ``[2000, 5100)``. A ``-`` window is the reverse complement.
 
 Stand-in forward: ``[len, #A, #C, #G, #T]`` of each sequence through the identity map,
-in the real wrapper's ``mean_embedding`` shape ``[1, batch, 5]``; the dataset embeds one
-sequence per call and ``torch.cat`` gives ``[3, 1, 5]``, so each gene stores ``[1, 5]``.
+in the real wrapper's ``mean_embedding`` shape ``[batch, 5]``; the dataset embeds one
+sequence per call and ``torch.cat`` gives ``[3, 5]``, and each gene stores its ``[1, 5]``
+row.
 
 Window bounds, derived from ``torchcell.sequence.data``:
 
@@ -32,11 +31,12 @@ Window bounds, derived from ``torchcell.sequence.data``:
   ``[1000, 6100)``.
 * ``nt_window_5979_max`` (``is_max_size=True``): YAL001W and YAL002C shift to
   ``[0, 5979)``; YAL003W ``[561, 6539)`` clips right and shifts to ``[121, 6100)``.
-* ``nt_window_three_prime_300``: ``+`` genes start at their 3' end, YAL001W
-  ``[112, 412)``, YAL003W ``[5100, 5400)``; YAL002C ``[20 - 300, 20)`` clips to
-  ``[0, 20)``.
-* ``nt_window_five_prime_1003``: YAL001W ``[101 - 1003, 101)`` clips to ``[0, 101)``;
-  YAL003W ``[998, 2001)``; YAL002C ``[32, 1035)``.
+* ``nt_window_three_prime_300`` (``include_stop_codon=True``): a ``+`` window starts
+  at the stop codon, 3 before the 3' end: YAL001W ``[109, 409)``, YAL003W
+  ``[5097, 5397)``; YAL002C (``-``) ``[23 - 300, 23)`` clips to ``[0, 23)``.
+* ``nt_window_five_prime_1003`` (``include_start_codon=True``): a ``+`` window ends
+  after the start codon: YAL001W ``[103 - 1003, 103)`` clips to ``[0, 103)``, YAL003W
+  ``[1000, 2003)``; YAL002C (``-``) ``[32 - 3, 29 + 1003)`` = ``[29, 1032)``.
 """
 
 import os
@@ -68,14 +68,14 @@ WINDOWS = {
         "YAL003W": (121, 6100),
     },
     "nt_window_three_prime_300": {
-        "YAL001W": (112, 412),
-        "YAL002C": (0, 20),
-        "YAL003W": (5100, 5400),
+        "YAL001W": (109, 409),
+        "YAL002C": (0, 23),
+        "YAL003W": (5097, 5397),
     },
     "nt_window_five_prime_1003": {
-        "YAL001W": (0, 101),
-        "YAL002C": (32, 1035),
-        "YAL003W": (998, 2001),
+        "YAL001W": (0, 103),
+        "YAL002C": (29, 1032),
+        "YAL003W": (1000, 2003),
     },
 }
 
@@ -101,9 +101,9 @@ class _FakeNT:
         _FakeNT.inits += 1
 
     def embed(self, sequences: list[str], mean_embedding: bool = False) -> torch.Tensor:
-        """``[len, #A, #C, #G, #T]`` per sequence, shaped ``[1, batch, 5]``."""
+        """``[len, #A, #C, #G, #T]`` per sequence, shaped ``[batch, 5]``."""
         _FakeNT.calls.append((list(sequences), mean_embedding))
-        return torch.tensor([_features(s) for s in sequences]).unsqueeze(0)
+        return torch.tensor([_features(s) for s in sequences])
 
 
 @pytest.fixture(autouse=True)
@@ -117,48 +117,43 @@ def _fake_backbone(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(nt_dataset_module, "NucleotideTransformer", _FakeNT)
 
 
-def _build(
-    monkeypatch: pytest.MonkeyPatch, root: Path, genome: Any, name: str
-) -> NucleotideTransformerDataset:
-    """Build a store with a class-level stand-in, then remove it again."""
-    monkeypatch.setattr(
-        NucleotideTransformerDataset, "transformer", _FakeNT(), raising=False
-    )
-    ds = NucleotideTransformerDataset(root=str(root), genome=genome, model_name=name)
-    monkeypatch.delattr(NucleotideTransformerDataset, "transformer")
-    return ds
+class _ExplodingNT:
+    """A backbone that must never be built (the store is already on disk)."""
+
+    def __init__(self) -> None:
+        raise AssertionError("backbone built on a cache hit")
 
 
-def test_fresh_build_fails_before_the_backbone_is_created(
+def _build(root: Path, genome: Any, name: str) -> NucleotideTransformerDataset:
+    """Build a store from scratch with the stand-in backbone."""
+    return NucleotideTransformerDataset(root=str(root), genome=genome, model_name=name)
+
+
+def test_fresh_build_creates_the_backbone_once_and_writes_the_store(
     embedding_genome: Any, tmp_path: Path
 ) -> None:
-    """Finding: with no store on disk, construction raises ``AttributeError``.
+    """With no store on disk, construction builds one backbone inside ``process``.
 
-    PyG's ``InMemoryDataset.__init__`` calls ``process`` from inside
-    ``super().__init__`` (``nucleotide_transformer.py`` line 53), and ``process`` reads
-    ``self.transformer`` (line 112), which is only assigned at line 60, after that
-    call. The backbone class is never constructed and no store is written. The sibling
-    ``fungal_up_down_transformer.py`` fixed the same ordering by building the model
-    inside ``process``. Pinned until this dataset does the same.
+    Contract (issue #543): the backbone is set to ``None`` before ``super().__init__``
+    and built by ``process`` on demand, so a fresh build embeds all three genes with a
+    single ``NucleotideTransformer()`` and writes ``processed/<name>.pt`` beside PyG's
+    two marker files; the instance keeps that backbone.
     """
-    with pytest.raises(AttributeError) as excinfo:
-        NucleotideTransformerDataset(
-            root=str(tmp_path), genome=embedding_genome, model_name="nt_window_5979"
-        )
+    ds = _build(tmp_path, embedding_genome, "nt_window_5979")
 
-    assert str(excinfo.value) == (
-        "'NucleotideTransformerDataset' object has no attribute 'transformer'"
-    )
-    assert _FakeNT.inits == 0
-    assert os.listdir(tmp_path / "processed") == []
+    assert _FakeNT.inits == 1
+    assert len(_FakeNT.calls) == 3
+    assert isinstance(ds.transformer, _FakeNT)
+    assert sorted(os.listdir(tmp_path / "processed")) == [
+        "nt_window_5979.pt",
+        "pre_filter.pt",
+        "pre_transform.pt",
+    ]
 
 
 @pytest.mark.parametrize("model_name", list(WINDOWS))
 def test_build_embeds_the_exact_window_of_each_gene(
-    embedding_genome: Any,
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    model_name: str,
+    embedding_genome: Any, tmp_path: Path, model_name: str
 ) -> None:
     """Each gene's window (bounds in the module docstring) is embedded and stored.
 
@@ -167,42 +162,64 @@ def test_build_embeds_the_exact_window_of_each_gene(
     embedding is the stand-in's ``[1, 5]`` row of that window; the collated store is
     ``[3, 5]``.
 
-    Findings on the prime windows: ``MODEL_TO_WINDOW`` carries a ``has_special_codon``
-    flag (``True``) that ``process`` unpacks and never passes (line 117 to 119), so the
-    3' window starts after the stop codon (YAL001W at 112, not 109) and the 5' window
-    omits the start-codon extension; and on the ``+`` strand the 5' window ends at the
-    1-based start (``s288c.py`` line 287), so YAL001W's window ``[0, 101)`` includes
-    the gene's first base ``chrI[100]``. Pinned until the flag is passed and the bound
-    is ``start - 1``.
+    Prime windows (issue #543): the ``has_special_codon`` flag of ``MODEL_TO_WINDOW``
+    is passed on as ``include_stop_codon`` / ``include_start_codon``, so YAL001W's 3'
+    window starts at its stop codon (109, not 112) and its 5' window ends after its
+    start codon (103). The exact window strings for YAL001W are asserted as literals
+    of the chromosome as well, so a shifted slice cannot pass.
     """
-    ds = _build(monkeypatch, tmp_path, embedding_genome, model_name)
+    ds = _build(tmp_path, embedding_genome, model_name)
     chromosome = embedding_genome.chromosome
     expected = {g: _window(chromosome, g, WINDOWS[model_name][g]) for g in GENE_IDS}
 
     assert _FakeNT.calls == [([expected[g]], True) for g in GENE_IDS]
     assert ds._data.embeddings[model_name].shape == (3, 5)
-    for gene in GENE_IDS:
+    for i, gene in enumerate(GENE_IDS):
         item = ds[gene]
         assert item.dna_windows == {model_name: expected[gene]}
         assert item.embeddings[model_name].tolist() == [_features(expected[gene])]
+        assert torch.equal(ds[i].embeddings[model_name], item.embeddings[model_name])
+
+
+def test_prime_windows_carry_the_codon_and_no_other_gene_base(
+    embedding_genome: Any, tmp_path: Path
+) -> None:
+    """YAL001W (``+``, CDS ``chrI[100:112]``): the exact 3' and 5' window strings.
+
+    The 3' window is the stop codon ``CDS[9:12]`` followed by the 297 downstream
+    bases ``chrI[112:409]``; the 5' window is all 100 upstream bases ``chrI[0:100]``
+    followed by the start codon ``CDS[0:3]``, and nothing else of the gene.
+    """
+    cds = str(embedding_genome["YAL001W"].cds.seq)
+    chromosome = embedding_genome.chromosome
+    assert cds == chromosome[100:112]
+    three = _build(tmp_path / "three", embedding_genome, "nt_window_three_prime_300")
+    five = _build(tmp_path / "five", embedding_genome, "nt_window_five_prime_1003")
+
+    three_window = three["YAL001W"].dna_windows["nt_window_three_prime_300"]
+    five_window = five["YAL001W"].dna_windows["nt_window_five_prime_1003"]
+    assert three_window == cds[9:12] + chromosome[112:409]
+    assert five_window == chromosome[0:100] + cds[0:3]
+    assert (len(three_window), len(five_window)) == (300, 103)
 
 
 def test_second_construction_reads_store_without_building_backbone(
     embedding_genome: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """A store on disk is loaded as is; neither the class nor ``process`` is used.
+    """A store on disk is loaded as is; no backbone is built and ``process`` is not run.
 
-    After the first build the class-level stand-in is removed, so a second
-    ``process`` would raise ``AttributeError``; the load succeeds, the backbone count
-    stays at the one instance ``_build`` made, and the rows match the first build.
+    The second construction swaps in a backbone that raises when built; the load
+    succeeds with ``transformer`` still ``None`` and the rows match the first build.
     """
     name = "nt_window_three_prime_300"
-    first = _build(monkeypatch, tmp_path, embedding_genome, name)
+    first = _build(tmp_path, embedding_genome, name)
+    monkeypatch.setattr(nt_dataset_module, "NucleotideTransformer", _ExplodingNT)
 
     again = NucleotideTransformerDataset(
         root=str(tmp_path), genome=embedding_genome, model_name=name
     )
 
+    assert again.transformer is None
     assert _FakeNT.inits == 1
     assert torch.equal(again._data.embeddings[name], first._data.embeddings[name])
     assert list(again._data.id) == GENE_IDS
@@ -212,7 +229,7 @@ def test_second_construction_reads_store_without_building_backbone(
 
 
 def test_initialize_model_builds_the_backbone_only_for_a_named_model(
-    embedding_genome: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    embedding_genome: Any, tmp_path: Path
 ) -> None:
     """``initialize_model`` returns a backbone for a named dataset, ``None`` otherwise.
 
@@ -227,17 +244,17 @@ def test_initialize_model_builds_the_backbone_only_for_a_named_model(
     assert unnamed._data is None
     assert _FakeNT.inits == 0
 
-    named = _build(monkeypatch, tmp_path / "named", embedding_genome, "nt_window_5979")
+    named = _build(tmp_path / "named", embedding_genome, "nt_window_5979")
     backbone = named.initialize_model()
     assert isinstance(backbone, _FakeNT)
-    assert _FakeNT.inits == 2  # the class-level instance in _build, then this one
+    assert _FakeNT.inits == 2  # the one process built, then this one
 
 
 def test_unknown_model_name_is_refused_with_the_valid_list(
     embedding_genome: Any, tmp_path: Path
 ) -> None:
-    """``BaseEmbeddingDataset`` raises before any directory is created (no space
-    after the first sentence, the ``embedding.py`` Finding).
+    """``BaseEmbeddingDataset`` raises before any directory is created, naming the
+    bad name and then the valid names after a space.
     """
     root = tmp_path / "store"
     with pytest.raises(ValueError) as excinfo:
@@ -246,7 +263,7 @@ def test_unknown_model_name_is_refused_with_the_valid_list(
         )
 
     assert str(excinfo.value) == (
-        "Invalid model_name 'nt_window_1'.Valid options are: nt_window_5979_max, "
+        "Invalid model_name 'nt_window_1'. Valid options are: nt_window_5979_max, "
         "nt_window_5979, nt_window_three_prime_5979, nt_window_five_prime_5979, "
         "nt_window_three_prime_300, nt_window_five_prime_1003"
     )

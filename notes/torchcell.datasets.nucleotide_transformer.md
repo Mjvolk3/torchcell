@@ -105,3 +105,11 @@ def process(self):
 
     torch.save(self.collate(data_list), self.processed_paths[0])
 ```
+
+## 2026.09.30 - Lazy backbone and codon flag (issue #543)
+
+- A fresh build raised `AttributeError` because PyG calls `process` inside `super().__init__` before `self.transformer` was set. `self.transformer = None` is now set before `super().__init__` and `process` builds the backbone when it is `None`, the pattern `fungal_up_down_transformer.py` and `esm2.py` use, so a store on disk is read without building a backbone.
+- `has_special_codon` was unpacked and dropped; it is now passed as the second positional (`include_stop_codon` / `include_start_codon`), so the 3' windows start at the stop codon (YAL001W at 109, not 112) and the 5' windows end after the start codon.
+- The backbone's mean embedding is now `[batch, dim]` ([[torchcell.models.nucleotide_transformer]]); each gene stores its `[1, dim]` row, so the collated `[n_genes, dim]` layout is unchanged.
+
+A rebuilt store differs on disk for the four prime-window models (`nt_window_three_prime_5979`, `nt_window_five_prime_5979`, `nt_window_three_prime_300`, `nt_window_five_prime_1003`): different windows, different embeddings. The two `nt_window_5979*` models are unchanged. Tests: [[tests.torchcell.datasets.test_datasets_nucleotide_transformer]].

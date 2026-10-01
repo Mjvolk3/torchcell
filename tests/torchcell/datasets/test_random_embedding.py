@@ -9,8 +9,8 @@ Genome (``tests/torchcell/conftest.py``, chromosome I of 6,100 nt, 0-based half-
 slices): ``YAL001W`` ``+`` gene ``[100, 112)`` with a 12 nt CDS; ``YAL002C`` ``-``
 ``[20, 32)`` with a 9 nt CDS; ``YAL003W`` ``+`` ``[2000, 5100)`` with a 3,100 nt CDS.
 
-``process`` seeds the GLOBAL torch generator with 42 and draws ``torch.rand(1, W)`` once
-per gene in gene-set order, so the three rows are the first ``3 * W`` draws of the
+``process`` draws ``torch.rand(1, W)`` from a private ``torch.Generator`` seeded with 42
+(issue #543; the global generator is untouched) once per gene in gene-set order, so the three rows are the first ``3 * W`` draws of the
 seed-42 stream. For ``W = 10`` the first row is ``[0.8823, 0.9150, 0.3829, 0.9593,
 0.3904, 0.6009, 0.2566, 0.7936, 0.9408, 0.1332]`` (torch's CPU generator; these are
 generator outputs, not derivable by hand, and are checked against a fresh
@@ -26,6 +26,7 @@ window is shorter than the locus:
   ``[32 - 9, 32)`` = ``[23, 32)`` (CDS length on the locus), YAL003W ``[2000, 5100)``.
 """
 
+import logging
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
@@ -55,7 +56,7 @@ FIRST_ROW_SEED_42 = [
 
 @pytest.fixture(autouse=True)
 def _restore_global_rng() -> Iterator[None]:
-    """Put the global torch generator back; ``process`` reseeds it (Finding below)."""
+    """Put the global torch generator back after tests that seed it."""
     state = torch.get_rng_state()
     yield
     torch.set_rng_state(state)
@@ -72,7 +73,7 @@ def test_rows_are_the_seed_42_stream_regardless_of_the_caller_rng(
     """Pins the exact first row, the three-row stream, shape and dtype per gene.
 
     The caller seeds the global generator with 7 first; the stored rows are still the
-    seed-42 draws, because ``process`` reseeds. ``ds["<gene>"]`` returns the gene's row
+    seed-42 draws, because ``process`` uses its own seeded generator. ``ds["<gene>"]`` returns the gene's row
     as ``[1, 10]`` float32.
     """
     torch.manual_seed(7)
@@ -90,15 +91,13 @@ def test_rows_are_the_seed_42_stream_regardless_of_the_caller_rng(
     assert torch.equal(ds["YAL003W"].embeddings["random_10"], stored[2:3])
 
 
-def test_construction_resets_the_global_torch_generator(
+def test_construction_leaves_the_global_torch_generator_alone(
     embedding_genome: Any, tmp_path: Path
 ) -> None:
-    """Finding: building a store leaves the global generator at seed 42 plus draws.
+    """A build draws from a private generator, so the caller's stream continues.
 
-    ``torch.manual_seed(42)`` at line 89 reseeds the process-wide generator, so after
-    a ``random_1`` build (three draws) the caller's next ``torch.rand(1)`` is the
-    fourth seed-42 draw, 0.9593, whatever the caller seeded before. Pinned until the
-    dataset uses a private ``torch.Generator``.
+    The caller seeds 123; after a ``random_1`` build the next ``torch.rand(1)`` is
+    seed 123's FIRST draw (issue #543; it used to be seed 42's fourth, 0.9593).
     """
     torch.manual_seed(123)
     ds = RandomEmbeddingDataset(
@@ -107,8 +106,10 @@ def test_construction_resets_the_global_torch_generator(
 
     next_draw = torch.rand(1)
     assert torch.equal(ds._data.embeddings["random_1"], _seed_42_stream(3, 1))
-    assert torch.equal(next_draw, _seed_42_stream(1, 4)[0, 3:4])
-    assert torch.allclose(next_draw, torch.tensor([0.9593]), atol=5e-5)
+    assert torch.equal(
+        next_draw, torch.rand(1, generator=torch.Generator().manual_seed(123))
+    )
+    assert not torch.equal(next_draw, _seed_42_stream(1, 4)[0, 3:4])
 
 
 @pytest.mark.parametrize(
@@ -159,7 +160,8 @@ def test_chunked_saves_merge_to_the_same_store(
 ) -> None:
     """``batch_size=2`` saves a partial list after gene 2 and merges it at gene 3.
 
-    The final store equals the single-chunk build (same ids, same seed-42 rows).
+    The final store equals the single-chunk build (same ids, same seed-42 rows), and
+    the chunk file ``random_10.partial.pt`` is consumed.
     """
     whole = RandomEmbeddingDataset(
         root=str(tmp_path / "whole"), genome=embedding_genome, model_name="random_10"
@@ -175,16 +177,20 @@ def test_chunked_saves_merge_to_the_same_store(
     assert torch.equal(
         chunked._data.embeddings["random_10"], whole._data.embeddings["random_10"]
     )
+    assert sorted(p.name for p in (tmp_path / "chunked" / "processed").iterdir()) == [
+        "pre_filter.pt",
+        "pre_transform.pt",
+        "random_10.pt",
+    ]
 
 
 def test_second_construction_reads_store_without_reprocessing(
     embedding_genome: Any, tmp_path: Path
 ) -> None:
-    """A store on disk is loaded as is, and ``process`` (which reseeds) is not run.
+    """A store on disk is loaded as is: the stored rows are unchanged.
 
     The caller seeds 7 before the second construction; the next ``torch.rand(1)``
-    is seed 7's first draw, which proves no reseed to 42 happened, and the stored
-    rows are unchanged.
+    is seed 7's first draw.
     """
     first = RandomEmbeddingDataset(
         root=str(tmp_path), genome=embedding_genome, model_name="random_10"
@@ -205,28 +211,33 @@ def test_second_construction_reads_store_without_reprocessing(
     assert list(parsed.gene_set) == GENE_IDS
 
 
-def test_an_interrupted_chunk_file_blocks_the_next_construction(
-    embedding_genome: Any, tmp_path: Path
+def test_an_interrupted_chunk_file_is_removed_with_a_warning(
+    embedding_genome: Any, tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """Finding: a partial ``{"data_list": [...]}`` store is never resumed.
+    """A chunk file left by an interrupted build no longer blocks the next one.
 
-    ``process`` saves intermediate chunks under the final store path (line 126). If a
-    build dies between chunks, the next construction sees the path, skips
-    ``process``, and ``BaseEmbeddingDataset.__init__`` unpacks the one-key dict into
-    ``data, slices``, raising ``ValueError``. The "load existing data" branch
-    (lines 116 to 121) therefore only ever merges chunks of the same run. Pinned until
-    chunks go to a separate path.
+    Chunks go to ``processed/<name>.partial.pt`` (issue #543), never the store path.
+    A stale chunk holding a foreign entry is removed with the exact warning below,
+    the build restarts at the first gene, and the store is the seed-42 stream of the
+    three genes only.
     """
     processed = tmp_path / "processed"
     processed.mkdir()
-    torch.save({"data_list": []}, processed / "random_10.pt")
+    partial = processed / "random_10.partial.pt"
+    torch.save({"data_list": ["stale"]}, partial)
 
-    with pytest.raises(ValueError) as excinfo:
-        RandomEmbeddingDataset(
+    with caplog.at_level(logging.WARNING, logger="torchcell.datasets.random_embedding"):
+        ds = RandomEmbeddingDataset(
             root=str(tmp_path), genome=embedding_genome, model_name="random_10"
         )
 
-    assert str(excinfo.value) == "not enough values to unpack (expected 2, got 1)"
+    assert [r.getMessage() for r in caplog.records] == [
+        f"Removing partial chunk file {partial} left by an interrupted build; "
+        "rebuilding from the first gene."
+    ]
+    assert list(ds._data.id) == GENE_IDS
+    assert torch.equal(ds._data.embeddings["random_10"], _seed_42_stream(3, 10))
+    assert not partial.exists()
 
 
 def test_pre_transform_is_baked_into_the_store(
@@ -267,7 +278,7 @@ def test_unknown_model_name_is_refused_with_the_valid_list(
         )
 
     assert str(excinfo.value) == (
-        "Invalid model_name 'random_2'.Valid options are: "
+        "Invalid model_name 'random_2'. Valid options are: "
         "random_6579, random_1000, random_100, random_10, random_1"
     )
     assert not root.exists()

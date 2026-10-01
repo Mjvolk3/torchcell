@@ -5,7 +5,9 @@
 
 """Dataset producing CaLM codon language-model embeddings for yeast genes."""
 
+import logging
 import os
+import os.path as osp
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
 
@@ -26,12 +28,20 @@ if TYPE_CHECKING:
     # deferred to initialize_model() so importing torchcell.datasets never requires it.
     from calm import CaLM
 
+log = logging.getLogger(__name__)
+
 
 class CalmDataset(BaseEmbeddingDataset):
-    """Embedding dataset that runs the CaLM model over gene CDS sequences."""
+    """Embedding dataset that runs the CaLM model over gene CDS sequences.
 
-    # 3072 = 1024 * 3
-    MODEL_TO_WINDOW = {"calm": ("window", 3072, False)}
+    CaLM tokenizes its input into codons, so each gene embeds its spliced CDS (the
+    ``orf_coding`` FASTA record), truncated to the first 3,072 nt (1,024 codons,
+    in frame from the start codon) when longer. ``dna_windows`` stores exactly the
+    string embedded.
+    """
+
+    # 3072 = 1024 * 3: the most CDS nucleotides embedded per gene
+    MODEL_TO_WINDOW = {"calm": ("cds", 3072)}
 
     def __init__(
         self,
@@ -76,32 +86,38 @@ class CalmDataset(BaseEmbeddingDataset):
             data["gene_set"] = genome.gene_set
             return ParsedGenome(**data)
 
+    @property
+    def partial_path(self) -> str:
+        """Path of the in-progress chunk file, beside (never at) the final store."""
+        return osp.join(self.processed_dir, f"{self.model_name}.partial.pt")
+
     def process(self) -> None:
-        """Embed each gene's CDS with CaLM and save the processed data list."""
+        """Embed each gene's CDS with CaLM and save the processed data list.
+
+        Chunks are written to ``partial_path``; a chunk file left by an interrupted
+        build is removed with a warning, since the build restarts at the first gene.
+        """
         # `self.model` is lazily built: it is None unless the caller initialized it because
         # embeddings actually need computing (see __init__). Reaching process() without it
         # is a programming error, not a runtime condition.
         if self.model is None:
             self.model = self.initialize_model()
         data_list = []
-        (window_method, window_size, is_max_size) = self.MODEL_TO_WINDOW[
-            cast(str, self.model_name)
-        ]
+        _, window_size = self.MODEL_TO_WINDOW[cast(str, self.model_name)]
+        if os.path.exists(self.partial_path):
+            log.warning(
+                f"Removing partial chunk file {self.partial_path} left by an "
+                "interrupted build; rebuilding from the first gene."
+            )
+            os.remove(self.partial_path)
 
         genome = cast(SCerevisiaeGenome, self.genome)
         for i, gene_id in tqdm(enumerate(genome.gene_set)):
             sequence = cast(SCerevisiaeGene, genome[gene_id])
-            if len(sequence) <= window_size:
-                assert len(str(sequence.cds.seq)) % 3 == 0
-                cds_sequence = sequence.cds.seq
-                embeddings = self.model.embed_sequence(str(cds_sequence))
-                dna_selection = getattr(sequence, window_method)(len(cds_sequence))
-                dna_window_dict = {self.model_name: dna_selection}
-            else:
-                dna_selection = getattr(sequence, window_method)(window_size)
-                assert len(dna_selection.seq) % 3 == 0
-                embeddings = self.model.embed_sequence(dna_selection.seq)
-                dna_window_dict = {self.model_name: dna_selection}
+            cds_sequence = str(sequence.cds.seq)[:window_size]
+            assert len(cds_sequence) % 3 == 0
+            embeddings = self.model.embed_sequence(cds_sequence)
+            dna_window_dict = {self.model_name: cds_sequence}
 
             data = Data(id=gene_id, dna_windows=dna_window_dict)
             data.embeddings = {self.model_name: embeddings}
@@ -114,19 +130,15 @@ class CalmDataset(BaseEmbeddingDataset):
             data_list.append(data)
 
             if (i + 1) % self.batch_size == 0 or (i + 1) == len(genome.gene_set):
-                # Load existing data from the file if it exists
-                if os.path.exists(self.processed_paths[0]):
-                    existing_data = torch.load(
-                        self.processed_paths[0], weights_only=False
-                    )
-                    existing_data_list = existing_data.get("data_list", [])
-                    data_list = existing_data_list + data_list
+                # Merge the chunks this run already wrote, then consume the file
+                if os.path.exists(self.partial_path):
+                    existing_data = torch.load(self.partial_path, weights_only=False)
+                    data_list = existing_data["data_list"] + data_list
+                    os.remove(self.partial_path)
                 if (i + 1) == len(genome.gene_set):
                     torch.save(self.collate(data_list), self.processed_paths[0])
-
                 else:
-                    # Save the updated data back to the file
-                    torch.save({"data_list": data_list}, self.processed_paths[0])
+                    torch.save({"data_list": data_list}, self.partial_path)
                 data_list = []
 
 

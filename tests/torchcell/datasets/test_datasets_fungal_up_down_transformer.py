@@ -197,8 +197,7 @@ def test_unknown_model_name_is_refused_with_the_valid_list(
 ) -> None:
     """``BaseEmbeddingDataset`` raises before any directory is created.
 
-    The two message fragments are joined without a space (the ``embedding.py``
-    Finding pinned in ``test_protT5.py``).
+    The message separates its two sentences with a space (issue #543).
     """
     root = tmp_path / "store"
     with pytest.raises(ValueError) as excinfo:
@@ -207,7 +206,7 @@ def test_unknown_model_name_is_refused_with_the_valid_list(
         )
 
     assert str(excinfo.value) == (
-        "Invalid model_name 'agnostic_upstream'.Valid options are: "
+        "Invalid model_name 'agnostic_upstream'. Valid options are: "
         "species_downstream, species_upstream"
     )
     assert _FakeSpeciesLM.inits == []

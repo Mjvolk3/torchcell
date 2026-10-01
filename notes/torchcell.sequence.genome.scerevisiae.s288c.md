@@ -737,3 +737,7 @@ registry against 0.1 s on the legacy paths, gene set 6,607 either way, pickle ro
 reconstructs the same paths. `test_s288c.py` was not run in this pass because its fixture
 uses the default `overwrite=True` while four 027 jobs held `data.db`. Plan:
 [[plan.genomes-tier.2026.09.14]]; registry: [[torchcell.sequence.genome.registry]].
+
+## 2026.09.30 - Plus-strand 5' window off by one (issue #543)
+
+`window_five_prime(w, include_start_codon=False)` on the `+` strand set the end to the 1-based start, so the window `[start - w, start)` ended at 0-based `start` and included the gene's first base. It now uses the 0-based start, `[start0 - w, start0)`, matching the minus strand, which never included a gene base. The `include_start_codon=True` path (used by the nucleotide transformer, fungal up/down and species LM datasets) was already correct and is unchanged. The docstring now states both strands' bounds. `s288c_ncbi.py` has the same `self.start` bound in its own `window_five_prime` and was not changed here. Tests: [[tests.torchcell.sequence.genome.scerevisiae.test_s288c_synthetic]], [[tests.torchcell.sequence.genome.scerevisiae.test_s288c]].

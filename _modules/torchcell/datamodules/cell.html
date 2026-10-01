@@ -123,17 +123,19 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Mapping</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">lightning</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">L</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">model_validator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span> <span class="k">as</span> <span class="n">TorchDataLoader</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span><span class="p">,</span> <span class="n">PrefetchLoader</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelStrict</span>
@@ -236,7 +238,13 @@
                     <span class="p">}</span>
                 <span class="p">)</span>
 
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">summary_data</span><span class="p">)</span>
+        <span class="c1"># Explicit columns so a details object with no index data yields an EMPTY frame</span>
+        <span class="c1"># with its columns (and ``__str__`` its "(empty)" form) rather than a column-less</span>
+        <span class="c1"># frame on which ``df["split"]`` raises ``KeyError``.</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="n">summary_data</span><span class="p">,</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">"split"</span><span class="p">,</span> <span class="s2">"index_type"</span><span class="p">,</span> <span class="s2">"key"</span><span class="p">,</span> <span class="s2">"count"</span><span class="p">,</span> <span class="s2">"ratio"</span><span class="p">,</span> <span class="s2">"total"</span><span class="p">],</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">({</span><span class="s2">"count"</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="s2">"ratio"</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="s2">"total"</span><span class="p">:</span> <span class="nb">int</span><span class="p">})</span>
 
         <span class="c1"># Create a categorical column for 'split' with the desired order</span>
         <span class="n">df</span><span class="p">[</span><span class="s2">"split"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span>
@@ -314,22 +322,28 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">DatasetIndexSplit</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Per-dataset index lists grouped by train/val/test split."""</span>
 
-    <span class="n">train</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]  # pydantic field: keep declared type + None default (changing either alters validation/runtime)</span>
-    <span class="n">val</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]  # pydantic field: keep declared type + None default (changing either alters validation/runtime)</span>
-    <span class="n">test</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]  # pydantic field: keep declared type + None default (changing either alters validation/runtime)</span>
+    <span class="n">train</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span>
+    <span class="n">val</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span>
+    <span class="n">test</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">overlap_dataset_index_split</span><span class="p">(</span>
     <span class="n">dataset_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">data_module_index</span><span class="p">:</span> <span class="n">DataModuleIndex</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatasetIndexSplit</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Intersect each dataset's indices with the train/val/test split indices."""</span>
+<span class="w">    </span><span class="sd">"""Intersect each dataset's indices with the train/val/test split indices.</span>
+
+<span class="sd">    A split that holds none of the datasets is an EMPTY dict, not ``None``: an empty</span>
+<span class="sd">    overlap is a legitimate outcome (e.g. a small subset whose test split draws from one</span>
+<span class="sd">    dataset only), and the experiment 003 plotting scripts that call this treat an empty</span>
+<span class="sd">    split as "nothing to draw".</span>
+<span class="sd">    """</span>
     <span class="n">train_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">data_module_index</span><span class="o">.</span><span class="n">train</span><span class="p">)</span>
     <span class="n">val_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">data_module_index</span><span class="o">.</span><span class="n">val</span><span class="p">)</span>
     <span class="n">test_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">data_module_index</span><span class="o">.</span><span class="n">test</span><span class="p">)</span>
 
-    <span class="n">train_dict</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">val_dict</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">test_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">train_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">val_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">test_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="k">for</span> <span class="n">dataset_name</span><span class="p">,</span> <span class="n">indices</span> <span class="ow">in</span> <span class="n">dataset_index</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">train_indices</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">train_set</span><span class="p">))</span>
@@ -343,11 +357,7 @@
         <span class="k">if</span> <span class="n">test_indices</span><span class="p">:</span>
             <span class="n">test_dict</span><span class="p">[</span><span class="n">dataset_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">test_indices</span>
 
-    <span class="k">return</span> <span class="n">DatasetIndexSplit</span><span class="p">(</span>
-        <span class="n">train</span><span class="o">=</span><span class="n">train_dict</span> <span class="k">if</span> <span class="n">train_dict</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]  # field accepts None default (see DatasetIndexSplit); type kept as-is</span>
-        <span class="n">val</span><span class="o">=</span><span class="n">val_dict</span> <span class="k">if</span> <span class="n">val_dict</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]  # field accepts None default (see DatasetIndexSplit); type kept as-is</span>
-        <span class="n">test</span><span class="o">=</span><span class="n">test_dict</span> <span class="k">if</span> <span class="n">test_dict</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]  # field accepts None default (see DatasetIndexSplit); type kept as-is</span>
-    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">DatasetIndexSplit</span><span class="p">(</span><span class="n">train</span><span class="o">=</span><span class="n">train_dict</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">val_dict</span><span class="p">,</span> <span class="n">test</span><span class="o">=</span><span class="n">test_dict</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="CellDataModule">
@@ -369,7 +379,7 @@
         <span class="n">split_indices</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">follow_batch</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">train_shuffle</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">collate_fn</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">collate_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]],</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">val_batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pinned_test_indices</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pinned_split_indices</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -449,6 +459,14 @@
             <span class="k">if</span> <span class="n">split_indices</span>
             <span class="k">else</span> <span class="p">[]</span>
         <span class="p">)</span>
+        <span class="c1"># The split is defined BY these keys: a record is placed only through the keys</span>
+        <span class="c1"># that hold it, so with none every record lands in no split and the module would</span>
+        <span class="c1"># train on nothing without an error. Refused here, before the index is computed.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_indices</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"split_indices is required: name at least one split index of the dataset "</span>
+                <span class="s2">"(e.g. 'phenotype_label_index'); without one every record lands in no split"</span>
+            <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_index</span><span class="p">:</span> <span class="n">DataModuleIndex</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_index_details</span><span class="p">:</span> <span class="n">DataModuleIndexDetails</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">follow_batch</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -631,11 +649,6 @@
         <span class="n">remaining</span> <span class="o">=</span> <span class="n">all_indices</span> <span class="o">-</span> <span class="p">(</span>
             <span class="n">final_splits</span><span class="p">[</span><span class="s2">"train"</span><span class="p">]</span> <span class="o">|</span> <span class="n">final_splits</span><span class="p">[</span><span class="s2">"val"</span><span class="p">]</span> <span class="o">|</span> <span class="n">final_splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">]</span>
         <span class="p">)</span>
-        <span class="n">target_ratios</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">"train"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_ratio</span><span class="p">,</span>
-            <span class="s2">"val"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">val_ratio</span><span class="p">,</span>
-            <span class="s2">"test"</span><span class="p">:</span> <span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_ratio</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">val_ratio</span><span class="p">,</span>
-        <span class="p">}</span>
 
         <span class="k">for</span> <span class="n">index_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_indices</span><span class="p">:</span>
             <span class="n">original_index</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span> <span class="n">index_name</span><span class="p">)</span>
@@ -651,11 +664,29 @@
                 <span class="p">}</span>
                 <span class="n">total_count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">current_counts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">key_remaining</span><span class="p">)</span>
 
+                <span class="c1"># Targets partition the key exactly: test is the REMAINDER, as in the</span>
+                <span class="c1"># first-pass slicing, not ``int(n * (1 - train - val))``, whose ratio is</span>
+                <span class="c1"># 0.09999999999999995 in floating point and so gave a 10-record key a test</span>
+                <span class="c1"># target of 0 (and a ZeroDivisionError below).</span>
+                <span class="n">target_train</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_ratio</span> <span class="o">*</span> <span class="n">total_count</span><span class="p">)</span>
+                <span class="n">target_val</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">val_ratio</span> <span class="o">*</span> <span class="n">total_count</span><span class="p">)</span>
+                <span class="n">target_counts</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">"train"</span><span class="p">:</span> <span class="n">target_train</span><span class="p">,</span>
+                    <span class="s2">"val"</span><span class="p">:</span> <span class="n">target_val</span><span class="p">,</span>
+                    <span class="s2">"test"</span><span class="p">:</span> <span class="n">total_count</span> <span class="o">-</span> <span class="n">target_train</span> <span class="o">-</span> <span class="n">target_val</span><span class="p">,</span>
+                <span class="p">}</span>
+                <span class="n">empty_targets</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">split</span> <span class="k">for</span> <span class="n">split</span><span class="p">,</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">target_counts</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">target</span> <span class="o">==</span> <span class="mi">0</span>
+                <span class="p">]</span>
+                <span class="k">if</span> <span class="n">empty_targets</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"Key </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2"> of </span><span class="si">{</span><span class="n">index_name</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">key_remaining</span><span class="p">)</span><span class="si">}</span><span class="s2"> record(s) "</span>
+                        <span class="sa">f</span><span class="s2">"left to balance, but its </span><span class="si">{</span><span class="n">total_count</span><span class="si">}</span><span class="s2"> "</span>
+                        <span class="sa">f</span><span class="s2">"records give a target of 0 for </span><span class="si">{</span><span class="n">empty_targets</span><span class="si">}</span><span class="s2">; balancing needs "</span>
+                        <span class="sa">f</span><span class="s2">"at least </span><span class="si">{</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">val_ratio</span><span class="p">)</span><span class="si">}</span><span class="s2"> records per such key"</span>
+                    <span class="p">)</span>
+
                 <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">key_remaining</span><span class="p">:</span>
-                    <span class="n">target_counts</span> <span class="o">=</span> <span class="p">{</span>
-                        <span class="n">split</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">total_count</span> <span class="o">*</span> <span class="n">ratio</span><span class="p">)</span>
-                        <span class="k">for</span> <span class="n">split</span><span class="p">,</span> <span class="n">ratio</span> <span class="ow">in</span> <span class="n">target_ratios</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                    <span class="p">}</span>
                     <span class="n">best_split</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
                         <span class="p">[</span><span class="s2">"train"</span><span class="p">,</span> <span class="s2">"val"</span><span class="p">,</span> <span class="s2">"test"</span><span class="p">],</span>
                         <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span>
@@ -707,6 +738,21 @@
             <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Splits after full pinning: train=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">final_splits</span><span class="p">[</span><span class="s1">'train'</span><span class="p">])</span><span class="si">}</span><span class="s2"> "</span>
                 <span class="sa">f</span><span class="s2">"val=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">final_splits</span><span class="p">[</span><span class="s1">'val'</span><span class="p">])</span><span class="si">}</span><span class="s2"> test=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">final_splits</span><span class="p">[</span><span class="s1">'test'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Every record of the pool must be placed. A record under no split-index key is</span>
+        <span class="c1"># never reached by the key-driven assignment above, and dropping it silently</span>
+        <span class="c1"># would be a data loss.</span>
+        <span class="n">orphans</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">all_indices</span>
+            <span class="o">-</span> <span class="p">(</span><span class="n">final_splits</span><span class="p">[</span><span class="s2">"train"</span><span class="p">]</span> <span class="o">|</span> <span class="n">final_splits</span><span class="p">[</span><span class="s2">"val"</span><span class="p">]</span> <span class="o">|</span> <span class="n">final_splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">])</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">orphans</span><span class="p">:</span>
+            <span class="n">shown</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">orphans</span><span class="p">[:</span><span class="mi">10</span><span class="p">]))</span>
+            <span class="n">more</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">", ... (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">orphans</span><span class="p">)</span><span class="si">}</span><span class="s2"> in all)"</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">orphans</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">10</span> <span class="k">else</span> <span class="s2">""</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">orphans</span><span class="p">)</span><span class="si">}</span><span class="s2"> record(s) sit under no key of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">split_indices</span><span class="si">}</span><span class="s2"> and "</span>
+                <span class="sa">f</span><span class="s2">"would land in no split: [</span><span class="si">{</span><span class="n">shown</span><span class="si">}{</span><span class="n">more</span><span class="si">}</span><span class="s2">]"</span>
             <span class="p">)</span>
 
         <span class="c1"># Create DataModuleIndexDetails object</span>
@@ -778,12 +824,19 @@
         <span class="n">dataset</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>  <span class="c1"># dynamic dataset/Subset passed through to the loaders</span>
         <span class="n">shuffle</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataLoader</span> <span class="o">|</span> <span class="n">PrefetchLoader</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TorchDataLoader</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="n">PrefetchLoader</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build the loader for ``dataset``: PyG's by default, torch's for a custom collate.</span>
+
+<span class="sd">        PyG's ``DataLoader`` pops any ``collate_fn`` and installs its own ``Collater``, so</span>
+<span class="sd">        a caller's function (e.g. experiment 006's ``LazyCollater``) would never run. When</span>
+<span class="sd">        ``collate_fn`` is given the plain torch ``DataLoader`` is used with it instead, and</span>
+<span class="sd">        ``follow_batch`` is not applied: that collate owns the batching.</span>
+<span class="sd">        """</span>
         <span class="c1"># Use provided batch_size or fall back to self.batch_size</span>
         <span class="k">if</span> <span class="n">batch_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">batch_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span>
 
-        <span class="n">dataloader_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">dataloader_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"batch_size"</span><span class="p">:</span> <span class="n">batch_size</span><span class="p">,</span>
             <span class="s2">"shuffle"</span><span class="p">:</span> <span class="n">shuffle</span><span class="p">,</span>
             <span class="s2">"num_workers"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_workers</span><span class="p">,</span>
@@ -791,7 +844,6 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_workers</span> <span class="o">&gt;</span> <span class="mi">0</span>
             <span class="k">else</span> <span class="kc">False</span><span class="p">,</span>
             <span class="s2">"pin_memory"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pin_memory</span><span class="p">,</span>
-            <span class="s2">"follow_batch"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">follow_batch</span><span class="p">,</span>
             <span class="c1"># THE SAME GUARD AS `prefetch_factor` BELOW, and for the same reason -- this one</span>
             <span class="c1"># was missed when that fix landed (commit 2cca6d83), so num_workers=0 was still</span>
             <span class="c1"># unconstructible afterwards. `timeout` is a WORKER-QUEUE timeout, so at</span>
@@ -816,11 +868,15 @@
             <span class="s2">"prefetch_factor"</span><span class="p">:</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefetch_factor</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_workers</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">),</span>
         <span class="p">}</span>
 
-        <span class="c1"># Add collate_fn if provided</span>
+        <span class="n">loader</span><span class="p">:</span> <span class="n">TorchDataLoader</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">collate_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">dataloader_kwargs</span><span class="p">[</span><span class="s2">"collate_fn"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">collate_fn</span>
-
-        <span class="n">loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="o">**</span><span class="n">dataloader_kwargs</span><span class="p">)</span>
+            <span class="n">loader</span> <span class="o">=</span> <span class="n">TorchDataLoader</span><span class="p">(</span>
+                <span class="n">dataset</span><span class="p">,</span> <span class="n">collate_fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">collate_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">dataloader_kwargs</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span>
+                <span class="n">dataset</span><span class="p">,</span> <span class="n">follow_batch</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">follow_batch</span><span class="p">,</span> <span class="o">**</span><span class="n">dataloader_kwargs</span>
+            <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefetch</span><span class="p">:</span>
             <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"cuda"</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">"cpu"</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">PrefetchLoader</span><span class="p">(</span><span class="n">loader</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
@@ -828,28 +884,28 @@
 
 <div class="viewcode-block" id="CellDataModule.train_dataloader">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodules.CellDataModule.html#torchcell.datamodules.CellDataModule.train_dataloader">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">train_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataLoader</span> <span class="o">|</span> <span class="n">PrefetchLoader</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TorchDataLoader</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="n">PrefetchLoader</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Return a dataloader over the training subset."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_dataset</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">train_shuffle</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CellDataModule.val_dataloader">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodules.CellDataModule.html#torchcell.datamodules.CellDataModule.val_dataloader">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">val_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataLoader</span> <span class="o">|</span> <span class="n">PrefetchLoader</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">val_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TorchDataLoader</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="n">PrefetchLoader</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Return a dataloader over the validation subset."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">val_dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">val_batch_size</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CellDataModule.test_dataloader">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodules.CellDataModule.html#torchcell.datamodules.CellDataModule.test_dataloader">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">test_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataLoader</span> <span class="o">|</span> <span class="n">PrefetchLoader</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TorchDataLoader</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="n">PrefetchLoader</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Return a dataloader over the test subset."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test_dataset</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CellDataModule.all_dataloader">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodules.CellDataModule.html#torchcell.datamodules.CellDataModule.all_dataloader">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">all_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataLoader</span> <span class="o">|</span> <span class="n">PrefetchLoader</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">all_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TorchDataLoader</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="n">PrefetchLoader</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Return a dataloader over the entire dataset."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span></div>
 </div>

@@ -40,6 +40,7 @@ import numpy as np
 import pandas as pd
 import torch
 from dotenv import load_dotenv
+from torch_geometric.data import HeteroData
 
 sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
 
@@ -150,16 +151,11 @@ def score_any_order(model, cell_graph, idx: np.ndarray, device) -> np.ndarray:
         n = chunk.shape[0]
         pert = torch.from_numpy(chunk.reshape(-1)).to(device)
         batch_assign = torch.arange(n, device=device).repeat_interleave(k)
-        batch = {
-            "gene": type(
-                "G",
-                (),
-                {
-                    "perturbation_indices": pert,
-                    "perturbation_indices_batch": batch_assign,
-                },
-            )()
-        }
+        # The model reads the genotype count from batch.num_graphs (issue #523).
+        batch = HeteroData()
+        batch.num_graphs = n
+        batch["gene"].perturbation_indices = pert
+        batch["gene"].perturbation_indices_batch = batch_assign
         preds, _ = model(cell_graph, batch, return_attention=False)
         out[start : start + n] = preds.squeeze(-1).float().cpu().numpy()
     return out * S.NORM_STD + S.NORM_MEAN

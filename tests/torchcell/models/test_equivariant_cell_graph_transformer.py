@@ -802,10 +802,15 @@ def test_seeded_model_output_is_unchanged_by_the_batch_size_fix(
     cell_graph: HeteroData, batch: HeteroData
 ) -> None:
     """Checkpoint compatibility for issue #523: on the fixture, where every genotype has
-    a perturbation, a seed-0 model with the per-gene and per-metabolite heads returns
-    exactly the tensors the pre-fix code returned. These values were printed from the
-    code before the change and are compared bit for bit, so any change to the
-    initialization order, the forward math or the parameter layout fails here.
+    a perturbation, a seed-0 model with the per-gene and per-metabolite heads keeps the
+    exact ``state_dict`` layout (70 keys, the order a strict checkpoint load matches) and
+    returns the tensors the pre-fix code returned, printed from that code.
+
+    The values are compared at atol = rtol = 1e-6, not bit for bit: the CPU matmul
+    kernels reduce in a thread-count-dependent order, and under OMP_NUM_THREADS=1 or 4 the
+    same code differs from the 2-thread values by one float32 ulp (max 1.19e-7). Any
+    change to the initialization order or the forward math moves these outputs by orders
+    of magnitude more than 1e-6, so the tolerance does not hide a real change.
     """
     torch.manual_seed(0)
     model = CellGraphTransformer(
@@ -819,8 +824,85 @@ def test_seeded_model_output_is_unchanged_by_the_batch_size_fix(
             "per_metabolite": {"output_dim": 1},
         },
     ).eval()
+    assert list(model.state_dict()) == [
+        "cls_token",
+        "gene_embedding.weight",
+        "transformer_layers.0.q_proj.weight",
+        "transformer_layers.0.q_proj.bias",
+        "transformer_layers.0.k_proj.weight",
+        "transformer_layers.0.k_proj.bias",
+        "transformer_layers.0.v_proj.weight",
+        "transformer_layers.0.v_proj.bias",
+        "transformer_layers.0.out_proj.weight",
+        "transformer_layers.0.out_proj.bias",
+        "transformer_layers.0.norm1.weight",
+        "transformer_layers.0.norm1.bias",
+        "transformer_layers.0.norm2.weight",
+        "transformer_layers.0.norm2.bias",
+        "transformer_layers.0.ffn.0.weight",
+        "transformer_layers.0.ffn.0.bias",
+        "transformer_layers.0.ffn.3.weight",
+        "transformer_layers.0.ffn.3.bias",
+        "transformer_layers.1.q_proj.weight",
+        "transformer_layers.1.q_proj.bias",
+        "transformer_layers.1.k_proj.weight",
+        "transformer_layers.1.k_proj.bias",
+        "transformer_layers.1.v_proj.weight",
+        "transformer_layers.1.v_proj.bias",
+        "transformer_layers.1.out_proj.weight",
+        "transformer_layers.1.out_proj.bias",
+        "transformer_layers.1.norm1.weight",
+        "transformer_layers.1.norm1.bias",
+        "transformer_layers.1.norm2.weight",
+        "transformer_layers.1.norm2.bias",
+        "transformer_layers.1.ffn.0.weight",
+        "transformer_layers.1.ffn.0.bias",
+        "transformer_layers.1.ffn.3.weight",
+        "transformer_layers.1.ffn.3.bias",
+        "perturbation_transform.cross_attn_layers.0.in_proj_weight",
+        "perturbation_transform.cross_attn_layers.0.in_proj_bias",
+        "perturbation_transform.cross_attn_layers.0.out_proj.weight",
+        "perturbation_transform.cross_attn_layers.0.out_proj.bias",
+        "perturbation_transform.ffn_layers.0.0.weight",
+        "perturbation_transform.ffn_layers.0.0.bias",
+        "perturbation_transform.ffn_layers.0.3.weight",
+        "perturbation_transform.ffn_layers.0.3.bias",
+        "perturbation_transform.norm1_layers.0.weight",
+        "perturbation_transform.norm1_layers.0.bias",
+        "perturbation_transform.norm2_layers.0.weight",
+        "perturbation_transform.norm2_layers.0.bias",
+        "perturbation_transform.cross_attn.in_proj_weight",
+        "perturbation_transform.cross_attn.in_proj_bias",
+        "perturbation_transform.cross_attn.out_proj.weight",
+        "perturbation_transform.cross_attn.out_proj.bias",
+        "perturbation_transform.ffn.0.weight",
+        "perturbation_transform.ffn.0.bias",
+        "perturbation_transform.ffn.3.weight",
+        "perturbation_transform.ffn.3.bias",
+        "perturbation_transform.norm1.weight",
+        "perturbation_transform.norm1.bias",
+        "perturbation_transform.norm2.weight",
+        "perturbation_transform.norm2.bias",
+        "perturbation_head.mlp.0.weight",
+        "perturbation_head.mlp.0.bias",
+        "perturbation_head.mlp.3.weight",
+        "perturbation_head.mlp.3.bias",
+        "per_gene_head.mlp.0.weight",
+        "per_gene_head.mlp.0.bias",
+        "per_gene_head.mlp.3.weight",
+        "per_gene_head.mlp.3.bias",
+        "per_metabolite_head.mlp.0.weight",
+        "per_metabolite_head.mlp.0.bias",
+        "per_metabolite_head.mlp.3.weight",
+        "per_metabolite_head.mlp.3.bias",
+    ]
     with torch.no_grad():
         pred, reps = model(cell_graph, batch)
+    per_gene = reps["head_outputs"]["per_gene"]
+    per_metabolite = reps["head_outputs"]["per_metabolite"]
+    assert pred.shape == (BATCH_SIZE, 1)
+    assert per_gene.shape == (BATCH_SIZE, GENE_NUM)
+    assert per_metabolite.shape == (BATCH_SIZE, NUM_METABOLITES)
     expected_pred = torch.tensor(
         [[-0.756462812423706], [-0.42957568168640137], [-1.0405769348144531]]
     )
@@ -865,9 +947,11 @@ def test_seeded_model_output_is_unchanged_by_the_batch_size_fix(
             [0.24313274025917053, 0.21999821066856384, 0.25784581899642944],
         ]
     )
-    assert torch.equal(pred, expected_pred)
-    assert torch.equal(reps["head_outputs"]["per_gene"], expected_per_gene)
-    assert torch.equal(reps["head_outputs"]["per_metabolite"], expected_per_metabolite)
+    torch.testing.assert_close(pred, expected_pred, atol=1e-6, rtol=1e-6)
+    torch.testing.assert_close(per_gene, expected_per_gene, atol=1e-6, rtol=1e-6)
+    torch.testing.assert_close(
+        per_metabolite, expected_per_metabolite, atol=1e-6, rtol=1e-6
+    )
 
 
 # Constructor and graph-regularization branches the siblings leave open ------------- #

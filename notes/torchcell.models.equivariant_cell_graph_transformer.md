@@ -391,3 +391,7 @@ Round context and the arm results: [[experiments.019-simb-multimodal.expression-
 - **Unchanged.** No default, initialization or forward math changed for batches where every genotype has a perturbation: a seed-0 model's outputs on the shared fixture are pinned bit for bit against values printed from the pre-fix code, and a pre-fix `state_dict` loads with `strict=True`.
 
 Tests: `test_trailing_wildtype_genotype_gets_the_zero_context_row`, `test_assignment_past_the_batch_size_raises`, `test_hypersagnn_renumbers_non_contiguous_set_ids_in_ascending_order`, `test_num_parameters_lists_every_block_and_totals_every_parameter`, `test_seeded_model_output_is_unchanged_by_the_batch_size_fix` in [[tests.torchcell.models.test_equivariant_cell_graph_transformer]].
+
+## 2026.09.30 - Review: two 010 scorers built dict batches
+
+`experiments/010-kuzmin-tmi/scripts/score_010_checkpoints_directly.py` and `rescore_wetlab_plate.py` passed a plain dict `{"gene": <namespace>}` as the batch, which has no `num_graphs`. Both now build a `HeteroData` with `num_graphs = n` (the genotypes in the chunk). Checked on a seed-0 toy model: the dict batch on the pre-fix code and the `HeteroData` batch on the fixed code give bit-identical predictions, so the scored values behind the 010 and 025 additive-baselines documents are unchanged. The `HyperSAGNN` class in this module has no consumer (the live one is in `cell_graph_transformer.py`).

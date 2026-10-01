@@ -360,6 +360,58 @@
     <span class="k">return</span> <span class="n">DatasetIndexSplit</span><span class="p">(</span><span class="n">train</span><span class="o">=</span><span class="n">train_dict</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">val_dict</span><span class="p">,</span> <span class="n">test</span><span class="o">=</span><span class="n">test_dict</span><span class="p">)</span>
 
 
+<span class="n">WORKER_TIMEOUT_S</span> <span class="o">=</span> <span class="mi">10800</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">worker_dataloader_kwargs</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">shuffle</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">persistent_workers</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">pin_memory</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">prefetch_factor</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Return the ``DataLoader`` keyword arguments every torchcell datamodule shares.</span>
+
+<span class="sd">    ``CellDataModule`` and ``PerturbationSubsetDataModule`` both build their loaders</span>
+<span class="sd">    from this one dict (issue #580), so the two cannot drift apart again. The worker</span>
+<span class="sd">    options are guarded on ``num_workers``: with workers, persistence is as requested,</span>
+<span class="sd">    ``timeout`` is ``WORKER_TIMEOUT_S`` (3 h), the context is ``spawn`` and</span>
+<span class="sd">    ``prefetch_factor`` is passed through; at ``num_workers=0`` persistence is off,</span>
+<span class="sd">    ``timeout`` is 0, the context is ``None`` and ``prefetch_factor`` is ``None``.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"batch_size"</span><span class="p">:</span> <span class="n">batch_size</span><span class="p">,</span>
+        <span class="s2">"shuffle"</span><span class="p">:</span> <span class="n">shuffle</span><span class="p">,</span>
+        <span class="s2">"num_workers"</span><span class="p">:</span> <span class="n">num_workers</span><span class="p">,</span>
+        <span class="s2">"persistent_workers"</span><span class="p">:</span> <span class="n">persistent_workers</span> <span class="k">if</span> <span class="n">num_workers</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"pin_memory"</span><span class="p">:</span> <span class="n">pin_memory</span><span class="p">,</span>
+        <span class="c1"># THE SAME GUARD AS `prefetch_factor` BELOW, and for the same reason -- this one</span>
+        <span class="c1"># was missed when that fix landed (commit 2cca6d83), so num_workers=0 was still</span>
+        <span class="c1"># unconstructible afterwards. `timeout` is a WORKER-QUEUE timeout, so at</span>
+        <span class="c1"># num_workers=0 torch asserts outright:</span>
+        <span class="c1">#   AssertionError: _SingleProcessDataLoaderIter requires timeout == 0</span>
+        <span class="c1"># raised from `iter(dataloader)`, i.e. during sanity-check, AFTER the dataset and</span>
+        <span class="c1"># embeddings have been loaded. A trial therefore burns its full startup cost and</span>
+        <span class="c1"># then dies, which is why 119 of them could fail in a job that still exited</span>
+        <span class="c1"># COMPLETED 0:0.</span>
+        <span class="s2">"timeout"</span><span class="p">:</span> <span class="p">(</span><span class="n">WORKER_TIMEOUT_S</span> <span class="k">if</span> <span class="n">num_workers</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span><span class="p">),</span>
+        <span class="s2">"multiprocessing_context"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"spawn"</span> <span class="k">if</span> <span class="n">num_workers</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="c1"># Torch REJECTS a non-None prefetch_factor at num_workers=0 ("could only be</span>
+        <span class="c1"># specified in multiprocessing"), so this needs the same guard its two</span>
+        <span class="c1"># neighbors already carry. Without it num_workers=0 is not merely slow, it is</span>
+        <span class="c1"># unconstructible -- every DataLoader raises ValueError before the first batch.</span>
+        <span class="c1">#</span>
+        <span class="c1"># That is not hypothetical: on 2026-07-28 Delta job 20556837 ran NUM_WORKERS=0</span>
+        <span class="c1"># and all 119 optuna trials died here, ~15s apiece, while the job still exited</span>
+        <span class="c1"># COMPLETED 0:0. num_workers=0 is worth supporting because on a parallel</span>
+        <span class="c1"># filesystem the spawn path is the expensive one -- each worker re-imports the</span>
+        <span class="c1"># whole stack off /work/hdd.</span>
+        <span class="s2">"prefetch_factor"</span><span class="p">:</span> <span class="p">(</span><span class="n">prefetch_factor</span> <span class="k">if</span> <span class="n">num_workers</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">}</span>
+
+
 <div class="viewcode-block" id="CellDataModule">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodules.CellDataModule.html#torchcell.datamodules.CellDataModule">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CellDataModule</span><span class="p">(</span><span class="n">L</span><span class="o">.</span><span class="n">LightningDataModule</span><span class="p">):</span>
@@ -836,37 +888,14 @@
         <span class="k">if</span> <span class="n">batch_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">batch_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span>
 
-        <span class="n">dataloader_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">"batch_size"</span><span class="p">:</span> <span class="n">batch_size</span><span class="p">,</span>
-            <span class="s2">"shuffle"</span><span class="p">:</span> <span class="n">shuffle</span><span class="p">,</span>
-            <span class="s2">"num_workers"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_workers</span><span class="p">,</span>
-            <span class="s2">"persistent_workers"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">persistent_workers</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_workers</span> <span class="o">&gt;</span> <span class="mi">0</span>
-            <span class="k">else</span> <span class="kc">False</span><span class="p">,</span>
-            <span class="s2">"pin_memory"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pin_memory</span><span class="p">,</span>
-            <span class="c1"># THE SAME GUARD AS `prefetch_factor` BELOW, and for the same reason -- this one</span>
-            <span class="c1"># was missed when that fix landed (commit 2cca6d83), so num_workers=0 was still</span>
-            <span class="c1"># unconstructible afterwards. `timeout` is a WORKER-QUEUE timeout, so at</span>
-            <span class="c1"># num_workers=0 torch asserts outright:</span>
-            <span class="c1">#   AssertionError: _SingleProcessDataLoaderIter requires timeout == 0</span>
-            <span class="c1"># raised from `iter(dataloader)`, i.e. during sanity-check, AFTER the dataset and</span>
-            <span class="c1"># embeddings have been loaded. A trial therefore burns its full startup cost and</span>
-            <span class="c1"># then dies, which is why 119 of them could fail in a job that still exited</span>
-            <span class="c1"># COMPLETED 0:0.</span>
-            <span class="s2">"timeout"</span><span class="p">:</span> <span class="p">(</span><span class="mi">10800</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_workers</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span><span class="p">),</span>
-            <span class="s2">"multiprocessing_context"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"spawn"</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_workers</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="c1"># Torch REJECTS a non-None prefetch_factor at num_workers=0 ("could only be</span>
-            <span class="c1"># specified in multiprocessing"), so this needs the same guard its two</span>
-            <span class="c1"># neighbours already carry. Without it num_workers=0 is not merely slow, it is</span>
-            <span class="c1"># unconstructible -- every DataLoader raises ValueError before the first batch.</span>
-            <span class="c1">#</span>
-            <span class="c1"># That is not hypothetical: on 2026-07-28 Delta job 20556837 ran NUM_WORKERS=0</span>
-            <span class="c1"># and all 119 optuna trials died here, ~15s apiece, while the job still exited</span>
-            <span class="c1"># COMPLETED 0:0. num_workers=0 is worth supporting because on a parallel</span>
-            <span class="c1"># filesystem the spawn path is the expensive one -- each worker re-imports the</span>
-            <span class="c1"># whole stack off /work/hdd.</span>
-            <span class="s2">"prefetch_factor"</span><span class="p">:</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefetch_factor</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_workers</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">),</span>
-        <span class="p">}</span>
+        <span class="n">dataloader_kwargs</span> <span class="o">=</span> <span class="n">worker_dataloader_kwargs</span><span class="p">(</span>
+            <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+            <span class="n">shuffle</span><span class="o">=</span><span class="n">shuffle</span><span class="p">,</span>
+            <span class="n">num_workers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_workers</span><span class="p">,</span>
+            <span class="n">persistent_workers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">persistent_workers</span><span class="p">,</span>
+            <span class="n">pin_memory</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pin_memory</span><span class="p">,</span>
+            <span class="n">prefetch_factor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">prefetch_factor</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="n">loader</span><span class="p">:</span> <span class="n">TorchDataLoader</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">collate_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>

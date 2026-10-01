@@ -114,14 +114,14 @@
            <div itemprop="articleBody">
              
   <h1>Source code for torchcell.losses.dcell</h1><div class="highlight"><pre>
-<span></span><span class="c1"># torchcell/losses/dcell_new.py</span>
-<span class="c1"># [[torchcell.losses.dcell_new]]</span>
-<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/losses/dcell_new.py</span>
-<span class="c1"># Test file: torchcell/losses/test_dcell_new.py</span>
+<span></span><span class="c1"># torchcell/losses/dcell.py</span>
+<span class="c1"># [[torchcell.losses.dcell]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/losses/dcell.py</span>
+<span class="c1"># Test file: tests/torchcell/losses/test_losses_dcell.py</span>
 
 <span class="sd">"""Loss for the DCell model: root MSE plus optional subsystem auxiliary losses."""</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
@@ -130,30 +130,78 @@
 <div class="viewcode-block" id="DCellLoss">
 <a class="viewcode-back" href="../../../generated/torchcell.losses.dcell.DCellLoss.html#torchcell.losses.dcell.DCellLoss">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DCellLoss</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Loss function for the DCellNew model implementation.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Loss function for the DCell model (Ma et al. 2018).</span>
 
-<span class="sd">    This loss function:</span>
-<span class="sd">    1. Takes the direct model outputs (predictions and outputs dictionary)</span>
-<span class="sd">    2. Applies the main loss to the root subsystem predictions</span>
-<span class="sd">    3. Optionally applies auxiliary losses to non-root subsystem outputs</span>
+<span class="sd">    The paper's objective (mirror ``torchcell-library/maUsingDeepLearning2018/paper.md``</span>
+<span class="sd">    line 196, sha256</span>
+<span class="sd">    ``ac837bc358ea4969a72789e66e31380bfdcbd7b8aea98dec47b108ee21d2070c``) is</span>
+<span class="sd">    ``(1/N) sum_i (Loss(Linear(O_i^(r)), y_i) + alpha * sum_{t != r}</span>
+<span class="sd">    Loss(Linear(O_i^(t)), y_i)) + lambda ||W||_2``, and line 199 states: "Loss is the</span>
+<span class="sd">    squared error loss function, and $r$ is the root of the hierarchy" and "the</span>
+<span class="sd">    parameter $\alpha$ $_ { ( = 0 . 3 ) }$ balances these two contributions". This</span>
+<span class="sd">    class computes the first two terms; the ``lambda ||W||_2`` term is the optimizer's</span>
+<span class="sd">    weight decay (``weight_decay`` in the 005/006 configs, 1e-6), and the mirror text</span>
+<span class="sd">    gives no value for lambda ("determined by four-fold cross-validation").</span>
+
+<span class="sd">    ``aux_reduction="sum"`` is the paper's sum over every non-root subsystem.</span>
+<span class="sd">    ``aux_reduction="mean"`` divides that sum by the number of counted subsystems,</span>
+<span class="sd">    an effective alpha of 0.3 / (T - 1). There is no default: real runs exist under</span>
+<span class="sd">    both regimes. Neither value reproduces the loss of the 005/006 runs made before</span>
+<span class="sd">    2026-09-30 through ``torchcell.trainers.int_dcell``: those passed ``[B, 1]``</span>
+<span class="sd">    predictions and targets against ``[B]`` heads, so each auxiliary MSE broadcast</span>
+<span class="sd">    over a ``[B, B]`` grid and the root head (``GO:&lt;root index&gt;``) was counted as an</span>
+<span class="sd">    auxiliary term as well (issue #578 records the affected runs).</span>
+
+<span class="sd">    The root is recognized by its DECLARED key, never by value or object identity:</span>
+<span class="sd">    ``outputs["root_key"]`` (``DCell`` and ``DCellOpt`` set it to ``GO:&lt;root index&gt;``)</span>
+<span class="sd">    and the alias ``"GO:ROOT"``. A non-root head whose values equal the root is</span>
+<span class="sd">    counted. Shapes must match the target exactly; nothing is broadcast.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        alpha: Weight for auxiliary losses (default: 0.3)</span>
-<span class="sd">        use_auxiliary_losses: Whether to use losses from non-root subsystems (default: True)</span>
+<span class="sd">        alpha: Weight for auxiliary losses (default: 0.3, the paper's value).</span>
+<span class="sd">        use_auxiliary_losses: Whether to use losses from non-root subsystems</span>
+<span class="sd">            (default: True).</span>
+<span class="sd">        aux_reduction: ``"sum"`` (the paper) or ``"mean"`` over the non-root</span>
+<span class="sd">            subsystem MSEs; required, keyword-only.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">,</span> <span class="n">use_auxiliary_losses</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Set the auxiliary-loss weight, toggle, and MSE criterion.</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">,</span>
+        <span class="n">use_auxiliary_losses</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">aux_reduction</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"sum"</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">],</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Set the auxiliary-loss weight, toggle, reduction and MSE criterion.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            alpha: Weight applied to the auxiliary subsystem losses.</span>
 <span class="sd">            use_auxiliary_losses: Whether to include non-root subsystem losses.</span>
+<span class="sd">            aux_reduction: How the non-root subsystem MSEs combine, ``"sum"`` or</span>
+<span class="sd">                ``"mean"``.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If ``aux_reduction`` is neither ``"sum"`` nor ``"mean"``.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">aux_reduction</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"sum"</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"aux_reduction must be 'sum' or 'mean', got </span><span class="si">{</span><span class="n">aux_reduction</span><span class="si">!r}</span><span class="s2">"</span>
+            <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">use_auxiliary_losses</span> <span class="o">=</span> <span class="n">use_auxiliary_losses</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aux_reduction</span> <span class="o">=</span> <span class="n">aux_reduction</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_shape</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Refuse an output whose shape differs from the target's (no broadcast)."""</span>
+        <span class="k">if</span> <span class="n">output</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">target</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"DCellLoss: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> has shape </span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s2"> but the target "</span>
+                <span class="sa">f</span><span class="s2">"has shape </span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s2">; shapes must match exactly"</span>
+            <span class="p">)</span>
 
 <div class="viewcode-block" id="DCellLoss.forward">
 <a class="viewcode-back" href="../../../generated/torchcell.losses.dcell.DCellLoss.html#torchcell.losses.dcell.DCellLoss.forward">[docs]</a>
@@ -161,17 +209,23 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">predictions</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">outputs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">target</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""</span>
-<span class="sd">        Compute the loss for DCellNew outputs.</span>
+<span class="sd">        Compute the loss for DCell outputs.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            predictions: Primary predictions tensor from the model (root output)</span>
-<span class="sd">            outputs: Dictionary of all model outputs including subsystem states</span>
-<span class="sd">            target: Target values to predict</span>
+<span class="sd">            outputs: Model outputs; ``linear_outputs`` maps term keys to head</span>
+<span class="sd">                outputs and ``root_key`` names the root's own key</span>
+<span class="sd">            target: Target values to predict, the same shape as ``predictions``</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Tuple of (total_loss, loss_components) where loss_components is a dictionary</span>
 <span class="sd">            containing the primary_loss, auxiliary_loss, and weighted_auxiliary_loss.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If a prediction or counted head differs in shape from the</span>
+<span class="sd">                target, or ``linear_outputs`` is given without ``root_key``.</span>
 <span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_shape</span><span class="p">(</span><span class="s2">"predictions"</span><span class="p">,</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
         <span class="c1"># Primary loss on main predictions</span>
         <span class="n">primary_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">criterion</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
 
@@ -192,28 +246,30 @@
 
         <span class="c1"># Get all linear outputs from subsystems</span>
         <span class="n">linear_outputs</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"linear_outputs"</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="k">if</span> <span class="n">linear_outputs</span> <span class="ow">and</span> <span class="s2">"root_key"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">outputs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"DCellLoss: outputs has 'linear_outputs' but no 'root_key'; the "</span>
+                <span class="s2">"model must declare which head is the root"</span>
+            <span class="p">)</span>
 
-        <span class="c1"># Compute auxiliary losses on non-root subsystems</span>
+        <span class="c1"># The root is skipped by its declared key and the GO:ROOT alias only</span>
+        <span class="n">root_keys</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"GO:ROOT"</span><span class="p">,</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"root_key"</span><span class="p">)}</span>
         <span class="n">auxiliary_losses</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">subsystem_name</span><span class="p">,</span> <span class="n">subsystem_output</span> <span class="ow">in</span> <span class="n">linear_outputs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="c1"># Skip the root output since it's the same as predictions</span>
-            <span class="c1"># The is_root check is more robust than exact equality</span>
-            <span class="n">is_root</span> <span class="o">=</span> <span class="n">subsystem_name</span> <span class="o">==</span> <span class="s2">"GO:ROOT"</span> <span class="ow">or</span> <span class="n">torch</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span>
-                <span class="n">subsystem_output</span><span class="p">,</span> <span class="n">predictions</span>
-            <span class="p">)</span>
-            <span class="k">if</span> <span class="n">is_root</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">subsystem_name</span> <span class="ow">in</span> <span class="n">root_keys</span><span class="p">:</span>
                 <span class="k">continue</span>
-
-            <span class="c1"># Add loss for this subsystem</span>
-            <span class="n">aux_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">criterion</span><span class="p">(</span><span class="n">subsystem_output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-            <span class="n">auxiliary_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aux_loss</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_check_shape</span><span class="p">(</span><span class="n">subsystem_name</span><span class="p">,</span> <span class="n">subsystem_output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+            <span class="n">auxiliary_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">criterion</span><span class="p">(</span><span class="n">subsystem_output</span><span class="p">,</span> <span class="n">target</span><span class="p">))</span>
 
         <span class="c1"># If no auxiliary losses, return only primary loss</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">auxiliary_losses</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">primary_loss</span><span class="p">,</span> <span class="n">loss_components</span>
 
         <span class="c1"># Combine losses with weight alpha</span>
-        <span class="n">auxiliary_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">auxiliary_losses</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">stacked</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">auxiliary_losses</span><span class="p">)</span>
+        <span class="n">auxiliary_loss</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">stacked</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">aux_reduction</span> <span class="o">==</span> <span class="s2">"sum"</span> <span class="k">else</span> <span class="n">stacked</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="p">)</span>
         <span class="n">weighted_auxiliary_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">auxiliary_loss</span>
         <span class="n">total_loss</span> <span class="o">=</span> <span class="n">primary_loss</span> <span class="o">+</span> <span class="n">weighted_auxiliary_loss</span>
 

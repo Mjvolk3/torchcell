@@ -336,9 +336,11 @@
             <span class="c1"># This avoids redundant forward pass</span>
             <span class="n">outputs_dict</span> <span class="o">=</span> <span class="n">representations</span>
 
-            <span class="c1"># Pass to the loss function</span>
+            <span class="c1"># DCellLoss refuses to broadcast: the heads are [B], so the root</span>
+            <span class="c1"># prediction and the target go in as [B] too (issue #554). The [B, 1]</span>
+            <span class="c1"># tensors above are kept for the metrics and plots, which flatten them.</span>
             <span class="n">loss_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_func</span><span class="p">(</span>
-                <span class="n">predictions</span><span class="p">,</span> <span class="n">outputs_dict</span><span class="p">,</span> <span class="n">gene_interaction_vals</span>
+                <span class="n">predictions</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">outputs_dict</span><span class="p">,</span> <span class="n">gene_interaction_vals</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
             <span class="p">)</span>
 
             <span class="c1"># Handle the tuple return format (loss, loss_dict)</span>

@@ -117,7 +117,7 @@
 <span></span><span class="sd">"""Lightning training task for DCell graph-based fitness regression."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">cast</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">lightning</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">L</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
@@ -162,6 +162,8 @@
         <span class="n">weight_decay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">train_wt_diff</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">aux_reduction</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"sum"</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">],</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Set up models, loss, optimizer config, and metric collections.</span>
@@ -175,6 +177,8 @@
 <span class="sd">            weight_decay: Adam weight decay.</span>
 <span class="sd">            batch_size: Batch size used for logging.</span>
 <span class="sd">            train_wt_diff: Whether to train on wild-type differences.</span>
+<span class="sd">            aux_reduction: ``DCellLoss`` reduction of the non-root subsystem MSEs,</span>
+<span class="sd">                ``"sum"`` (Ma et al. 2018) or ``"mean"``; required.</span>
 <span class="sd">            **kwargs: Additional keyword arguments.</span>
 
 <span class="sd">        Raises:</span>
@@ -200,7 +204,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">x_name</span> <span class="o">=</span> <span class="s2">"x"</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">x_batch_name</span> <span class="o">=</span> <span class="s2">"batch"</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">loss</span> <span class="o">=</span> <span class="n">DCellLoss</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loss</span> <span class="o">=</span> <span class="n">DCellLoss</span><span class="p">(</span><span class="n">aux_reduction</span><span class="o">=</span><span class="n">aux_reduction</span><span class="p">)</span>
 
         <span class="c1"># optimizer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span> <span class="o">=</span> <span class="n">learning_rate</span>
@@ -269,7 +273,9 @@
 <span class="sd">        """</span>
         <span class="n">linear_outputs</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">out</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">out</span> <span class="ow">in</span> <span class="n">y_hat</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
         <span class="n">loss</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss</span><span class="p">(</span>
-            <span class="n">linear_outputs</span><span class="p">[</span><span class="s2">"GO:ROOT"</span><span class="p">],</span> <span class="p">{</span><span class="s2">"linear_outputs"</span><span class="p">:</span> <span class="n">linear_outputs</span><span class="p">},</span> <span class="n">y</span>
+            <span class="n">linear_outputs</span><span class="p">[</span><span class="s2">"GO:ROOT"</span><span class="p">],</span>
+            <span class="p">{</span><span class="s2">"linear_outputs"</span><span class="p">:</span> <span class="n">linear_outputs</span><span class="p">,</span> <span class="s2">"root_key"</span><span class="p">:</span> <span class="s2">"GO:ROOT"</span><span class="p">},</span>
+            <span class="n">y</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span>
 

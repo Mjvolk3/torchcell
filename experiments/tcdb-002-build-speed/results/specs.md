@@ -14,6 +14,8 @@
 | 2934 | r8 | bloom-alone | c3f6b940 | kg_bench_bloom | 32 | 128 | 25000 | true | true | 0.02 | 48 |  |  |  | 834.7 | 1,131 | 83.9 | 4.5 | 4230530 | 12910969040 | COMPLETED |  |
 | 2998 | r10 | expr-bytes | a0b30e3b | kg_bench_expr | 16 | 64 | 25000 | true | true | 0.02 | 128 |  |  | 256 | 974.3 | 1,031 | 43.6 | 2.7 | 173100 | 12658295605 | COMPLETED |  |
 | 2997 | r10 | expr-inproc | a0b30e3b | kg_bench_expr | 16 | 64 | 25000 | true | true | 0.02 | 128 |  |  |  | 2,320.1 | 2,382 | 26.3 | 1.0 | 173100 | 12658347316 | COMPLETED |  |
+| 3083 | r12 | noref-g64-48 | 50da7dc4 | kg_bench_ladder | 48 | 192 | 25000 | true | true | 0.02 | 128 | 64 | true |  | 477.2 | 557 | 47.6 | 19.0 | 29736985 | 13431707091 | COMPLETED | adapters.pool_memory_fraction=0.8 |
+| 3082 | r12 | noref-g64-24 | 50da7dc4 | kg_bench_ladder | 24 | 96 | 25000 | true | true | 0.02 | 128 | 64 | true |  | 496.5 | 582 | 36.7 | 17.2 | 29736985 | 13431708001 | COMPLETED | adapters.pool_memory_fraction=0.8 |
 | 3070 | r11 | mem60-48 | 33e0c048 | kg_bench_ladder | 48 | 192 | 25000 | true | true | 0.02 | 128 | 64 | true |  | 582.1 | 644 | 141.5 | 17.6 | 29736985 | 13431710999 | COMPLETED | adapters.pool_memory_fraction=0.6 |
 | 2881 | r5 | fast-writer | 60b09ac6 | kg_bench_ladder | 48 | 192 | 25000 | true | true |  |  |  |  |  | 591.3 | 660 | 115.0 | 16.0 | 29736977 | 39275464550 | COMPLETED |  |
 | 2882 | r5 | fast-writer-io0.02 | 60b09ac6 | kg_bench_ladder | 48 | 192 | 25000 | true | true | 0.02 |  |  |  |  | 596.3 | 660 | 124.5 | 15.7 | 29736977 | 39275464647 | COMPLETED |  |

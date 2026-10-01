@@ -760,3 +760,26 @@ scale with workers (the parent's single writer, or the per-rebuild fork cost at 
 parent size, unmeasured here). With the retention fixed, worker memory no longer
 grows with the group, so the recycle frequency can fall to whatever the rebuild cost
 justifies; round 12 measures that.
+
+### Round 12: tasks without the reference index, groups of 64 (commit 50da7dc4)
+
+Same ladder, completion order, `chunks_per_worker=64`, `pool_memory_fraction=0.8` as
+a guard (it never fired: 0 recycles in either arm).
+
+| job | box | wall | peak GB | mean cores | share of samples under 4 cores | mean parent cores | rows |
+|--:|---|--:|--:|--:|--:|--:|--:|
+| 3066 (r10, g2) | 24 / 96 | 644 s | 62.0 | 11.0 | | | 29,736,985 |
+| 3082 (r12, g64) | 24 / 96 | 497 s | 36.4 | 17.2 | 0.21 | 0.72 | 29,736,985 |
+| 3069 (r11, g2) | 48 / 192 | 604 s | 103.8 | 10.5 | | | 29,736,985 |
+| 3083 (r12, g64) | 48 / 192 | 477 s | 47.3 | 19.0 | 0.18 | 0.77 | 29,736,985 |
+
+<https://wandb.ai/zhao-group/tcdb/runs/hda7kpk5>
+<https://wandb.ai/zhao-group/tcdb/runs/iygtmd63>
+
+Dropping the reference index from the tasks and rebuilding the pool 32x less often
+is worth 23% at 24 CPUs and 21% at 48, and halves peak memory (62 to 36 GB, 104 to
+47 GB). Against the production path (job 2856, 5,496 s at 48 CPUs) the ladder is now
+11.5x faster at 48 CPUs and 11.1x at 24. The 48-CPU box runs at 19 of 48 cores with
+the parent at 0.77 of one core, so the next bound is the parent's single consumer
+(unpickling results, dedup, appends): the next measurement is a py-spy profile of
+the parent on this arm (`PROFILE=1`).

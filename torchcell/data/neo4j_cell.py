@@ -1342,6 +1342,11 @@ def main_incidence() -> None:
         break
 
 
+def _label_values(label_df: pd.DataFrame, label: str) -> np.ndarray[Any, Any]:
+    """Return the non-missing values of one label column as a numpy array."""
+    return label_df[label].dropna().to_numpy()
+
+
 def main_transform_standardization() -> None:
     """Test standardization of labels using LabelNormalizationTransform with metabolic network."""
     import os.path as osp
@@ -1453,9 +1458,7 @@ def main_transform_standardization() -> None:
 
     # Print statistics of original data using dataset.label_df
     for label in labels:
-        values = cast(
-            "np.ndarray[Any, Any]", dataset.label_df[label].dropna().values
-        )  # pragma: no cover - demo main, needs a built dataset
+        values = _label_values(dataset.label_df, label)
         print(f"\n{label} statistics (original):")
         print(f"  Count: {len(values)}")
         print(f"  Min: {values.min():.4f}")

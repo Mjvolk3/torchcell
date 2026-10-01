@@ -273,3 +273,5 @@ Pinned in [[tests.torchcell.data.test_neo4j_cell_process]]: `overwrite_intermedi
 ## 2026.09.30 - min_max_normalize_dataset docstring names both ESM2 layouts
 
 The docstring said `esm2_*` stores the collated embedding FLAT as `[n_genes * D]`. That holds only for ESM2 stores built before PR #552; stores built since are `[n_genes, D]` like every other embedding dataset. Reworded to say so (issue #555). The code already branches on `embeddings.dim() == 1` and handles both layouts; no behavior changed.
+
+The standardization demo (`main_transform_standardization`) read each label column with a bare `cast(np.ndarray, label_df[label].dropna().values)`, which strict mypy flags (`type-arg`) once the file is in a diff. It now calls a module-level helper, `_label_values(label_df, label)`, which returns `label_df[label].dropna().to_numpy()` typed `np.ndarray[Any, Any]` with no cast. Test: `test_label_values_drops_missing_rows_and_returns_a_float_array` in [[tests.torchcell.data.test_neo4j_cell]].

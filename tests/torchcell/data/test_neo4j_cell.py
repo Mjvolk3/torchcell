@@ -38,6 +38,7 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import networkx as nx
+import numpy as np
 import pandas as pd
 import pytest
 import torch
@@ -51,6 +52,7 @@ from torchcell.data.neo4j_cell import (
     Neo4jCellDataset,
     ParsedGenome,
     ProcessingStep,
+    _label_values,
     create_embedding_graph,
     create_graph_from_gene_set,
     min_max_normalize_dataset,
@@ -143,6 +145,21 @@ def test_normalize_tensor_row_does_not_reach_a_unit_sum_below_one() -> None:
         [torch.tensor([1.0, 3.0]), torch.tensor([9.0, 9.0])]
     )
     assert [row.tolist() for row in only_first] == [[0.0, 1.0]]
+
+
+def test_label_values_drops_missing_rows_and_returns_a_float_array() -> None:
+    """``_label_values`` returns the label column's non-missing values, in row order,
+    as a float64 numpy array (the standardization demo reads its statistics from it).
+    """
+    label_df = pd.DataFrame(
+        {"fitness": [0.25, float("nan"), 1.5], "gene_interaction": [0.0, 0.1, 0.2]}
+    )
+
+    values = _label_values(label_df, "fitness")
+
+    assert type(values) is np.ndarray
+    assert values.dtype == np.float64
+    assert values.tolist() == [0.25, 1.5]
 
 
 def test_min_max_normalize_dataset_rewrites_the_first_key_in_place() -> None:

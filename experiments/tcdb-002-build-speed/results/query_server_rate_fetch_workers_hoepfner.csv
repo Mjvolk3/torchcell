@@ -1,0 +1,3 @@
+dataset,fetch_workers,prefix_length,records,seconds,records_per_s,identical_to_one_session,parent_peak_gb,worker_peak_gb
+EnvChemgenHoepfner2014Dataset,0,0,3124319,2044.3,1528.3,True,33.81,0.0
+EnvChemgenHoepfner2014Dataset,8,2,3124319,471.7,6623.4,True,33.82,1.33

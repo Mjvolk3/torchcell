@@ -344,6 +344,16 @@
         <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">reconcile_systematic_names</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">,</span> <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"ORF"</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Ohnuki 2022"</span>
         <span class="p">)</span>
+        <span class="c1"># One strain per target ORF (0 repeats among the 1982 released rows): a repeat</span>
+        <span class="c1"># would store two records of one genotype, so it is refused, not stored twice.</span>
+        <span class="n">repeated</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+            <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span><span class="o">.</span><span class="n">duplicated</span><span class="p">(),</span> <span class="s2">"systematic_gene_name"</span>
+        <span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">repeated</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Ohnuki 2022 </span><span class="si">{</span><span class="n">MUTANT_FILE</span><span class="si">}</span><span class="s2"> lists </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">repeated</span><span class="p">)</span><span class="si">}</span><span class="s2"> target ORF(s) more "</span>
+                <span class="sa">f</span><span class="s2">"than once after name reconciliation: </span><span class="si">{</span><span class="n">repeated</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
 
         <span class="c1"># Drop the single strain with missing CalMorph values (never impute).</span>
         <span class="n">has_all</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="p">[</span><span class="n">feature_cols</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -419,7 +429,19 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_wt_reference</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">df_wt</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">feature_cols</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CalMorphPhenotype</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Aggregate the 749 replicate 3Delta profiles into one mean reference phenotype."""</span>
+<span class="w">        </span><span class="sd">"""Aggregate the 749 replicate 3Delta profiles into one mean reference phenotype.</span>
+
+<span class="sd">        A blank reference cell is refused, as a blank mutant cell drops its strain: the</span>
+<span class="sd">        reference mean is never taken over a subset of the replicates (0 blank cells in</span>
+<span class="sd">        the released 749 x 501 table).</span>
+<span class="sd">        """</span>
+        <span class="n">blank</span> <span class="o">=</span> <span class="n">df_wt</span><span class="p">[</span><span class="n">feature_cols</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">blank</span> <span class="o">=</span> <span class="n">blank</span><span class="p">[</span><span class="n">blank</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">blank</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Ohnuki 2022 </span><span class="si">{</span><span class="n">WT_FILE</span><span class="si">}</span><span class="s2"> has blank reference cell(s) "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">blank</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span><span class="si">}</span><span class="s2">; the 3Delta reference mean is never imputed"</span>
+            <span class="p">)</span>
         <span class="n">wt_means</span> <span class="o">=</span> <span class="p">{</span>
             <span class="n">col</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">df_wt</span><span class="p">[</span><span class="n">col</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"raise"</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
             <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">feature_cols</span>

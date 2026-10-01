@@ -180,7 +180,7 @@ def test_good_dataset_emits_twelve_results_in_order_and_passes() -> None:
         "(no resolver supplied: spelling checked, annotation not)"
     )
     assert _result(report, "uncertainty_sanity").message == (
-        "0 labelled uncertainties, none a zero dispersion; 0 records report "
+        "0 labeled uncertainties, none a zero dispersion; 0 records report "
         "n_samples >= 2 with no uncertainty"
     )
     assert _result(report, "media_membership").details["matched_media"] == {
@@ -319,9 +319,9 @@ def test_uncertainty_sanity_counts_replicated_records_without_an_uncertainty() -
     assert sanity.passed is True
     assert sanity.details["n_no_uncertainty_with_replicates"] == 3
     assert sanity.details["n_checked"] == 0
-    # verbatim from common.py, including its spelling of "labelled"
+    # verbatim from common.py, American spelling since issue #541
     assert sanity.message == (
-        "0 labelled uncertainties, none a zero dispersion; 3 records report "
+        "0 labeled uncertainties, none a zero dispersion; 3 records report "
         "n_samples >= 2 with no uncertainty"
     )
 

@@ -326,9 +326,10 @@ def _sites() -> dict[str, oc.AdapterNodeSite]:
 
 def test_adapter_node_sites_read_each_properties_form() -> None:
     """A dict literal and a local dict give sorted keys; a helper call resolves through
-    the module-wide table of dict-returning functions; a parameter, an unknown helper
-    and a ``dict(...)`` call are unreadable (None); no ``properties`` gives ``[]``; a
-    non-literal label is None; the edge is not a node site.
+    the module-wide table of dict-returning functions; a parameter, an unknown helper,
+    a ``dict(...)`` call and a dict literal with a computed key are unreadable (None);
+    no ``properties`` gives ``[]``; a non-literal label is None; the edge is not a node
+    site.
     """
     sites = oc.adapter_node_sites(_ADAPTER)
     assert [site.lineno for site in sites] == sorted(site.lineno for site in sites)
@@ -341,7 +342,7 @@ def test_adapter_node_sites_read_each_properties_form() -> None:
         "parameter": ("param", None),
         "helper": ("helper", ["a", "z"]),
         "missing_helper": ("gone", None),
-        "computed_key": ("computed", []),
+        "computed_key": ("computed", None),
         "dynamic_label": (None, ["a"]),
         "bare": ("bare", []),
         "called": ("called", None),
@@ -349,23 +350,30 @@ def test_adapter_node_sites_read_each_properties_form() -> None:
     assert _sites()["literal"].lineno == 8
 
 
-def test_a_computed_key_reads_as_no_properties_and_yields_a_false_mismatch() -> None:
-    """Finding: ``_dict_keys`` returns ``[]`` for a dict with a non-literal key
-    (``ontology_checks.py:503-504``), not None, so the site is read as emitting nothing
-    instead of being skipped as unreadable, and every declared property of its class is
-    reported as ``declared_not_emitted``. Pinned until the reader returns None there.
+def test_a_computed_key_reads_as_unreadable_and_is_skipped() -> None:
+    """A dict literal with a non-literal key is unreadable, so no mismatch is reported.
+
+    Contract (issue #536): ``_dict_keys`` returns None for ``{k: 1, "a": 2}``, the same
+    outcome as any properties form the reader cannot resolve, and
+    ``adapter_property_mismatches`` skips the site instead of reporting the declared
+    ``a`` and ``k`` as never emitted. The literal-key ``literal`` site beside it is still
+    compared, so the skip is specific to the unreadable site.
     """
-    site = _sites()["computed_key"]
+    sites = _sites()
     mismatches = oc.adapter_property_mismatches(
-        [site], {"computed": _entry("node", properties=["a", "k"])}
+        [sites["computed_key"], sites["literal"]],
+        {
+            "computed": _entry("node", properties=["a", "k"]),
+            "gene": _entry("node", properties=["a"]),
+        },
     )
     assert [m.model_dump() for m in mismatches] == [
         {
-            "node_label": "computed",
-            "function": "computed_key",
-            "lineno": site.lineno,
-            "emitted_not_declared": [],
-            "declared_not_emitted": ["a", "k"],
+            "node_label": "gene",
+            "function": "literal",
+            "lineno": 8,
+            "emitted_not_declared": ["b"],
+            "declared_not_emitted": [],
         }
     ]
 
@@ -626,10 +634,10 @@ def test_join_key_audit_counts_each_partial_record_exactly() -> None:
     component, an unidentified ``agent`` and a perturbation with no compound. r3 names a
     medium without a base and has neither temperature nor gap. r4 is two empty mappings.
 
-    Finding: ``n_with_every_compound_identified`` counts a record with no compounds at
-    all (``ontology_checks.py:889-898`` starts from ``resolved = True``), so r3 and the
-    empty r4 raise it to 3 of 4. Pinned until the census separates "no compounds" from
-    "all identified".
+    Contract (issue #536): a record naming no compound is counted under
+    ``n_with_no_compounds`` (r3 and the empty r4), never as every compound identified;
+    ``n_with_every_compound_identified`` is r1 alone, and r2 (an unidentified agent)
+    is in neither count.
     """
     r1 = (
         {
@@ -690,7 +698,8 @@ def test_join_key_audit_counts_each_partial_record_exactly() -> None:
         "n_with_media_base": 2,
         "n_with_temperature": 1,
         "n_with_temperature_gap": 1,
-        "n_with_every_compound_identified": 3,
+        "n_with_no_compounds": 2,
+        "n_with_every_compound_identified": 1,
         "distinct_genomes": ["S. cerevisiae|S288C|haploid"],
         "distinct_media_bases": ["SC", "YPD"],
         "distinct_compound_identities": [

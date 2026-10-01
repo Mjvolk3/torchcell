@@ -5,12 +5,22 @@
 """Core data containers mapping experiments to their shared references."""
 
 import hashlib
+import json
 from collections.abc import Iterator
 from typing import Any
 
 from pydantic import field_validator
 
 from torchcell.datamodels import ExperimentReferenceType, ModelStrict
+
+
+class DuplicateReferenceError(ValueError):
+    """Two entries of a ``ReferenceIndex`` carry equal references.
+
+    Every experiment belongs to exactly one reference, so a reference split over two
+    entries is one reference's members stored twice; ``ExperimentReferenceIndex.combine``
+    is the way to merge them before building the container.
+    """
 
 
 class ExperimentReferenceIndex(ModelStrict):
@@ -110,13 +120,30 @@ class ReferenceIndex(ModelStrict):
     def validate_data(
         cls, v: list[ExperimentReferenceIndex]
     ) -> list[ExperimentReferenceIndex]:
-        """Check the member-index sets partition ``range(N)`` exactly (cover once, no gap)."""
+        """Check the member-index sets partition ``range(N)`` exactly (cover once, no gap)
+        and that no reference appears in two entries (``DuplicateReferenceError``).
+
+        References are compared by value: the class name plus the key-sorted JSON dump, so
+        two separately built equal references collide as ``==`` says they are equal.
+        """
         all_indices = [i for eri in v for i in eri.member_indices]
         if sorted(all_indices) != list(range(len(all_indices))):
             raise ValueError(
                 "member_indices across references must partition range(N) exactly "
                 "(every experiment covered by exactly one reference, no gaps/overlaps)"
             )
+        first_entry: dict[str, int] = {}
+        for position, eri in enumerate(v):
+            key = type(eri.reference).__name__ + json.dumps(
+                eri.reference.model_dump(mode="json"), sort_keys=True
+            )
+            if key in first_entry:
+                raise DuplicateReferenceError(
+                    f"entries {first_entry[key]} and {position} carry equal references; "
+                    "each reference must appear in exactly one entry (merge them with "
+                    "ExperimentReferenceIndex.combine)"
+                )
+            first_entry[key] = position
         return v
 
 

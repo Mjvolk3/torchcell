@@ -11,3 +11,7 @@ created: 1790773225511
 New file, sixteen tests, 99 percent alone. A fake schema module of plain `BaseModel` classes is swapped in for `oc.s` (no real schema class is subclassed): orphans, lanes, back edges, enum collisions, the phenotype label map, the three adapter AST readers, media checks on a patched library, collisions by name and by InChIKey, the join-key census.
 
 Findings: a non-literal dict key reads as "no properties" instead of "unreadable", producing a false mismatch (lines 503-504); a record with no compounds counts as "every compound identified" (889-898).
+
+## 2026.10.01 - Findings retired (issue #536)
+
+A computed dict key now reads as unreadable (None) and the site is skipped by `adapter_property_mismatches`; the census asserts `n_with_no_compounds` 2 and `n_with_every_compound_identified` 1.

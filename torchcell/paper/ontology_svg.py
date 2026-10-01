@@ -424,7 +424,18 @@ def _card_svg(graph: OntologyGraph, card: Card, compact: bool = False) -> str:
 
 
 def _inheritance_svg(graph: OntologyGraph, layout: Layout) -> str:
-    """UML generalisation: elbow from the child's left edge back to the parent."""
+    """UML generalisation: elbow from the child back to the parent's facing edge.
+
+    A parent left of the child (the tree layout inside a lane) is reached from the
+    child's left edge, turning in the tree gutter ``GAP_X / 2`` right of the parent. A
+    parent wholly right of the child (a base class in another lane, such as
+    ``ProvenanceGapMixin``) is reached from the child's RIGHT edge into the parent's
+    LEFT edge, with the head pointing right, turning ``LANE_PAD / 2`` left of the
+    parent, inside the lane padding that the layout keeps free of cards; the line then
+    crosses neither card. Its horizontal leg can still pass under cards that lie
+    between the two (the child's own subtree, a whole lane), which the opaque cards
+    hide; routing around them is not attempted.
+    """
     parts: list[str] = []
     for name, cls in graph.classes.items():
         if not cls.parent or cls.parent not in layout.cards or name not in layout.cards:
@@ -432,17 +443,22 @@ def _inheritance_svg(graph: OntologyGraph, layout: Layout) -> str:
         child = layout.cards[name]
         parent = layout.cards[cls.parent]
         stroke, _ = _lane_colors(cls.lane)
-        x1, y1 = parent.x + parent.w, parent.cy
-        x2, y2 = child.x, child.cy
-        mid = x1 + GAP_X / 2
+        y1, y2 = parent.cy, child.cy
+        if parent.x >= child.x + child.w:
+            x1, x2, head = parent.x, child.x + child.w, -7.0
+            mid = x1 - LANE_PAD / 2
+        else:
+            x1, x2, head = parent.x + parent.w, child.x, 7.0
+            mid = x1 + GAP_X / 2
         parts.append(
             f'<path class="inherit" d="M{x2:.1f} {y2:.1f} H{mid:.1f} '
-            f'V{y1:.1f} H{x1 + 7:.1f}" fill="none" stroke="{stroke}" '
+            f'V{y1:.1f} H{x1 + head:.1f}" fill="none" stroke="{stroke}" '
             f'stroke-width="0.9" stroke-opacity="0.85"/>'
         )
         parts.append(
             f'<path class="inherit-head" d="M{x1:.1f} {y1:.1f} '
-            f'l7 -3.4 v6.8 Z" fill="#FFFFFF" stroke="{stroke}" stroke-width="0.9"/>'
+            f'l{head:g} -3.4 v6.8 Z" fill="#FFFFFF" stroke="{stroke}" '
+            f'stroke-width="0.9"/>'
         )
     return "".join(parts)
 
@@ -768,8 +784,11 @@ def render_schematic_svg(
         if abs(yb - ya) < 0.5:
             spine = f"M{xa:.1f} {ya:.1f} H{tip:.1f}"
         else:
-            mid = (xa + xb) / 2
-            r = min(3.0, abs(yb - ya) / 2, (xb - xa) / 2)
+            # The vertical leg sits midway between the source and the arrowhead BASE,
+            # and the radius is capped at half that span, so the last leg (mid + r to
+            # tip) never runs backward under the head.
+            mid = (xa + tip) / 2
+            r = min(3.0, abs(yb - ya) / 2, (tip - xa) / 2)
             sweep_in, sweep_out = (1, 0) if yb > ya else (0, 1)
             step = r if yb > ya else -r
             spine = (

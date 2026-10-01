@@ -622,18 +622,18 @@ class SharedRecordRules:
         )
 
     def _uncertainty_result(self) -> LevelResult:
-        """L2: a labelled dispersion is never exactly 0; unreported ones are counted."""
+        """L2: a labeled dispersion is never exactly 0; unreported ones are counted."""
         passed = self._n_zero_dispersion == 0
         return LevelResult(
             level=Level.L2,
             name="uncertainty_sanity",
             passed=passed,
             message=(
-                f"{self._n_uncertainty_checked} labelled uncertainties, none a zero "
+                f"{self._n_uncertainty_checked} labeled uncertainties, none a zero "
                 f"dispersion; {self._n_unreported_uncertainty} records report "
                 "n_samples >= 2 with no uncertainty"
                 if passed
-                else f"{self._n_zero_dispersion}/{self._n_uncertainty_checked} labelled "
+                else f"{self._n_zero_dispersion}/{self._n_uncertainty_checked} labeled "
                 "uncertainties are a sample dispersion of exactly 0 (a pseudocount "
                 "artifact, not perfect precision)"
             ),
@@ -742,10 +742,15 @@ class SharedRecordRules:
         )
 
     def _gene_containment_results(self, sgd_genes: set[str]) -> list[LevelResult]:
-        """L4: the aggregate containment floor, plus the per-record genome membership."""
+        """L4: the aggregate containment floor, plus the per-record genome membership.
+
+        An empty measured set passes both results vacuously and says so: with no gene
+        perturbation there is no gene to be off the reference, which is the verdict
+        ``current_genome_genes`` already gives the same set.
+        """
         measured = set(self._gene_records)
         missing = sorted(measured - sgd_genes)
-        overlap = len(measured & sgd_genes) / len(measured) if measured else 0.0
+        overlap = len(measured & sgd_genes) / len(measured) if measured else 1.0
         containment = LevelResult(
             level=Level.L4,
             name="gene_containment_sgd",
@@ -753,6 +758,9 @@ class SharedRecordRules:
             message=(
                 f"{overlap:.3f} of {len(measured)} measured genes are S288C reference "
                 f"genes (>= {self.min_containment})"
+                if measured
+                else "no measured genes (the measured gene set is empty); containment "
+                "holds vacuously"
             ),
             details={
                 "n_measured": len(measured),

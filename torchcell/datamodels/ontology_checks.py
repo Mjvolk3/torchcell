@@ -255,7 +255,15 @@ class JoinKeyCensus(BaseModel):
     n_with_media_base: int = 0
     n_with_temperature: int = 0
     n_with_temperature_gap: int = 0
-    n_with_every_compound_identified: int = 0
+    n_with_no_compounds: int = Field(
+        default=0,
+        description="records whose medium and perturbations name no compound at all",
+    )
+    n_with_every_compound_identified: int = Field(
+        default=0,
+        description="records naming at least one compound, every one identified; a "
+        "record with no compound is counted under n_with_no_compounds instead",
+    )
     distinct_genomes: list[str] = Field(default_factory=list)
     distinct_media_bases: list[str] = Field(default_factory=list)
     distinct_compound_identities: list[str] = Field(default_factory=list)
@@ -496,12 +504,18 @@ def phenotype_label_map(schema: dict[str, GraphSchemaEntry]) -> PhenotypeLabelMa
     return result
 
 
-def _dict_keys(node: ast.Dict) -> list[str]:
-    """String keys of a dict literal; a non-literal key makes the site unreadable."""
+def _dict_keys(node: ast.Dict) -> list[str] | None:
+    """Sorted string keys of a dict literal, or None (unreadable).
+
+    A non-literal key (a name, an expression, a ``**`` spread) makes the whole site
+    unreadable, the same outcome as a properties argument this reader cannot resolve:
+    ``[]`` would claim the site emits no properties and report every declared property
+    of its class as never emitted.
+    """
     keys: list[str] = []
     for key in node.keys:
         if not (isinstance(key, ast.Constant) and isinstance(key.value, str)):
-            return []
+            return None
         keys.append(key.value)
     return sorted(keys)
 
@@ -886,6 +900,9 @@ def join_key_audit(
             compound = perturbation.get("compound") or perturbation.get("agent")
             if compound:
                 compounds.append(compound)
+        if not compounds:
+            census.n_with_no_compounds += 1
+            continue
         resolved = True
         for compound in compounds:
             identity = _compound_identity_from_mapping(compound)

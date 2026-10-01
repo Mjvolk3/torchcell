@@ -437,7 +437,7 @@ def test_uncertainty_passes_and_counts_replicated_records_without_uncertainty() 
     assert result.level == Level.L2
     assert result.passed is True
     assert result.message == (
-        "1 labelled uncertainties, none a zero dispersion; 1 records report "
+        "1 labeled uncertainties, none a zero dispersion; 1 records report "
         "n_samples >= 2 with no uncertainty"
     )
     assert result.details == {
@@ -479,7 +479,7 @@ def test_uncertainty_fails_on_a_zero_sample_dispersion_with_examples() -> None:
     result = _run(records)["uncertainty_sanity"]
     assert result.passed is False
     assert result.message == (
-        "2/3 labelled uncertainties are a sample dispersion of exactly 0 "
+        "2/3 labeled uncertainties are a sample dispersion of exactly 0 "
         "(a pseudocount artifact, not perfect precision)"
     )
     assert result.details["examples"] == [
@@ -710,20 +710,32 @@ def test_gene_containment_passes_when_every_gene_is_on_the_genome() -> None:
     )
 
 
-def test_gene_containment_fails_a_dataset_with_no_genes() -> None:
-    """Finding: with ``sgd_genes`` given and no gene perturbations, containment FAILS.
+def test_gene_containment_passes_a_dataset_with_no_genes_vacuously() -> None:
+    """With ``sgd_genes`` given and no gene perturbations, both L4 results pass.
 
-    ``overlap`` is defined as 0.0 for an empty measured set (common.py line 748), so
-    ``gene_containment_sgd`` reports "0.000 of 0" as a failure while
-    ``current_genome_genes`` passes the same empty set. Pinned until the empty case is
-    decided (vacuous pass or explicit refusal).
+    Contract (issue #541): the empty measured set is vacuously contained, the same
+    verdict ``current_genome_genes`` gives it, and the containment message names the
+    empty set instead of printing "0.000 of 0". ``overlap`` is 1.0 so the floor holds at
+    any ``min_containment`` up to 1.
     """
-    results = _run([_record()], sgd_genes={"YA"})
-    assert results["gene_containment_sgd"].passed is False
-    assert results["gene_containment_sgd"].message == (
-        "0.000 of 0 measured genes are S288C reference genes (>= 0.9)"
+    results = _run([_record()], sgd_genes={"YA"}, min_containment=1.0)
+    containment = results["gene_containment_sgd"]
+    assert containment.passed is True
+    assert containment.message == (
+        "no measured genes (the measured gene set is empty); containment holds "
+        "vacuously"
     )
-    assert results["current_genome_genes"].passed is True
+    assert containment.details == {
+        "n_measured": 0,
+        "n_in_sgd": 0,
+        "overlap": 1.0,
+        "missing_examples": [],
+    }
+    off = results["current_genome_genes"]
+    assert off.passed is True
+    assert off.message == (
+        "every one of the 0 measured systematic names is a gene of the current genome"
+    )
 
 
 def test_results_order_and_levels_with_and_without_sgd_genes() -> None:

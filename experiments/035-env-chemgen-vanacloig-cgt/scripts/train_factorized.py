@@ -271,6 +271,15 @@ def build_encoder(cfg: FactorizedConfig, cell_graph):
     model_cfg = OmegaConf.to_container(raw, resolve=True)["model"]  # type: ignore[index]
     assert cfg.cgt_dim % cfg.cgt_heads == 0, "cgt_dim must be divisible by cgt_heads"
     model_cfg["learnable_embedding"]["size"] = cfg.cgt_dim
+    # the prior sits on layer 1 (python index) in default.yaml; a one-layer encoder
+    # has no layer 1, so without this it would train with no prior at all. Each head's
+    # own lambda is 1 and the single scale is cfg.cgt_lambda in train_seed.
+    reg = model_cfg["graph_regularization"]
+    reg["graph_reg_layer"] = min(1, cfg.cgt_layers - 1)
+    for head in reg["regularized_heads"].values():
+        head["layer"] = reg["graph_reg_layer"]
+        head["lambda"] = 1.0
+    assert len(reg["regularized_heads"]) <= cfg.cgt_heads, "fewer heads than graphs"
     return CellGraphTransformer(
         gene_num=model_cfg["gene_num"],
         hidden_channels=cfg.cgt_dim,
@@ -404,7 +413,7 @@ def train_seed(
             record = {
                 "step": step + 1,
                 "epoch": (step + 1) / steps_per_epoch,
-                "train_loss": float(loss),
+                "train_loss": float(loss.detach()),
                 "penalty": float(penalty),
                 "grad_norm": float(grad_norm),
                 "lr": float(scheduler.get_last_lr()[0]),

@@ -1,0 +1,33 @@
+# Round 8, GPU: train the cell graph transformer gene encoder to saturation, and
+# separate the training budget from the graph prior's weight.
+#
+# Round 2 ran 20 epochs at prior weight 1 and its validation curve was still rising at
+# the last step. The round-8 smoke (slurm 3071) measured the prior at 23,000 to 47,000
+# against a data loss of 0.6 and a gradient norm of 7,000 to 8,500 under a clip of 10,
+# so at weight 1 the task gradient is scaled down by about 700. Arms: layers in
+# {1, 2, 8} at 9 heads, prior weight in {0, 0.001, 1 (round 2's)}; 200 epochs (one epoch
+# = one pass over the 3,598 strains, each against all training compounds, 128 strains per
+# step), evaluated every epoch with validation, held-out and train curves logged. One fold
+# per config so folds run as parallel processes; the comparison pools <name>_f<k> under
+# <name>. Fold seed 0, one seed.
+#
+# PARALLEL=2 launcher: even positions are worker 0 (the 8-layer chain, 31 GB on the card),
+# odd positions worker 1 (the 1- and 2-layer chain, 8 to 12 GB). This file is card A.
+- {name: L8_lam0_f0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [0], cgt_layers: 8, cgt_heads: 9, cgt_lambda: 0.0}
+- {name: L1_lam0_f0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [0], cgt_layers: 1, cgt_heads: 9, cgt_lambda: 0.0}
+- {name: L8_lam0_f1, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [1], cgt_layers: 8, cgt_heads: 9, cgt_lambda: 0.0}
+- {name: L1_lam0_f1, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [1], cgt_layers: 1, cgt_heads: 9, cgt_lambda: 0.0}
+- {name: L8_lam0_f2, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [2], cgt_layers: 8, cgt_heads: 9, cgt_lambda: 0.0}
+- {name: L1_lam0_f2, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [2], cgt_layers: 1, cgt_heads: 9, cgt_lambda: 0.0}
+- {name: L8_lam0_f3, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [3], cgt_layers: 8, cgt_heads: 9, cgt_lambda: 0.0}
+- {name: L1_lam0_f3, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [3], cgt_layers: 1, cgt_heads: 9, cgt_lambda: 0.0}
+- {name: L8_lam0_f4, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [4], cgt_layers: 8, cgt_heads: 9, cgt_lambda: 0.0}
+- {name: L1_lam0_f4, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [4], cgt_layers: 1, cgt_heads: 9, cgt_lambda: 0.0}
+- {name: L8_lam1_f0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [0], cgt_layers: 8, cgt_heads: 9, cgt_lambda: 1.0}
+- {name: L2_lam0_f0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [0], cgt_layers: 2, cgt_heads: 9, cgt_lambda: 0.0}
+- {name: L8_lam1_f1, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [1], cgt_layers: 8, cgt_heads: 9, cgt_lambda: 1.0}
+- {name: L2_lam0_f1, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [1], cgt_layers: 2, cgt_heads: 9, cgt_lambda: 0.0}
+- {name: L8_lam1_f2, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [2], cgt_layers: 8, cgt_heads: 9, cgt_lambda: 1.0}
+- {name: L2_lam0_f2, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [2], cgt_layers: 2, cgt_heads: 9, cgt_lambda: 0.0}
+- {name: L2_lam0_f4, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [4], cgt_layers: 2, cgt_heads: 9, cgt_lambda: 0.0}
+- {name: L2_lam0_f3, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [3], cgt_layers: 2, cgt_heads: 9, cgt_lambda: 0.0}

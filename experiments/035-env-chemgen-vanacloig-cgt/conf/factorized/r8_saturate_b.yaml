@@ -1,0 +1,20 @@
+# Round 8, card B (see r8_saturate_a.yaml): prior weight 0.001 for every depth, and the
+# last two folds of the 8-layer, weight-1 arm. Even positions worker 0 (8-layer chain),
+# odd positions worker 1.
+- {name: L8_lam1e-3_f0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [0], cgt_layers: 8, cgt_heads: 9, cgt_lambda: 0.001}
+- {name: L1_lam1e-3_f0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [0], cgt_layers: 1, cgt_heads: 9, cgt_lambda: 0.001}
+- {name: L8_lam1e-3_f1, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [1], cgt_layers: 8, cgt_heads: 9, cgt_lambda: 0.001}
+- {name: L1_lam1e-3_f1, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [1], cgt_layers: 1, cgt_heads: 9, cgt_lambda: 0.001}
+- {name: L8_lam1e-3_f2, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [2], cgt_layers: 8, cgt_heads: 9, cgt_lambda: 0.001}
+- {name: L1_lam1e-3_f2, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [2], cgt_layers: 1, cgt_heads: 9, cgt_lambda: 0.001}
+- {name: L8_lam1e-3_f3, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [3], cgt_layers: 8, cgt_heads: 9, cgt_lambda: 0.001}
+- {name: L1_lam1e-3_f3, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [3], cgt_layers: 1, cgt_heads: 9, cgt_lambda: 0.001}
+- {name: L8_lam1e-3_f4, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [4], cgt_layers: 8, cgt_heads: 9, cgt_lambda: 0.001}
+- {name: L1_lam1e-3_f4, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [4], cgt_layers: 1, cgt_heads: 9, cgt_lambda: 0.001}
+- {name: L8_lam1_f3, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [3], cgt_layers: 8, cgt_heads: 9, cgt_lambda: 1.0}
+- {name: L2_lam1e-3_f0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [0], cgt_layers: 2, cgt_heads: 9, cgt_lambda: 0.001}
+- {name: L8_lam1_f4, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [4], cgt_layers: 8, cgt_heads: 9, cgt_lambda: 1.0}
+- {name: L2_lam1e-3_f1, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [1], cgt_layers: 2, cgt_heads: 9, cgt_lambda: 0.001}
+- {name: L2_lam1e-3_f3, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [3], cgt_layers: 2, cgt_heads: 9, cgt_lambda: 0.001}
+- {name: L2_lam1e-3_f2, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [2], cgt_layers: 2, cgt_heads: 9, cgt_lambda: 0.001}
+- {name: L2_lam1e-3_f4, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], folds: [4], cgt_layers: 2, cgt_heads: 9, cgt_lambda: 0.001}

@@ -15,3 +15,7 @@ Findings: an unknown temperature schedule silently holds the initial temperature
 ## 2026.10.01 - Two findings retired, two left open by the #529 fix
 
 Retired: an unknown temperature schedule now raises at construction (asserted for `TemperatureScheduler` and `MleDistSupCR`, exact message); switched-off terms and the buffered below-minimum returns log one zero per target column ([0.0] on one column, [0.0, 0.0, 0.0] on three). Left open and still pinned, with the candidate formulas in their docstrings: the doubled current batch at buffer weight 1, and the SupCR factor 1 - 0.5 w on the whole loss.
+
+## 2026.10.01 - Review of PR #584: three-column widths below min_samples
+
+Both buffered below-`min_samples` tests now also assert [0.0, 0.0, 0.0] on a three-column target, so a hard-coded `torch.zeros(1)` at either site fails.

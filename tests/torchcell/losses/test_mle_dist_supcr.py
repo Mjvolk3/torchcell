@@ -249,7 +249,7 @@ def test_the_buffered_dist_loss_counts_the_current_batch_twice() -> None:
 
 def test_buffered_dist_loss_waits_for_min_samples_then_wraps_around() -> None:
     """Buffer size 4, min 4: three samples return (0, [0.0]), one zero per target
-    column; three more wrap, the
+    column ([0.0, 0.0, 0.0] for a three-column target); three more wrap, the
     first new row landing in slot 3 and the next two in slots 0 and 1, pointer
     (3 + 3) mod 4 = 2, total min(6, 4) = 4, and the buffer is full.
     """
@@ -257,6 +257,9 @@ def test_buffered_dist_loss_waits_for_min_samples_then_wraps_around() -> None:
     loss, dims = buffered(PREDICTIONS, TARGETS)
     assert loss.item() == 0.0
     assert dims.tolist() == [0.0]
+    wide = BufferedWeightedDistLoss(buffer_size=4, bandwidth=0.5, min_samples=4)
+    _, wide_dims = wide(PREDICTIONS.repeat(1, 3), TARGETS.repeat(1, 3))
+    assert wide_dims.tolist() == [0.0, 0.0, 0.0]
     assert (int(buffered.buffer_ptr), int(buffered.total_samples)) == (3, 3)
     assert not bool(buffered.buffer_full)
 
@@ -342,7 +345,8 @@ def test_buffered_supcr_scales_the_loss_by_one_minus_half_the_buffer_weight() ->
 
 
 def test_buffered_supcr_waits_wraps_and_takes_the_gathered_batch() -> None:
-    """Below min_samples: (0, [0.0]), one zero per label column. Gathered embeddings
+    """Below min_samples: (0, [0.0]), one zero per label column ([0.0, 0.0, 0.0] for
+    three label columns). Gathered embeddings
     fill the buffer instead of
     the local ones; a second push of 3 into a buffer of 4 holding 3 wraps like the
     distribution buffer (slots 3, 0, 1; pointer 2; full).
@@ -354,6 +358,11 @@ def test_buffered_supcr_waits_wraps_and_takes_the_gathered_batch() -> None:
     loss, dims = cell(EMBEDDINGS, TARGETS, gathered, TARGETS + 5.0)
     assert loss.item() == 0.0
     assert dims.tolist() == [0.0]
+    wide = BufferedWeightedSupCRCell(
+        buffer_size=4, embedding_dim=2, temperature=1.0, min_samples=4
+    )
+    _, wide_dims = wide(EMBEDDINGS, TARGETS.repeat(1, 3))
+    assert wide_dims.tolist() == [0.0, 0.0, 0.0]
     assert cell.embedding_buffer[:3].tolist() == gathered.tolist()
     assert cell.label_buffer[:3].flatten().tolist() == [5.0, 6.0, 7.0]
 

@@ -135,7 +135,9 @@ macOS, and Linux.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="torchcell.utils.FileLockHelper.default_timeout">
 <span class="sig-name descname"><span class="pre">default_timeout</span></span><a class="headerlink" href="#torchcell.utils.FileLockHelper.default_timeout" title="Link to this definition"></a></dt>
-<dd><p>Default timeout in seconds for acquiring locks</p>
+<dd><p>Default timeout in seconds for acquiring locks. A caller’s
+<code class="docutils literal notranslate"><span class="pre">timeout</span></code> replaces it only when given (<code class="docutils literal notranslate"><span class="pre">None</span></code> means the default), so
+<code class="docutils literal notranslate"><span class="pre">timeout=0</span></code> is one non-blocking attempt, as in <code class="docutils literal notranslate"><span class="pre">filelock</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)">float</a></p>
@@ -146,7 +148,8 @@ macOS, and Linux.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="torchcell.utils.FileLockHelper.default_retry_delay">
 <span class="sig-name descname"><span class="pre">default_retry_delay</span></span><a class="headerlink" href="#torchcell.utils.FileLockHelper.default_retry_delay" title="Link to this definition"></a></dt>
-<dd><p>Default delay between retries in seconds</p>
+<dd><p>Default delay between retries in seconds, passed to
+<code class="docutils literal notranslate"><span class="pre">filelock</span></code>’s <code class="docutils literal notranslate"><span class="pre">acquire</span></code> as <code class="docutils literal notranslate"><span class="pre">poll_interval</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)">float</a></p>
@@ -162,8 +165,10 @@ macOS, and Linux.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>file_path</strong> – Path to the JSON file</p></li>
-<li><p><strong>timeout</strong> – Maximum time to wait for lock acquisition</p></li>
-<li><p><strong>retry_delay</strong> – Delay between lock acquisition retries</p></li>
+<li><p><strong>timeout</strong> – Maximum time to wait for lock acquisition (<code class="docutils literal notranslate"><span class="pre">None</span></code>: the class
+default; <code class="docutils literal notranslate"><span class="pre">0</span></code>: a single non-blocking attempt)</p></li>
+<li><p><strong>retry_delay</strong> – Delay between lock acquisition retries (<code class="docutils literal notranslate"><span class="pre">None</span></code>: the class
+default)</p></li>
 <li><p><strong>create_if_missing</strong> – If True, create file with default_data if it doesn’t exist</p></li>
 <li><p><strong>default_data</strong> – Data to write if creating new file (defaults to empty dict)</p></li>
 </ul>
@@ -190,8 +195,10 @@ macOS, and Linux.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>file_path</strong> – Path to the JSON file</p></li>
 <li><p><strong>data</strong> – Data to serialize to JSON</p></li>
-<li><p><strong>timeout</strong> – Maximum time to wait for lock acquisition</p></li>
-<li><p><strong>retry_delay</strong> – Delay between lock acquisition retries</p></li>
+<li><p><strong>timeout</strong> – Maximum time to wait for lock acquisition (<code class="docutils literal notranslate"><span class="pre">None</span></code>: the class
+default; <code class="docutils literal notranslate"><span class="pre">0</span></code>: a single non-blocking attempt)</p></li>
+<li><p><strong>retry_delay</strong> – Delay between lock acquisition retries (<code class="docutils literal notranslate"><span class="pre">None</span></code>: the class
+default)</p></li>
 <li><p><strong>indent</strong> – JSON indentation level</p></li>
 <li><p><strong>ensure_ascii</strong> – If True, escape non-ASCII characters</p></li>
 </ul>
@@ -216,8 +223,10 @@ the result back, all within a single lock acquisition.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>file_path</strong> – Path to the JSON file</p></li>
 <li><p><strong>update_func</strong> – Function that takes current data and returns updated data</p></li>
-<li><p><strong>timeout</strong> – Maximum time to wait for lock acquisition</p></li>
-<li><p><strong>retry_delay</strong> – Delay between lock acquisition retries</p></li>
+<li><p><strong>timeout</strong> – Maximum time to wait for lock acquisition (<code class="docutils literal notranslate"><span class="pre">None</span></code>: the class
+default; <code class="docutils literal notranslate"><span class="pre">0</span></code>: a single non-blocking attempt)</p></li>
+<li><p><strong>retry_delay</strong> – Delay between lock acquisition retries (<code class="docutils literal notranslate"><span class="pre">None</span></code>: the class
+default)</p></li>
 <li><p><strong>create_if_missing</strong> – If True, create file with default_data if it doesn’t exist</p></li>
 <li><p><strong>default_data</strong> – Initial data if creating new file</p></li>
 </ul>
@@ -241,7 +250,8 @@ or need to perform non-JSON operations.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>file_path</strong> – Path to the file to lock</p></li>
-<li><p><strong>timeout</strong> – Maximum time to wait for lock acquisition</p></li>
+<li><p><strong>timeout</strong> – Maximum time to wait for lock acquisition (<code class="docutils literal notranslate"><span class="pre">None</span></code>: the class
+default; <code class="docutils literal notranslate"><span class="pre">0</span></code>: a single non-blocking attempt)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

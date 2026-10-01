@@ -142,12 +142,35 @@
 <span class="sd">    macOS, and Linux.</span>
 
 <span class="sd">    Attributes:</span>
-<span class="sd">        default_timeout: Default timeout in seconds for acquiring locks</span>
-<span class="sd">        default_retry_delay: Default delay between retries in seconds</span>
+<span class="sd">        default_timeout: Default timeout in seconds for acquiring locks. A caller's</span>
+<span class="sd">            ``timeout`` replaces it only when given (``None`` means the default), so</span>
+<span class="sd">            ``timeout=0`` is one non-blocking attempt, as in ``filelock``.</span>
+<span class="sd">        default_retry_delay: Default delay between retries in seconds, passed to</span>
+<span class="sd">            ``filelock``'s ``acquire`` as ``poll_interval``.</span>
 <span class="sd">    """</span>
 
     <span class="n">default_timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">60.0</span>
     <span class="n">default_retry_delay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_timeout</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The caller's timeout, or the class default when none was given."""</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">default_timeout</span> <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">timeout</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_retry_delay</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">retry_delay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The caller's retry delay, or the class default when none was given."""</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">default_retry_delay</span> <span class="k">if</span> <span class="n">retry_delay</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">retry_delay</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_temp_path</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Staging path for an atomic write: ``&lt;name&gt;.tmp`` beside the target.</span>
+
+<span class="sd">        The suffix is APPENDED to the full name (``a.json`` -&gt; ``a.json.tmp``), so two</span>
+<span class="sd">        targets that share a stem (``a.json``, ``a.yaml``) never share a staging file</span>
+<span class="sd">        while each holds only its own lock.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">file_path</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span><span class="n">file_path</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">".tmp"</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_lock_path</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
@@ -177,8 +200,10 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            file_path: Path to the JSON file</span>
-<span class="sd">            timeout: Maximum time to wait for lock acquisition</span>
-<span class="sd">            retry_delay: Delay between lock acquisition retries</span>
+<span class="sd">            timeout: Maximum time to wait for lock acquisition (``None``: the class</span>
+<span class="sd">                default; ``0``: a single non-blocking attempt)</span>
+<span class="sd">            retry_delay: Delay between lock acquisition retries (``None``: the class</span>
+<span class="sd">                default)</span>
 <span class="sd">            create_if_missing: If True, create file with default_data if it doesn't exist</span>
 <span class="sd">            default_data: Data to write if creating new file (defaults to empty dict)</span>
 
@@ -192,8 +217,8 @@
 <span class="sd">        """</span>
         <span class="n">file_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
         <span class="n">lock_path</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_lock_path</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
-        <span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span> <span class="ow">or</span> <span class="bp">cls</span><span class="o">.</span><span class="n">default_timeout</span>
-        <span class="n">retry_delay</span> <span class="o">=</span> <span class="n">retry_delay</span> <span class="ow">or</span> <span class="bp">cls</span><span class="o">.</span><span class="n">default_retry_delay</span>
+        <span class="n">timeout</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_resolve_timeout</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="n">retry_delay</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_resolve_retry_delay</span><span class="p">(</span><span class="n">retry_delay</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">default_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">default_data</span> <span class="o">=</span> <span class="p">{}</span>
@@ -201,7 +226,7 @@
         <span class="n">lock</span> <span class="o">=</span> <span class="n">FileLock</span><span class="p">(</span><span class="n">lock_path</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
 
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">with</span> <span class="n">lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">):</span>
+            <span class="k">with</span> <span class="n">lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span> <span class="n">poll_interval</span><span class="o">=</span><span class="n">retry_delay</span><span class="p">):</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">file_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
                     <span class="k">if</span> <span class="n">create_if_missing</span><span class="p">:</span>
                         <span class="c1"># Create parent directories if needed</span>
@@ -240,8 +265,10 @@
 <span class="sd">        Args:</span>
 <span class="sd">            file_path: Path to the JSON file</span>
 <span class="sd">            data: Data to serialize to JSON</span>
-<span class="sd">            timeout: Maximum time to wait for lock acquisition</span>
-<span class="sd">            retry_delay: Delay between lock acquisition retries</span>
+<span class="sd">            timeout: Maximum time to wait for lock acquisition (``None``: the class</span>
+<span class="sd">                default; ``0``: a single non-blocking attempt)</span>
+<span class="sd">            retry_delay: Delay between lock acquisition retries (``None``: the class</span>
+<span class="sd">                default)</span>
 <span class="sd">            indent: JSON indentation level</span>
 <span class="sd">            ensure_ascii: If True, escape non-ASCII characters</span>
 
@@ -251,8 +278,8 @@
 <span class="sd">        """</span>
         <span class="n">file_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
         <span class="n">lock_path</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_lock_path</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
-        <span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span> <span class="ow">or</span> <span class="bp">cls</span><span class="o">.</span><span class="n">default_timeout</span>
-        <span class="n">retry_delay</span> <span class="o">=</span> <span class="n">retry_delay</span> <span class="ow">or</span> <span class="bp">cls</span><span class="o">.</span><span class="n">default_retry_delay</span>
+        <span class="n">timeout</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_resolve_timeout</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="n">retry_delay</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_resolve_retry_delay</span><span class="p">(</span><span class="n">retry_delay</span><span class="p">)</span>
 
         <span class="c1"># Create parent directories if needed</span>
         <span class="n">file_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -260,9 +287,9 @@
         <span class="n">lock</span> <span class="o">=</span> <span class="n">FileLock</span><span class="p">(</span><span class="n">lock_path</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
 
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">with</span> <span class="n">lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">):</span>
+            <span class="k">with</span> <span class="n">lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span> <span class="n">poll_interval</span><span class="o">=</span><span class="n">retry_delay</span><span class="p">):</span>
                 <span class="c1"># Write to temporary file first for atomicity</span>
-                <span class="n">temp_path</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">".tmp"</span><span class="p">)</span>
+                <span class="n">temp_path</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_temp_path</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
                 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">temp_path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
                     <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="n">indent</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="n">ensure_ascii</span><span class="p">)</span>
 
@@ -296,8 +323,10 @@
 <span class="sd">        Args:</span>
 <span class="sd">            file_path: Path to the JSON file</span>
 <span class="sd">            update_func: Function that takes current data and returns updated data</span>
-<span class="sd">            timeout: Maximum time to wait for lock acquisition</span>
-<span class="sd">            retry_delay: Delay between lock acquisition retries</span>
+<span class="sd">            timeout: Maximum time to wait for lock acquisition (``None``: the class</span>
+<span class="sd">                default; ``0``: a single non-blocking attempt)</span>
+<span class="sd">            retry_delay: Delay between lock acquisition retries (``None``: the class</span>
+<span class="sd">                default)</span>
 <span class="sd">            create_if_missing: If True, create file with default_data if it doesn't exist</span>
 <span class="sd">            default_data: Initial data if creating new file</span>
 
@@ -309,8 +338,8 @@
 <span class="sd">        """</span>
         <span class="n">file_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
         <span class="n">lock_path</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_lock_path</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
-        <span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span> <span class="ow">or</span> <span class="bp">cls</span><span class="o">.</span><span class="n">default_timeout</span>
-        <span class="n">retry_delay</span> <span class="o">=</span> <span class="n">retry_delay</span> <span class="ow">or</span> <span class="bp">cls</span><span class="o">.</span><span class="n">default_retry_delay</span>
+        <span class="n">timeout</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_resolve_timeout</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="n">retry_delay</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_resolve_retry_delay</span><span class="p">(</span><span class="n">retry_delay</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">default_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">default_data</span> <span class="o">=</span> <span class="p">{}</span>
@@ -318,7 +347,7 @@
         <span class="n">lock</span> <span class="o">=</span> <span class="n">FileLock</span><span class="p">(</span><span class="n">lock_path</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
 
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">with</span> <span class="n">lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">):</span>
+            <span class="k">with</span> <span class="n">lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span> <span class="n">poll_interval</span><span class="o">=</span><span class="n">retry_delay</span><span class="p">):</span>
                 <span class="c1"># Read current data</span>
                 <span class="k">if</span> <span class="n">file_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
                     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
@@ -333,7 +362,7 @@
                 <span class="n">updated_data</span> <span class="o">=</span> <span class="n">update_func</span><span class="p">(</span><span class="n">current_data</span><span class="p">)</span>
 
                 <span class="c1"># Write back atomically</span>
-                <span class="n">temp_path</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">".tmp"</span><span class="p">)</span>
+                <span class="n">temp_path</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_temp_path</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
                 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">temp_path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
                     <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">updated_data</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
@@ -361,7 +390,8 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            file_path: Path to the file to lock</span>
-<span class="sd">            timeout: Maximum time to wait for lock acquisition</span>
+<span class="sd">            timeout: Maximum time to wait for lock acquisition (``None``: the class</span>
+<span class="sd">                default; ``0``: a single non-blocking attempt)</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            FileLock instance</span>
@@ -374,8 +404,7 @@
 <span class="sd">                    f.write("new data\\n")</span>
 <span class="sd">        """</span>
         <span class="n">lock_path</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_lock_path</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
-        <span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span> <span class="ow">or</span> <span class="bp">cls</span><span class="o">.</span><span class="n">default_timeout</span>
-        <span class="k">return</span> <span class="n">FileLock</span><span class="p">(</span><span class="n">lock_path</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">FileLock</span><span class="p">(</span><span class="n">lock_path</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">_resolve_timeout</span><span class="p">(</span><span class="n">timeout</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="FileLockHelper.cleanup_lock_files">

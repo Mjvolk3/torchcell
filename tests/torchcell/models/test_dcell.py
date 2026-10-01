@@ -33,6 +33,7 @@ Two more fixtures are built in this file.
   2 + 2 + 4 = 8; parameters 2 * (2 + 3) * 2 + 2 * (8 + 3) = 42, heads 3 * 3 = 9, total 51.
 """
 
+import re
 import sys
 import types
 from pathlib import Path
@@ -42,6 +43,7 @@ import networkx as nx
 import pytest
 import torch
 from omegaconf import OmegaConf
+from omegaconf.errors import ConfigAttributeError
 from sortedcontainers import SortedDict
 from torch_geometric.data import Batch, HeteroData
 
@@ -419,17 +421,18 @@ def test_dcell_loss_on_model_outputs_trains_every_parameter(
     """With auxiliary losses on, the heads of terms 1 and 2 (untouched by the prediction
     alone, see the backward test above) receive gradient, so every parameter does.
     The loss is exactly MSE(root) + 0.3 * (MSE(GO:1) + MSE(GO:2)), the paper's sum over
-    non-root subsystems (issue #554): GO:ROOT is skipped by its key and GO:0 because the
-    model binds the same tensor object to both names (dcell.py ``linear_outputs["GO:ROOT"]
-    = predictions``).
+    non-root subsystems (issue #554): GO:ROOT and GO:0 are skipped because GO:0 is the
+    root key the model declares in ``outputs["root_key"]``.
     """
     model = _model(dcell_graph)
     predictions, outputs = model(dcell_graph, dcell_batch)
     target = torch.tensor([0.5, -0.5])
-    total, parts = DCellLoss(alpha=0.3)(predictions, outputs, target)
+    total, parts = DCellLoss(alpha=0.3, aux_reduction="sum")(
+        predictions, outputs, target
+    )
     linear = outputs["linear_outputs"]
     mse = torch.nn.functional.mse_loss
-    assert linear["GO:0"] is linear["GO:ROOT"]
+    assert outputs["root_key"] == "GO:0"
     auxiliary = mse(linear["GO:1"], target) + mse(linear["GO:2"], target)
     torch.testing.assert_close(total, mse(predictions, target) + 0.3 * auxiliary)
     torch.testing.assert_close(parts["auxiliary_loss"], auxiliary.detach())
@@ -534,7 +537,12 @@ def test_model_built_from_to_cell_data_consumes_the_processor_batch() -> None:
 # ---------------------------------------------------------------- the overfit script
 
 
-def _main_cfg(lr: float, epochs: int, plot_every: int) -> Any:
+def _main_cfg(
+    lr: float, epochs: int, plot_every: int, aux_reduction: str | None = "sum"
+) -> Any:
+    dcell_loss: dict[str, Any] = {"alpha": 0.3, "use_auxiliary_losses": True}
+    if aux_reduction is not None:
+        dcell_loss["aux_reduction"] = aux_reduction
     return OmegaConf.create(
         {
             "trainer": {"accelerator": "cpu", "max_epochs": epochs},
@@ -545,11 +553,7 @@ def _main_cfg(lr: float, epochs: int, plot_every: int) -> Any:
                 "output_size": 1,
             },
             "regression_task": {
-                "dcell_loss": {
-                    "alpha": 0.3,
-                    "use_auxiliary_losses": True,
-                    "aux_reduction": "sum",
-                },
+                "dcell_loss": dcell_loss,
                 "optimizer": {"type": "AdamW", "lr": lr, "weight_decay": 0.0},
                 "lr_scheduler": {
                     "type": "ReduceLROnPlateau",
@@ -638,3 +642,62 @@ def test_main_with_the_plot_call_patched_saves_every_plot_and_returns_eval_outpu
         again, _ = model(fake_loader, _processed_batch(fake_loader))
     assert torch.equal(again, predictions)
     assert set(outputs["linear_outputs"]) == {"GO:0", "GO:1", "GO:2", "GO:ROOT"}
+
+
+_EPOCH_LINE = re.compile(
+    r"Epoch (\d+)/2, Total Loss: ([-\d.]+), Primary Loss: ([-\d.]+), "
+    r"Aux Loss: ([-\d.]+)"
+)
+
+
+def test_main_reads_aux_reduction_and_logs_its_closed_form_loss(
+    fake_loader: HeteroData,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """``main`` passes ``dcell_loss.aux_reduction`` to ``DCellLoss`` (issue #554).
+
+    Epoch 1 runs the seeded initial model, so its logged loss is a closed form of that
+    model's heads: with root GO:2 (MSE p) and non-root GO:0, GO:1 (MSEs a, b), "sum"
+    logs p + 0.3 * (a + b) with Aux a + b, and "mean" logs p + 0.3 * (a + b) / 2 with
+    Aux (a + b) / 2. At lr 1e-2 the different gradients make epoch 2 differ as well.
+    """
+    monkeypatch.setattr(dcell_module, "DCell", _OneArgPlotDCell)
+    batch = _processed_batch(fake_loader)
+    torch.manual_seed(0)
+    reference = DCell(fake_loader, min_subsystem_size=2, subsystem_ratio=0.5)
+    with torch.no_grad():
+        _, ref_outputs = reference(fake_loader, batch)
+    target = batch["gene"].phenotype_values
+    assert ref_outputs["root_key"] == "GO:2"
+    mse = {
+        k: torch.nn.functional.mse_loss(v, target).item()
+        for k, v in ref_outputs["linear_outputs"].items()
+    }
+    p, aux_sum = mse["GO:2"], mse["GO:0"] + mse["GO:1"]
+    logged: dict[str, list[tuple[float, float, float]]] = {}
+    for reduction in ("sum", "mean"):
+        torch.manual_seed(0)
+        dcell_module.main(
+            _main_cfg(lr=1e-2, epochs=2, plot_every=5, aux_reduction=reduction)
+        )
+        lines = _EPOCH_LINE.findall(capsys.readouterr().out)
+        assert [line[0] for line in lines] == ["1", "2"]
+        logged[reduction] = [(float(t), float(q), float(a)) for _, t, q, a in lines]
+    aux = {"sum": aux_sum, "mean": aux_sum / 2}
+    for reduction, rows in logged.items():
+        total, primary, auxiliary = rows[0]
+        assert primary == pytest.approx(p, abs=1e-6)
+        assert auxiliary == pytest.approx(aux[reduction], abs=1e-6)
+        assert total == pytest.approx(p + 0.3 * aux[reduction], abs=1e-6)
+    assert logged["sum"][1][0] != logged["mean"][1][0]
+
+
+def test_main_without_aux_reduction_in_the_config_raises(
+    fake_loader: HeteroData,
+) -> None:
+    """The key is required: a config without ``dcell_loss.aux_reduction`` fails."""
+    with pytest.raises(ConfigAttributeError, match="Missing key aux_reduction"):
+        dcell_module.main(
+            _main_cfg(lr=1e-3, epochs=1, plot_every=5, aux_reduction=None)
+        )

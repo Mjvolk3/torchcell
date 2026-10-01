@@ -12,12 +12,13 @@ against ``fitness`` y = [1.0, 0.0, 0.5].
 The trainer calls the loss it constructs, ``torchcell.losses.DCellLoss(predictions,
 outputs, target)``, with predictions = the squeezed root head and
 ``outputs["linear_outputs"]`` = every squeezed head (the loss skips ``GO:ROOT``).
-``DCellLoss`` defaults to the SUM over non-root subsystems of Ma et al. 2018 (issue #554):
+The task's required ``aux_reduction`` reaches the loss; under ``"sum"``, the SUM over
+non-root subsystems of Ma et al. 2018 (issue #554):
 
 * loss = MSE(root) + 0.3 * (MSE(GO:1) + MSE(GO:2))
   = (1 + 1 + 0.25) / 3 + 0.3 * ((1 + 1 + 2.25) / 3 + (1 + 4 + 0.25) / 3)
   = 0.75 + 0.3 * 9.5 / 3 = 0.75 + 0.95 = 1.7;
-  under ``aux_reduction="mean"`` (the 005/006 runs) it was 0.75 + 0.3 * 9.5 / 6 = 1.225;
+  under ``aux_reduction="mean"`` it is 0.75 + 0.3 * 9.5 / 6 = 1.225;
 * subsystem mean m = mean over the three terms = [0, 2/3, 4/3];
 * Pearson(m, y) = -0.5 and Pearson(root, y) = +0.5 (deviations [-2/3, 0, 2/3] and
   [0, -1, 1] against [0.5, -0.5, 0]: cov -1/3 over 2/3, cov 1/2 over 1); Spearman
@@ -75,8 +76,12 @@ def _models() -> dict[str, nn.Module]:
     return {"dcell": DCellCountSubsystems(), "dcell_linear": DCellIdentityHeads()}
 
 
-def _task(**kwargs: Any) -> DCellRegressionTask:
-    return DCellRegressionTask(_models(), target="fitness", **kwargs)
+def _task(
+    aux_reduction: Literal["sum", "mean"] = "sum", **kwargs: Any
+) -> DCellRegressionTask:
+    return DCellRegressionTask(
+        _models(), target="fitness", aux_reduction=aux_reduction, **kwargs
+    )
 
 
 def _loader() -> DataLoader[HeteroData]:
@@ -122,12 +127,16 @@ def test_init_registers_submodels_metrics_and_the_current_dcell_loss() -> None:
     """
     assert tracemalloc.is_tracing() is False
     models = _models()
-    task = DCellRegressionTask(models, target="fitness")
+    task = DCellRegressionTask(models, target="fitness", aux_reduction="mean")
     assert dict(task.named_children())["dcell"] is models["dcell"]
     assert dict(task.named_children())["dcell_linear"] is models["dcell_linear"]
     assert task.automatic_optimization is False
     assert type(task.loss) is DCellLoss
-    assert (task.loss.alpha, task.loss.use_auxiliary_losses) == (0.3, True)
+    assert (
+        task.loss.alpha,
+        task.loss.use_auxiliary_losses,
+        task.loss.aux_reduction,
+    ) == (0.3, True, "mean")
     assert sorted(map(str, task.train_metrics.keys())) == [
         "train_MAE",
         "train_MSE",
@@ -150,7 +159,11 @@ def test_configure_optimizers_is_adam_over_dcell_then_linear_parameters() -> Non
     """One Adam group: lr and weight decay as given, dcell parameters then the heads."""
     models = _models()
     task = DCellRegressionTask(
-        models, target="fitness", learning_rate=3e-3, weight_decay=1e-4
+        models,
+        target="fitness",
+        learning_rate=3e-3,
+        weight_decay=1e-4,
+        aux_reduction="sum",
     )
     optimizer = task.configure_optimizers()
     assert type(optimizer) is torch.optim.Adam
@@ -185,14 +198,15 @@ def test_loss_feeds_the_root_as_prediction_and_every_head_as_auxiliary(
     """``_loss`` calls ``DCellLoss(predictions, outputs, target)`` in that order.
 
     With auxiliary losses the value is 1.7 (root MSE 0.75 plus 0.3 times the SUM of the
-    GO:1 and GO:2 MSEs, 9.5 / 3), or 1.225 under ``aux_reduction="mean"`` (9.5 / 6, the
-    005/006 runs); without them it is the root MSE alone, 0.75, so the root
+    GO:1 and GO:2 MSEs, 9.5 / 3), or 1.225 under ``aux_reduction="mean"`` (9.5 / 6);
+    the constructor's ``aux_reduction`` reaches the loss. Without auxiliaries it is the
+    root MSE alone, 0.75, so the root
     is what lands in ``predictions`` (issue #516: the steps used to pass the deprecated
     ``(outputs, target, weights)`` order and raised on a parameter generator).
     """
-    task = _task()
+    task = _task(aux_reduction=reduction)
+    assert task.loss.aux_reduction == reduction
     task.loss.use_auxiliary_losses = auxiliary
-    task.loss.aux_reduction = reduction
     batch = make_dcell_regression_batch()
     loss = task._loss(task(batch), batch.fitness)
     assert loss.item() == pytest.approx(expected, abs=1e-6)
@@ -351,7 +365,9 @@ def test_genetic_interaction_target_uses_its_own_box_plot(
     fitness_plots, gi_plots = _BoxPlots(), _BoxPlots()
     monkeypatch.setattr(viz_fitness, "box_plot", fitness_plots)
     monkeypatch.setattr(viz_gi, "box_plot", gi_plots)
-    task = DCellRegressionTask(_models(), target="genetic_interaction_score")
+    task = DCellRegressionTask(
+        _models(), target="genetic_interaction_score", aux_reduction="sum"
+    )
     _trainer(tmp_path).validate(task, dataloaders=_loader(), verbose=False)
     assert fitness_plots.calls == []
     assert gi_plots.calls == [(Y, ROOT)]
@@ -365,7 +381,7 @@ def test_unknown_target_is_rejected_at_construction() -> None:
     validation epoch raised ``UnboundLocalError`` on ``fig``.
     """
     with pytest.raises(ValueError) as excinfo:
-        DCellRegressionTask(_models(), target="growth_rate")
+        DCellRegressionTask(_models(), target="growth_rate", aux_reduction="sum")
     assert str(excinfo.value) == (
         "Unknown target 'growth_rate': expected one of "
         "('fitness', 'genetic_interaction_score')."

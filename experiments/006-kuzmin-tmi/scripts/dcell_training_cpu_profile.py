@@ -299,7 +299,9 @@ def run_profile() -> tuple[pd.DataFrame, pd.DataFrame]:
     if n_params["total"] != expected:
         raise SystemExit(f"rebuilt DCell has {n_params['total']} parameters, frozen DAG implies {expected}")
     attach_regions(model)
-    loss_fn = DCellLoss(alpha=ALPHA, use_auxiliary_losses=True)
+    # "mean": the committed profile CSVs were measured under the pre-2026-09-30 loss,
+    # which reduced the auxiliary terms with a mean (issue #554).
+    loss_fn = DCellLoss(alpha=ALPHA, use_auxiliary_losses=True, aux_reduction="mean")
     opt = torch.optim.AdamW(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
     model.train()
     meta = {

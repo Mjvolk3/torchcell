@@ -5,7 +5,7 @@
 """Slim Lightning trainer for DCell regression with subsystem and root metrics."""
 
 import os.path as osp
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import lightning as L
 import matplotlib.pyplot as plt
@@ -47,6 +47,8 @@ class DCellRegressionSlimTask(L.LightningModule):
         weight_decay: float = 1e-5,
         batch_size: int | None = None,
         alpha: float = 0.3,
+        *,
+        aux_reduction: Literal["sum", "mean"],
         **kwargs: Any,
     ) -> None:
         """Register the DCell submodels, DCell loss, optimizer settings, and metrics.
@@ -59,6 +61,8 @@ class DCellRegressionSlimTask(L.LightningModule):
             weight_decay: Adam weight decay.
             batch_size: Batch size used for logging.
             alpha: Regularization weight for the DCell loss.
+            aux_reduction: ``DCellLoss`` reduction of the non-root subsystem MSEs,
+                ``"sum"`` (Ma et al. 2018) or ``"mean"``; required.
             **kwargs: Additional unused keyword arguments.
         """
         super().__init__()
@@ -77,7 +81,7 @@ class DCellRegressionSlimTask(L.LightningModule):
         self.x_name = "x"
         self.x_batch_name = "batch"
 
-        self.loss = DCellLoss(alpha)
+        self.loss = DCellLoss(alpha, aux_reduction=aux_reduction)
 
         # optimizer
         self.learning_rate = learning_rate
@@ -148,7 +152,9 @@ class DCellRegressionSlimTask(L.LightningModule):
         """
         linear_outputs = {name: out.squeeze(-1) for name, out in y_hat.items()}
         loss, _ = self.loss(
-            linear_outputs["GO:ROOT"], {"linear_outputs": linear_outputs}, y
+            linear_outputs["GO:ROOT"],
+            {"linear_outputs": linear_outputs, "root_key": "GO:ROOT"},
+            y,
         )
         return cast(torch.Tensor, loss)
 

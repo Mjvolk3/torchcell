@@ -24,4 +24,4 @@ All six findings of this file are retired. The tests now run with the `DCellLoss
 
 ## 2026.09.30 - Loss values under the paper's sum (issue #554)
 
-`DCellLoss` now sums the auxiliary MSEs, so the pinned loss is 0.75 + 0.3 * 9.5 / 3 = 1.7 (was 1.225 under the mean); the loss test also pins 1.225 under `aux_reduction="mean"` and 0.75 with auxiliary losses off. Auxiliary-head gradients doubled (GO:1 0.8 / 0.3, GO:2 0.9 / 0.3, `scale` [1.0, 0.8, 0.9]); their signs, and therefore the one-Adam-step deltas, are unchanged.
+`aux_reduction` is a required constructor argument now, so the tests pass it instead of mutating `task.loss`. The pinned loss is 0.75 + 0.3 * 9.5 / 3 = 1.7 under `"sum"` (was 1.225 under the mean, still pinned under `"mean"`) and 0.75 with auxiliary losses off. Auxiliary-head gradients doubled (GO:1 0.8 / 0.3, GO:2 0.9 / 0.3, `scale` [1.0, 0.8, 0.9]); their signs, and therefore the one-Adam-step deltas, are unchanged. These values describe this trainer only; the 005/006 runs went through `int_dcell` ([[tests.torchcell.trainers.test_int_dcell]]).

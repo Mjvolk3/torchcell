@@ -215,9 +215,11 @@ class RegressionTask(LightningModule):
             # This avoids redundant forward pass
             outputs_dict = representations
 
-            # Pass to the loss function
+            # DCellLoss refuses to broadcast: the heads are [B], so the root
+            # prediction and the target go in as [B] too (issue #554). The [B, 1]
+            # tensors above are kept for the metrics and plots, which flatten them.
             loss_output = self.loss_func(
-                predictions, outputs_dict, gene_interaction_vals
+                predictions.squeeze(1), outputs_dict, gene_interaction_vals.squeeze(1)
             )
 
             # Handle the tuple return format (loss, loss_dict)

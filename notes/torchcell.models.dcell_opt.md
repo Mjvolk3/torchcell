@@ -596,6 +596,6 @@ def _process_dimension_group(self, term_indices, inputs, ...):
 3. **torch.compile**: Tried - minimal improvement due to dynamic ops
 4. **This Approach**: Selected - best balance of performance and model preservation
 
-## 2026.09.30 - DCellLoss reduction passed from the config (issue #554)
+## 2026.09.30 - Declared root key and required reduction (issues #554, #578)
 
-`main` now passes `cfg.regression_task.dcell_loss.aux_reduction` to `DCellLoss`, whose default became the paper's sum over non-root subsystems. Runs made before 2026-09-30 with auxiliary losses on used the mean; see [[torchcell.losses.dcell]].
+`forward` now declares `outputs["root_key"] = "GO:<root index>"`. Before, `DCellLoss` could not recognize the root: `predictions` and `GO:<root>` come from two separate indexing calls, so they are equal but distinct tensors, and the identity skip of the first PR #574 commit counted the root as a third auxiliary term (fixture value 0.8298076 against the paper value 0.6840844, [[tests.torchcell.models.test_dcell_opt]]). `main` passes `cfg.regression_task.dcell_loss.aux_reduction`. Auxiliary-on runs before 2026-09-30 are listed in [[torchcell.losses.dcell]] and issue #578.

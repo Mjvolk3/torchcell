@@ -68,8 +68,8 @@ regression_task:
   # DCellLoss configuration
   dcell_loss:
     alpha: 0.3 # Weight for auxiliary losses
-    use_auxiliary_losses: false # default true  # Whether to use losses from non-root subsystems
-    aux_reduction: "sum" # Ma et al. 2018 sum over non-root subsystems; inert while use_auxiliary_losses is false (issue #554)
+    use_auxiliary_losses: true # default true  # Whether to use losses from non-root subsystems
+    aux_reduction: "sum" # Ma et al. 2018 objective: alpha 0.3 times the SUM over non-root subsystems (issue #554); the paper-sum counterpart of _mmli_001
 
   is_weighted_phenotype_loss: false
 

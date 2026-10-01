@@ -15,3 +15,7 @@ Previous behavior and the fix:
 - Best-checkpoint artifacts: the artifact block ran in `on_validation_epoch_end`, which Lightning calls before `ModelCheckpoint` saves (with validation every epoch the save happens in `on_train_epoch_end`, after the module hooks), so each artifact held the previous epoch's checkpoint; with `enable_checkpointing=False` it read `None.best_model_path` and raised. Now `_log_best_checkpoint` runs from `on_train_epoch_start` and `on_train_end`, the first module hooks after the save, so the artifact `model-global_step-<n>` holds the checkpoint saved at step n, and a missing checkpoint callback logs nothing.
 
 Evidence: `tests/torchcell/trainers/test_dcell_regression_slim.py` (`test_loss_feeds_the_root_as_prediction_and_every_head_as_auxiliary`, `test_test_epoch_end_logs_and_resets_the_root_metrics`, `test_each_epoch_best_checkpoint_is_logged_once_at_its_own_step`, `test_training_without_a_checkpoint_callback_logs_no_artifact`).
+
+## 2026.09.30 - Required aux_reduction and declared root key (issue #554)
+
+The constructor takes a required keyword-only `aux_reduction` (`"sum"` for Ma et al. 2018, `"mean"` for the pre-2026-09-30 reduction) and passes it to `DCellLoss`; `_loss` declares `root_key="GO:ROOT"`, the conftest-style head name of the root. Issue #554, PR #574.

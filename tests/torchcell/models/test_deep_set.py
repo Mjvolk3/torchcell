@@ -344,7 +344,8 @@ def test_main_prints_the_demo_shapes_and_leaves_anomaly_detection_off(
         torch.manual_seed(0)
         from torchcell.models.deep_set import main
 
-        main()
+        with pytest.warns(UserWarning, match="Anomaly Detection has been enabled"):
+            main()
         after = torch.is_anomaly_enabled()
     finally:
         torch.autograd.set_detect_anomaly(False)

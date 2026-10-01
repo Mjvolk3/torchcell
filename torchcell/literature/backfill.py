@@ -59,7 +59,9 @@ def is_citation_key_dir(path: Path) -> bool:
     A citation-key directory is a directory whose name does not start with ``_``
     (``_bib``, ``_sync_reports`` and other underscore stores belong to the mirror, not
     to a paper) and that holds at least one file somewhere below it (an empty
-    directory has nothing to pin).
+    directory has nothing to pin). The backfill report is therefore silent on an
+    empty key directory, such as one left by a capture that died after ``mkdir``;
+    ``lit_sync`` reports those separately.
     """
     return (
         path.is_dir()

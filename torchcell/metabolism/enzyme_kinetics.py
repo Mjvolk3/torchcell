@@ -41,7 +41,11 @@ averaged parameter cannot be traced back to a measurement:
 4. break remaining ties on the MEDIAN value, which is deterministic and avoids letting an
    arbitrary row order decide. With an even number of tied rows this is the LOWER median
    (``statistics.median_low``), so the value is always one measured row; rows sharing
-   that value are ordered by their full serialized content, never by input position.
+   that value are ordered lexicographically on their ``model_dump_json()`` TEXT (so
+   ``"ph":10.0`` sorts before ``"ph":9.0``), never by input position. That order is
+   deterministic by construction, not scientifically meaningful. The lower median is
+   not neutral: for a ``k_cat`` it tightens a capacity bound (conservative), but for a
+   ``K_M`` a lower value means MORE saturation at a given substrate concentration.
 
 Every resolved value keeps ``n_candidates`` and ``selection_rule`` so a reviewer can see
 how much choice was involved, and the PubMed id of the row it came from.

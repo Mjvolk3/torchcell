@@ -252,14 +252,25 @@ def test_even_number_of_ties_takes_the_lower_median_in_any_row_order() -> None:
         assert resolved is not None
         picked.append(resolved.value)
     assert picked == [2.0, 2.0, 2.0, 2.0]
+    # unequal multiplicity: sorted (1, 3, 3, 3), the lower middle is 3.0 in any order
+    heavy = [_rec(kcat_value=v) for v in (1.0, 3.0, 3.0, 3.0)]
+    permuted = [heavy[2], heavy[0], heavy[3], heavy[1]]
+    heavy_values = []
+    for order in (heavy, permuted):
+        resolved = resolve_parameter(order, KineticKind.KCAT, "P00000")
+        assert resolved is not None
+        heavy_values.append(resolved.value)
+    assert heavy_values == [3.0, 3.0]
     assert forward.selection_rule == backward.selection_rule
     assert forward.selection_rule == "wildtype_only -> nearest_30C -> median_of_ties"
 
 
 def test_rows_sharing_the_median_value_resolve_to_the_same_row_in_any_order() -> None:
     """Two tied rows with the same k_cat but different PubMed ids and pH: the chosen
-    row is the one whose serialized content sorts first (pmid 111, pH 6.5), not the
-    first listed.
+    row is the one whose ``model_dump_json()`` TEXT sorts first (pmid 111, pH 6.5),
+    not the first listed. The order is lexicographic on the text, not numeric (so
+    ``"ph":10.0`` sorts before ``"ph":9.0``); it is deterministic by construction,
+    which is the contract, not scientifically meaningful.
     """
     rows = [
         _rec(kcat_value=2.0, kcat_pubmedid=222.0, ph=7.5),

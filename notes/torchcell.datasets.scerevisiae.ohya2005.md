@@ -247,3 +247,13 @@ A read-only Fable 5.1 agent graded eight recorded claims against the mirror (pap
 Issue #518 (sweep); the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes; PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: yes; refused deposit leaving a directory: n/a.
 
 Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `_RAW_FILES`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.
+
+## 2026.10.01 - Interning, TCV prefix, duplicate and blank ORFs (issues #537, #546)
+
+Previous behavior: `process` wrote every record inline (no `interned` env, unlike the thirteen interning loaders); `TCV` was in `_CV_PREFIXES` although no TCV parameter exists (#494); two spellings of one ORF gave two records; blank ORF rows were dropped silently; `create_experiment` was a bare `pass`; records were built inside the open write transaction, so a refusal left an empty store.
+
+Fix: records are built first and written through `_open_write_lmdb` + `_intern_record`, so the constant reference (the 501-feature WT phenotype) is stored once in `processed/interned` and each record carries a `$ref` pointer; `_CV_PREFIXES` is `("CCV", "ACV", "DCV")`; duplicate spellings are refused; blank ORF rows are dropped with a counted warning; `create_experiment` raises `NotImplementedError`.
+
+Record values are unchanged: `test_the_interned_store_resolves_to_exactly_the_inline_records` builds the synthetic matrices with the shipped writer and with the earlier inline writer and compares every resolved record exactly. The on-disk layout of a rebuilt store does change; the dev store at `$DATA_ROOT/data/torchcell/scmd_ohya2005` keeps its inline layout until its next rebuild. Measured on the pinned matrices: 4718 x 501, CV columns DCV 127 + CCV 60 + ACV 33 = 220, 0 TCV, 0 blank ORFs, 0 duplicate spellings (every ORF is lowercase, all distinct after uppercasing), 0 missing or non-numeric cells.
+
+Left open: the publication is Ohya 2005 while the matrices are the Suzuki 2018 CalMorph 1.2 re-analysis (#491); that changes every stored record and belongs to a database-labelled PR.

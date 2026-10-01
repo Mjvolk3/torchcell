@@ -45,3 +45,11 @@ Store rebuilt under the current schema before the 2026.09.14 full KG rebuild.
 Issue #537; the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes (#537); PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: yes (#537); refused deposit leaving a directory: n/a.
 
 Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `_DATASET_S2_SHA256`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.
+
+## 2026.10.01 - Refusals before the store opens (issue #537)
+
+Previous behavior: `process` opened `processed/lmdb` first and built each record inside the write transaction. A duplicated or lowercase-duplicated ORF gave one record per row, a blank `commonName` was stored as the string "nan", and a blank `log2relT` reached the phenotype validator as NaN fitness, which aborted the build after the store existed; a retry then found the empty store, skipped `process` and served 0 records.
+
+Fix: every record is built first, then the store is opened and written. Two rows resolving to one ORF, a blank `commonName` and a blank `log2relT` are each refused with a `RuntimeError` naming the row. Measured on the pinned Dataset S2 (sha256 `37ef19ee...`): 0 duplicates, 0 lowercase ORFs, 0 blank common names and 0 blank `log2relT` of 1312 rows, so the built records do not change.
+
+Tests: `test_an_orf_listed_twice_is_refused_before_the_store_opens`, `test_a_blank_common_name_is_refused_before_the_store_opens`, `test_a_blank_log2relt_is_refused_before_the_store_opens`.

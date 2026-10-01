@@ -275,30 +275,54 @@ class SmfODuibhir2014Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Convert each Dataset S2 row into a fitness record; write LMDB."""
+        """Convert each Dataset S2 row into a fitness record; write LMDB.
+
+        Every record is built and every refusal raised BEFORE the store is opened, so a
+        refused file leaves no ``processed/lmdb`` behind for a retry to serve as empty.
+        Refusals (each 0 of the 1312 rows of the pinned file, 2026.10.01): a blank
+        ``commonName`` or ``log2relT``, and two rows resolving to the same ORF.
+        """
         verify_raw_files(self.raw_dir, {_RAW_FILENAME: _DATASET_S2_SHA256})
         resolve = self._resolver()
         df = self._read_dataset_s2()
 
-        os.makedirs(self.preprocess_dir, exist_ok=True)
-        os.makedirs(self.processed_dir, exist_ok=True)
-
         dropped: list[str] = []
-        env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e11))
-        idx = 0
-        with env.begin(write=True) as txn:
-            for _, row in tqdm(df.iterrows(), total=len(df), desc="oduibhir2014"):
-                token = str(row["orf"])
-                orf = resolve(token)
-                if orf is None:
-                    dropped.append(token)
-                    continue
-                experiment, reference, publication = self._experiment(
+        first_row: dict[str, str] = {}
+        records: list[
+            tuple[FitnessExperiment, FitnessExperimentReference, Publication]
+        ] = []
+        for _, row in df.iterrows():
+            token = str(row["orf"])
+            orf = resolve(token)
+            if orf is None:
+                dropped.append(token)
+                continue
+            if orf in first_row:
+                raise RuntimeError(
+                    f"Dataset S2 lists {orf} twice (rows {first_row[orf]!r} and "
+                    f"{token!r}); one record per deletion strain is required"
+                )
+            first_row[orf] = token
+            if pd.isna(row["commonName"]):
+                raise RuntimeError(f"Dataset S2 row {token!r} has a blank commonName")
+            if pd.isna(row["log2relT"]):
+                raise RuntimeError(f"Dataset S2 row {token!r} has a blank log2relT")
+            records.append(
+                self._experiment(
                     dataset_name=self.name,
                     orf=orf,
                     common_name=str(row["commonName"]),
                     log2relt=float(row["log2relT"]),
                 )
+            )
+
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        os.makedirs(self.processed_dir, exist_ok=True)
+        env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e11))
+        with env.begin(write=True) as txn:
+            for idx, (experiment, reference, publication) in enumerate(
+                tqdm(records, desc="oduibhir2014")
+            ):
                 txn.put(
                     f"{idx}".encode(),
                     pickle.dumps(
@@ -309,11 +333,10 @@ class SmfODuibhir2014Dataset(ExperimentDataset):
                         }
                     ),
                 )
-                idx += 1
         env.close()
         log.info(
             "Wrote %d ODuibhir2014 fitness experiments to LMDB (%d ORFs dropped: %s)",
-            idx,
+            len(records),
             len(dropped),
             sorted(dropped),
         )

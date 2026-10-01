@@ -39,3 +39,11 @@ FASTA-vs-gene_set mismatch). Added an optional injectable `genome` (defaults to 
 Issue #518 (sweep); the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes; PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: yes; refused deposit leaving a directory: n/a.
 
 Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `_RAW_FILES`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.
+
+## 2026.10.01 - Blank and duplicate ORFs, refusals before the store opens (issue #537)
+
+Previous behavior: blank or whitespace-only ORF rows were dropped with no log line while the count read "0 dropped for naming"; two spellings of one ORF gave two records; `create_experiment` returned None; records were built inside the open write transaction, so a refused reference left an empty store a retry served as 0 records.
+
+Fix: blank ORF rows are dropped with a counted warning, duplicate spellings are refused, `create_experiment` raises `NotImplementedError`, every record is built before the store opens, and `TCV` is removed from `_CV_PREFIXES` (as in Ohya 2005, #494). Measured on the pinned matrices (1112 x 501): 0 blank ORFs, 0 duplicate spellings, 0 TCV columns; the built records do not change.
+
+Still pinned, not an item of #537: a blank CalMorph cell is stored as 0.0 (`create_calmorph_experiment`); the pinned matrix has 0 blank cells.

@@ -37,11 +37,16 @@ to NaN and skipped), CCV103_A1B 1.0.
   copied from ``$DATA_ROOT/<_MIRROR_DIR>`` and a second call with the mirror removed
   re-verifies the raw copies.
 
-Findings pinned here: the same ORF in two spellings gives two records with identical
-genotypes; a row whose ORF is blank or whitespace only is dropped silently (lines 224 to
-226, no log line, the count reads "0 dropped for naming"), although the module says
-"no record is dropped for a naming reason"; ``create_experiment`` is a bare ``pass``
-returning None (line 254).
+2026.10.01 (issue #537): the Phase 16 findings are retired. Two spellings of one strain
+are refused before anything is written; blank or whitespace-only ORF rows are dropped
+with a counted warning; ``create_experiment`` raises ``NotImplementedError``; every
+record is built before the store is opened, so a refused reference leaves no
+``processed/lmdb``; ``TCV`` is no longer a CV prefix. The pinned matrices have 0
+duplicates, 0 blank ORFs and 0 TCV columns (1112 x 501).
+
+Finding still pinned here: a blank CalMorph cell is stored as 0.0 (see
+``test_missing_calmorph_value_is_stored_as_zero``); the pinned matrix has 0 blank
+cells, so a fix would not change the built records, but it is not an item of #537.
 """
 
 from __future__ import annotations
@@ -50,7 +55,6 @@ import hashlib
 import json
 import logging
 import re
-from collections.abc import Callable
 from pathlib import Path
 from typing import Any, cast
 
@@ -295,20 +299,22 @@ def test_items_retype_through_the_calmorph_classes(
         assert typed["publication"].model_dump() == _PUBLICATION
 
 
-def test_generic_hooks_are_inert_and_create_experiment_returns_none(
+def test_generic_hooks_are_inert_and_create_experiment_raises(
     dataset: m.ScmdOhnuki2018Dataset,
 ) -> None:
-    """``preprocess_raw`` returns its frame unchanged.
-
-    Finding: ``create_experiment`` is a bare ``pass`` (line 254) returning None rather
-    than raising ``NotImplementedError``. Pinned until it raises.
+    """``preprocess_raw`` returns its frame unchanged. Contract (issue #537):
+    ``create_experiment`` raises ``NotImplementedError`` naming the method that builds
+    the records, instead of returning None.
     """
     frame = pd.DataFrame({"ORF": ["YAL001C"], "A101_A": [1.0]})
     returned = dataset.preprocess_raw(frame)
     assert returned is frame
     assert returned.to_dict("list") == {"ORF": ["YAL001C"], "A101_A": [1.0]}
-    hook: Callable[[], object] = dataset.create_experiment
-    assert hook() is None
+    with pytest.raises(NotImplementedError) as info:
+        dataset.create_experiment()
+    assert str(info.value) == (
+        "ScmdOhnuki2018Dataset builds records with create_calmorph_experiment"
+    )
 
 
 def test_build_logs_the_strain_count_then_processing(
@@ -323,37 +329,48 @@ def test_build_logs_the_strain_count_then_processing(
     ]
 
 
-def test_duplicate_spellings_are_kept_and_blank_orfs_dropped_silently(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
-) -> None:
-    """Finding: YAL001C and ``yal001c `` give two records with the same genotype (the
-    reconciler maps unique names; nothing checks duplicate rows). Finding: the blank
-    and the whitespace-only ORF rows are dropped by the ``notna`` and ``!= ""`` filters
-    (lines 224 to 226) with no log line, and the count reads "(0 dropped for naming)".
-    Pinned until duplicates are refused and blank names are logged.
-    """
+def _edge_root(tmp_path: Path, mutant_rows: list[list[str]]) -> Path:
     root = tmp_path / "edges"
     (root / "raw").mkdir(parents=True)
     _write_tsv(
-        root / "raw" / "ess1112data.tsv",
-        ["ORF", "A101_A", "ACV103_A1B"],
-        [
-            ["YAL001C", "1.0", "0.1"],
-            ["yal001c ", "2.0", "0.2"],
-            ["", "3.0", "0.3"],
-            ["  ", "4.0", "0.4"],
-        ],
+        root / "raw" / "ess1112data.tsv", ["ORF", "A101_A", "ACV103_A1B"], mutant_rows
     )
     _write_tsv(
         root / "raw" / "wt114data.tsv",
         ["NAME", "A101_A", "ACV103_A1B"],
         [["w1", "1.0", "0.3"], ["w2", "3.0", "0.5"]],
     )
+    return root
+
+
+def test_blank_orf_rows_are_dropped_with_a_counted_warning(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Contract (issue #537): the blank and the whitespace-only ORF rows name no strain;
+    both are dropped and counted in a warning ahead of the strain count (they used to
+    vanish with no log line). The reference is A101_A 2.0 and ACV103_A1B
+    (0.3 + 0.5) / 2 = 0.4. The pinned matrix has 0 blank ORFs of 1112.
+    """
+    root = _edge_root(
+        tmp_path,
+        [
+            ["YAL001C", "1.0", "0.1"],
+            ["", "3.0", "0.3"],
+            ["  ", "4.0", "0.4"],
+            ["ydr001c ", "2.0", "0.2"],
+        ],
+    )
     with caplog.at_level(logging.INFO, logger=m.log.name):
         dataset = m.ScmdOhnuki2018Dataset(root=str(root), genome=_genome())
-    assert [r.getMessage() for r in caplog.records if r.name == m.log.name] == [
-        "Ohnuki 2018: 2 essential-gene heterozygote strains (0 dropped for naming)",
-        "Processing Ohnuki 2018 CalMorph morphology data...",
+    assert [
+        (r.levelname, r.getMessage()) for r in caplog.records if r.name == m.log.name
+    ] == [
+        ("WARNING", "Ohnuki 2018: dropping 2 mutant row(s) with a blank ORF"),
+        (
+            "INFO",
+            "Ohnuki 2018: 2 essential-gene heterozygote strains (0 dropped for naming)",
+        ),
+        ("INFO", "Processing Ohnuki 2018 CalMorph morphology data..."),
     ]
     reference = CalMorphExperimentReference(
         dataset_name="ScmdOhnuki2018Dataset",
@@ -367,11 +384,11 @@ def test_duplicate_spellings_are_kept_and_blank_orfs_dropped_silently(
         ),
     ).model_dump()
     assert len(dataset) == 2
-    for index, (base, cv) in enumerate(((1.0, 0.1), (2.0, 0.2))):
+    for index, (orf, base, cv) in enumerate(
+        (("YAL001C", 1.0, 0.1), ("YDR001C", 2.0, 0.2))
+    ):
         experiment = dataset[index]["experiment"]
-        assert (
-            experiment["genotype"] == _experiment("YAL001C", [0, 0, 0, 0])["genotype"]
-        )
+        assert experiment["genotype"] == _experiment(orf, [0, 0, 0, 0])["genotype"]
         assert experiment["phenotype"] == (
             CalMorphPhenotype(
                 calmorph={"A101_A": base},
@@ -382,11 +399,33 @@ def test_duplicate_spellings_are_kept_and_blank_orfs_dropped_silently(
     dataset.close_lmdb()
 
 
+def test_two_spellings_of_one_strain_are_refused_before_the_store_opens(
+    tmp_path: Path,
+) -> None:
+    """Contract (issue #537): YAL001C and ``yal001c `` name the same strain once
+    stripped and uppercased, so the build refuses them by their raw spellings before
+    ``data.csv`` or the store is written; a retry refuses again. The pinned matrix has
+    0 such pairs among its 1112 rows.
+    """
+    root = _edge_root(tmp_path, [["YAL001C", "1.0", "0.1"], ["yal001c ", "2.0", "0.2"]])
+    for _ in range(2):
+        with pytest.raises(RuntimeError) as info:
+            m.ScmdOhnuki2018Dataset(root=str(root), genome=_genome())
+        assert str(info.value) == (
+            "Ohnuki 2018: the same strain is listed more than once (ORF stripped and "
+            "uppercased): ['YAL001C', 'yal001c ']"
+        )
+        assert not (root / "preprocess" / "data.csv").exists()
+        assert not (root / "processed" / "lmdb").exists()
+
+
 def test_a_wt_feature_with_no_numeric_cell_refuses_the_reference(
     tmp_path: Path,
 ) -> None:
     """Every WT cell of ACV103_A1B is "n.d.", so its coerced mean is NaN and the reference
-    ``CalMorphPhenotype`` refuses it by name.
+    ``CalMorphPhenotype`` refuses it by name. Contract (issue #537): every record is
+    built before the store is opened, so the refusal leaves no ``processed/lmdb`` and a
+    retry on the same root refuses again instead of serving 0 records.
     """
     root = tmp_path / "nd"
     (root / "raw").mkdir(parents=True)
@@ -400,14 +439,16 @@ def test_a_wt_feature_with_no_numeric_cell_refuses_the_reference(
         ["NAME", "A101_A", "ACV103_A1B"],
         [["w1", "1.0", "n.d."], ["w2", "3.0", "n.d."]],
     )
-    with pytest.raises(pydantic.ValidationError) as info:
-        m.ScmdOhnuki2018Dataset(root=str(root), genome=_genome())
-    assert [(e["loc"], e["msg"]) for e in info.value.errors()] == [
-        (
-            ("calmorph_coefficient_of_variation",),
-            "Value error, CV measurement ACV103_A1B cannot be NaN",
-        )
-    ]
+    for _ in range(2):
+        with pytest.raises(pydantic.ValidationError) as info:
+            m.ScmdOhnuki2018Dataset(root=str(root), genome=_genome())
+        assert [(e["loc"], e["msg"]) for e in info.value.errors()] == [
+            (
+                ("calmorph_coefficient_of_variation",),
+                "Value error, CV measurement ACV103_A1B cannot be NaN",
+            )
+        ]
+        assert not (root / "processed" / "lmdb").exists()
 
 
 def test_missing_genome_is_built_once_by_default_genome(

@@ -7,8 +7,9 @@ The only raw file is ``paper.pdf``, whose presence is all PyG checks; a placehol
 written so ``download()`` is never called, and the values come from the module-level
 ``TABLE_3`` literal. ``build_metabolite_s_id_map`` (which loads Yeast9) is replaced by a
 stub that records its argument and returns ``s_0001`` to ``s_0005`` for the five acids.
-The genome stub carries ``alias_to_systematic`` for the 16 common names; ``YDR379C-A``
-matches the systematic-name regex and is never looked up.
+The genome stub carries ``alias_to_systematic`` for the 16 common names and a
+``gene_set`` of their 16 ORFs plus ``YDR379C-A``, which matches the systematic-name regex
+and is checked against that set.
 
 Record 0 = ASM4 (Table 3 mean, SD; n = 3):
     acetate 4.02 +/- 0.30, citrate 0.10 +/- 0.03, malate 0.15 +/- 0.02,
@@ -41,12 +42,12 @@ malate 0.15 +/- 0.01, pyruvate 0.18 +/- 0.05, succinate 1.29 +/- 0.05, phosphate
   mirror file is copied and "Staged <dest> (<n> bytes, sha256 verified)" is logged.
 - ``main`` with ``load_dotenv`` stubbed and the genome and dataset classes as recorders.
 
-Findings pinned here: a systematic-shaped name is accepted by the regex (line 358)
-without consulting the genome, so a nonexistent ORF such as YAL999W is stored; an alias
-with several candidate ORFs silently takes the first (line 364); the same ORF reached by
-its common and its systematic name gives two records with identical genotypes; a NaN
-cell is stored as a NaN level and SE instead of being refused or dropped; the perturbed
-name is the raw table key, so ``yal999w`` stays lowercase.
+2026.10.01 (issue #537): the Phase 16 findings are retired. A systematic-shaped name
+absent from ``genome.gene_set`` (``yal999w``), an alias of two ORFs (``AMB``), two rows
+resolving to one ORF (ASM4 and ``YDL088C``) and a NaN mean or SD are each refused with a
+named ``RuntimeError`` before ``data.csv`` or the store is written; a retry refuses
+again. The released Table 3 has 0 of each among its 17 strains (``YDR379C-A`` is a
+gene of the R64 genome; every common name has exactly one candidate ORF).
 """
 
 from __future__ import annotations
@@ -119,6 +120,7 @@ _S_IDS = {
 class _StubGenome:
     def __init__(self, names: dict[str, str]) -> None:
         self.alias_to_systematic = {k: [v] for k, v in names.items()}
+        self.gene_set = {*_ORF_BY_NAME.values(), "YDR379C-A"}
 
 
 def _genome(names: dict[str, str] = _ORF_BY_NAME) -> SCerevisiaeGenome:
@@ -418,84 +420,73 @@ def _row(means: list[float], sds: list[float]) -> list[tuple[float, float]]:
     return list(zip(means, sds, strict=True))
 
 
-def test_synthetic_table_keeps_duplicates_unchecked_orfs_and_nan_cells(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, s_id_calls: list[dict[str, str]]
+_OTHER = _row(
+    [3.0, 2.0, 0.2, 0.3, 0.4, 0.5, 0.6], [0.1, 0.2, 0.02, 0.03, 0.04, 0.05, 0.06]
+)
+
+
+@pytest.mark.parametrize(
+    ("table", "aliases", "message"),
+    [
+        (
+            {"ASM4": "ASM4", "YDL088C": "ASM4"},
+            {},
+            "Yoshida2012: Table 3 rows 'ASM4' and 'YDL088C' both resolve to YDL088C",
+        ),
+        (
+            {"yal999w": "OTHER"},
+            {},
+            "Yoshida2012: systematic name 'YAL999W' is not a gene of the genome",
+        ),
+        (
+            {"AMB": "OTHER"},
+            {"AMB": ["YBR001C", "YCR001W"]},
+            "Yoshida2012: gene name 'AMB' is an alias of 2 ORFs ['YBR001C', 'YCR001W']",
+        ),
+        (
+            {"ASM4": "NAN_CITRATE"},
+            {},
+            "Yoshida2012: Table 3 row 'ASM4' has a NaN citrate cell (nan, nan)",
+        ),
+    ],
+    ids=["duplicate_orf", "orf_not_in_genome", "ambiguous_alias", "nan_cell"],
+)
+def test_a_bad_table_row_is_refused_before_anything_is_written(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    s_id_calls: list[dict[str, str]],
+    table: dict[str, str],
+    aliases: dict[str, list[str]],
+    message: str,
 ) -> None:
-    """Finding: ``YDL088C`` resolves by the regex (line 358) to the same ORF as ASM4, so
-    the two give identical genotypes and both are stored; ``yal999w`` also passes the
-    regex and is stored as YAL999W without the genome ever being asked; ``AMB``, whose
-    alias lists two ORFs, silently takes the first, YBR001C (line 364); citrate
-    (nan, nan) is stored as a NaN level and a NaN SE. Pinned until the loader refuses a
-    duplicate, an unknown ORF, an ambiguous alias and a missing cell.
+    """Contract (issue #537): beside the released WT row, a table with ASM4 twice (as
+    ``ASM4`` and as its ORF ``YDL088C``), a systematic-shaped ``yal999w`` the genome does
+    not have, an alias ``AMB`` of two ORFs, or a citrate (nan, nan) cell is refused with
+    a named message. Nothing is written: no ``data.csv``, no ``processed/lmdb``, and a
+    second constructor on the same root refuses again.
     """
     asm4 = m.TABLE_3["ASM4"]
-    nan_citrate = [asm4[0], asm4[1], (math.nan, math.nan), *asm4[3:]]
-    other = _row(
-        [3.0, 2.0, 0.2, 0.3, 0.4, 0.5, 0.6], [0.1, 0.2, 0.02, 0.03, 0.04, 0.05, 0.06]
-    )
+    rows = {
+        "ASM4": asm4,
+        "OTHER": _OTHER,
+        "NAN_CITRATE": [asm4[0], asm4[1], (math.nan, math.nan), *asm4[3:]],
+    }
     monkeypatch.setattr(
         m,
         "TABLE_3",
-        {
-            "WT": m.TABLE_3["WT"],
-            "ASM4": asm4,
-            "YDL088C": nan_citrate,
-            "yal999w": other,
-            "AMB": other,
-        },
+        {"WT": m.TABLE_3["WT"], **{key: rows[row] for key, row in table.items()}},
     )
-    genome = cast(SCerevisiaeGenome, _StubGenome(_ORF_BY_NAME))
-    genome.alias_to_systematic["AMB"] = ["YBR001C", "YCR001W"]
-    root = _root(tmp_path, "synthetic_table")
-    dataset = m.OrganicAcidYoshida2012Dataset(root=str(root), genome=genome)
-    items = [dataset[i]["experiment"] for i in range(len(dataset))]
-    assert [
-        (
-            e["genotype"]["perturbations"][0]["systematic_gene_name"],
-            e["genotype"]["perturbations"][0]["perturbed_gene_name"],
-        )
-        for e in items
-    ] == [
-        ("YDL088C", "ASM4"),
-        ("YDL088C", "YDL088C"),
-        ("YAL999W", "yal999w"),
-        ("YBR001C", "AMB"),
-    ]
-    assert (
-        items[1]["genotype"]["perturbations"]
-        == (
-            Genotype(
-                perturbations=[
-                    KanMxDeletionPerturbation(
-                        systematic_gene_name="YDL088C", perturbed_gene_name="YDL088C"
-                    )
-                ]
-            ).model_dump()["perturbations"]
-        )
-    )
-    duplicate = items[1]["phenotype"]
-    assert math.isnan(duplicate["metabolite_level"]["citrate"])
-    assert math.isnan(duplicate["metabolite_level_se"]["citrate"])
-    assert {
-        k: v for k, v in duplicate["metabolite_level"].items() if k != "citrate"
-    } == {
-        "acetate": 4.02,
-        "malate": 0.15,
-        "pyruvate": 0.13,
-        "succinate": 1.31,
-        "phosphate": 0.78,
-    }
-    assert items[3]["phenotype"] == (
-        _phenotype(
-            [2.0, 0.2, 0.3, 0.5, 0.6, 0.4], [0.2, 0.02, 0.03, 0.05, 0.06, 0.04]
-        ).model_dump()
-    )
-    assert json.loads((root / "preprocess" / "gene_set.json").read_text()) == [
-        "YAL999W",
-        "YBR001C",
-        "YDL088C",
-    ]
-    dataset.close_lmdb()
+    genome = _StubGenome(_ORF_BY_NAME)
+    genome.alias_to_systematic.update(aliases)
+    root = _root(tmp_path, "refused")
+    for _ in range(2):
+        with pytest.raises(RuntimeError) as info:
+            m.OrganicAcidYoshida2012Dataset(
+                root=str(root), genome=cast(SCerevisiaeGenome, genome)
+            )
+        assert str(info.value) == message
+        assert not (root / "preprocess" / "data.csv").exists()
+        assert not (root / "processed" / "lmdb").exists()
 
 
 def test_negative_sd_is_refused_by_the_phenotype_validator(

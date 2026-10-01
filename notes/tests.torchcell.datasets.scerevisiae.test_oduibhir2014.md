@@ -19,3 +19,7 @@ Findings: a duplicate or lowercase ORF is stored once per row (lines 292-314); a
 ## 2026.09.30 - Raw sha256 pin enforced at build time
 
 Issues #518, #524, #528, #537. Finding retired: the unverified-raw Finding (#537) `test_a_mirror_file_off_the_pin_is_refused_but_left_in_raw_for_the_next_build` is now `test_a_mirror_file_off_the_pin_is_refused_and_nothing_lands_in_raw`. Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.
+
+## 2026.10.01 - Findings retired (issues #537, #546)
+
+Retired the Phase 16 findings: a duplicated ORF (verbatim or lowercase), a blank `commonName` and a blank `log2relT` are now refused with exact `RuntimeError` messages, and each refusal leaves no `processed/lmdb` and no `gene_set.json`, with a second constructor on the same root refusing again.

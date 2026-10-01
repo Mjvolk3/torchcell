@@ -34,3 +34,11 @@ created: 1783835401860
 Issue #518 (sweep); the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes; PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: no; refused deposit leaving a directory: n/a.
 
 Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `PDF_SHA256`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.
+
+## 2026.10.01 - Genome-checked names and refusals before the store opens (issue #537)
+
+Previous behavior: a systematic-shaped name skipped the genome (a nonexistent YAL999W was stored), an alias with two candidate ORFs took the first, a strain written by its common and its systematic name gave two records, and a NaN cell was stored as a NaN level and SE. `data.csv` and the store were written while records were still being built.
+
+Fix: a systematic-shaped name must be in `genome.gene_set`; an alias must name exactly one ORF; two rows resolving to one ORF and a NaN mean or SD in any Table 3 cell are refused with a named `RuntimeError`. Every record is built before `data.csv` or the store is written. Measured on the released Table 3 (17 strains, 126 cells): `YDR379C-A` is a gene of R64, every common name has exactly one candidate, 0 duplicates, 0 NaN cells, so the built records do not change.
+
+Test: `test_a_bad_table_row_is_refused_before_anything_is_written` (four cases).

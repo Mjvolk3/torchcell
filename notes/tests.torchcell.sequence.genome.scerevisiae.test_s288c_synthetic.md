@@ -28,3 +28,8 @@ Retired the Finding that the `+` 5' window included the first CDS base. Now asse
 ## 2026.09.30 - drop_empty_go cache reset asserted (issue #570)
 
 - Added `test_drop_empty_go_rebuilds_the_locus_index_and_go_genes`: with both caches warm, YBL001W resolves CURRENT before `drop_empty_go` and RETIRED after; `feature_index["genes"]` is the five surviving genes; `go_genes` is a new object with the exact three-term map. Fails on the previous source (YBL001W stayed CURRENT).
+
+## 2026.10.01 - overwrite default and the data.db source record
+
+- `build_db` now seeds `data.db` with the module's `build_genome_database` (source record included) instead of a bare `gffutils.create_db`, since a database without the record is now refused.
+- New tests assert: the attrs default of `overwrite` is `False`; a default construction on an empty root makes exactly one `create_db` call on the fixture GFF, leaves only `data.db` (mode 0644) carrying the expected `GenomeDatabaseSource`, and a second default construction leaves its inode and `st_mtime_ns` unchanged; `overwrite=True` replaces the file (new inode, one file, record rewritten); a plain-gffutils database and a database whose recorded GFF sha256 no longer matches are refused with the exact `GenomeDatabaseSourceError` message, the first leaving the file untouched; a two-row record table is refused by name; unpickling an `overwrite=True` genome leaves `data.db` untouched and restores `overwrite=True`.

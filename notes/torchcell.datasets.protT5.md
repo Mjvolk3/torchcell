@@ -64,3 +64,7 @@ We get this error because I was bit myopic 👀 at first thinking there weren't 
 - `process` returns before building a backbone when `model_name` is `None`; it used to build one on every construction. The dead post-`super` branch (which called a nonexistent `initialize_transformer`) was removed.
 
 A rebuilt store differs on disk (tensor instead of a list of numpy arrays; float32 even on a half-precision GPU build). Tests: [[tests.torchcell.datasets.test_protT5]].
+
+## 2026.10.01 - genome built with overwrite=False
+
+The `SCerevisiaeGenome` construction here passed `overwrite=True`, rebuilding the shared `data.db` under every other reader. It now passes `overwrite=False`, which opens the existing database after checking its source record (see [[torchcell.sequence.genome.scerevisiae.s288c]]).

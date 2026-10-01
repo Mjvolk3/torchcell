@@ -8,8 +8,11 @@
 import logging
 import os
 import os.path as osp
+import sqlite3
+import tempfile
 from enum import StrEnum
 from itertools import product
+from pathlib import Path
 from typing import Any, ClassVar, SupportsIndex, cast
 
 import gffutils
@@ -18,10 +21,11 @@ from attrs import define, field
 from Bio import SeqIO
 from gffutils.feature import Feature
 from goatools.obo_parser import GODag
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sortedcontainers import SortedDict, SortedSet
 from torch_geometric.data import download_url
 
+from torchcell.literature.manifest import sha256_file
 from torchcell.sequence import (
     DnaSelectionResult,
     DnaWindowResult,
@@ -487,16 +491,143 @@ class GeneNameResolution(BaseModel):
         return self.status in (GeneNameStatus.CURRENT, GeneNameStatus.RENAMED)
 
 
+#: The gffutils database every genome builds under its ``genome_root``.
+GENOME_DB_FILENAME = "data.db"
+#: The table inside ``data.db`` that records what the database was built from.
+SOURCE_TABLE = "torchcell_genome_db_source"
+#: The ``gffutils.create_db`` arguments every build uses (also recorded in the source).
+CREATE_DB_KWARGS: dict[str, Any] = {
+    "keep_order": True,
+    "merge_strategy": "merge",
+    "sort_attribute_values": True,
+}
+
+
+class GenomeDatabaseSource(BaseModel):
+    """What a genome ``data.db`` was built from: the pinned GFF and the build arguments.
+
+    It is stored as one JSON row in :data:`SOURCE_TABLE` inside the database itself, so
+    the record and the features it describes are replaced together by one atomic rename
+    and a reader can never pair a new database with an old record.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    assembly_set: str
+    gff_filename: str
+    gff_sha256: str
+    keep_order: bool
+    merge_strategy: str
+    sort_attribute_values: bool
+
+
+class GenomeDatabaseSourceError(RuntimeError):
+    """``data.db`` cannot be shown to have been built from this genome's pinned GFF."""
+
+
+def genome_database_source(
+    assembly_set: str, gff_filename: str, gff_path: str
+) -> GenomeDatabaseSource:
+    """The source record a database built from ``gff_path`` now would carry."""
+    return GenomeDatabaseSource(
+        assembly_set=assembly_set,
+        gff_filename=gff_filename,
+        gff_sha256=sha256_file(Path(gff_path)),
+        **CREATE_DB_KWARGS,
+    )
+
+
+def build_genome_database(
+    gff_path: str, db_path: str, source: GenomeDatabaseSource
+) -> None:
+    """Build ``db_path`` from ``gff_path`` beside it, record ``source``, rename it in.
+
+    The database is written to a temporary file in the same directory and moved onto
+    ``db_path`` with ``os.replace``, so a concurrent reader opens either the previous
+    complete file or the new complete file, never a missing or half-written one.
+    """
+    db_dir = osp.dirname(db_path)
+    os.makedirs(db_dir, exist_ok=True)
+    fd, tmp_path = tempfile.mkstemp(
+        prefix=GENOME_DB_FILENAME + ".", suffix=".building", dir=db_dir
+    )
+    os.close(fd)
+    gffutils.create_db(gff_path, dbfn=tmp_path, force=True, **CREATE_DB_KWARGS)
+    with sqlite3.connect(tmp_path) as conn:
+        conn.execute(f"CREATE TABLE {SOURCE_TABLE} (record TEXT NOT NULL)")
+        conn.execute(
+            f"INSERT INTO {SOURCE_TABLE} (record) VALUES (?)",
+            (source.model_dump_json(),),
+        )
+    conn.close()
+    os.chmod(tmp_path, 0o644)
+    os.replace(tmp_path, db_path)
+
+
+def read_genome_database_source(db_path: str) -> GenomeDatabaseSource | None:
+    """The source recorded inside ``db_path``, or None when it carries no record."""
+    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    has_table = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (SOURCE_TABLE,)
+    ).fetchone()
+    if has_table is None:
+        conn.close()
+        return None
+    rows = conn.execute(f"SELECT record FROM {SOURCE_TABLE}").fetchall()
+    conn.close()
+    if len(rows) != 1:
+        raise GenomeDatabaseSourceError(
+            f"{db_path}: {SOURCE_TABLE} holds {len(rows)} rows, expected exactly 1"
+        )
+    return GenomeDatabaseSource.model_validate_json(rows[0][0])
+
+
+def check_genome_database_source(
+    db_path: str, expected: GenomeDatabaseSource, rebuild_call: str
+) -> None:
+    """Refuse ``db_path`` unless it records exactly ``expected`` as its source."""
+    recorded = read_genome_database_source(db_path)
+    if recorded is None:
+        raise GenomeDatabaseSourceError(
+            f"{db_path} carries no {SOURCE_TABLE} record, so it cannot be shown to "
+            f"have been built from {expected.assembly_set}/{expected.gff_filename} "
+            f"(sha256 {expected.gff_sha256}). Rebuild it deliberately, once, while "
+            f"no job reads it: {rebuild_call}"
+        )
+    if recorded != expected:
+        raise GenomeDatabaseSourceError(
+            f"{db_path} was built from {recorded.model_dump()} but this genome's "
+            f"source is {expected.model_dump()}. Rebuild it deliberately, once, while "
+            f"no job reads it: {rebuild_call}"
+        )
+
+
 @define(eq=False)
 class SCerevisiaeGenome(Genome):
-    """S288C genome wrapper exposing genes, GO annotations, and sequence queries."""
+    """S288C genome wrapper exposing genes, GO annotations, and sequence queries.
+
+    ``overwrite`` decides what happens to ``<genome_root>/data.db``, the gffutils
+    database built from the pinned GFF:
+
+    * ``False`` (the default): build it only when it is absent; otherwise open the
+      existing file, after checking that the source recorded inside it (assembly set,
+      GFF filename, GFF sha256, build arguments) equals this genome's. A database with
+      no record or a different record raises :class:`GenomeDatabaseSourceError`.
+    * ``True``: rebuild it unconditionally. Every other process reading the same
+      ``genome_root`` is affected, so pass it only deliberately, while nothing runs.
+
+    Either build is written beside ``data.db`` and renamed onto it, so a reader never
+    sees a missing or partial file. The record does not detect rows deleted afterwards:
+    :meth:`drop_chrmt` and :meth:`drop_empty_go` delete from this same file in place,
+    so a later genome on the same ``genome_root`` opens the reduced database.
+    """
 
     #: The assembly set in the genomes tier this class reads its release files from.
     ASSEMBLY_SET: ClassVar[str] = SGD_S288C_R64
 
     genome_root: str = field(init=True, repr=False, default="data/sgd/genome")
     go_root: str = field(init=True, repr=False, default="data/go")
-    overwrite: bool = field(init=True, repr=True, default=True)
+    overwrite: bool = field(init=True, repr=True, default=False)
     fasta_dna: dict[str, Any] = field(init=False, default=None, repr=False)
     chr_to_nc: dict[int, str] = field(init=False, default=None, repr=False)
     nc_to_chr: dict[str, int] = field(init=False, default=None, repr=False)
@@ -534,10 +665,8 @@ class SCerevisiaeGenome(Genome):
             self.ASSEMBLY_SET,
             "S288C_reference_sequence_" + self.genome_version + ".fsa",
         )
-        self._gff_path: str = resolve(
-            self.ASSEMBLY_SET,
-            "saccharomyces_cerevisiae_" + self.genome_version + ".gff",
-        )
+        gff_filename = "saccharomyces_cerevisiae_" + self.genome_version + ".gff"
+        self._gff_path: str = resolve(self.ASSEMBLY_SET, gff_filename)
         self._protein_fasta_path = resolve(
             self.ASSEMBLY_SET, "orf_trans_all_" + self.genome_version + ".fasta"
         )
@@ -545,18 +674,16 @@ class SCerevisiaeGenome(Genome):
             self.ASSEMBLY_SET, "orf_coding_all_" + self.genome_version + ".fasta"
         )
 
-        db_path = osp.join(self.genome_root, "data.db")
-
-        # Create database only if overwrite is True
-        if self.overwrite:
-            # TODO remove sort_attribute_values since this can be time consuming.
-            gffutils.create_db(
-                self._gff_path,
-                dbfn=db_path,
-                force=True,
-                keep_order=True,
-                merge_strategy="merge",
-                sort_attribute_values=True,
+        db_path = osp.join(self.genome_root, GENOME_DB_FILENAME)
+        source = genome_database_source(self.ASSEMBLY_SET, gff_filename, self._gff_path)
+        if self.overwrite or not osp.exists(db_path):
+            build_genome_database(self._gff_path, db_path, source)
+        else:
+            check_genome_database_source(
+                db_path,
+                source,
+                f"SCerevisiaeGenome(genome_root={self.genome_root!r}, "
+                f"go_root={self.go_root!r}, overwrite=True)",
             )
 
         # Set up connection manager for thread/process-safe database access
@@ -623,10 +750,12 @@ class SCerevisiaeGenome(Genome):
         if "_go_dag" in state:
             state["_go_dag"] = None
 
-        # Use attrs' __reduce_ex__ but with our cleaned state
+        # Reconstruct with overwrite=False: unpickling in a worker must open the
+        # parent's database, never rebuild it under the other workers. The original
+        # ``overwrite`` value comes back with ``state``.
         return (
             self.__class__,
-            (self.genome_root, self.go_root, self.overwrite),
+            (self.genome_root, self.go_root, False),
             state,
             None,
             iter([]),

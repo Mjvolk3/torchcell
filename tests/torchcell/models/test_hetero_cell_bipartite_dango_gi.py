@@ -1122,13 +1122,14 @@ def test_null_aggregation_norm_builds_exactly_the_module_main_built(
         torch.testing.assert_close(null.state_dict()[key], tensor, rtol=0, atol=0)
 
 
-@pytest.mark.parametrize("value", ["layer", "batch", "none"])
+@pytest.mark.parametrize("value", ["layer", "batch", "none", "", False, 0])
 @pytest.mark.parametrize("method", ["sum", "cross_attention", "pairwise_interaction"])
 def test_a_non_null_aggregation_norm_is_refused_by_name(
-    method: str, value: str
+    method: str, value: object
 ) -> None:
-    """Contract (issue #540): any value other than null, including the string "none",
-    raises ``AggregationNormNotImplementedError`` (a ValueError) with the exact message
+    """Contract (issue #540): any value other than null, including the string "none"
+    and the falsy non-null values "", False and 0 (the check is ``is not None``, not
+    truthiness), raises ``AggregationNormNotImplementedError`` (a ValueError) with the exact message
     naming the value and the ``_lazy`` module that builds the norm, for every
     aggregation method, from the model and from ``HeteroConvAggregator`` given the
     value either as its argument or inside its ``aggregation_config``.
@@ -1141,9 +1142,10 @@ def test_a_non_null_aggregation_norm_is_refused_by_name(
     assert issubclass(AggregationNormNotImplementedError, ValueError)
 
     conv = AttentionConvWrapper(GINConv(nn.Linear(HIDDEN, HIDDEN)), HIDDEN)
+    norm_kwarg: dict[str, Any] = {"aggregation_norm": value}
     with pytest.raises(AggregationNormNotImplementedError, match=_refusal(value)):
         HeteroConvAggregator(
-            {PHYS: conv}, HIDDEN, aggregation_method=method, aggregation_norm=value
+            {PHYS: conv}, HIDDEN, aggregation_method=method, **norm_kwarg
         )
     with pytest.raises(AggregationNormNotImplementedError, match=_refusal(value)):
         HeteroConvAggregator(

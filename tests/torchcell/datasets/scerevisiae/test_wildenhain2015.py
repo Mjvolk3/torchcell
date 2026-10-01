@@ -25,7 +25,8 @@ synthetic files with the pins monkeypatched to their digests, and one build runs
 
 2026.10.01 (issue #520): the datapoint key is the parsed z, so two z strings of equal
 value (``-4.0`` / ``-4.00``) are one screen (n 1) rather than an SD-0 abort, and a missing
-mirror manifest refuses with the deposit step instead of a bare ``FileNotFoundError``.
+mirror manifest refuses with the deposit step instead of a bare ``FileNotFoundError``. A
+non-finite or unparseable z refuses in ``_collapse_matrix`` naming the cell.
 """
 
 from __future__ import annotations
@@ -652,6 +653,42 @@ def test_two_z_strings_of_equal_value_are_one_screen(
         "environment_response_uncertainty",
         "environment_response_se",
     ]
+
+
+@pytest.mark.parametrize(
+    ("z_scores", "message"),
+    [
+        (("nan", "nan"), "YAL001C/CID 1183: z_score 'nan' is not finite"),
+        (("-4.0", "inf"), "YAL001C/CID 1183: z_score 'inf' is not finite"),
+        (("-4.0", "n/a"), "YAL001C/CID 1183: z_score 'n/a' is not a number"),
+    ],
+)
+def test_a_non_finite_or_unparseable_z_refuses_naming_the_cell(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    z_scores: tuple[str, str],
+    message: str,
+) -> None:
+    """Contract (issue #520 review): ``nan != nan``, so two ``nan`` rows would be two
+    float keys of one cell, and an unparseable z would be a bare ``ValueError``. Both
+    refuse in ``_collapse_matrix``, naming the cell and the raw string, before the store
+    is opened. The pinned export has 0 of either.
+    """
+    rows = [
+        _row(
+            PUBCHEM_CID="1183",
+            PUBCHEM_ACTIVITY_OUTCOME="Inactive",
+            orf="YAL001C",
+            z_score=z,
+            **{"non replicate": "0"},
+        )
+        for z in z_scores
+    ]
+    _write_raw(tmp_path, rows)
+    with pytest.raises(RuntimeError) as info:
+        _build(tmp_path, monkeypatch)
+    assert str(info.value) == message
+    assert not (tmp_path / "processed" / "lmdb").exists()
 
 
 def test_canonical_names_skip_standards_that_do_not_resolve_back() -> None:

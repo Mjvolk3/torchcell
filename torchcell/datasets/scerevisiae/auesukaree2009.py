@@ -800,6 +800,19 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
         pub_dump = publication.model_dump()
         ref_dump = self._reference().model_dump()
 
+        # Resolve every table BEFORE the store exists: a refusal (missing table,
+        # checksum miss, unadjudicated AMBIGUOUS token, missing genome) must not leave an
+        # empty ``processed/lmdb`` that a retry would serve as a built dataset.
+        resolved_specs = []
+        for spec in _STRESS_SPECS:
+            stress = spec["stress"]
+            if stress not in tables:
+                raise RuntimeError(
+                    f"stress table not found in PDF: {stress!r} "
+                    f"(parsed: {sorted(tables)})"
+                )
+            resolved_specs.append((spec, self._resolve_stress(stress, tables[stress])))
+
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e11))
@@ -808,18 +821,10 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
         dropped_tokens: dict[str, int] = {}
         collapsed_tokens: list[CollapsedToken] = []
         with env.begin(write=True) as txn:
-            for spec in _STRESS_SPECS:
+            for spec, (orf_names, dropped, collapsed) in resolved_specs:
                 stress = spec["stress"]
-                if stress not in tables:
-                    raise RuntimeError(
-                        f"stress table not found in PDF: {stress!r} "
-                        f"(parsed: {sorted(tables)})"
-                    )
                 environment = self._environment(spec)
                 n_listed += len(tables[stress])
-                orf_names, dropped, collapsed = self._resolve_stress(
-                    stress, tables[stress]
-                )
                 for token, count in dropped.items():
                     dropped_tokens[token] = dropped_tokens.get(token, 0) + count
                 collapsed_tokens.extend(collapsed)

@@ -62,6 +62,7 @@ import csv
 import gzip
 import hashlib
 import logging
+import math
 import os
 import os.path as osp
 import re
@@ -511,6 +512,24 @@ class MatrixCell(BaseModel):
         return ResponseCategory.not_determined, " / ".join(words)
 
 
+def _parse_z(z_raw: str, orf: str, identity: str) -> float:
+    """The released z_score as a finite float; refuse, naming the cell, otherwise.
+
+    A non-finite z would break the datapoint key (``nan != nan``, so two ``nan`` rows
+    become two screens) and the mean / SD. Measured on the pinned export: 0 of 484,830
+    strain datapoints are unparseable or non-finite.
+    """
+    try:
+        z = float(z_raw)
+    except ValueError:
+        raise RuntimeError(
+            f"{orf}/{identity}: z_score {z_raw!r} is not a number"
+        ) from None
+    if not math.isfinite(z):
+        raise RuntimeError(f"{orf}/{identity}: z_score {z_raw!r} is not finite")
+    return z
+
+
 def _canonical_common_names(genome: SCerevisiaeGenome) -> dict[str, str]:
     """``systematic name -> the genome's own standard (common) name``.
 
@@ -622,7 +641,7 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
                         or None,
                     )
                     cells[key] = cell
-                cell.screens[float(z_raw)] = (
+                cell.screens[_parse_z(z_raw, orf, identity)] = (
                     row[idx["non replicate"]].strip(),
                     row[idx["PUBCHEM_ACTIVITY_OUTCOME"]].strip(),
                     row[idx["bioactivity"]].strip(),

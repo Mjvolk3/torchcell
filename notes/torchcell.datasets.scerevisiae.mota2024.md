@@ -158,3 +158,5 @@ Fix (issue #520): an unknown score refuses with the file, the symbol, the token 
 Record-neutral, measured on the three pinned sheets: header found in each (row 5, 5, 7), scored rows acetic 331 `+` / 46 `++`, butyric 371 / 51, octanoic 437 / 53, 0 other symbols.
 
 Tests: `test_unknown_grade_symbol_refuses_naming_file_symbol_and_token`, `test_a_sheet_without_the_header_row_refuses_naming_the_file`.
+
+Review follow-up (same day): both refusals used to fire inside the write transaction, after `processed/lmdb` existed, so a retry served an empty dataset. `process()` now parses all three sheets before the store is opened and iterates the parsed results inside the transaction. On the synthetic edge build, the LMDB (4 records) is byte-identical to main's: key and value digest `91482078...`, from the b4-zelezniak scratchpad `equiv_build.py`.

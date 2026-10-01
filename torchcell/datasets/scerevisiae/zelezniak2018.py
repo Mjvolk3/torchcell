@@ -17,9 +17,9 @@ both from the same Zenodo record 1320289 (concept DOI 10.5281/zenodo.1320288):
   ``ProteinAbundancePhenotype`` (WS9): ``protein_abundance = {protein_ORF -> mean log
   signal}`` with ``measurement_type = "swath_ms_label_free_log_signal_sva"``. The parent
   **WT** strain (``KO_ORF == "WT"``) supplies the reference profile. Every protein has
-  >=2 replicate samples per strain, so the standard error is always defined. A blank
-  value or a repeated (protein, strain, replicate) row refuses the build (neither occurs
-  in the pinned release), since either would make the row count misstate ``n``.
+  >=2 replicate samples per strain, so the standard error is always defined. A blank or
+  non-finite value or a repeated (protein, strain, replicate) row refuses the build (none
+  occurs in the pinned release), since each would make ``n``, the mean or the SE wrong.
 
 - ``MetaboliteZelezniak2018Dataset`` -- the targeted central-carbon/amino-acid
   METABOLOME of the same 95 kinase-KO strains (plus a measured WT) by SRM-MS/MS. The file
@@ -55,6 +55,7 @@ import urllib.request
 from typing import Any
 
 import lmdb
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
@@ -163,9 +164,10 @@ class ProteomeZelezniak2018Dataset(ExperimentDataset):
         ``n`` is the row count per protein, so every row must be one distinct replicate
         with a value. A blank value (which pandas would leave out of ``n`` unrecorded)
         and a repeated (protein, replicate) id (which would count as an extra replicate
-        and shrink the SE) both refuse, naming the strain. Measured on the pinned
-        release (sha256 ``9ff81ecb...``): 0 blank values and 0 repeated (ORF, KO_ORF,
-        replicate) rows of 264,264, so neither refusal fires on the real file.
+        and shrink the SE) both refuse, naming the strain, and so does a non-finite
+        value (``inf`` passes the blank check but has no mean or SE). Measured on the
+        pinned release (sha256 ``9ff81ecb...``): 0 blank, 0 non-finite and 0 repeated
+        (ORF, KO_ORF, replicate) rows of 264,264, so no refusal fires on the real file.
         """
         blank = sub[sub["value"].isna()]
         if len(blank):
@@ -174,6 +176,13 @@ class ProteomeZelezniak2018Dataset(ExperimentDataset):
                 f"value(s), first {blank['ORF'].iloc[0]} replicate "
                 f"{blank['replicate'].iloc[0]}; a blank would drop out of n_replicates "
                 "unrecorded"
+            )
+        infinite = sub[np.isinf(sub["value"].to_numpy(dtype="float64"))]
+        if len(infinite):
+            raise RuntimeError(
+                f"Zelezniak proteome strain {strain}: {len(infinite)} non-finite "
+                f"protein value(s), first {infinite['ORF'].iloc[0]} replicate "
+                f"{infinite['replicate'].iloc[0]}; a non-finite value has no mean or SE"
             )
         repeated = sub[sub.duplicated(["ORF", "replicate"], keep=False)]
         if len(repeated):

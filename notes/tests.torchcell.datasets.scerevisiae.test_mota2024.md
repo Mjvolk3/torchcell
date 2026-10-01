@@ -19,3 +19,5 @@ Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256Mismat
 ## 2026.10.01 - Grade-symbol and header findings retired (issue #520)
 
 Retired: `test_unknown_grade_symbol_is_skipped_without_a_ledger_entry` and `test_a_sheet_without_the_header_row_raises_a_bare_stop_iteration`. The `+++` row left the shared edge fixture; a dedicated test now asserts the exact refusal for it, and the missing header asserts the exact `RuntimeError` naming the file.
+
+Review follow-up (same day): the refusal tests now also assert that no `processed/lmdb` exists after the refusal, and that a second construction refuses with the same exact message.

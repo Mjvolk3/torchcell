@@ -19,3 +19,5 @@ Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256Mismat
 ## 2026.10.01 - z-key and manifest findings retired (issue #520)
 
 Retired: `test_two_z_strings_of_equal_value_abort_the_build` and `test_download_without_a_manifest_raises_file_not_found`. Now asserted: `-4.0` and `-4.00` in one cell build one record with z -4.0, n 1 and the two single-screen dispersion gaps; `download()` with no manifest raises the exact `RuntimeError` naming the manifest path and the deposit step.
+
+Review follow-up (same day): `test_a_non_finite_or_unparseable_z_refuses_naming_the_cell` (`nan`/`nan`, `inf`, `n/a`) asserts the exact messages and that no store is left.

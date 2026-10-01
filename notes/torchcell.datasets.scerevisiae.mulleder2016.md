@@ -159,9 +159,8 @@ Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `DATA_
 - Record-neutral on the pinned Table S3: 4,678 concentration rows, 0 non-systematic ORFs, 0 repeated ORFs, 0 blank and 0 text cells (all 19 columns float64).
 - Left open: `n_replicates` stays 1 although `data_raw` has two to four rows for 191 of the 4,678 released ORFs (167 with 2, 20 with 3, 4 with 4; issue #488), the reference count (#489) and `SM_AGAR` (#143).
 - Behavior note: a numeric-looking TEXT cell such as `"1.5"` is now refused, where `float()` used to accept it; the pinned sheet has 0 text cells.
+- Tests: `test_ledger_counts_dropped_rows_and_their_orfs`, `test_blank_concentration_refuses_the_build_by_name`, `test_text_concentration_refuses_the_build_by_name`.
 
 ## 2026.10.01 - Correction to the replicate count above
 
 The first count of multi-row ORFs (194) was taken over all 4,831 ORFs in `data_raw`. Three of them (YOR221C, YOL086C, YOL067C, two rows each) are not in the released `intracellular_concentration_mM` sheet, so the affected stored records are 191 (167 with 2 rows, 20 with 3, 4 with 4), matching issue #488. Re-measured with `verify_review.py` in the fix scratchpad.
-
-- Tests: `test_ledger_counts_dropped_rows_and_their_orfs`, `test_blank_concentration_refuses_the_build_by_name`, `test_text_concentration_refuses_the_build_by_name`.

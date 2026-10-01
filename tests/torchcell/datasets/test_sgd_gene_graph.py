@@ -264,13 +264,13 @@ def test_string_lookup_raises_because_there_are_no_dna_windows(tmp_path: Path) -
 def test_invalid_model_name_is_refused_before_any_file_is_written(
     tmp_path: Path,
 ) -> None:
-    """The base validator's message joins its two sentences without a space."""
+    """The base validator names the bad name, then the valid names after a space."""
     with pytest.raises(ValueError) as excinfo:
         GraphEmbeddingDataset(
             root=str(tmp_path / "bad"), graph=_graph(), model_name="window_5979"
         )
     assert str(excinfo.value) == (
-        "Invalid model_name 'window_5979'.Valid options are: "
+        "Invalid model_name 'window_5979'. Valid options are: "
         "normalized_chrom_pathways, chrom_pathways"
     )
     assert not (tmp_path / "bad").exists()

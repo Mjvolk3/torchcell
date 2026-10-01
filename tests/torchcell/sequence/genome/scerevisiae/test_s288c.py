@@ -79,14 +79,14 @@ def test_gene_YIL111W(genome):
 
 def test_YAL037W_window_five_prime(genome):
     # + strand
-    # No start codon
+    # No start codon: ends before the gene's first base, 0-based 74019 (issue #543)
     dna_result = genome["YAL037W"].window_five_prime(9, include_start_codon=False)
     assert dna_result.id == "YAL037W"
     assert dna_result.chromosome == 1
     assert dna_result.strand == "+"
-    assert dna_result.start_window == 74011
-    assert dna_result.end_window == 74020
-    assert dna_result.seq == "ACACTGCTA"
+    assert dna_result.start_window == 74010
+    assert dna_result.end_window == 74019
+    assert dna_result.seq == "AACACTGCT"
 
     # With start codon
     dna_result = genome["YAL037W"].window_five_prime(9, include_start_codon=True)

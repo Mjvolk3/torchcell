@@ -56,3 +56,11 @@ AttributeError: 'GlobalStorage' object has no attribute 'dna_windows'
 ```
 
 We get this error because I was bit myopic 👀 at first thinking there weren't any models that would allow us to encode the entire genome. Since this has changed we should be more general in the way we include the meta data of the embeddings. Instead of `dna_windows` it should probably be something like `embedding_meta` and this could be a series of different objects. Still unclear to me the best thing to do here, and it is not absolutely necessary right now.
+
+## 2026.09.30 - One tensor type, real exclusion, no idle backbone (issue #543)
+
+- Embedded genes were stored as numpy arrays and excluded genes as torch `zeros(1, 1024)` (hard-coded width, on `self.device`), so the collate kept a Python list. Every gene now stores a float32 CPU torch `[1, hidden]` row, `hidden` read from `transformer.model.config.hidden_size` (T5 maps it to `d_model`), so the collate is one `[n_genes, hidden]` tensor.
+- The `_no_dubious_uncharacterized` exclusion list is capitalized (`Dubious`, `Uncharacterized`) so it matches SGD.
+- `process` returns before building a backbone when `model_name` is `None`; it used to build one on every construction. The dead post-`super` branch (which called a nonexistent `initialize_transformer`) was removed.
+
+A rebuilt store differs on disk (tensor instead of a list of numpy arrays; float32 even on a half-precision GPU build). Tests: [[tests.torchcell.datasets.test_protT5]].

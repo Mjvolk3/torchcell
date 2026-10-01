@@ -17,15 +17,14 @@ slices): ``YAL001W`` ``+`` gene ``[100, 112)`` with CDS = the locus (12 nt); ``Y
 Stand-in forward: ``[len, #A, #C, #G, #T]`` through the identity map, returned in the
 real ``embed_sequence`` shape ``[1, 5]``. ``ATGGCCTAA`` gives ``[9, 3, 2, 2, 2]``.
 
-Branches (``codon_language_model.py`` lines 94 to 104):
-
-* a gene of at most 3,072 nt embeds its CDS FASTA record, and the stored window is
-  ``window(len(cds))`` on the locus: YAL001W ``[100, 112)``; YAL002C ``[32 - 9, 32)`` =
-  ``[23, 32)``, 9 nt of genomic sequence that is NOT the CDS that was embedded;
-* a longer gene embeds ``window(3072)`` with the default ``is_max_size=True``, which
-  for a window shorter than the gene keeps the 5' end: YAL003W ``[2000, 5072)``.
+Contract (issue #543): CaLM tokenizes codons, so every gene embeds its spliced CDS
+(the CDS FASTA record) truncated to the first 3,072 nt, in frame from the start codon,
+and ``dna_windows`` stores exactly that string: YAL001W ``chrI[100:112]``; YAL002C
+``ATGGCCTAA`` (not the 9 nt of locus ``chrI[23:32]`` the old window held); YAL003W
+``chrI[2000:5072]``. Chunks go to ``processed/calm.partial.pt``, never to the store.
 """
 
+import logging
 import sys
 import types
 from pathlib import Path
@@ -84,21 +83,15 @@ def _fake_calm(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "calm", _calm_module(_FakeCaLM))
 
 
-def test_build_embeds_cds_for_short_genes_and_a_5prime_window_for_long_ones(
+def test_build_embeds_the_spliced_cds_and_stores_what_it_embedded(
     embedding_genome: Any, tmp_path: Path
 ) -> None:
-    """Pins the embedded input, the stored window and the stored row for each branch.
+    """Pins the embedded input, the stored window string and the stored row per gene.
 
-    One CaLM is built; ``embed_sequence`` receives YAL001W's CDS, ``ATGGCCTAA`` for
-    YAL002C, and ``chrI[2000:5072]`` for YAL003W, in gene-set order; each stored
-    embedding is the stand-in's ``[1, 5]`` row of that input.
-
-    Findings: (1) for a spliced gene the stored ``dna_windows`` entry (YAL002C,
-    revcomp of ``chrI[23:32]``) is not the sequence that was embedded; (2)
-    ``MODEL_TO_WINDOW["calm"]`` carries ``is_max_size=False`` (line 34), which
-    ``process`` unpacks and never passes, so YAL003W gets the 5'-anchored
-    ``[2000, 5072)`` rather than the symmetric ``[2014, 5086)``. Pinned until the
-    window is taken from the embedded sequence and the flag is passed.
+    One CaLM is built; ``embed_sequence`` receives YAL001W's CDS, the spliced
+    ``ATGGCCTAA`` for YAL002C, and the first 3,072 nt of YAL003W's 3,100 nt CDS, in
+    gene-set order; ``dna_windows`` holds the same string and each stored embedding is
+    the stand-in's ``[1, 5]`` row of it.
     """
     ds = CalmDataset(root=str(tmp_path), genome=embedding_genome)
     chromosome = embedding_genome.chromosome
@@ -107,11 +100,6 @@ def test_build_embeds_cds_for_short_genes_and_a_5prime_window_for_long_ones(
         "YAL002C": "ATGGCCTAA",
         "YAL003W": chromosome[2000:5072],
     }
-    windows = {
-        "YAL001W": ("+", 100, 112, chromosome[100:112]),
-        "YAL002C": ("-", 23, 32, str(Seq(chromosome[23:32]).reverse_complement())),
-        "YAL003W": ("+", 2000, 5072, chromosome[2000:5072]),
-    }
 
     assert _FakeCaLM.inits == 1
     assert _FakeCaLM.calls == [embedded[g] for g in GENE_IDS]
@@ -119,12 +107,10 @@ def test_build_embeds_cds_for_short_genes_and_a_5prime_window_for_long_ones(
     assert ds["YAL002C"].embeddings["calm"].tolist() == [[9.0, 3.0, 2.0, 2.0, 2.0]]
     for gene in GENE_IDS:
         item = ds[gene]
-        window = item.dna_windows["calm"]
-        assert (window.strand, window.start_window, window.end_window, window.seq) == (
-            windows[gene]
-        )
+        assert item.dna_windows == {"calm": embedded[gene]}
         assert item.embeddings["calm"].tolist() == [_features(embedded[gene])]
-    assert windows["YAL002C"][3] != embedded["YAL002C"]
+    assert str(Seq(chromosome[23:32]).reverse_complement()) != embedded["YAL002C"]
+    assert len(embedded["YAL003W"]) == 3072
 
 
 def test_chunked_saves_merge_to_the_same_store(
@@ -133,7 +119,8 @@ def test_chunked_saves_merge_to_the_same_store(
     """``batch_size=1`` writes and re-reads a partial list after every gene.
 
     The final collated store equals the single-chunk build: same ids in gene-set
-    order and the same ``[3, 5]`` embedding tensor.
+    order and the same ``[3, 5]`` embedding tensor; the chunk file is consumed, so
+    only the store and PyG's markers remain.
     """
     whole = CalmDataset(root=str(tmp_path / "whole"), genome=embedding_genome)
     chunked = CalmDataset(
@@ -142,9 +129,40 @@ def test_chunked_saves_merge_to_the_same_store(
 
     assert list(chunked._data.id) == GENE_IDS
     assert torch.equal(chunked._data.embeddings["calm"], whole._data.embeddings["calm"])
-    assert [chunked[i].dna_windows["calm"].seq for i in range(3)] == [
-        whole[i].dna_windows["calm"].seq for i in range(3)
+    assert [chunked[i].dna_windows["calm"] for i in range(3)] == [
+        whole[i].dna_windows["calm"] for i in range(3)
     ]
+    assert sorted(p.name for p in (tmp_path / "chunked" / "processed").iterdir()) == [
+        "calm.pt",
+        "pre_filter.pt",
+        "pre_transform.pt",
+    ]
+
+
+def test_a_stale_chunk_file_is_removed_with_a_warning(
+    embedding_genome: Any, tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A chunk file left by an interrupted build is discarded, not merged (issue #543).
+
+    The stale ``calm.partial.pt`` holds a foreign gene; the build logs the exact
+    warning, rebuilds from the first gene, and the store holds the three genes only.
+    """
+    processed = tmp_path / "processed"
+    processed.mkdir()
+    partial = processed / "calm.partial.pt"
+    torch.save({"data_list": ["stale"]}, partial)
+
+    with caplog.at_level(
+        logging.WARNING, logger="torchcell.datasets.codon_language_model"
+    ):
+        ds = CalmDataset(root=str(tmp_path), genome=embedding_genome)
+
+    assert [r.getMessage() for r in caplog.records] == [
+        f"Removing partial chunk file {partial} left by an interrupted build; "
+        "rebuilding from the first gene."
+    ]
+    assert list(ds._data.id) == GENE_IDS
+    assert not partial.exists()
 
 
 def test_second_construction_reads_store_without_building_calm(
@@ -171,6 +189,6 @@ def test_unknown_model_name_is_refused_with_the_valid_list(
     with pytest.raises(ValueError) as excinfo:
         CalmDataset(root=str(root), genome=embedding_genome, model_name="calm2")
 
-    assert str(excinfo.value) == "Invalid model_name 'calm2'.Valid options are: calm"
+    assert str(excinfo.value) == "Invalid model_name 'calm2'. Valid options are: calm"
     assert _FakeCaLM.inits == 0
     assert not root.exists()

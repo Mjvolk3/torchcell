@@ -5,7 +5,9 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/random_embedding
 # Test file: tests/torchcell/datasets/test_random_embedding.py
 
+import logging
 import os
+import os.path as osp
 from collections.abc import Callable
 from typing import Any, cast
 
@@ -19,6 +21,8 @@ from torchcell.sequence.genome.scerevisiae.s288c import (
     SCerevisiaeGene,
     SCerevisiaeGenome,
 )
+
+log = logging.getLogger(__name__)
 
 
 class RandomEmbeddingDataset(BaseEmbeddingDataset):
@@ -79,26 +83,43 @@ class RandomEmbeddingDataset(BaseEmbeddingDataset):
             "initialize_model is not needed for RandomEmbeddingDataset"
         )
 
+    @property
+    def partial_path(self) -> str:
+        """Path of the in-progress chunk file, beside (never at) the final store."""
+        return osp.join(self.processed_dir, f"{self.model_name}.partial.pt")
+
     def process(self) -> None:
-        """Generate random embeddings per gene and save them in batched chunks."""
+        """Generate random embeddings per gene and save them in batched chunks.
+
+        Rows are drawn from a private ``torch.Generator`` seeded with 42, so the
+        store is the seed-42 stream and the caller's global RNG is left untouched.
+        Chunks are written to ``partial_path``; a chunk file left by an interrupted
+        build is removed with a warning, since the build restarts at the first gene.
+        """
         data_list = []
         (window_method, window_size, is_max_size) = self.MODEL_TO_WINDOW[
             cast(str, self.model_name)
         ]
 
-        torch.manual_seed(42)  # Set a fixed seed for reproducibility
+        generator = torch.Generator().manual_seed(42)
+        if os.path.exists(self.partial_path):
+            log.warning(
+                f"Removing partial chunk file {self.partial_path} left by an "
+                "interrupted build; rebuilding from the first gene."
+            )
+            os.remove(self.partial_path)
 
         genome = cast(SCerevisiaeGenome, self.genome)
         for i, gene_id in tqdm(enumerate(genome.gene_set)):
             sequence = cast(SCerevisiaeGene, genome[gene_id])
             if len(sequence) <= window_size:
                 cds_sequence = sequence.cds.seq
-                embeddings = torch.rand(1, window_size)  # Random values between 0 and 1
+                embeddings = torch.rand(1, window_size, generator=generator)
                 dna_selection = getattr(sequence, window_method)(len(cds_sequence))
                 dna_window_dict = {self.model_name: dna_selection}
             else:
                 dna_selection = getattr(sequence, window_method)(window_size)
-                embeddings = torch.rand(1, window_size)  # Random values between 0 and 1
+                embeddings = torch.rand(1, window_size, generator=generator)
                 dna_window_dict = {self.model_name: dna_selection}
 
             data = Data(id=gene_id, dna_windows=dna_window_dict)
@@ -112,18 +133,15 @@ class RandomEmbeddingDataset(BaseEmbeddingDataset):
             data_list.append(data)
 
             if (i + 1) % self.batch_size == 0 or (i + 1) == len(genome.gene_set):
-                # Load existing data from the file if it exists
-                if os.path.exists(self.processed_paths[0]):
-                    existing_data = torch.load(
-                        self.processed_paths[0], weights_only=False
-                    )
-                    existing_data_list = existing_data.get("data_list", [])
-                    data_list = existing_data_list + data_list
+                # Merge the chunks this run already wrote, then consume the file
+                if os.path.exists(self.partial_path):
+                    existing_data = torch.load(self.partial_path, weights_only=False)
+                    data_list = existing_data["data_list"] + data_list
+                    os.remove(self.partial_path)
                 if (i + 1) == len(genome.gene_set):
                     torch.save(self.collate(data_list), self.processed_paths[0])
                 else:
-                    # Save the updated data back to the file
-                    torch.save({"data_list": data_list}, self.processed_paths[0])
+                    torch.save({"data_list": data_list}, self.partial_path)
                 data_list = []
 
 

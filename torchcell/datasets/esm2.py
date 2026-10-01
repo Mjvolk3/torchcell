@@ -28,7 +28,7 @@ class Esm2Dataset(BaseEmbeddingDataset):
         "esm2_t6_8M_UR50D_all": ("esm2_t6_8M_UR50D", None),
         "esm2_t6_8M_UR50D_no_dubious_uncharacterized": (
             "esm2_t6_8M_UR50D",
-            ["dubious", "uncharacterized"],
+            ["Dubious", "Uncharacterized"],
         ),
         "esm2_t6_8M_UR50D_no_dubious": ("esm2_t6_8M_UR50D", ["Dubious"]),
         "esm2_t6_8M_UR50D_no_uncharacterized": (
@@ -38,7 +38,7 @@ class Esm2Dataset(BaseEmbeddingDataset):
         "esm2_t12_35M_UR50D_all": ("esm2_t12_35M_UR50D", None),
         "esm2_t12_35M_UR50D_no_dubious_uncharacterized": (
             "esm2_t12_35M_UR50D",
-            ["dubious", "uncharacterized"],
+            ["Dubious", "Uncharacterized"],
         ),
         "esm2_t12_35M_UR50D_no_dubious": ("esm2_t12_35M_UR50D", ["Dubious"]),
         "esm2_t12_35M_UR50D_no_uncharacterized": (
@@ -48,7 +48,7 @@ class Esm2Dataset(BaseEmbeddingDataset):
         "esm2_t30_150M_UR50D_all": ("esm2_t30_150M_UR50D", None),
         "esm2_t30_150M_UR50D_no_dubious_uncharacterized": (
             "esm2_t30_150M_UR50D",
-            ["dubious", "uncharacterized"],
+            ["Dubious", "Uncharacterized"],
         ),
         "esm2_t30_150M_UR50D_no_dubious": ("esm2_t30_150M_UR50D", ["Dubious"]),
         "esm2_t30_150M_UR50D_no_uncharacterized": (
@@ -58,7 +58,7 @@ class Esm2Dataset(BaseEmbeddingDataset):
         "esm2_t33_650M_UR50D_all": ("esm2_t33_650M_UR50D", None),
         "esm2_t33_650M_UR50D_no_dubious_uncharacterized": (
             "esm2_t33_650M_UR50D",
-            ["dubious", "uncharacterized"],
+            ["Dubious", "Uncharacterized"],
         ),
         "esm2_t33_650M_UR50D_no_dubious": ("esm2_t33_650M_UR50D", ["Dubious"]),
         "esm2_t33_650M_UR50D_no_uncharacterized": (
@@ -68,7 +68,7 @@ class Esm2Dataset(BaseEmbeddingDataset):
         "esm2_t36_3B_UR50D_all": ("esm2_t36_3B_UR50D", None),
         "esm2_t36_3B_UR50D_no_dubious_uncharacterized": (
             "esm2_t36_3B_UR50D",
-            ["dubious", "uncharacterized"],
+            ["Dubious", "Uncharacterized"],
         ),
         "esm2_t36_3B_UR50D_no_dubious": ("esm2_t36_3B_UR50D", ["Dubious"]),
         "esm2_t36_3B_UR50D_no_uncharacterized": (
@@ -78,7 +78,7 @@ class Esm2Dataset(BaseEmbeddingDataset):
         "esm2_t48_15B_UR50D_all": ("esm2_t48_15B_UR50D", None),
         "esm2_t48_15B_UR50D_no_dubious_uncharacterized": (
             "esm2_t48_15B_UR50D",
-            ["dubious", "uncharacterized"],
+            ["Dubious", "Uncharacterized"],
         ),
         "esm2_t48_15B_UR50D_no_dubious": ("esm2_t48_15B_UR50D", ["Dubious"]),
         "esm2_t48_15B_UR50D_no_uncharacterized": (
@@ -95,21 +95,20 @@ class Esm2Dataset(BaseEmbeddingDataset):
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
     ):
-        """Configure the genome and model, then process embeddings if needed."""
+        """Configure the genome and model, then process embeddings if needed.
+
+        An unknown ``model_name`` is refused by ``BaseEmbeddingDataset`` with a
+        ``ValueError`` naming the valid names; ``None`` builds nothing. The backbone
+        is built inside ``process``, which PyG runs only when the store is absent.
+        """
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.genome: SCerevisiaeGenome | ParsedGenome | None = genome
         self.model_name = model_name
-        self.exclude_classifications = self.MODEL_TO_WINDOW[cast(str, self.model_name)][
-            1
-        ]
         super().__init__(root, self.model_name, transform, pre_transform)
         self.genome = self.parse_genome(genome)
         del genome
 
         if self.model_name:
-            if not os.path.exists(self.processed_paths[0]):
-                self.transformer = self.initialize_model()
-                self.process()
             self.data, self.slices = torch.load(
                 self.processed_paths[0], map_location="cpu", weights_only=False
             )
@@ -129,10 +128,15 @@ class Esm2Dataset(BaseEmbeddingDataset):
         return Esm2(model_name=self.MODEL_TO_WINDOW[cast(str, self.model_name)][0])
 
     def process(self) -> None:
-        """Compute ESM2 embeddings for each gene and save the processed dataset."""
-        self.transformer = self.initialize_model()
+        """Compute ESM2 embeddings for each gene and save the processed dataset.
+
+        Each gene stores a ``[1, hidden]`` float32 row (zeros for an excluded ORF
+        classification), so the collate is ``[n_genes, hidden]``.
+        """
         if not self.model_name:
             return
+        self.transformer = self.initialize_model()
+        exclude_classifications = self.MODEL_TO_WINDOW[self.model_name][1]
 
         data_list = []
 
@@ -144,8 +148,8 @@ class Esm2Dataset(BaseEmbeddingDataset):
             protein_sequence = str(cast(Any, genome[gene_id]).protein.seq)
 
             if (
-                self.exclude_classifications
-                and orf_classification in self.exclude_classifications
+                exclude_classifications
+                and orf_classification in exclude_classifications
             ):
                 print(f"zeros for {gene_id}")
                 embeddings = (
@@ -161,9 +165,9 @@ class Esm2Dataset(BaseEmbeddingDataset):
                     [protein_sequence], mean_embedding=True
                 )
 
-            embeddings = (
-                embeddings.cpu().squeeze()
-            )  # Remove extra dimensions if necessary
+            # One sequence per call: keep a leading axis, [1, hidden], so the collate
+            # stacks genes as rows instead of flattening them into one vector.
+            embeddings = embeddings.cpu().reshape(1, -1)
 
             protein_data_dict = {self.model_name: protein_sequence}
 

@@ -27,7 +27,7 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):  # type: ignore[misc]  # InMem
         if model_name and model_name not in self.MODEL_TO_WINDOW:
             valid_model_names = ", ".join(self.MODEL_TO_WINDOW.keys())
             raise ValueError(
-                f"Invalid model_name '{model_name}'."
+                f"Invalid model_name '{model_name}'. "
                 f"Valid options are: {valid_model_names}"
             )
         # BUG

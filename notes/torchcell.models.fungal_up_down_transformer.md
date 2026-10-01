@@ -116,3 +116,11 @@ I believe that we get `input_ids_len==1001` when the `sequnece_length==1003`, be
 [GitHub Issue Recommendation](https://github.com/gagneurlab/SpeciesLM/issues/1#issuecomment-1740531872)
 
 Previous padding did something like `[0,0,0,2,4424,64,...,3]`] instead of `[2,4424,0,0,0,64,...,3]`. This is supposed to preserve the location of the `2` which is id for speical token `[CLS]`, which helps indicate the species label `4424`, which in the case of yeast corresponds with `"candida_glabrata"`.
+
+## 2026.09.30 - Vocabulary, length message, layer bound (issue #543)
+
+- The constructor now checks `VALID_MODEL_NAMES` before any Hub call: `Invalid model_name '<name>'. Valid options are: downstream_species_lm, upstream_species_lm`. The agnostic models and the default `""` used to construct.
+- The short-downstream refusal said `must be >  11` while 11 bp is accepted; it now says `must be >= 11` (the accepted range, 11 to 300 bp, is unchanged).
+- The layer-range check was `target_layer[1] > len(hidden_states)`, so with 13 hidden states `(2, 13)` passed and silently averaged 2 to 12. It is now `>=`, and the message names the largest valid index: `Target layer 13 is out of range. Max layer is 12.`
+
+Tests: [[tests.torchcell.models.test_fungal_up_down_transformer]].

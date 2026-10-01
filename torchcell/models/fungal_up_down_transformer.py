@@ -42,7 +42,16 @@ class FungalUpDownTransformer(NucleotideModel):
             target_layer (int | tuple[int, ...], optional): The layer(s) of the
                 model to be used for embeddings. If a tuple, embeddings are
                 averaged over the range of layers. Defaults to (8,).
+
+        Raises:
+            ValueError: If ``model_name`` is not in ``VALID_MODEL_NAMES``; raised
+                before anything is downloaded or loaded.
         """
+        if model_name not in self.VALID_MODEL_NAMES:
+            raise ValueError(
+                f"Invalid model_name '{model_name}'. "
+                f"Valid options are: {', '.join(self.VALID_MODEL_NAMES)}"
+            )
         self.target_layer = target_layer
         self.tokenizer = None
         self.model = None
@@ -188,7 +197,7 @@ class FungalUpDownTransformer(NucleotideModel):
             if self.model_name.startswith("downstream"):
                 if sequence_length < 11:
                     raise ValueError(
-                        f"Seq len for {self.model_name} must be >  11."
+                        f"Seq len for {self.model_name} must be >= 11."
                         f" Provided: {sequence_length}"
                     )
                 elif sequence_length > desired_length:
@@ -223,10 +232,10 @@ class FungalUpDownTransformer(NucleotideModel):
                     torch.stack(hidden_states[self.target_layer[0] :]), dim=0
                 )[0]
             else:
-                if self.target_layer[1] > len(hidden_states):
+                if self.target_layer[1] >= len(hidden_states):
                     raise ValueError(
                         f"Target layer {self.target_layer[1]} is out of range."
-                        f" Max layer is {len(hidden_states)}."
+                        f" Max layer is {len(hidden_states) - 1}."
                     )
                 embedding = torch.mean(
                     torch.stack(

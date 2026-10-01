@@ -91,3 +91,7 @@ def __add__(self, other):
 ## 2024.04.04 - MODEL_TO_WINDOW changed to some configuration
 
 Now that we are using DNA, protein, and other arbitrary node features it will be best to rename this.
+
+## 2026.09.30 - Refusal message spacing (issue #543)
+
+Previously the unknown-name refusal joined its two literals with no space: `Invalid model_name 'x'.Valid options are: ...`. It now reads `Invalid model_name 'x'. Valid options are: ...`. Every embedding dataset test that pins the message was updated (`test_embedding`, `test_esm2`, `test_protT5`, `test_codon_language_model`, `test_random_embedding`, `test_datasets_nucleotide_transformer`, `test_datasets_fungal_up_down_transformer`, `test_sgd_gene_graph`).

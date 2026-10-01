@@ -12,8 +12,8 @@ Fake tokenizer: splits the text on spaces and returns ``[0] + [3 + i for each wo
 count is 1 (CLS) + 1 (species) + (L - 5) + 1 (SEP) = L - 2; a 1003 bp upstream
 sequence gives exactly 1001 tokens, the length the wrapper pads to.
 
-Fake model: 13 hidden states (embedding layer plus 12 blocks, the size the network
-test's refusal "Max layer is 13" implies) with ``hidden_states[l][0, t] = [t, l]``.
+Fake model: 13 hidden states (embedding layer plus 12 blocks, indices 0 to 12; the
+network test's refusal names the largest index, "Max layer is 12") with ``hidden_states[l][0, t] = [t, l]``.
 So a pooled embedding's first coordinate is the mean token position kept and its
 second is the mean layer index averaged. Worked values used below:
 
@@ -113,7 +113,7 @@ class TestFungalUpDownTransformerUpstream:
             model.embed(sequences)
         assert (
             str(excinfo.value)
-            == "Seq len for downstream_species_lm must be >  11. Provided: 10"
+            == "Seq len for downstream_species_lm must be >= 11. Provided: 10"
         )
 
     def test_embed_raises_value_error_for_downstream_long(self, model):
@@ -179,11 +179,11 @@ class TestFungalUpDownTransformerUpstream:
 
     def test_target_layer_as_single_element_tuple_error(self, model):
         """Verify an out-of-range target layer raises ValueError."""
-        model.target_layer = (8, 14)
+        model.target_layer = (8, 13)
         sequences = ["ATTTG" * 200 + "ATG"]  # Adjust as per your needs
         with pytest.raises(ValueError) as excinfo:
             model.embed(sequences, mean_embedding=True)
-        assert str(excinfo.value) == "Target layer 14 is out of range. Max layer is 13."
+        assert str(excinfo.value) == "Target layer 13 is out of range. Max layer is 12."
 
 
 # ---------------------------------------------------------------------------
@@ -327,22 +327,23 @@ def test_warm_cache_skips_the_download_and_prints_the_directory(
     assert capsys.readouterr().out == f"{cached} model already downloaded.\n"
 
 
-def test_model_name_vocabulary_is_not_enforced(fakes: _Faked) -> None:
-    """Finding: ``VALID_MODEL_NAMES`` is never checked; the prefix alone decides.
+@pytest.mark.parametrize("name", ["upstream_agnostic_lm", ""])
+def test_model_name_outside_the_vocabulary_is_refused_before_loading(
+    fakes: _Faked, name: str
+) -> None:
+    """The constructor checks ``VALID_MODEL_NAMES`` first (issue #543).
 
-    The class docstring says the agnostic models "are not supported here", yet
-    ``upstream_agnostic_lm`` constructs and takes the upstream limit 1003. The default
-    ``model_name=""`` also constructs (loading revision "") and is refused only when a
-    limit is needed, by ``max_sequence_size`` (fungal_up_down_transformer.py line 111)
-    with the exact message below. Pinned until the constructor checks the vocabulary.
+    The class docstring says the agnostic models "are not supported here", so
+    ``upstream_agnostic_lm`` is refused, as is the default ``model_name=""``, with
+    the exact message below and before any Hub call is made.
     """
-    agnostic = FungalUpDownTransformer(model_name="upstream_agnostic_lm")
-    assert agnostic.max_sequence_size == 1003
-    unnamed = FungalUpDownTransformer()
-    assert fakes.log[-1] == ("model", (HUB_DIR,), {"revision": ""})
     with pytest.raises(ValueError) as excinfo:
-        unnamed.embed(["ACGTACGTACGT"])
-    assert str(excinfo.value) == "Unknown model_name: "
+        FungalUpDownTransformer(model_name=name)
+    assert str(excinfo.value) == (
+        f"Invalid model_name '{name}'. "
+        "Valid options are: downstream_species_lm, upstream_species_lm"
+    )
+    assert fakes.log == []
 
 
 def test_sequence_is_tokenized_as_species_then_stride_one_six_mers(
@@ -367,12 +368,10 @@ def test_sequence_is_tokenized_as_species_then_stride_one_six_mers(
 
 
 def test_downstream_length_window_is_eleven_to_three_hundred(fakes: _Faked) -> None:
-    """Finding: 11 bp is accepted although the refusal text says "must be >  11".
+    """The window is 11 to 300 bp inclusive, and the refusal says ">= 11" (issue #543).
 
-    The check is ``sequence_length < 11`` (fungal_up_down_transformer.py line 189), so
-    the window is 11 to 300 inclusive. 11 bp pools to [4, 10] (9 tokens, mean position
-    4; layers 8 to 12) and 300 bp to [148.5, 10] (298 tokens, mean position 297 / 2).
-    Pinned until the message and the check agree.
+    11 bp pools to [4, 10] (9 tokens, mean position 4; layers 8 to 12) and 300 bp to
+    [148.5, 10] (298 tokens, mean position 297 / 2); 10 and 301 are refused.
     """
     model = FungalUpDownTransformer(model_name="downstream_species_lm")
     torch.testing.assert_close(model.embed(["A" * 11]), torch.tensor([[4.0, 10.0]]))
@@ -380,7 +379,7 @@ def test_downstream_length_window_is_eleven_to_three_hundred(fakes: _Faked) -> N
     with pytest.raises(ValueError) as short:
         model.embed(["A" * 10])
     assert str(short.value) == (
-        "Seq len for downstream_species_lm must be >  11. Provided: 10"
+        "Seq len for downstream_species_lm must be >= 11. Provided: 10"
     )
     with pytest.raises(ValueError) as long:
         model.embed(["A" * 301])
@@ -496,24 +495,22 @@ def test_target_layer_selects_or_averages_hidden_states(
     )
 
 
-def test_target_layer_upper_bound_is_off_by_one(fakes: _Faked) -> None:
-    """Finding: ``(2, 13)`` passes the range check and silently averages 2 to 12.
+def test_target_layer_upper_bound_is_the_last_hidden_state(fakes: _Faked) -> None:
+    """With 13 hidden states the largest index is 12 (issue #543).
 
-    With 13 hidden states the largest index is 12, but the check is
-    ``target_layer[1] > len(hidden_states)`` (fungal_up_down_transformer.py line 226),
-    so 13 is accepted and the slice ``[2:14]`` stops at 12: mean layer 7. Only 14 is
-    refused. Pinned until the check becomes ``>=``.
+    ``(2, 12)`` averages layers 2 to 12 (mean layer 7); ``(2, 13)`` names a layer that
+    does not exist and is refused with the largest valid index in the message.
     """
     model = FungalUpDownTransformer(
-        model_name="downstream_species_lm", target_layer=(2, 13)
+        model_name="downstream_species_lm", target_layer=(2, 12)
     )
     torch.testing.assert_close(
         model.embed(["ACGTACGTACGT"]), torch.tensor([[4.5, 7.0]])
     )
-    model.target_layer = (2, 14)
+    model.target_layer = (2, 13)
     with pytest.raises(ValueError) as excinfo:
         model.embed(["ACGTACGTACGT"])
-    assert str(excinfo.value) == "Target layer 14 is out of range. Max layer is 13."
+    assert str(excinfo.value) == "Target layer 13 is out of range. Max layer is 12."
 
 
 def test_batches_stack_per_sequence_in_input_order(fakes: _Faked) -> None:

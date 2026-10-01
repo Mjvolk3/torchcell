@@ -21,9 +21,9 @@ and requires grad, so the wrapper's ``detach`` is observable.
 Worked values for ``mean_embedding=True``: sequence 0 averages t over {0, 1, 2}, which
 is 3 / 3 = 1, with the b-column 0; sequence 1 averages t over {0, 1, 2, 3, 4}, which is
 10 / 5 = 2, with the b-column 10. The pad positions (t = 3, 4, 5 for sequence 0) would
-move the first mean to 15 / 6 = 2.5 if the mask were ignored. The wrapper then adds a
-leading axis, so the result is ``[[[1, 0], [2, 10]]]`` of shape ``[1, 2, 2]`` (a
-Finding: the mean path does not return ``[batch, dim]``).
+move the first mean to 15 / 6 = 2.5 if the mask were ignored. The result is
+``[[1, 0], [2, 10]]`` of shape ``[batch, dim]`` = ``[2, 2]`` (issue #543 removed a
+stray leading axis).
 """
 
 import os
@@ -162,23 +162,34 @@ def test_warm_cache_skips_the_download_and_says_so(
     assert capsys.readouterr().out == f"{HUB_ID} model already downloaded.\n"
 
 
-def test_load_model_ignores_its_model_name_argument(  # test-quality: allow the contract is the loader call log the fakes record
-    faked: tuple[CallLog, _FakeTokenizer, _FakeMaskedLM], tmp_path: Path
+def test_load_model_loads_the_named_checkpoint(  # test-quality: allow the contract is the loader call log the fakes record
+    faked: tuple[CallLog, _FakeTokenizer, _FakeMaskedLM],
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """Finding: ``load_model(model_name=...)`` always loads the module constant.
+    """``load_model(model_name=...)`` downloads and loads THAT Hub id (issue #543).
 
-    ``load_model`` (nucleotide_transformer.py lines 55 to 65) passes ``MODEL_NAME`` to
-    both ``from_pretrained`` calls, so the argument is dead. Pinned until the loader
-    either honors or drops it. The reload also moves the model to the device again.
+    With the default checkpoint cached and ``some/other-model`` not, the reload
+    fetches the other model into the same cache directory, then loads it by its id;
+    the download notice names it, and the model is moved to the device again.
     """
     log, _, model = faked
-    (tmp_path / "pretrained_LLM" / "nucleotide_transformer" / HUB_ID).mkdir(
-        parents=True
-    )
+    cache = tmp_path / "pretrained_LLM" / "nucleotide_transformer"
+    (cache / HUB_ID).mkdir(parents=True)
     wrapper = NucleotideTransformer()
     log.clear()
+    capsys.readouterr()
     wrapper.load_model(model_name="some/other-model")
-    assert log == [("tok", (HUB_ID,), {}), ("model", (HUB_ID,), {})]
+    other = "some/other-model"
+    assert log == [
+        ("tok", (other,), {"cache_dir": str(cache)}),
+        ("model", (other,), {"cache_dir": str(cache)}),
+        ("tok", (other,), {}),
+        ("model", (other,), {}),
+    ]
+    assert capsys.readouterr().out == (
+        f"Downloading {other} model to {cache / other}...\nDownload finished.\n"
+    )
     assert model.moved_to == [torch.device("cpu"), torch.device("cpu")]
 
 
@@ -238,17 +249,13 @@ def test_embed_per_token_returns_last_hidden_state_detached(
     assert out.requires_grad is False
 
 
-def test_embed_mean_pools_over_unmasked_tokens_with_a_leading_axis(
+def test_embed_mean_pools_over_unmasked_tokens_to_batch_by_dim(
     wrapper: NucleotideTransformer,
 ) -> None:
-    """Finding: the masked mean comes back as ``[1, batch, dim]``, not ``[batch, dim]``.
-
-    Worked in the module docstring: [[[1, 0], [2, 10]]]. The ``unsqueeze(0)`` at
-    nucleotide_transformer.py line 102 adds the leading axis. Pinned until the pooled
-    shape is decided.
-    """
+    """The masked mean is ``[batch, dim]``: [[1, 0], [2, 10]] (module docstring)."""
     out = wrapper.embed(["AC", "ACGT"], mean_embedding=True)
-    torch.testing.assert_close(out, torch.tensor([[[1.0, 0.0], [2.0, 10.0]]]))
+    assert out.shape == (2, 2)
+    torch.testing.assert_close(out, torch.tensor([[1.0, 0.0], [2.0, 10.0]]))
 
 
 def test_embed_wraps_a_bare_string_into_a_batch_of_one(
@@ -257,9 +264,9 @@ def test_embed_wraps_a_bare_string_into_a_batch_of_one(
     """A single string is encoded as ``["ACG"]``: mean over t in {0..3} is 1.5.
 
     ``"ACG"`` encodes to ``[2, 5, 5, 5, 1, 1]``, four unmasked positions, so the mean
-    of t is 6 / 4 = 1.5 and the b-column is 0; the output is ``[[[1.5, 0.0]]]``.
+    of t is 6 / 4 = 1.5 and the b-column is 0; the output is ``[[1.5, 0.0]]``.
     """
     _, tok, _ = faked
     out = wrapper.embed("ACG", mean_embedding=True)
     assert tok.calls[0][0] == ["ACG"]
-    torch.testing.assert_close(out, torch.tensor([[[1.5, 0.0]]]))
+    torch.testing.assert_close(out, torch.tensor([[1.5, 0.0]]))

@@ -20,9 +20,9 @@ lower-triangular ones map (a cumulative sum), returned with the real wrapper's
 * ``MSK*``: f = [4, 1, 1, 1], embedding [4, 5, 6, 7];
 * ``MKKS*``: f = [5, 1, 2, 1], embedding [5, 6, 8, 9].
 
-The dataset squeezes each to shape ``[4]`` float32, and an excluded gene gets
-``zeros(4)`` without a backbone call. The PyG collate concatenates the three ``[4]``
-vectors into one flat ``[12]`` tensor, which breaks lookup by gene id (Finding below).
+The dataset stores each as a ``[1, 4]`` float32 row (issue #543), and an excluded gene
+gets ``zeros(1, 4)`` without a backbone call. The PyG collate stacks the rows into
+``[3, 4]``, so integer and gene-id lookup both return the gene's ``[1, 4]`` row.
 """
 
 import os
@@ -34,6 +34,8 @@ import torch
 from torch_geometric.data import Data
 
 import torchcell.datasets.esm2 as esm2_module
+from torchcell.datasets.cell import CellDataset
+from torchcell.datasets.cell import ParsedGenome as CellParsedGenome
 from torchcell.datasets.esm2 import Esm2Dataset
 from torchcell.sequence import ParsedGenome
 
@@ -94,8 +96,8 @@ def _per_gene(ds: Esm2Dataset, name: str) -> dict[str, list[float]]:
         item = ds[i]
         emb = item.embeddings[name]
         assert emb.dtype == torch.float32
-        assert emb.shape == (4,)
-        out[item.id] = emb.tolist()
+        assert emb.shape == (1, 4)
+        out[item.id] = emb[0].tolist()
     return out
 
 
@@ -105,7 +107,11 @@ def _per_gene(ds: Esm2Dataset, name: str) -> dict[str, list[float]]:
         ("esm2_t6_8M_UR50D_all", "esm2_t6_8M_UR50D", set()),
         ("esm2_t12_35M_UR50D_no_dubious", "esm2_t12_35M_UR50D", {"YAL002C"}),
         ("esm2_t33_650M_UR50D_no_uncharacterized", "esm2_t33_650M_UR50D", {"YAL003W"}),
-        ("esm2_t48_15B_UR50D_no_dubious_uncharacterized", "esm2_t48_15B_UR50D", set()),
+        (
+            "esm2_t48_15B_UR50D_no_dubious_uncharacterized",
+            "esm2_t48_15B_UR50D",
+            {"YAL002C", "YAL003W"},
+        ),
     ],
 )
 def test_build_embeds_proteins_and_zeroes_excluded_classes(
@@ -120,13 +126,12 @@ def test_build_embeds_proteins_and_zeroes_excluded_classes(
     Pins: the backbone is built exactly once with the checkpoint prefix of the dataset
     name; ``embed`` receives ``[protein]`` with ``mean_embedding=True`` for every
     non-excluded gene in gene-set order and is never called for an excluded one; the
-    stored vector is the stand-in's value (or ``zeros(4)``), shape ``[4]`` float32;
+    stored row is the stand-in's value (or zeros), shape ``[1, 4]`` float32;
     ``dna_windows`` holds the protein string; the store is ``processed/<name>.pt``.
 
-    Finding: the ``_no_dubious_uncharacterized`` variants list ``"dubious"`` and
-    ``"uncharacterized"`` in lowercase (``esm2.py`` lines 29 to 32), while SGD writes
-    ``Dubious`` / ``Uncharacterized`` (the other variants use the capitalized form), so
-    that variant excludes nothing and equals ``_all``. Pinned until the list is fixed.
+    The ``_no_dubious_uncharacterized`` variants list SGD's capitalized ``Dubious`` /
+    ``Uncharacterized`` (issue #543), so the Dubious YAL002C and the Uncharacterized
+    YAL003W are both zeroed and only YAL001W reaches the backbone.
     """
     ds = Esm2Dataset(root=str(tmp_path), genome=embedding_genome, model_name=model_name)
 
@@ -203,57 +208,71 @@ def test_pre_transform_is_applied_before_the_store_is_written(
     }
 
 
-def test_lookup_by_gene_id_slices_the_flattened_collate(
+def test_lookup_by_gene_id_and_by_index_return_the_same_row(
     embedding_genome: Any, tmp_path: Path
 ) -> None:
-    """Finding: ``ds["<gene>"]`` returns one scalar of the flat store, not the vector.
+    """``ds["<gene>"]`` and ``ds[i]`` return the gene's exact ``[1, 4]`` row (issue #543).
 
-    The squeeze at ``esm2.py`` line 165 leaves each embedding 1-D, so the collate
-    concatenates them into ``[5, 6, 7, 8, 4, 5, 6, 7, 5, 6, 8, 9]`` (``_all``), and
-    ``BaseEmbeddingDataset.__getitem__`` slices ``value[index : index + 1]``: gene 0
-    gives ``[5.]``, gene 1 ``[6.]`` (YAL001W's second component) and gene 2 ``[7.]``.
-    Pinned until the stored embeddings keep a leading axis.
+    The collate is ``[3, 4]`` with one row per gene in gene-set order. The node
+    feature ``CellDataset.create_embedding_graph`` builds (``squeeze(0)`` of each row)
+    is the gene's ``[4]`` vector, as it was for the old flat layout.
     """
     name = "esm2_t6_8M_UR50D_all"
     ds = Esm2Dataset(root=str(tmp_path), genome=embedding_genome, model_name=name)
 
-    assert ds._data.embeddings[name].tolist() == [
-        5.0,
-        6.0,
-        7.0,
-        8.0,
-        4.0,
-        5.0,
-        6.0,
-        7.0,
-        5.0,
-        6.0,
-        8.0,
-        9.0,
-    ]
-    assert {g: ds[g].embeddings[name].tolist() for g in GENE_IDS} == {
-        "YAL001W": [5.0],
-        "YAL002C": [6.0],
-        "YAL003W": [7.0],
-    }
+    assert ds._data.embeddings[name].tolist() == [EMBEDDED[g] for g in GENE_IDS]
+    for i, gene in enumerate(GENE_IDS):
+        by_id = ds[gene].embeddings[name]
+        by_index = ds[i].embeddings[name]
+        assert by_id.tolist() == [EMBEDDED[gene]]
+        assert torch.equal(by_id, by_index)
     assert ds["YAL002C"].dna_windows == {name: "MSK*"}
 
+    parsed = ds.genome
+    assert isinstance(parsed, ParsedGenome)
+    graph = CellDataset.create_embedding_graph(
+        CellParsedGenome(gene_set=parsed.gene_set), ds
+    )
+    assert {g: graph.nodes[g]["embedding"].tolist() for g in graph.nodes} == EMBEDDED
 
-@pytest.mark.parametrize("model_name", ["esm2_t6_8M_UR50D_bogus", None])
-def test_unknown_model_name_is_a_key_error_before_anything_is_written(
-    embedding_genome: Any, tmp_path: Path, model_name: str | None
+
+@pytest.mark.parametrize("model_name", ["esm2_t6_8M_UR50D_bogus", "esm2_t6_8M"])
+def test_unknown_model_name_is_a_value_error_naming_the_valid_names(
+    embedding_genome: Any, tmp_path: Path, model_name: str
 ) -> None:
-    """Finding: an unknown (or absent) name raises ``KeyError`` from ``MODEL_TO_WINDOW``.
+    """An unknown name is refused by ``BaseEmbeddingDataset`` with a ``ValueError``.
 
-    ``esm2.py`` line 102 indexes the table before ``BaseEmbeddingDataset`` can raise its
-    ``ValueError("Invalid model_name ...")``, so this dataset refuses with the bare key,
-    and ``model_name=None`` (the signature default) cannot construct at all. Nothing
-    is built and nothing is written. Pinned until the lookup moves after the base check.
+    The message names the bad name, then every valid name in table order (issue
+    #543; it used to be a bare ``KeyError``). Nothing is built and nothing is written.
     """
     root = tmp_path / "store"
-    with pytest.raises(KeyError) as excinfo:
+    with pytest.raises(ValueError) as excinfo:
         Esm2Dataset(root=str(root), genome=embedding_genome, model_name=model_name)
 
-    assert excinfo.value.args == (model_name,)
+    valid = ", ".join(Esm2Dataset.MODEL_TO_WINDOW)
+    assert str(excinfo.value) == (
+        f"Invalid model_name '{model_name}'. Valid options are: {valid}"
+    )
+    assert valid.startswith("esm2_t6_8M_UR50D_all, esm2_t6_8M_UR50D_no_dubious_unch")
+    assert len(Esm2Dataset.MODEL_TO_WINDOW) == 24
     assert _FakeEsm2.inits == []
     assert not root.exists()
+
+
+def test_no_model_name_builds_no_backbone_and_no_store(
+    embedding_genome: Any, tmp_path: Path
+) -> None:
+    """``model_name=None`` (the signature default) constructs empty, without a backbone.
+
+    ``process`` returns before building one, so two constructions build none, and
+    only PyG's two marker files are written.
+    """
+    first = Esm2Dataset(root=str(tmp_path), genome=embedding_genome, model_name=None)
+    Esm2Dataset(root=str(tmp_path), genome=embedding_genome, model_name=None)
+
+    assert _FakeEsm2.inits == []
+    assert first._data is None
+    assert sorted(os.listdir(tmp_path / "processed")) == [
+        "pre_filter.pt",
+        "pre_transform.pt",
+    ]

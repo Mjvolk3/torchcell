@@ -84,12 +84,12 @@ def other(tmp_path: Path) -> _Toy:
 def test_invalid_model_name_is_refused_before_any_directory_is_made(
     tmp_path: Path,
 ) -> None:
-    """Finding: the two message literals (embedding.py lines 30-31) join with no space,
-    so it reads "Invalid model_name 'bad'.Valid options are: toy, other". The root is not
-    created, since the check precedes ``InMemoryDataset.__init__``.
+    """The refusal names the bad name, then the valid names after a space (issue #543):
+    "Invalid model_name 'bad'. Valid options are: toy, other". The root is not created,
+    since the check precedes ``InMemoryDataset.__init__``.
     """
     root = tmp_path / "never"
-    message = "Invalid model_name 'bad'.Valid options are: toy, other"
+    message = "Invalid model_name 'bad'. Valid options are: toy, other"
     with pytest.raises(ValueError, match=f"^{re.escape(message)}$"):
         _Toy(str(root), model_name="bad")
     assert not root.exists()

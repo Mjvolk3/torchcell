@@ -21,7 +21,7 @@ class NucleotideTransformer(NucleotideModel):
         self.load_model()
 
     @staticmethod
-    def _check_and_download_model() -> None:
+    def _check_and_download_model(model_name: str = MODEL_NAME) -> None:
         """Download the pretrained model and tokenizer if not already cached."""
         # Define the directory where you want the model to be saved
         script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -33,17 +33,17 @@ class NucleotideTransformer(NucleotideModel):
         if not os.path.exists(target_directory):
             os.makedirs(target_directory)
 
-        model_directory = os.path.join(target_directory, MODEL_NAME)
+        model_directory = os.path.join(target_directory, model_name)
 
         # Check if the model has already been downloaded
         if os.path.exists(model_directory):
-            print(f"{MODEL_NAME} model already downloaded.")
+            print(f"{model_name} model already downloaded.")
         else:
-            print(f"Downloading {MODEL_NAME} model to {model_directory}...")
+            print(f"Downloading {model_name} model to {model_directory}...")
             # tokenizer
-            AutoTokenizer.from_pretrained(MODEL_NAME, cache_dir=target_directory)  # type: ignore[no-untyped-call]  # transformers from_pretrained is untyped
+            AutoTokenizer.from_pretrained(model_name, cache_dir=target_directory)  # type: ignore[no-untyped-call]  # transformers from_pretrained is untyped
             # model
-            AutoModelForMaskedLM.from_pretrained(MODEL_NAME, cache_dir=target_directory)
+            AutoModelForMaskedLM.from_pretrained(model_name, cache_dir=target_directory)
             print("Download finished.")
 
     @property
@@ -53,13 +53,13 @@ class NucleotideTransformer(NucleotideModel):
         return 5979
 
     def load_model(self, model_name: str = MODEL_NAME) -> None:
-        """Load the tokenizer and model onto the selected device."""
+        """Load the named Hub checkpoint's tokenizer and model onto the device."""
         # Check and download the model if necessary
-        self._check_and_download_model()
+        self._check_and_download_model(model_name)
 
         # Load the tokenizer and the model
-        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)  # type: ignore[no-untyped-call]  # transformers from_pretrained is untyped
-        self.model = AutoModelForMaskedLM.from_pretrained(MODEL_NAME)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)  # type: ignore[no-untyped-call]  # transformers from_pretrained is untyped
+        self.model = AutoModelForMaskedLM.from_pretrained(model_name)
 
         # Move the model to the selected device
         self.model.to(self.device)
@@ -67,7 +67,11 @@ class NucleotideTransformer(NucleotideModel):
     def embed(
         self, sequences: str | list[str], mean_embedding: bool = False
     ) -> torch.Tensor:
-        """Embed one or more DNA sequences, optionally returning mean embeddings."""
+        """Embed DNA sequences: per-token ``[batch, tokens, dim]`` or mean ``[batch, dim]``.
+
+        With ``mean_embedding`` the last hidden state is averaged over the non-pad
+        tokens of each sequence.
+        """
         if isinstance(sequences, str):
             sequences = [sequences]  # Convert single string to a list
 
@@ -99,7 +103,6 @@ class NucleotideTransformer(NucleotideModel):
             embeddings = torch.sum(attention_mask * embeddings, dim=-2) / torch.sum(
                 attention_mask, dim=-2
             )
-            embeddings = embeddings.unsqueeze(0)
 
         return embeddings
 

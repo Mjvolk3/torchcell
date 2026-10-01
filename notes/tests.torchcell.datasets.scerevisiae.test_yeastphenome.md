@@ -13,3 +13,7 @@ Eight to fourteen tests, 25 to 83 percent alone (100 with the siblings); the dat
 ## 2026.09.30 - Raw sha256 pin enforced at build time
 
 Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.
+
+## 2026.09.30 - Real pin for the module-scoped build (issue #561)
+
+The module-scoped `dataset` fixture (data-gated) now builds inside a `pytest.MonkeyPatch.context()` that restores the real `verify_raw_files` on the yeastphenome module. Module scope is set up before the conftest's function-scoped real-pin restore, so without this the real build ran under the recorder. Whether the real build passes the real pin has not been measured, because the test is data-gated.

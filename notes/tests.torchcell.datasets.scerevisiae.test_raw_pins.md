@@ -16,3 +16,10 @@ Covers every loader module that calls `verify_raw_files`, enumerated by `PINNED_
 - `test_download_refuses_a_manifest_digest_off_the_module_pin[<7 loaders>]`: a manifest digest other than the module constant raises `ManifestPinMismatchError` with the exact message, and nothing is linked.
 
 Mutation checks run by hand before commit: dropping the design workbook from Lian 2019's mapping, reading a raw file before `verify_raw_files` in Ohnuki 2022, and removing `data` from `REAL_DATA_MARKERS` each failed the matching test.
+
+## 2026.09.30 - Review fixes on PR #577
+
+- `test_every_loader_is_pinned_or_on_the_debt_list` (new): (A) the modules under `torchcell/datasets/scerevisiae/` with a class defining `process()`, minus `PINNED_LOADERS`, equal the literal `UNPINNED_LOADERS` debt list (`costanzo2016`, `costanzo2016_deprecated`, `kemmeren2014`, `kuzmin2018`, `kuzmin2020`, `sameith2015`, `sgd`, `synth_leth_db`). (B) No module outside `PINNED_LOADERS` carries a pin, meaning a `sha256`-named identifier, attribute, argument or def, or a 64-hex string constant, found by AST so comments do not count. The `== 30` count is dropped.
+- The process test no longer creates raw files. With `raw/` empty, any open before the check raises. The docstring now states what is proved: the first call carries the complete mapping before any raw file is opened. Later calls are not observed because the stand-in raises. The manifest and genomes-tier stand-ins encode the data root and the tier key in the digest they return. A new pinned class raises `KeyError` until it has a row in `_pins_from_constants`, which is the tripwire.
+- The download refusal now covers all 11 (relpath, pin) pairs of the seven loaders. Earlier files have their pin repointed at the staged bytes, and exactly those are linked. `dotenv.load_dotenv` is stubbed.
+- Mutation checks: an `open().readline()` before the call in Hillenmeyer, a wrong data root in Caudal, and removing Xue's call each failed.

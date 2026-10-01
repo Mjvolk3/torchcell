@@ -23,3 +23,8 @@ Two fixtures for the loader pin check (issues #518, #524, #528, #537). `raw_pin_
 - `PINNED_LOADERS` is no longer a hand list: it is every module under `torchcell/datasets/scerevisiae/` whose source calls `verify_raw_files(...)` (AST scan, 30 modules, the same set as the old list).
 - `raw_pin_calls` is unchanged for synthetic tests. A new function-scoped autouse fixture, `_real_pins_for_real_data`, calls `restore_real_pins`, which puts the real `verify_raw_files` back in every pinned loader for a test marked `slow` or `data`. Those tests run only under `--slow`/`--data` and build from the real mirrors, so they now meet the real pin. The issue asked for the whole fixture to go inert under the flags; that would also hand the real check to every synthetic build test in a `--slow` run and fail them all, so the switch is per test marker instead.
 - New fixtures `pin_restorer`, `real_verify_raw_files`, and a `pytest_generate_tests` hook that parametrizes `pinned_loader` over `PINNED_LOADERS`, all consumed by [[tests.torchcell.datasets.scerevisiae.test_raw_pins]].
+
+## 2026.09.30 - Review fixes on PR #577
+
+- New `pinned_loaders` fixture. The `PINNED_LOADERS` comment now says that a new pinned module is patched and parametrized automatically, but is asserted only once it has a `_pins_from_constants` row (`KeyError` until then).
+- The `restore_real_pins` docstring now states the module-scope limit: a build in a module- or session-scoped fixture is set up before the function-scoped restore and keeps the recorder unless it restores the real check itself. `test_yeastphenome.py`'s module-scoped `dataset` now does this. It was the only such fixture building a pinned loader under `slow`/`data`, found by grepping module- and session-scoped fixtures.

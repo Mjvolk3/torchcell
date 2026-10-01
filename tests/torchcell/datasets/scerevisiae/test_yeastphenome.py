@@ -45,7 +45,7 @@ from typing import Any
 import pandas as pd
 import pytest
 
-from torchcell.data import RawSha256MismatchError
+from torchcell.data import RawSha256MismatchError, verify_raw_files
 from torchcell.datamodels.schema import (
     EnvironmentResponseExperiment,
     EnvironmentResponseExperimentReference,
@@ -84,7 +84,11 @@ def dataset(tmp_path_factory, monkeypatch_module):
     os.makedirs(raw, exist_ok=True)
     for f in _RAW_FILES:
         shutil.copy(osp.join(_RAW_MIRROR, f), osp.join(raw, f))
-    return YeastPhenomeDataset(root=str(root))
+    # Module scope is set up before the conftest's function-scoped real-pin restore, so
+    # this real build puts the real build-time check back itself (issue #561).
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(yp_mod, "verify_raw_files", verify_raw_files)
+        return YeastPhenomeDataset(root=str(root))
 
 
 @pytest.fixture(scope="module")

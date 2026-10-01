@@ -19,3 +19,7 @@ Findings: a lipid no wild-type row measured has no reference entry (lines 246, 3
 ## 2026.09.30 - Raw sha256 pin enforced at build time
 
 Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.
+
+## 2026.10.01 - Findings retired (issues #537, #546)
+
+Retired the Phase 16 findings: a lipid no WT row measured and an all-blank mutant row are refused with exact messages and leave no `data.csv` and no store; padded and lowercase systematic names resolve (`ybr001c` -> YBR001C) with the full three-lipid reference.

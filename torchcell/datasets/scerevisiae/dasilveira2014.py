@@ -195,10 +195,10 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
     def _resolve_systematic(self, name: str) -> str | None:
         """Validate/resolve a source systematic name against the R64 genome."""
         genome = cast(SCerevisiaeGenome, self.genome)
-        name = name.strip()
+        name = name.strip().upper()
         if name in genome.gene_set:
             return name
-        candidates = genome.alias_to_systematic.get(name.upper(), [])
+        candidates = genome.alias_to_systematic.get(name, [])
         if candidates:
             return candidates[0]
         return None
@@ -222,7 +222,14 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Parse the Quant sheet into per-mutant Metabolite experiments and write LMDB."""
+        """Parse the Quant sheet into per-mutant Metabolite experiments and write LMDB.
+
+        Every record is built and every refusal raised BEFORE ``data.csv`` or the store is
+        written, so a refused matrix leaves nothing for a retry to serve. Refusals (each
+        0 in the pinned Table S4, 2026.10.01: 147 lipids, 127 mutant rows): a lipid that
+        no WT control row measured (it would have no reference value) and a mutant row
+        with every lipid blank.
+        """
         verify_raw_files(
             self.raw_dir, {DATA_FILENAME: DATA_SHA256, CHEBI_FILENAME: CHEBI_SHA256}
         )
@@ -240,6 +247,12 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
         if len(wt_df) != len(_WT_ROW_IDS):
             raise RuntimeError(
                 f"expected {len(_WT_ROW_IDS)} WT control rows, found {len(wt_df)}"
+            )
+        no_wt = [c for c in lipid_cols if not wt_df[c].notna().any()]
+        if no_wt:
+            raise RuntimeError(
+                f"da Silveira: {len(no_wt)} lipid(s) measured in no WT control row, so "
+                f"they have no reference value: {no_wt}"
             )
         wt_mean = wt_df[lipid_cols].mean(axis=0, skipna=True)
         wt_count = wt_df[lipid_cols].notna().sum(axis=0)
@@ -286,6 +299,10 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
             std = row[_STD_COL]
             gene_name = str(std).strip() if pd.notna(std) else orf
             level = {c: float(row[c]) for c in lipid_cols if pd.notna(row[c])}
+            if not level:
+                raise RuntimeError(
+                    f"da Silveira: mutant row {source_orf!r} has every lipid blank"
+                )
             rows.append({"orf": orf, "gene": gene_name, "level": level})
         log.info(
             "da Silveira: %d mutant records, %d WT control rows -> measured reference "
@@ -296,6 +313,7 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
             n_unresolved,
             f" ({unresolved})" if unresolved else "",
         )
+        records = [self.create_experiment(record_row) for record_row in rows]
         pd.DataFrame(
             [
                 {"orf": r["orf"], "gene": r["gene"], "n_lipids": len(r["level"])}
@@ -304,10 +322,8 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
         ).to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e11))
-        idx = 0
         with env.begin(write=True) as txn:
-            for record_row in tqdm(rows):
-                experiment, reference, publication = self.create_experiment(record_row)
+            for idx, (experiment, reference, publication) in enumerate(tqdm(records)):
                 txn.put(
                     f"{idx}".encode(),
                     pickle.dumps(
@@ -318,9 +334,8 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
                         }
                     ),
                 )
-                idx += 1
         env.close()
-        log.info("Wrote %d da Silveira lipidome experiments to LMDB", idx)
+        log.info("Wrote %d da Silveira lipidome experiments to LMDB", len(records))
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None

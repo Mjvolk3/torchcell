@@ -34,3 +34,11 @@ verified, 127 mutant records × up to 147 lipid species.**
 Issue #518 (sweep); the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes; PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: yes; refused deposit leaving a directory: n/a.
 
 Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `DATA_SHA256`, `CHEBI_SHA256`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.
+
+## 2026.10.01 - Refusals before the store opens (issue #537)
+
+Previous behavior: a lipid that no WT control row measured was stored on mutants with no reference value; a mutant with every lipid blank reached the phenotype validator inside the open write transaction, leaving `data.csv` with `n_lipids` 0 and an empty `processed/lmdb` that a retry served as 0 records; `gene_set` membership was case-sensitive, so `ybr001c` was unresolved.
+
+Fix: both cases are refused with a named `RuntimeError` before `data.csv` or the store is written, and names are uppercased before the `gene_set` and alias lookups. Measured on the pinned Table S4 (`Quant` sheet): 147 lipids, all measured in at least one WT row; 127 mutant rows, none all-blank, every name uppercase and resolved; the built records do not change.
+
+Tests: `test_a_lipid_no_wt_row_measured_is_refused_before_anything_is_written`, `test_padded_and_lowercase_systematic_names_resolve`, `test_an_all_blank_mutant_row_is_refused_before_anything_is_written`.

@@ -487,36 +487,19 @@ def test_get_edges_emits_the_exact_ohya_edge_list(
     assert [entry["method"] for entry in recorder.logged] == EDGE_METHODS
 
 
-def test_an_interned_store_emits_the_same_graph_as_the_inline_one(
+def test_the_loader_interns_the_reference_and_the_graph_is_unchanged(
     tmp_path: Path, recorder: _WandbRecorder
 ) -> None:
-    """Finding: ``ScmdOhya2005Dataset.process`` writes every record inline
-    (``pickle.dumps`` of the three dumps, ohya2005.py lines 214 to 221) and never calls
-    ``_intern_record``, so a built Ohya store has no ``processed/interned`` env, unlike
-    the 13 loaders that intern. Pinned until the loader interns.
-
-    The adapter still has to read a ``$ref`` store (a rebuilt one, or a reference
-    interned by a shared writer), so the two records are rewritten here with the base
-    writer ``_intern_record``: the reference (>= 512 bytes of canonical JSON) becomes a
-    ``{"$ref", "name"}`` pointer in the records env and its body goes to the sibling
-    ``interned`` env; the environment (315 bytes) and the publication stay inline. A
-    fresh dataset on that root splices the pointer back in ``get_single_item``, and the
-    adapter's node and edge lists are exactly the inline store's.
+    """Contract (issue #546): ``ScmdOhya2005Dataset.process`` writes through the base
+    writer ``_intern_record``, as the thirteen other interning loaders do. In the built
+    store the reference (>= 512 bytes of canonical JSON) is a ``{"$ref", "name"}``
+    pointer whose body sits in the sibling ``interned`` env; the environment (315
+    bytes) and the publication stay inline. ``get_single_item`` splices the pointer
+    back, so the adapter's node and edge lists are exactly the hand-built graph.
     """
     root = _build(tmp_path)
-    inline = _dataset(root)
-    assert not osp.isdir(osp.join(inline.processed_dir, "interned"))
-    records_path = osp.join(inline.processed_dir, "lmdb")
-    env, interned_env = inline._open_write_lmdb(records_path)
-    with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-        for index, experiment in enumerate(EXPERIMENTS):
-            txn.put(
-                f"{index}".encode(),
-                inline._intern_record(experiment, REFERENCE, PUBLICATION, itxn),
-            )
-    env.close()
-    interned_env.close()
-
+    records_path = osp.join(root, "processed", "lmdb")
+    _dataset(root).close_lmdb()
     raw_env = lmdb.open(records_path, readonly=True, lock=False)
     with raw_env.begin() as txn:
         raw = txn.get(b"1")
@@ -528,6 +511,7 @@ def test_an_interned_store_emits_the_same_graph_as_the_inline_one(
     ).hexdigest()
     assert stored["reference"] == {"$ref": reference_digest, "name": DATASET}
     assert stored["experiment"]["environment"] == ENVIRONMENT.model_dump()
+    assert stored["publication"] == PUBLICATION.model_dump()
 
     adapter = _adapter(_dataset(root))
     assert list(adapter.get_nodes()) == _expected_nodes()

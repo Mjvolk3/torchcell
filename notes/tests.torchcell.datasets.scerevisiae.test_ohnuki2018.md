@@ -19,3 +19,7 @@ Findings: blank or whitespace-only ORF rows are dropped with no log line while t
 ## 2026.09.30 - Raw sha256 pin enforced at build time
 
 Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.
+
+## 2026.10.01 - Findings retired (issues #537, #546)
+
+Retired the Phase 16 findings: blank ORF rows give a counted warning, two spellings of one strain are refused with no `data.csv` or store, `create_experiment` raises, and a refused WT reference leaves no `processed/lmdb`. The blank-cell-stored-as-0.0 finding stays pinned (not an item of #537).

@@ -41,12 +41,10 @@ BY4741 reference at fitness 1.0.
   file placed there by hand is refused with no store written (issue #537).
 - ``main`` with ``load_dotenv`` stubbed and the genome and dataset classes as recorders.
 
-Findings pinned here: the same ORF listed twice (or once in lowercase) gives one record
-per row with identical genotypes (no duplicate check in lines 292 to 314); a blank
-``commonName`` is stored as the string "nan" (``str(row["commonName"])``, line 301);
-a blank ``log2relT`` raises pydantic's ``ValidationError`` instead of a named refusal,
-and because the write env is opened first (line 289) the aborted build leaves an empty
-``processed/lmdb`` that a retry serves as 0 records.
+2026.10.01 (issue #537): the Phase 16 findings are retired. An ORF listed twice (verbatim
+or in lowercase), a blank ``commonName`` and a blank ``log2relT`` are each refused with a
+named ``RuntimeError`` before the store is opened, so the refused root holds no
+``processed/lmdb`` and a retry refuses again (each 0 of the 1312 rows of the pinned file).
 """
 
 from __future__ import annotations
@@ -59,7 +57,6 @@ from pathlib import Path
 from typing import Any, cast
 
 import pandas as pd
-import pydantic
 import pytest
 
 from torchcell.data import RawSha256MismatchError
@@ -334,68 +331,74 @@ def test_drop_ledger_names_every_unresolved_raw_token(
     ]
 
 
-def test_duplicate_rows_are_all_kept_and_a_blank_common_name_becomes_nan(
-    tmp_path: Path,
-) -> None:
-    """Finding: YAL001C twice and ``yal001c`` once give three records with the same
-    systematic name (the lowercase row keeps its lowercase ``tfc3``), because nothing
-    deduplicates the resolved ORF (lines 292 to 314). Finding: a blank ``commonName`` is
-    read as NaN and stored as the string "nan" (line 301). Pinned until the loader
-    refuses a duplicated ORF and a missing common name.
-    """
-    root = tmp_path / "dups"
+def _refused_twice(root: Path, message: str) -> None:
+    """Two constructors on ``root`` both raise ``message`` and leave no store behind."""
+    for _ in range(2):
+        with pytest.raises(RuntimeError) as info:
+            m.SmfODuibhir2014Dataset(root=str(root), genome=_genome())
+        assert str(info.value) == message
+        assert not (root / "processed" / "lmdb").exists()
+        assert not (root / "preprocess" / "gene_set.json").exists()
+
+
+def _edge_root(tmp_path: Path, slug: str, rows: list[list[str]]) -> Path:
+    root = tmp_path / slug
     (root / "raw").mkdir(parents=True)
-    _write_s2(
-        root / "raw",
-        [
-            ["YAL001C", "TFC3", "1.0", "0.1"],
-            ["YAL001C", "TFC3", "0.5", "0.1"],
-            ["YBR001C", "", "0.25", "0.2"],
-            ["yal001c", "tfc3", "2", "0.0"],
-        ],
+    _write_s2(root / "raw", rows)
+    return root
+
+
+@pytest.mark.parametrize(
+    ("second", "token"),
+    [
+        (["YAL001C", "TFC3", "0.5", "0.1"], "YAL001C"),
+        (["yal001c", "tfc3", "2", "0.0"], "yal001c"),
+    ],
+)
+def test_an_orf_listed_twice_is_refused_before_the_store_opens(
+    tmp_path: Path, second: list[str], token: str
+) -> None:
+    """Contract (issue #537): one record per deletion strain. A second row resolving to
+    an ORF already seen, verbatim or in lowercase, is refused naming both raw tokens,
+    before ``processed/lmdb`` is opened, so a retry on the same root refuses again
+    instead of serving an empty store. The pinned Dataset S2 has 0 such rows of 1312.
+    """
+    root = _edge_root(
+        tmp_path, f"dup_{token}", [["YAL001C", "TFC3", "1.0", "0.1"], second]
     )
-    dataset = m.SmfODuibhir2014Dataset(root=str(root), genome=_genome())
-    assert [dataset[i]["experiment"] for i in range(len(dataset))] == [
-        _experiment("YAL001C", "TFC3", 0.5),
-        _experiment("YAL001C", "TFC3", 0.7071067811865476),
-        _experiment("YBR001C", "nan", 0.8408964152537145),
-        _experiment("YAL001C", "tfc3", 0.25),
-    ]
-    assert json.loads((root / "preprocess" / "gene_set.json").read_text()) == [
-        "YAL001C",
-        "YBR001C",
-    ]
-    dataset.close_lmdb()
+    _refused_twice(
+        root,
+        f"Dataset S2 lists YAL001C twice (rows 'YAL001C' and '{token}'); one record "
+        "per deletion strain is required",
+    )
 
 
-def test_blank_log2relt_fails_validation_and_leaves_a_half_built_store(
-    tmp_path: Path,
-) -> None:
-    """Finding: a blank ``log2relT`` gives ``2.0 ** -nan`` = NaN and the phenotype
-    validator raises pydantic's ``ValidationError`` ("Fitness cannot be NaN"), not a named
-    refusal. The write env was already opened at line 289, so the failed build leaves an
-    empty ``processed/lmdb`` and no ``gene_set.json``; a retry on the same root finds the
-    store, skips ``process()`` and serves 0 records. Pinned until the loader refuses a
-    blank cell before opening the store.
+def test_a_blank_common_name_is_refused_before_the_store_opens(tmp_path: Path) -> None:
+    """Contract (issue #537): a blank ``commonName`` is refused by row instead of being
+    stored as the string "nan"; nothing is written, and a retry refuses again. The
+    pinned Dataset S2 has 0 blank common names of 1312.
     """
-    root = tmp_path / "blank"
-    (root / "raw").mkdir(parents=True)
-    _write_s2(
-        root / "raw",
+    root = _edge_root(
+        tmp_path,
+        "blank_name",
+        [["YAL001C", "TFC3", "1.0", "0.1"], ["YBR001C", "", "0.25", "0.2"]],
+    )
+    _refused_twice(root, "Dataset S2 row 'YBR001C' has a blank commonName")
+
+
+def test_a_blank_log2relt_is_refused_before_the_store_opens(tmp_path: Path) -> None:
+    """Contract (issue #537): a blank ``log2relT`` is refused by row with a named
+    message (it used to reach the phenotype validator as NaN fitness after the write
+    env was open, leaving an empty ``processed/lmdb`` that a retry served as 0
+    records). Now no store exists after the refusal and a retry refuses again. The
+    pinned Dataset S2 has 0 blank ``log2relT`` of 1312.
+    """
+    root = _edge_root(
+        tmp_path,
+        "blank",
         [["YAL001C", "TFC3", "1.0", "0.1"], ["YCR001W", "YCR001W", "", "0.3"]],
     )
-    with pytest.raises(pydantic.ValidationError) as info:
-        m.SmfODuibhir2014Dataset(root=str(root), genome=_genome())
-    assert [e["msg"] for e in info.value.errors()] == [
-        "Value error, Fitness cannot be NaN"
-    ]
-    assert (root / "processed" / "lmdb").is_dir()
-    assert not (root / "preprocess" / "gene_set.json").exists()
-    # The failed constructor's write handle is unreachable and still open, and the CI
-    # py-lmdb refuses a second open of the path in this process, so the half-built
-    # state is pinned on disk: the store's data file exists and no gene set was
-    # written, which is what a retry would read as zero records.
-    assert (root / "processed" / "lmdb" / "data.mdb").exists()
+    _refused_twice(root, "Dataset S2 row 'YCR001W' has a blank log2relT")
 
 
 def _mirror(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, content: bytes) -> Path:

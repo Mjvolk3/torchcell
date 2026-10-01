@@ -46,12 +46,11 @@ PE 34:2 has no ChEBI cell; a third row has no Name. Only the first survives the 
   are copied from the mirror and each logs "Verified <dest> (sha256 <digest>)".
 - ``main`` with ``load_dotenv`` stubbed and the genome and dataset classes as recorders.
 
-Findings pinned here: a lipid no WT control measured is stored on the mutant but has no
-reference entry (line 246 keeps only non-NaN WT means, line 361 restricts to those), so
-the reference is a strict subset even when the strain measured everything; a mutant row
-with no measured lipid raises pydantic's ``ValidationError`` after the write env is open
-(line 305), leaving ``data.csv`` with ``n_lipids`` 0 and an empty ``processed/lmdb``
-that a retry serves as 0 records.
+2026.10.01 (issue #537): the Phase 16 findings are retired. A lipid no WT control row
+measured and a mutant row with every lipid blank are each refused with a named
+``RuntimeError`` before ``data.csv`` or the store is written, so a retry refuses again;
+``gene_set`` membership is case-insensitive, so ``ybr001c`` resolves to YBR001C. The
+pinned Table S4 has 0 of each (147 lipids, 127 mutant rows, every name uppercase).
 """
 
 from __future__ import annotations
@@ -65,7 +64,6 @@ from typing import Any, cast
 
 import openpyxl
 import pandas as pd
-import pydantic
 import pytest
 
 from torchcell.data import RawSha256MismatchError
@@ -374,19 +372,47 @@ def test_ledger_logs_chebi_coverage_the_duplicate_and_the_unresolved_orf(
     ]
 
 
-def test_lipid_no_wt_measured_has_no_reference_entry_and_names_are_stripped(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
+def _refused_twice(root: Path, message: str) -> None:
+    """Two constructors on ``root`` both raise ``message`` and write no data.csv/store."""
+    for _ in range(2):
+        with pytest.raises(RuntimeError) as info:
+            m.MetaboliteDaSilveira2014Dataset(root=str(root), genome=_genome())
+        assert str(info.value) == message
+        assert not (root / "preprocess" / "data.csv").exists()
+        assert not (root / "processed" / "lmdb").exists()
+
+
+def test_a_lipid_no_wt_row_measured_is_refused_before_anything_is_written(
+    tmp_path: Path,
 ) -> None:
-    """Finding: Erg is blank in all three WT rows, so the reference covers two lipids
-    and the padded YAL001C record keeps Erg 3.5 with no reference value for it (lines
-    246 and 361). The padded ORF and standard name are stripped; the lowercase
-    ``ybr001c`` does not resolve (``gene_set`` membership is case-sensitive, line 201).
-    Pinned until the loader either refuses a lipid without a WT baseline or records it.
+    """Contract (issue #537): Erg is blank in all three WT rows, so it would be stored on
+    the mutant with no reference value. The build refuses it by name before
+    ``data.csv`` or the store is written, and a retry refuses again. The pinned Table S4
+    has 0 such lipids of 147.
     """
     rows: list[list[Any]] = [
         ["Y7092", "WT1", 10, 20, None],
         ["Y7220", "WT2", 12, None, None],
         ["BY4741", "WT3", 14, 22, None],
+        ["YAL001C", "TFC3", 1.5, 2.5, 3.5],
+    ]
+    _refused_twice(
+        _root(tmp_path, rows),
+        "da Silveira: 1 lipid(s) measured in no WT control row, so they have no "
+        "reference value: ['Erg']",
+    )
+
+
+def test_padded_and_lowercase_systematic_names_resolve(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Contract (issue #537): ``gene_set`` membership is case-insensitive. The padded
+    `` YAL001C `` / `` TFC3 `` row is stripped and the lowercase ``ybr001c`` resolves
+    to YBR001C (it used to be logged as unresolved). The pinned Table S4 has 0
+    lowercase or padded names of 127, so the built records do not change.
+    """
+    rows: list[list[Any]] = [
+        *[row for row in _QUANT_ROWS if row[0] in {"Y7092", "Y7220", "BY4741"}],
         [" YAL001C ", " TFC3 ", 1.5, 2.5, 3.5],
         ["ybr001c", "NTH1", 1, 2, 3],
     ]
@@ -394,21 +420,27 @@ def test_lipid_no_wt_measured_has_no_reference_entry_and_names_are_stripped(
         dataset = m.MetaboliteDaSilveira2014Dataset(
             root=str(_root(tmp_path, rows)), genome=_genome()
         )
-    assert len(dataset) == 1
+    reference = _reference(
+        {"PC 32:1": 12.0, "PE 34:2": 21.0, "Erg": 6.0},
+        {"PC 32:1": 3, "PE 34:2": 2, "Erg": 2},
+    )
+    assert len(dataset) == 2
     assert dataset[0]["experiment"] == _experiment(
         "YAL001C", "TFC3", {"PC 32:1": 1.5, "PE 34:2": 2.5, "Erg": 3.5}
     )
-    assert dataset[0]["reference"] == _reference(
-        {"PC 32:1": 12.0, "PE 34:2": 21.0}, {"PC 32:1": 3, "PE 34:2": 2}
+    assert dataset[1]["experiment"] == _experiment(
+        "YBR001C", "NTH1", {"PC 32:1": 1.0, "PE 34:2": 2.0, "Erg": 3.0}
     )
+    assert dataset[0]["reference"] == reference
+    assert dataset[1]["reference"] == reference
     summaries = [
         r.getMessage()
         for r in caplog.records
         if r.name == m.log.name and "mutant records" in r.getMessage()
     ]
     assert summaries == [
-        "da Silveira: 1 mutant records, 3 WT control rows -> measured reference "
-        "(2 lipids), 1 unresolved ORFs (['ybr001c'])"
+        "da Silveira: 2 mutant records, 3 WT control rows -> measured reference "
+        "(3 lipids), 0 unresolved ORFs"
     ]
     dataset.close_lmdb()
 
@@ -435,33 +467,20 @@ def test_clean_matrix_logs_no_unresolved_suffix(
     dataset.close_lmdb()
 
 
-def test_all_blank_mutant_row_fails_validation_and_leaves_an_empty_store(
+def test_an_all_blank_mutant_row_is_refused_before_anything_is_written(
     tmp_path: Path,
 ) -> None:
-    """Finding: a mutant with every lipid blank gets ``metabolite_level={}`` and the
-    phenotype validator raises pydantic's ``ValidationError`` ("metabolite_level cannot
-    be empty") inside the open write transaction (line 305), so ``data.csv`` already
-    records the strain with ``n_lipids`` 0 and a retry on the same root finds the empty
-    ``processed/lmdb`` and serves 0 records. Pinned until the loader drops or refuses
-    the row before opening the store.
+    """Contract (issue #537): a mutant with every lipid blank is refused by name before
+    ``data.csv`` or the store is written (it used to reach the phenotype validator
+    inside the open write transaction, leaving ``n_lipids`` 0 in ``data.csv`` and an
+    empty ``processed/lmdb`` that a retry served as 0 records). A retry refuses again.
+    The pinned Table S4 has 0 all-blank mutant rows of 127.
     """
     rows = [row for row in _QUANT_ROWS if row[0] in {"Y7092", "Y7220", "BY4741"}]
     rows.append(["YAL001C", "TFC3", None, None, None])
-    root = _root(tmp_path, rows)
-    with pytest.raises(pydantic.ValidationError) as info:
-        m.MetaboliteDaSilveira2014Dataset(root=str(root), genome=_genome())
-    assert [e["msg"] for e in info.value.errors()] == [
-        "Value error, metabolite_level cannot be empty"
-    ]
-    assert (root / "preprocess" / "data.csv").read_text() == (
-        "orf,gene,n_lipids\nYAL001C,TFC3,0\n"
+    _refused_twice(
+        _root(tmp_path, rows), "da Silveira: mutant row 'YAL001C' has every lipid blank"
     )
-    # The failed constructor's write handle is unreachable and still open, and the CI
-    # py-lmdb refuses a second open of the path in this process, so the half-built
-    # state is pinned on disk: the store directory exists with its data file, and no
-    # gene set was written, which is what a retry would read as zero records.
-    assert (root / "processed" / "lmdb" / "data.mdb").exists()
-    assert not (root / "preprocess" / "gene_set.json").exists()
 
 
 def test_download_copies_both_verified_mirror_workbooks(

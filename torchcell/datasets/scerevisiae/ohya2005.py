@@ -11,7 +11,7 @@ drug-hypersensitive quadruple-deletion counterpart is
 
 Values are RAW per-strain CalMorph population averages, one 501-length vector per strain:
 281 base parameters (``CALMORPH_LABELS``: 220 mean + 61 ratio) + 220 coefficient-of-
-variation / noise parameters (``CALMORPH_STATISTICS``, prefixed CCV/ACV/DCV/TCV). The
+variation / noise parameters (``CALMORPH_STATISTICS``, prefixed CCV/ACV/DCV). The
 122-row wildtype matrix (122 independent ``his3`` WT replicate averages) is aggregated
 per-feature into a single mean-WT reference phenotype.
 
@@ -66,11 +66,9 @@ missed.
 import logging
 import os
 import os.path as osp
-import pickle
 from collections.abc import Callable
 from typing import Any
 
-import lmdb
 import pandas as pd
 from tqdm import tqdm
 
@@ -104,8 +102,9 @@ from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
-# CV parameters are prefixed CCV/ACV/DCV/TCV; everything else is a base parameter.
-_CV_PREFIXES = ("CCV", "ACV", "DCV", "TCV")
+# CV parameters are prefixed CCV/ACV/DCV (60 + 33 + 127 = 220 in the pinned matrices; no
+# TCV parameter exists, #494); everything else is a base parameter.
+_CV_PREFIXES = ("CCV", "ACV", "DCV")
 
 # sha256-pinned raw matrices in the library mirror ``data/`` directory.
 _RAW_FILES: dict[str, dict[str, str]] = {
@@ -183,7 +182,15 @@ class ScmdOhya2005Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Load raw TSVs, build CalMorph experiments, and write the LMDB store."""
+        """Load raw TSVs, build CalMorph experiments, and write the LMDB store.
+
+        Every record is built (and so every refusal raised) BEFORE the store is opened, so
+        a refused matrix leaves no ``processed/lmdb`` for a retry to serve as empty.
+        Records are written through ``_intern_record``: the constant reference (the
+        501-feature WT phenotype) is stored once in the sibling ``interned`` env and each
+        record carries a ``$ref`` pointer that ``get_single_item`` splices back, so the
+        resolved records are the same values as the earlier inline layout.
+        """
         verify_raw_files(
             self.raw_dir, {name: spec["sha256"] for name, spec in _RAW_FILES.items()}
         )
@@ -201,26 +208,23 @@ class ScmdOhya2005Dataset(ExperimentDataset):
 
         log.info("Processing Ohya 2005 CalMorph morphology data...")
 
-        # Initialize LMDB environment
-        env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e12))
+        records = [
+            self.create_calmorph_experiment(
+                self.name, row, wt_reference_phenotype=self.wt_reference_phenotype
+            )
+            for _, row in tqdm(df.iterrows(), total=df.shape[0])
+        ]
 
-        with env.begin(write=True) as txn:
-            for index, row in tqdm(df.iterrows(), total=df.shape[0]):
-                experiment, reference, publication = self.create_calmorph_experiment(
-                    self.name, row, wt_reference_phenotype=self.wt_reference_phenotype
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
+        # LIFO exit: the interned txn commits before the records txn (crash safety).
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
+            for index, (experiment, reference, publication) in enumerate(records):
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(experiment, reference, publication, itxn),
                 )
-
-                # Serialize the Pydantic objects
-                serialized_data = pickle.dumps(
-                    {
-                        "experiment": experiment.model_dump(),
-                        "reference": reference.model_dump(),
-                        "publication": publication.model_dump(),
-                    }
-                )
-                txn.put(f"{index}".encode(), serialized_data)
-
         env.close()
+        interned_env.close()
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
@@ -244,8 +248,24 @@ class ScmdOhya2005Dataset(ExperimentDataset):
         df_mutant = df_mutant.copy()
         # The ORF column carries the systematic gene name; there is no common-name column.
         df_mutant["systematic_gene_name"] = df_mutant["ORF"].str.strip().str.upper()
-        df_mutant = df_mutant[df_mutant["systematic_gene_name"].notna()]
-        df_mutant = df_mutant[df_mutant["systematic_gene_name"] != ""]
+        # A row with a blank ORF names no strain; it is dropped and counted (0 of the
+        # 4718 rows of the pinned matrix, 2026.10.01).
+        blank = df_mutant["systematic_gene_name"].isna() | (
+            df_mutant["systematic_gene_name"] == ""
+        )
+        n_blank = int(blank.sum())
+        if n_blank:
+            log.warning(
+                "Ohya 2005: dropping %d mutant row(s) with a blank ORF", n_blank
+            )
+        df_mutant = df_mutant[~blank]
+        duplicated = df_mutant["systematic_gene_name"].duplicated(keep=False)
+        if duplicated.any():
+            raise RuntimeError(
+                "Ohya 2005: the same strain is listed more than once (ORF stripped and "
+                "uppercased): "
+                f"{df_mutant.loc[duplicated, 'ORF'].tolist()}"
+            )
 
         # Drop any strain with a missing CalMorph value -- CalMorph completeness requires
         # the full 501-trait vocabulary per record; values are NEVER imputed (drop whole).
@@ -288,8 +308,10 @@ class ScmdOhya2005Dataset(ExperimentDataset):
         return wt_means
 
     def create_experiment(self) -> None:
-        """Required by base class but not used - see create_calmorph_experiment."""
-        pass
+        """Not used: records are built by ``create_calmorph_experiment``."""
+        raise NotImplementedError(
+            "ScmdOhya2005Dataset builds records with create_calmorph_experiment"
+        )
 
     @staticmethod
     def create_calmorph_experiment(

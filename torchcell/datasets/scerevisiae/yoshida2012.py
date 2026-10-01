@@ -349,19 +349,38 @@ class OrganicAcidYoshida2012Dataset(ExperimentDataset):
         log.info("Staged %s (%d bytes, sha256 verified)", dest, osp.getsize(dest))
 
     def _resolve_systematic(self, gene: str) -> str:
-        """Resolve a common/systematic gene name to a systematic ORF id (must succeed)."""
+        """Resolve a common/systematic gene name to a systematic ORF id (must succeed).
+
+        A systematic-shaped name must be a gene of the injected genome, and a common name
+        must name exactly one gene; anything else is refused by name rather than stored.
+        """
         gene = gene.strip().upper()
-        if _SYSTEMATIC_RE.match(gene):
-            return gene
         genome = cast(SCerevisiaeGenome, self.genome)
+        if _SYSTEMATIC_RE.match(gene):
+            if gene not in genome.gene_set:
+                raise RuntimeError(
+                    f"Yoshida2012: systematic name '{gene}' is not a gene of the genome"
+                )
+            return gene
         candidates = genome.alias_to_systematic.get(gene, [])
         if not candidates:
             raise RuntimeError(f"Yoshida2012: could not resolve gene name '{gene}'")
+        if len(candidates) > 1:
+            raise RuntimeError(
+                f"Yoshida2012: gene name '{gene}' is an alias of {len(candidates)} "
+                f"ORFs {candidates}"
+            )
         return candidates[0]
 
     @post_process
     def process(self) -> None:
-        """Build per-strain Metabolite experiments from the Table 3 literal, write LMDB."""
+        """Build per-strain Metabolite experiments from the Table 3 literal, write LMDB.
+
+        Every record is built and every refusal raised BEFORE ``data.csv`` or the store is
+        written, so a refused table leaves nothing for a retry to serve. Refusals (each
+        0 of the 17 strains of the released Table 3, 2026.10.01): an unresolvable or
+        ambiguous name, two strains resolving to one ORF, and a NaN mean or SD.
+        """
         verify_raw_files(self.raw_dir, {PDF_FILENAME: PDF_SHA256})
         if self.genome is None:
             raise RuntimeError(
@@ -372,15 +391,29 @@ class OrganicAcidYoshida2012Dataset(ExperimentDataset):
         # stays unmapped (inorganic; not a modelled organic-acid target).
         self._s_id_map = build_metabolite_s_id_map(ACID_KEGG_IDS)
 
+        for gene, values in TABLE_3.items():
+            for column, (mean, sd) in zip(_TABLE_3_COLUMNS, values, strict=True):
+                if math.isnan(mean) or math.isnan(sd):
+                    raise RuntimeError(
+                        f"Yoshida2012: Table 3 row '{gene}' has a NaN {column} cell "
+                        f"({mean}, {sd})"
+                    )
         self._reference = _row_analytes(TABLE_3[_WT_KEY])
 
-        os.makedirs(self.preprocess_dir, exist_ok=True)
         rows: list[dict[str, Any]] = []
+        gene_by_orf: dict[str, str] = {}
         for gene, values in TABLE_3.items():
             if gene == _WT_KEY:
                 continue
             orf = self._resolve_systematic(gene)
+            if orf in gene_by_orf:
+                raise RuntimeError(
+                    f"Yoshida2012: Table 3 rows '{gene_by_orf[orf]}' and '{gene}' both "
+                    f"resolve to {orf}"
+                )
+            gene_by_orf[orf] = gene
             rows.append({"orf": orf, "gene": gene, "analytes": _row_analytes(values)})
+        records = [self.create_experiment(record_row) for record_row in rows]
         log.info(
             "Yoshida2012: %d deletion strains, WT reference over %d analytes, "
             "%d organic acids mapped to Yeast9 s_NNNN",
@@ -388,15 +421,14 @@ class OrganicAcidYoshida2012Dataset(ExperimentDataset):
             len(self._reference),
             len(self._s_id_map),
         )
+        os.makedirs(self.preprocess_dir, exist_ok=True)
         pd.DataFrame([{"orf": r["orf"], "gene": r["gene"]} for r in rows]).to_csv(
             osp.join(self.preprocess_dir, "data.csv"), index=False
         )
 
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e11))
-        idx = 0
         with env.begin(write=True) as txn:
-            for record_row in tqdm(rows):
-                experiment, reference, publication = self.create_experiment(record_row)
+            for idx, (experiment, reference, publication) in enumerate(tqdm(records)):
                 txn.put(
                     f"{idx}".encode(),
                     pickle.dumps(
@@ -407,9 +439,8 @@ class OrganicAcidYoshida2012Dataset(ExperimentDataset):
                         }
                     ),
                 )
-                idx += 1
         env.close()
-        log.info("Wrote %d Yoshida2012 organic-acid experiments to LMDB", idx)
+        log.info("Wrote %d Yoshida2012 organic-acid experiments to LMDB", len(records))
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None

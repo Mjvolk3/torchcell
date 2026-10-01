@@ -19,3 +19,7 @@ Findings: `TCV` in `_CV_PREFIXES` (line 105) is not a real prefix, so a TCV colu
 ## 2026.09.30 - Raw sha256 pin enforced at build time
 
 Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.
+
+## 2026.10.01 - Findings retired (issues #537, #546)
+
+Retired the duplicate, TCV, `create_experiment` and half-built-store findings: two spellings of one strain are refused, blank ORF rows give a counted warning, a `TCV101_X` column is refused as a base parameter, `create_experiment` raises, a non-numeric cell leaves no store. New `test_the_interned_store_resolves_to_exactly_the_inline_records` builds both layouts and compares every resolved record exactly, and pins the `$ref` layout. The Suzuki 2018 publication finding (#491) stays pinned.

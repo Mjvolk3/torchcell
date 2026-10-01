@@ -26,7 +26,7 @@ defined per the paper's ref [34].
 Values are RAW per-strain CalMorph population averages (same semantics as Ohya 2005), one
 501-length vector per strain: 281 base parameters (``CALMORPH_LABELS``: 220 mean + 61
 ratio) + 220 coefficient-of-variation / noise parameters (``CALMORPH_STATISTICS``,
-prefixed CCV/ACV/DCV/TCV). The 114-row wildtype matrix (114 independent BY4743 WT
+prefixed CCV/ACV/DCV). The 114-row wildtype matrix (114 independent BY4743 WT
 replicate averages) is aggregated per-feature into a single mean-WT reference phenotype.
 
 PROVENANCE / SOURCING (sha256-pinned; loader reads the library-mirror ``data/`` files and
@@ -91,8 +91,9 @@ from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
-# CV parameters are prefixed CCV/ACV/DCV/TCV; everything else is a base parameter.
-_CV_PREFIXES = ("CCV", "ACV", "DCV", "TCV")
+# CV parameters are prefixed CCV/ACV/DCV (60 + 33 + 127 = 220 in the pinned matrices; no
+# TCV parameter exists, #494); everything else is a base parameter.
+_CV_PREFIXES = ("CCV", "ACV", "DCV")
 
 # sha256-pinned raw matrices in the library mirror ``data/`` directory.
 _RAW_FILES: dict[str, dict[str, str]] = {
@@ -187,13 +188,17 @@ class ScmdOhnuki2018Dataset(ExperimentDataset):
 
         log.info("Processing Ohnuki 2018 CalMorph morphology data...")
 
+        # Every record is built (and so every refusal raised) before the store is opened,
+        # so a refused matrix leaves no ``processed/lmdb`` for a retry to serve as empty.
+        records = [
+            self.create_calmorph_experiment(
+                self.name, row, wt_reference_phenotype=self.wt_reference_phenotype
+            )
+            for _, row in tqdm(df.iterrows(), total=df.shape[0])
+        ]
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e12))
-
         with env.begin(write=True) as txn:
-            for index, row in tqdm(df.iterrows(), total=df.shape[0]):
-                experiment, reference, publication = self.create_calmorph_experiment(
-                    self.name, row, wt_reference_phenotype=self.wt_reference_phenotype
-                )
+            for index, (experiment, reference, publication) in enumerate(records):
                 serialized_data = pickle.dumps(
                     {
                         "experiment": experiment.model_dump(),
@@ -221,10 +226,24 @@ class ScmdOhnuki2018Dataset(ExperimentDataset):
         df_mutant = df_mutant.copy()
         # The ORF column carries the systematic gene name; there is no common-name column.
         df_mutant["systematic_gene_name"] = df_mutant["ORF"].str.strip().str.upper()
-        df_mutant = df_mutant[df_mutant["systematic_gene_name"].notna()]
-        df_mutant = df_mutant[df_mutant["systematic_gene_name"] != ""].reset_index(
-            drop=True
+        # A row with a blank ORF names no strain; it is dropped and counted (0 of the
+        # 1112 rows of the pinned matrix, 2026.10.01).
+        blank = df_mutant["systematic_gene_name"].isna() | (
+            df_mutant["systematic_gene_name"] == ""
         )
+        n_blank = int(blank.sum())
+        if n_blank:
+            log.warning(
+                "Ohnuki 2018: dropping %d mutant row(s) with a blank ORF", n_blank
+            )
+        df_mutant = df_mutant[~blank].reset_index(drop=True)
+        duplicated = df_mutant["systematic_gene_name"].duplicated(keep=False)
+        if duplicated.any():
+            raise RuntimeError(
+                "Ohnuki 2018: the same strain is listed more than once (ORF stripped "
+                "and uppercased): "
+                f"{df_mutant.loc[duplicated, 'ORF'].tolist()}"
+            )
 
         if self.genome is None:
             self.genome = default_genome()
@@ -250,8 +269,10 @@ class ScmdOhnuki2018Dataset(ExperimentDataset):
         return wt_means
 
     def create_experiment(self) -> None:
-        """Required by base class but not used - see create_calmorph_experiment."""
-        pass
+        """Not used: records are built by ``create_calmorph_experiment``."""
+        raise NotImplementedError(
+            "ScmdOhnuki2018Dataset builds records with create_calmorph_experiment"
+        )
 
     @staticmethod
     def create_calmorph_experiment(

@@ -142,6 +142,8 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torchcell</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">biocypher</span><span class="w"> </span><span class="kn">import</span> <span class="n">BioCypher</span>  <span class="c1"># type: ignore[attr-defined]  # untyped re-export</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.build_telemetry</span><span class="w"> </span><span class="kn">import</span> <span class="n">BuildPhase</span><span class="p">,</span> <span class="n">ResourceSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.fast_csv</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastCsvSink</span><span class="p">,</span> <span class="n">build_row_specs</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGraph</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.dataset_adapter_map</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataset_adapter_map</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.incremental_import</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -223,11 +225,18 @@
     <span class="n">sorted_cfg</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">wandb_cfg</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">hashed_cfg</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">sorted_cfg</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
     <span class="n">group</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">slurm_job_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">hashed_cfg</span><span class="si">}</span><span class="s2">"</span>
+    <span class="c1"># Tags make builds comparable across rounds: the config's own tags plus any the</span>
+    <span class="c1"># launcher passes in TCDB_TAGS (comma-separated: round, arm, commit). A build with</span>
+    <span class="c1"># no tags is the production path and stays untagged.</span>
+    <span class="n">tags</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">wandb_cfg</span><span class="p">[</span><span class="s2">"wandb"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tags"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]]</span>
+    <span class="n">tags</span> <span class="o">+=</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"TCDB_TAGS"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)</span> <span class="k">if</span> <span class="n">t</span><span class="p">]</span>
     <span class="n">wandb</span><span class="o">.</span><span class="n">init</span><span class="p">(</span>
         <span class="n">mode</span><span class="o">=</span><span class="n">wandb_cfg</span><span class="p">[</span><span class="s2">"wandb"</span><span class="p">][</span><span class="s2">"mode"</span><span class="p">],</span>
         <span class="n">project</span><span class="o">=</span><span class="n">wandb_cfg</span><span class="p">[</span><span class="s2">"wandb"</span><span class="p">][</span><span class="s2">"project"</span><span class="p">],</span>
         <span class="n">config</span><span class="o">=</span><span class="n">wandb_cfg</span><span class="p">,</span>
         <span class="n">group</span><span class="o">=</span><span class="n">group</span><span class="p">,</span>
+        <span class="n">tags</span><span class="o">=</span><span class="n">tags</span><span class="p">,</span>
+        <span class="n">job_type</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"TCDB_JOB_TYPE"</span><span class="p">,</span> <span class="s2">"build"</span><span class="p">),</span>
         <span class="c1"># save_code=True,</span>
     <span class="p">)</span>
     <span class="c1"># save_code = True only works for git repositories, so we log the kg dir.</span>
@@ -259,6 +268,13 @@
         <span class="n">schema_config_path</span><span class="o">=</span><span class="n">SCHEMA_CONFIG_PATH</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">({</span><span class="s2">"biocypher-out"</span><span class="p">:</span> <span class="n">bc</span><span class="o">.</span><span class="n">_output_directory</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]})</span>
+    <span class="c1"># Whole-container CPU + memory every 5 s, stamped with the adapter/method in</span>
+    <span class="c1"># flight; the per-phase table it yields at the end is what a build-speed round</span>
+    <span class="c1"># is scored on. Samples land beside the CSVs so they survive with the output.</span>
+    <span class="n">sampler</span> <span class="o">=</span> <span class="n">ResourceSampler</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">output_directory</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"telemetry"</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mf">5.0</span><span class="p">)</span>
+    <span class="n">sampler</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="n">build_t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">BuildPhase</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="s2">"instantiate datasets"</span><span class="p">,</span> <span class="s2">"setup"</span><span class="p">)</span>
     <span class="c1"># Partition workers</span>
     <span class="n">io_workers</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span>
         <span class="n">wandb</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">adapters</span><span class="p">[</span><span class="s2">"io_to_total_worker_ratio"</span><span class="p">]</span> <span class="o">*</span> <span class="n">num_workers</span>
@@ -266,6 +282,28 @@
     <span class="n">process_workers</span> <span class="o">=</span> <span class="n">num_workers</span> <span class="o">-</span> <span class="n">io_workers</span>
     <span class="n">chunk_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">wandb</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">adapters</span><span class="p">[</span><span class="s2">"chunk_size"</span><span class="p">])</span>
     <span class="n">loader_batch_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">wandb</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">adapters</span><span class="p">[</span><span class="s2">"loader_batch_size"</span><span class="p">])</span>
+    <span class="n">inprocess_max_records</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">wandb</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">adapters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"inprocess_max_records"</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">single_pass</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">wandb</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">adapters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"single_pass"</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+    <span class="n">fast_writer</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">wandb</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">adapters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"fast_writer"</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+    <span class="n">chunks_per_worker</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">wandb</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">adapters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"chunks_per_worker"</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="c1"># r7: MiB of resolved record JSON a single-pass chunk may carry (48 is the</span>
+    <span class="c1"># module default that job 2905 ran with).</span>
+    <span class="n">single_pass_chunk_budget_mb</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+        <span class="n">wandb</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">adapters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"single_pass_chunk_budget_mb"</span><span class="p">,</span> <span class="mi">48</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="c1"># r10: a dataset runs in-process only if it is also under this many MiB of</span>
+    <span class="c1"># resolved records (0 keeps the record-count rule alone); and chunk results are</span>
+    <span class="c1"># consumed as they complete instead of in submission order.</span>
+    <span class="n">inprocess_max_mb</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">wandb</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">adapters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"inprocess_max_mb"</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">completion_order</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">wandb</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">adapters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"completion_order"</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+    <span class="c1"># r11: recycle a pool once the container's memory is above this fraction of its</span>
+    <span class="c1"># cgroup limit (0 keeps the fixed chunks_per_worker groups).</span>
+    <span class="n">pool_memory_fraction</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">wandb</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">adapters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"pool_memory_fraction"</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="c1"># r5: rows rendered in the chunk workers, the main process only dedups and</span>
+    <span class="c1"># appends (torchcell.fast_csv). The specs are frozen from THIS BioCypher instance</span>
+    <span class="c1"># before any adapter forks a pool, so every worker inherits them.</span>
+    <span class="n">row_specs</span> <span class="o">=</span> <span class="n">build_row_specs</span><span class="p">(</span><span class="n">bc</span><span class="p">)</span> <span class="k">if</span> <span class="n">fast_writer</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">sink</span> <span class="o">=</span> <span class="n">FastCsvSink</span><span class="p">(</span><span class="n">bc</span><span class="p">,</span> <span class="n">row_specs</span><span class="p">)</span> <span class="k">if</span> <span class="n">row_specs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
 
     <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
         <span class="p">{</span>
@@ -403,6 +441,18 @@
                 <span class="n">loader_batch_size</span><span class="o">=</span><span class="n">loader_batch_size</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
+        <span class="c1"># Set after construction: the 52 adapter subclasses each spell out the base</span>
+        <span class="c1"># constructor's arguments, and this knob is a build setting, not per adapter.</span>
+        <span class="n">adapters</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">inprocess_max_records</span> <span class="o">=</span> <span class="n">inprocess_max_records</span>
+        <span class="n">adapters</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">single_pass</span> <span class="o">=</span> <span class="n">single_pass</span>
+        <span class="n">adapters</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">row_specs</span> <span class="o">=</span> <span class="n">row_specs</span>
+        <span class="n">adapters</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">chunks_per_worker</span> <span class="o">=</span> <span class="n">chunks_per_worker</span>
+        <span class="n">adapters</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">single_pass_chunk_budget_bytes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+            <span class="n">single_pass_chunk_budget_mb</span> <span class="o">*</span> <span class="mi">2</span><span class="o">**</span><span class="mi">20</span>
+        <span class="p">)</span>
+        <span class="n">adapters</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">inprocess_max_bytes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">inprocess_max_mb</span> <span class="o">*</span> <span class="mi">2</span><span class="o">**</span><span class="mi">20</span><span class="p">)</span>
+        <span class="n">adapters</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">completion_order</span> <span class="o">=</span> <span class="n">completion_order</span>
+        <span class="n">adapters</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pool_memory_fraction</span> <span class="o">=</span> <span class="n">pool_memory_fraction</span>
     <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
         <span class="s2">"Built </span><span class="si">%d</span><span class="s2"> adapters; skipped </span><span class="si">%d</span><span class="s2"> with no LMDB: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
         <span class="nb">len</span><span class="p">(</span><span class="n">adapters</span><span class="p">),</span>
@@ -413,11 +463,15 @@
 
     <span class="n">total_nodes</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">total_edges</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">for</span> <span class="n">adapter</span> <span class="ow">in</span> <span class="n">adapters</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">adapter_index</span><span class="p">,</span> <span class="n">adapter</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">adapters</span><span class="p">):</span>
         <span class="n">adapter_name</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">adapter</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">({</span><span class="s2">"adapter_index"</span><span class="p">:</span> <span class="n">adapter_index</span><span class="p">,</span> <span class="s2">"current_adapter"</span><span class="p">:</span> <span class="n">adapter_name</span><span class="p">})</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Writing nodes for adapter: </span><span class="si">{</span><span class="n">adapter_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="n">n_nodes</span> <span class="o">=</span> <span class="n">_count_while_writing</span><span class="p">(</span><span class="n">bc</span><span class="o">.</span><span class="n">write_nodes</span><span class="p">,</span> <span class="n">adapter</span><span class="o">.</span><span class="n">get_nodes</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">sink</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">n_nodes</span> <span class="o">=</span> <span class="n">sink</span><span class="o">.</span><span class="n">write_nodes</span><span class="p">(</span><span class="n">adapter</span><span class="o">.</span><span class="n">get_nodes</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n_nodes</span> <span class="o">=</span> <span class="n">_count_while_writing</span><span class="p">(</span><span class="n">bc</span><span class="o">.</span><span class="n">write_nodes</span><span class="p">,</span> <span class="n">adapter</span><span class="o">.</span><span class="n">get_nodes</span><span class="p">())</span>
         <span class="n">total_nodes</span> <span class="o">+=</span> <span class="n">n_nodes</span>
         <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
             <span class="p">{</span>
@@ -429,7 +483,10 @@
 
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Writing edges for adapter: </span><span class="si">{</span><span class="n">adapter_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="n">n_edges</span> <span class="o">=</span> <span class="n">_count_while_writing</span><span class="p">(</span><span class="n">bc</span><span class="o">.</span><span class="n">write_edges</span><span class="p">,</span> <span class="n">adapter</span><span class="o">.</span><span class="n">get_edges</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">sink</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">n_edges</span> <span class="o">=</span> <span class="n">sink</span><span class="o">.</span><span class="n">write_edges</span><span class="p">(</span><span class="n">adapter</span><span class="o">.</span><span class="n">get_edges</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n_edges</span> <span class="o">=</span> <span class="n">_count_while_writing</span><span class="p">(</span><span class="n">bc</span><span class="o">.</span><span class="n">write_edges</span><span class="p">,</span> <span class="n">adapter</span><span class="o">.</span><span class="n">get_edges</span><span class="p">())</span>
         <span class="n">total_edges</span> <span class="o">+=</span> <span class="n">n_edges</span>
         <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
             <span class="p">{</span>
@@ -445,7 +502,27 @@
         <span class="n">total_edges</span><span class="p">,</span>
         <span class="nb">len</span><span class="p">(</span><span class="n">adapters</span><span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">({</span><span class="s2">"total_nodes"</span><span class="p">:</span> <span class="n">total_nodes</span><span class="p">,</span> <span class="s2">"total_edges"</span><span class="p">:</span> <span class="n">total_edges</span><span class="p">})</span>
+    <span class="k">if</span> <span class="n">sink</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">sink</span><span class="o">.</span><span class="n">finish</span><span class="p">()</span>
+    <span class="n">generation_wall_s</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">build_t0</span>
+    <span class="n">BuildPhase</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="s2">"finish"</span><span class="p">,</span> <span class="s2">"finish"</span><span class="p">)</span>
+    <span class="n">timings</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+    <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">"total_nodes"</span><span class="p">:</span> <span class="n">total_nodes</span><span class="p">,</span>
+            <span class="s2">"total_edges"</span><span class="p">:</span> <span class="n">total_edges</span><span class="p">,</span>
+            <span class="s2">"generation_wall_s"</span><span class="p">:</span> <span class="n">generation_wall_s</span><span class="p">,</span>
+            <span class="s2">"generation_cpu_core_s"</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">cpu_core_seconds</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">timings</span><span class="p">),</span>
+            <span class="s2">"generation_mem_peak_gb"</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">mem_peak_gb</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">timings</span><span class="p">),</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.0</span>
+            <span class="p">),</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">"Generation wall </span><span class="si">%.0f</span><span class="s2"> s, peak memory </span><span class="si">%.1f</span><span class="s2"> GiB"</span><span class="p">,</span>
+        <span class="n">generation_wall_s</span><span class="p">,</span>
+        <span class="nb">max</span><span class="p">((</span><span class="n">t</span><span class="o">.</span><span class="n">mem_peak_gb</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">timings</span><span class="p">),</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span>
+    <span class="p">)</span>
     <span class="k">if</span> <span class="n">import_mode</span> <span class="o">==</span> <span class="s2">"full"</span><span class="p">:</span>
         <span class="c1"># Write admin import statement and schema information (for biochatter)</span>
         <span class="n">bc</span><span class="o">.</span><span class="n">write_import_call</span><span class="p">()</span>

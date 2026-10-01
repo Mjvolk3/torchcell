@@ -121,15 +121,17 @@
 <span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/cell_adapter</span>
 <span class="c1"># Test file: tests/torchcell/adapters/test_cell_adapter.py</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">deque</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Iterator</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">ProcessPoolExecutor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">FIRST_COMPLETED</span><span class="p">,</span> <span class="n">Future</span><span class="p">,</span> <span class="n">ProcessPoolExecutor</span><span class="p">,</span> <span class="n">wait</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">chain</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">wandb</span>
@@ -138,6 +140,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.build_telemetry</span><span class="w"> </span><span class="kn">import</span> <span class="n">BuildPhase</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.identity</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">environment_identity</span><span class="p">,</span>
     <span class="n">environment_perturbation_identity</span><span class="p">,</span>
@@ -145,12 +148,58 @@
     <span class="n">media_identity</span><span class="p">,</span>
     <span class="n">temperature_identity</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.interned_constant</span><span class="w"> </span><span class="kn">import</span> <span class="n">split_experiment_dump</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.fast_csv</span><span class="w"> </span><span class="kn">import</span> <span class="n">RenderedChunk</span><span class="p">,</span> <span class="n">RowSpecs</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">CpuExperimentLoaderMultiprocessing</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <span class="n">CHUNKS_PER_WORKER</span> <span class="o">=</span> <span class="mi">2</span>
+
+<span class="n">SINGLE_PASS_NODES</span> <span class="o">=</span> <span class="s2">"all node types (chunked)"</span>
+<span class="n">SINGLE_PASS_EDGES</span> <span class="o">=</span> <span class="s2">"all edge types (chunked)"</span>
+<span class="n">SINGLE_PASS_CHUNK_BUDGET_BYTES</span> <span class="o">=</span> <span class="mi">48</span> <span class="o">*</span> <span class="mi">2</span><span class="o">**</span><span class="mi">20</span>
+<span class="n">INPROCESS_MAX_BYTES</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># 0: the in-process rule is by record count alone</span>
+<span class="sd">"""Resolved-record bytes a single-pass chunk may carry.</span>
+
+<span class="sd">A folded pass emits every node (or edge) type per record, so a chunk's output scales</span>
+<span class="sd">with the record's resolved size, not its count. Bloom2019 (segregant genotypes, no</span>
+<span class="sd">memory reduction factor in its adapter config) got 12,500-record chunks on job 2889;</span>
+<span class="sd">30 workers plus their loader children took anonymous memory from 36 GB to 104 GB in</span>
+<span class="sd">20 s and the container was OOM-killed at 128 GB. The budget divides by the sampled</span>
+<span class="sd">resolved record size so a chunk of big records is proportionally shorter.</span>
+
+<span class="sd">r7: the budget is a per-adapter attribute (``single_pass_chunk_budget_bytes``) because</span>
+<span class="sd">48 MiB cut Costanzo dmf to 2,355-record chunks on job 2905 and its node pass took</span>
+<span class="sd">5,317 s against 2,794 s at 6,250 records on job 2889 (same code otherwise, same box):</span>
+<span class="sd">2.7x more chunks, and the pool is rebuilt every chunks_per_worker x workers of them.</span>
+<span class="sd">"""</span>
+<span class="n">SINGLE_PASS_MIN_CHUNK</span> <span class="o">=</span> <span class="mi">256</span>
+<span class="n">CGROUP_MEMORY_CURRENT</span> <span class="o">=</span> <span class="s2">"/sys/fs/cgroup/memory.current"</span>
+<span class="n">CGROUP_MEMORY_MAX</span> <span class="o">=</span> <span class="s2">"/sys/fs/cgroup/memory.max"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">cgroup_memory_fraction</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Current cgroup v2 memory use as a fraction of the container's limit.</span>
+
+<span class="sd">    Raises when the container has no memory limit (``memory.max`` is ``max``) or the</span>
+<span class="sd">    cgroup files are absent: the memory-driven pool recycling needs a real limit to</span>
+<span class="sd">    measure against, and running without one is a configuration error, not a case</span>
+<span class="sd">    to fall back from.</span>
+<span class="sd">    """</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">CGROUP_MEMORY_MAX</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="n">limit</span> <span class="o">=</span> <span class="n">fh</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">limit</span> <span class="o">==</span> <span class="s2">"max"</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="s2">"pool_memory_fraction needs a cgroup memory limit; memory.max is 'max'"</span>
+        <span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">CGROUP_MEMORY_CURRENT</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fh</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">current</span> <span class="o">/</span> <span class="nb">int</span><span class="p">(</span><span class="n">limit</span><span class="p">)</span>
+
+
+<span class="sd">"""Phase names of the r3 single-pass traversals (one per adapter per kind)."""</span>
 <span class="sd">"""Chunks a pool worker may handle before the pool is rebuilt with fresh workers.</span>
 
 <span class="sd">Bounds a worker's heap, which ratchets up across chunks because CPython does not</span>
@@ -173,6 +222,7 @@
         <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">chunk_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1e4</span><span class="p">),</span>
         <span class="n">loader_batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1e3</span><span class="p">),</span>
+        <span class="n">inprocess_max_records</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Store config, dataset, and worker/chunk sizes for graph generation.</span>
 
@@ -184,6 +234,12 @@
 <span class="sd">            chunk_size: Number of dataset items processed per chunk.</span>
 <span class="sd">            loader_batch_size: Batch size used within each chunk; must not</span>
 <span class="sd">                exceed ``chunk_size``.</span>
+<span class="sd">            inprocess_max_records: Datasets with at most this many records run</span>
+<span class="sd">                every chunked method in THIS process, with no worker pool and no</span>
+<span class="sd">                loader children. 0 disables the path. On job 2032 a method cost</span>
+<span class="sd">                about 30 s of fixed overhead (pool fork from a ~100 GB parent,</span>
+<span class="sd">                loader forks, LMDB open, teardown) whatever the dataset size, so</span>
+<span class="sd">                33 small datasets took 9.5 h for a median of 1,484 records each.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">loader_batch_size</span> <span class="o">&gt;</span> <span class="n">chunk_size</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -196,6 +252,33 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">io_workers</span> <span class="o">=</span> <span class="n">io_workers</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">chunk_size</span> <span class="o">=</span> <span class="n">chunk_size</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">loader_batch_size</span> <span class="o">=</span> <span class="n">loader_batch_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inprocess_max_records</span> <span class="o">=</span> <span class="n">inprocess_max_records</span>
+        <span class="c1"># r3: one traversal per adapter for every chunked node method (and one for</span>
+        <span class="c1"># every chunked edge method) instead of one traversal per method. The</span>
+        <span class="c1"># per-record work is identical; only the number of passes over the LMDB and</span>
+        <span class="c1"># the pydantic rehydrations change. Set by the build script from the config.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">single_pass</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_single_pass_methods</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># r5: when set, chunk workers render neo4j-admin rows themselves and return one</span>
+        <span class="c1"># RenderedChunk per chunk; the build's FastCsvSink dedups and appends. None</span>
+        <span class="c1"># keeps the BioCypherNode/Edge objects flowing to bc.write_nodes/write_edges.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">row_specs</span><span class="p">:</span> <span class="n">RowSpecs</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chunks_per_worker</span> <span class="o">=</span> <span class="n">CHUNKS_PER_WORKER</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">single_pass_chunk_budget_bytes</span> <span class="o">=</span> <span class="n">SINGLE_PASS_CHUNK_BUDGET_BYTES</span>
+        <span class="c1"># r10: the in-process rule is by records only unless this is set; then a</span>
+        <span class="c1"># dataset also has to fit in this many resolved bytes. Job 2959 ran Caudal</span>
+        <span class="c1"># (943 records of 3 MB), Kemmeren (1,484 of 780 KB), Messner and Nadal-Ribelles</span>
+        <span class="c1"># in-process on one core for 39 minutes of a 4 h build.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inprocess_max_bytes</span> <span class="o">=</span> <span class="n">INPROCESS_MAX_BYTES</span>
+        <span class="c1"># r10: yield chunk results as they complete instead of in submission order.</span>
+        <span class="c1"># In order, the parent blocks on the oldest chunk and submits a replacement</span>
+        <span class="c1"># only after consuming it, so one slow chunk idles the rest of the pool: job</span>
+        <span class="c1"># 2959's Costanzo passes averaged 18 of 64 cores with peaks at 50.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">completion_order</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="c1"># r11: recycle a pool once the container's memory is above this fraction of</span>
+        <span class="c1"># its cgroup limit (0 keeps the fixed chunks_per_worker groups).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pool_memory_fraction</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_record_bytes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">event</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">wandb</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log_method_table</span><span class="p">()</span>
@@ -447,6 +530,36 @@
 <span class="sd">        """</span>
         <span class="n">memory_reduction_factor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_memory_reduction_factor</span><span class="p">(</span><span class="n">method_name</span><span class="p">,</span> <span class="n">is_edge</span><span class="p">)</span>
         <span class="n">chunk_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chunk_size</span> <span class="o">*</span> <span class="n">memory_reduction_factor</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">method_name</span> <span class="ow">in</span> <span class="p">(</span><span class="n">SINGLE_PASS_NODES</span><span class="p">,</span> <span class="n">SINGLE_PASS_EDGES</span><span class="p">):</span>
+            <span class="n">record_bytes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_estimate_record_bytes</span><span class="p">()</span>
+            <span class="n">budget_chunk</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="n">SINGLE_PASS_MIN_CHUNK</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">single_pass_chunk_budget_bytes</span> <span class="o">//</span> <span class="n">record_bytes</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">budget_chunk</span> <span class="o">&lt;</span> <span class="n">chunk_size</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="s2">"single-pass chunk </span><span class="si">%d</span><span class="s2"> -&gt; </span><span class="si">%d</span><span class="s2"> records (</span><span class="si">%d</span><span class="s2"> resolved bytes per record)"</span><span class="p">,</span>
+                    <span class="n">chunk_size</span><span class="p">,</span>
+                    <span class="n">budget_chunk</span><span class="p">,</span>
+                    <span class="n">record_bytes</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">chunk_size</span> <span class="o">=</span> <span class="n">budget_chunk</span>
+
+        <span class="c1"># Small datasets: one chunk, this process, no forks. The whole dataset is</span>
+        <span class="c1"># the chunk, and data_chunker's in-process branch iterates it directly. With</span>
+        <span class="c1"># inprocess_max_bytes set, "small" also means small in resolved bytes, so a</span>
+        <span class="c1"># dataset of a few hundred multi-MB expression records goes to the pool.</span>
+        <span class="n">inprocess</span> <span class="o">=</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inprocess_max_records</span>
+        <span class="k">if</span> <span class="n">inprocess</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">inprocess_max_bytes</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">inprocess</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_estimate_record_bytes</span><span class="p">()</span>
+                <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inprocess_max_bytes</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">inprocess</span><span class="p">:</span>
+            <span class="n">whole</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span> <span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">)]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">close_lmdb</span><span class="p">()</span>
+            <span class="k">yield from</span> <span class="n">chunk_processing_func</span><span class="p">(</span><span class="n">whole</span><span class="p">,</span> <span class="n">method_name</span><span class="p">,</span> <span class="n">inprocess</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">return</span>
 
         <span class="c1"># Every chunk view is built BEFORE the first submission, and the dataset's LMDB</span>
         <span class="c1"># environment is closed once afterwards, so that no chunk is ever built while</span>
@@ -472,8 +585,49 @@
         <span class="c1"># OOM kills, and 316 GB of anon memory. Recycling caps that at roughly one</span>
         <span class="c1"># group's working set. The group is a multiple of the pool size, so a 414-chunk</span>
         <span class="c1"># method rebuilds the pool ~7 times rather than paying a fork storm.</span>
-        <span class="n">group_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_workers</span> <span class="o">*</span> <span class="n">CHUNKS_PER_WORKER</span>
-        <span class="k">for</span> <span class="n">group_start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_chunks</span><span class="p">),</span> <span class="n">group_size</span><span class="p">):</span>
+        <span class="c1"># r6: the group size is the knob. Job 2889's telemetry (Costanzo, 30 workers,</span>
+        <span class="c1"># 6,250-record chunks) shows a 47 s cycle: the pool fills memory to the cgroup</span>
+        <span class="c1"># cap, is torn down, and the container sits at 3 to 10 cores for about 15 s</span>
+        <span class="c1"># while the next pool forks. With the byte-budgeted chunks the groups would be</span>
+        <span class="c1"># 2.7x shorter still, so chunks_per_worker (default CHUNKS_PER_WORKER) sets it.</span>
+        <span class="n">group_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_workers</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">chunks_per_worker</span>
+        <span class="n">remaining</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">data_chunks</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">pool_chunks</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">            </span><span class="sd">"""The chunks one pool handles: at most group_size, fewer under memory pressure.</span>
+
+<span class="sd">            r11: with ``pool_memory_fraction`` set, a pool stops taking chunks once the</span>
+<span class="sd">            container's cgroup memory is above that fraction of its limit (checked at</span>
+<span class="sd">            each submission after every worker has had one chunk), so the group size</span>
+<span class="sd">            follows the box instead of a fixed count. Job 3067's telemetry: live</span>
+<span class="sd">            workers retain about 1 GB per chunk handled and only the pool teardown</span>
+<span class="sd">            releases it; at 22 workers x 8 chunks that crossed 96 GB in 89 s, while</span>
+<span class="sd">            22 x 2 peaked near 57 GB per group.</span>
+<span class="sd">            """</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">remaining</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">chunk</span>
+                <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;=</span> <span class="n">group_size</span><span class="p">:</span>
+                    <span class="k">return</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pool_memory_fraction</span> <span class="o">&gt;</span> <span class="mi">0</span>
+                    <span class="ow">and</span> <span class="n">n</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_workers</span>
+                    <span class="ow">and</span> <span class="n">cgroup_memory_fraction</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool_memory_fraction</span>
+                <span class="p">):</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="s2">"pool recycled at </span><span class="si">%d</span><span class="s2"> chunks: cgroup memory at </span><span class="si">%.2f</span><span class="s2"> of its limit"</span><span class="p">,</span>
+                        <span class="n">n</span><span class="p">,</span>
+                        <span class="n">cgroup_memory_fraction</span><span class="p">(),</span>
+                    <span class="p">)</span>
+                    <span class="k">return</span>
+
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">group</span> <span class="o">=</span> <span class="n">pool_chunks</span><span class="p">()</span>
+            <span class="n">first</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">first</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">group</span> <span class="o">=</span> <span class="n">chain</span><span class="p">([</span><span class="n">first</span><span class="p">],</span> <span class="n">group</span><span class="p">)</span>
             <span class="c1"># Move everything currently reachable into the GC's permanent generation</span>
             <span class="c1"># before forking this group's pool. Workers inherit the parent's heap</span>
             <span class="c1"># copy-on-write, but one collection inside a worker traverses every tracked</span>
@@ -491,8 +645,6 @@
             <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
             <span class="n">gc</span><span class="o">.</span><span class="n">freeze</span><span class="p">()</span>
 
-            <span class="n">group</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">data_chunks</span><span class="p">[</span><span class="n">group_start</span> <span class="p">:</span> <span class="n">group_start</span> <span class="o">+</span> <span class="n">group_size</span><span class="p">])</span>
-
             <span class="k">def</span><span class="w"> </span><span class="nf">submit_next</span><span class="p">(</span>
                 <span class="n">executor</span><span class="p">:</span> <span class="n">ProcessPoolExecutor</span><span class="p">,</span> <span class="n">group</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">group</span>
             <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Future</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
@@ -509,6 +661,20 @@
                     <span class="k">if</span> <span class="n">future</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="k">break</span>
                     <span class="n">in_flight</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">completion_order</span><span class="p">:</span>
+                    <span class="c1"># r10: consume whichever chunk finishes first and refill at once,</span>
+                    <span class="c1"># so the window stays full and no worker waits on the oldest chunk.</span>
+                    <span class="c1"># Row order across chunks then depends on timing; the writer dedups</span>
+                    <span class="c1"># by id, and the import does not depend on row order.</span>
+                    <span class="n">pending</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Future</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">in_flight</span><span class="p">)</span>
+                    <span class="k">while</span> <span class="n">pending</span><span class="p">:</span>
+                        <span class="n">done</span><span class="p">,</span> <span class="n">pending</span> <span class="o">=</span> <span class="n">wait</span><span class="p">(</span><span class="n">pending</span><span class="p">,</span> <span class="n">return_when</span><span class="o">=</span><span class="n">FIRST_COMPLETED</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">finished</span> <span class="ow">in</span> <span class="n">done</span><span class="p">:</span>
+                            <span class="k">yield from</span> <span class="n">finished</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+                            <span class="n">future</span> <span class="o">=</span> <span class="n">submit_next</span><span class="p">(</span><span class="n">executor</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">future</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                                <span class="n">pending</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
+                    <span class="k">continue</span>
                 <span class="k">while</span> <span class="n">in_flight</span><span class="p">:</span>
                     <span class="k">yield from</span> <span class="n">in_flight</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
                     <span class="n">future</span> <span class="o">=</span> <span class="n">submit_next</span><span class="p">(</span><span class="n">executor</span><span class="p">)</span>
@@ -525,8 +691,22 @@
 
         <span class="nd">@wraps</span><span class="p">(</span><span class="n">data_creation_logic</span><span class="p">)</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">:</span> <span class="s2">"CellAdapter"</span><span class="p">,</span> <span class="n">data_chunk</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
+            <span class="bp">self</span><span class="p">:</span> <span class="s2">"CellAdapter"</span><span class="p">,</span>
+            <span class="n">data_chunk</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+            <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+            <span class="n">inprocess</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">inprocess</span><span class="p">:</span>
+                <span class="n">datas_inproc</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_chunk</span><span class="p">)):</span>
+                    <span class="n">transformed</span> <span class="o">=</span> <span class="n">data_chunk</span><span class="o">.</span><span class="n">transform_item</span><span class="p">(</span><span class="n">data_chunk</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                    <span class="n">out</span> <span class="o">=</span> <span class="n">data_creation_logic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transformed</span><span class="p">,</span> <span class="n">method_name</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                        <span class="n">datas_inproc</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">datas_inproc</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+                <span class="n">data_chunk</span><span class="o">.</span><span class="n">close_lmdb</span><span class="p">()</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pack_chunk</span><span class="p">(</span><span class="n">datas_inproc</span><span class="p">)</span>
             <span class="n">memory_reduction_factor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_memory_reduction_factor</span><span class="p">(</span><span class="n">method_name</span><span class="p">)</span>
             <span class="n">loader_batch_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loader_batch_size</span> <span class="o">*</span> <span class="n">memory_reduction_factor</span><span class="p">)</span>
             <span class="c1"># loader_batch_size = self.loader_batch_size</span>
@@ -550,17 +730,77 @@
                             <span class="n">datas</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
             <span class="k">finally</span><span class="p">:</span>
                 <span class="n">data_loader</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-            <span class="k">return</span> <span class="n">datas</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pack_chunk</span><span class="p">(</span><span class="n">datas</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">decorator</span></div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_estimate_record_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Median JSON size of a resolved record, from evenly spaced samples (cached)."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_bytes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_bytes</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">//</span> <span class="n">samples</span><span class="p">)</span>
+        <span class="n">sizes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="c1"># get() leaves the LMDB environment open. A full dataset closes it again on</span>
+        <span class="c1"># the next slice (its len() runs through indices()), but a subset view has</span>
+        <span class="c1"># stored indices, so every chunk view below would shallow-copy the open</span>
+        <span class="c1"># environment and the pool's feeder could not pickle it (jobs 2918-2921,</span>
+        <span class="c1"># Costanzo capped to 2M: "cannot pickle 'Environment' object").</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">close_lmdb</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_record_bytes</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">sizes</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">sizes</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_bytes</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Pickle for a pool task WITHOUT the parent's per-record indexes.</span>
+
+<span class="sd">        Every chunk task pickles the bound chunk method, hence this adapter, hence</span>
+<span class="sd">        ``self.dataset``, and the worker only reads records through the chunk view it</span>
+<span class="sd">        is handed. Two caches on the dataset are per-record and must not travel:</span>
+
+<span class="sd">        - ``_indices``: a subset view (a capped or prefiltered build, the benchmark</span>
+<span class="sd">          ladder) carries the whole index list, 2M entries and 10 MB per task</span>
+<span class="sd">          (``experiments/tcdb-002-build-speed/scripts/worker_heap_ratchet.py``).</span>
+<span class="sd">        - ``_experiment_reference_index``: the reference node method runs in the</span>
+<span class="sd">          parent before the chunked pass and caches one member index per record, so</span>
+<span class="sd">          every Costanzo task carried 20.7M integers, 103.5 MB, which the loader's</span>
+<span class="sd">          per-chunk ``gc.freeze`` then pinned in the worker: 0.85 GB retained per</span>
+<span class="sd">          chunk per worker, released only by the pool teardown; with it dropped the</span>
+<span class="sd">          worker stays flat at 0.38 GB</span>
+<span class="sd">          (``experiments/tcdb-002-build-speed/scripts/pool_worker_retention.py``).</span>
+<span class="sd">        """</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">shipped</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s2">"dataset"</span><span class="p">])</span>
+        <span class="n">shipped</span><span class="o">.</span><span class="n">_indices</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">shipped</span><span class="o">.</span><span class="n">_experiment_reference_index</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">state</span><span class="p">[</span><span class="s2">"dataset"</span><span class="p">]</span> <span class="o">=</span> <span class="n">shipped</span>
+        <span class="k">return</span> <span class="n">state</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_pack_chunk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datas</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return a chunk's output as objects, or as one RenderedChunk when rendering."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">row_specs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">datas</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">RenderedChunk</span><span class="o">.</span><span class="n">from_rows</span><span class="p">(</span><span class="n">datas</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">row_specs</span><span class="p">)]</span>
 
 <div class="viewcode-block" id="CellAdapter.get_memory_reduction_factor">
 <a class="viewcode-back" href="../../../generated/torchcell.adapters.CellAdapter.html#torchcell.adapters.CellAdapter.get_memory_reduction_factor">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_memory_reduction_factor</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">is_edge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Return the configured memory reduction factor for a method (default 1.0)."""</span>
+<span class="w">        </span><span class="sd">"""Return the configured memory reduction factor for a method (default 1.0).</span>
+
+<span class="sd">        The single-pass method carries every chunked method's output per record, so</span>
+<span class="sd">        its factor is the smallest configured factor divided by the number of</span>
+<span class="sd">        methods folded in: a chunk then holds about as much as one method's chunk did.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">method_name</span> <span class="ow">in</span> <span class="p">(</span><span class="n">SINGLE_PASS_NODES</span><span class="p">,</span> <span class="n">SINGLE_PASS_EDGES</span><span class="p">):</span>
+            <span class="n">factors</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">get_memory_reduction_factor</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">is_edge</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_single_pass_methods</span>
+            <span class="p">]</span>
+            <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">factors</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">factors</span><span class="p">)</span>
         <span class="n">method_list</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cell_adapter</span><span class="o">.</span><span class="n">edge_methods</span>
             <span class="k">if</span> <span class="n">is_edge</span>
@@ -572,40 +812,73 @@
         <span class="k">return</span> <span class="mf">1.0</span></div>
 
 
+    <span class="nd">@data_chunker</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_all_chunked</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Apply every folded chunked method to one record (single-pass body)."""</span>
+        <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">method</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_single_pass_methods</span><span class="p">:</span>
+            <span class="c1"># ``__wrapped__`` is the undecorated per-record function that</span>
+            <span class="c1"># data_chunker wrapped; calling it directly skips a nested loader.</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Any</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span><span class="o">.</span><span class="n">__wrapped__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">method_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_yield_methods</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">methods</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]],</span>
+        <span class="n">config_methods</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Run the enabled methods of one kind, per method or as a single pass."""</span>
+        <span class="n">enabled</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">methods</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="s2">"method_name"</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">config_methods</span><span class="p">]</span>
+        <span class="p">]</span>
+        <span class="n">chunked</span> <span class="o">=</span> <span class="p">[(</span><span class="n">n</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">enabled</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">m</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"_get_"</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">method_name</span><span class="p">,</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">enabled</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_pass</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">method</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"_get_"</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Running: </span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">BuildPhase</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">method_name</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"_get_"</span><span class="p">):</span>
+                <span class="k">yield from</span> <span class="n">method</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data_by_type</span><span class="p">(</span>
+                    <span class="n">method</span><span class="p">,</span> <span class="n">method_name</span><span class="p">,</span> <span class="n">is_edge</span><span class="o">=</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"edge"</span>
+                <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">event</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">({</span><span class="s2">"event"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="p">,</span> <span class="s2">"method"</span><span class="p">:</span> <span class="n">method_name</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="n">kind</span><span class="p">})</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_pass</span> <span class="ow">and</span> <span class="n">chunked</span><span class="p">:</span>
+            <span class="n">pass_name</span> <span class="o">=</span> <span class="n">SINGLE_PASS_NODES</span> <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"node"</span> <span class="k">else</span> <span class="n">SINGLE_PASS_EDGES</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_single_pass_methods</span> <span class="o">=</span> <span class="n">chunked</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Running: </span><span class="si">{</span><span class="n">pass_name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chunked</span><span class="p">)</span><span class="si">}</span><span class="s2"> methods folded)"</span><span class="p">)</span>
+            <span class="n">BuildPhase</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">pass_name</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span>
+            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data_by_type</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_all_chunked</span><span class="p">,</span> <span class="n">pass_name</span><span class="p">,</span> <span class="n">is_edge</span><span class="o">=</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"edge"</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">event</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">({</span><span class="s2">"event"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="p">,</span> <span class="s2">"method"</span><span class="p">:</span> <span class="n">pass_name</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="n">kind</span><span class="p">})</span>
+
 <div class="viewcode-block" id="CellAdapter.get_nodes">
 <a class="viewcode-back" href="../../../generated/torchcell.adapters.CellAdapter.html#torchcell.adapters.CellAdapter.get_nodes">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Yield BioCypher nodes from every enabled node method in config order."""</span>
-        <span class="k">for</span> <span class="n">method_name</span><span class="p">,</span> <span class="n">method</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_methods</span><span class="p">:</span>
-            <span class="n">config_method_names</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">i</span><span class="p">[</span><span class="s2">"method_name"</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cell_adapter</span><span class="o">.</span><span class="n">node_methods</span>
-            <span class="p">]</span>
-            <span class="k">if</span> <span class="n">method_name</span> <span class="ow">in</span> <span class="n">config_method_names</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Running: </span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"_get_"</span><span class="p">):</span>
-                    <span class="k">yield from</span> <span class="n">method</span><span class="p">()</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data_by_type</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">method_name</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">event</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">({</span><span class="s2">"event"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="p">,</span> <span class="s2">"method"</span><span class="p">:</span> <span class="n">method_name</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"node"</span><span class="p">})</span></div>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_yield_methods</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">node_methods</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cell_adapter</span><span class="o">.</span><span class="n">node_methods</span><span class="p">,</span> <span class="s2">"node"</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CellAdapter.get_edges">
 <a class="viewcode-back" href="../../../generated/torchcell.adapters.CellAdapter.html#torchcell.adapters.CellAdapter.get_edges">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_edges</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">BioCypherEdge</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Yield BioCypher edges from every enabled edge method in config order."""</span>
-        <span class="k">for</span> <span class="n">method_name</span><span class="p">,</span> <span class="n">method</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">edge_methods</span><span class="p">:</span>
-            <span class="n">config_method_names</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">i</span><span class="p">[</span><span class="s2">"method_name"</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cell_adapter</span><span class="o">.</span><span class="n">edge_methods</span>
-            <span class="p">]</span>
-            <span class="k">if</span> <span class="n">method_name</span> <span class="ow">in</span> <span class="n">config_method_names</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Running: </span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"_get_"</span><span class="p">):</span>
-                    <span class="k">yield from</span> <span class="n">method</span><span class="p">()</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data_by_type</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">method_name</span><span class="p">,</span> <span class="n">is_edge</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">event</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">({</span><span class="s2">"event"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="p">,</span> <span class="s2">"method"</span><span class="p">:</span> <span class="n">method_name</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"edge"</span><span class="p">})</span></div>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_yield_methods</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">edge_methods</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cell_adapter</span><span class="o">.</span><span class="n">edge_methods</span><span class="p">,</span> <span class="s2">"edge"</span>
+        <span class="p">)</span></div>
 
 
     <span class="nd">@property</span>
@@ -659,16 +932,50 @@
         <span class="k">return</span> <span class="n">nodes</span>
 
     <span class="nd">@data_chunker</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_experiment_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
-        <span class="n">experiment_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
-            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
-            <span class="n">node_id</span><span class="o">=</span><span class="n">experiment_id</span><span class="p">,</span>
-            <span class="n">preferred_id</span><span class="o">=</span><span class="s2">"experiment"</span><span class="p">,</span>
-            <span class="n">node_label</span><span class="o">=</span><span class="s2">"experiment"</span><span class="p">,</span>
-            <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())},</span>
-        <span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_experiment_node</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The Experiment node plus the interned constants its blob points to.</span>
+
+<span class="sd">        The node id is the sha256 of the fully inlined record, as before. The blob</span>
+<span class="sd">        written to ``serialized_data`` replaces the large sub-objects (environment,</span>
+<span class="sd">        segregant genotype) with ``{"$ref": &lt;id&gt;}`` pointers and emits each pointed-to</span>
+<span class="sd">        constant as an ``interned constant`` node once per record; the sink dedups</span>
+<span class="sd">        nodes by id, so a dataset's constant environment is written once</span>
+<span class="sd">        (torchcell/datamodels/interned_constant.py).</span>
+<span class="sd">        """</span>
+        <span class="n">dump</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
+        <span class="n">experiment_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">dump</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="n">pointered</span><span class="p">,</span> <span class="n">constants</span> <span class="o">=</span> <span class="n">split_experiment_dump</span><span class="p">(</span><span class="n">dump</span><span class="p">)</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">BioCypherNode</span><span class="p">(</span>
+                <span class="n">node_id</span><span class="o">=</span><span class="n">experiment_id</span><span class="p">,</span>
+                <span class="n">preferred_id</span><span class="o">=</span><span class="s2">"experiment"</span><span class="p">,</span>
+                <span class="n">node_label</span><span class="o">=</span><span class="s2">"experiment"</span><span class="p">,</span>
+                <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">pointered</span><span class="p">)},</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+        <span class="c1"># Literal label: the ontology coherence check reads emitted labels from the</span>
+        <span class="c1"># source statically (torchcell/datamodels/ontology_checks.py).</span>
+        <span class="k">for</span> <span class="n">ref</span><span class="p">,</span> <span class="n">kind</span><span class="p">,</span> <span class="n">payload</span> <span class="ow">in</span> <span class="n">constants</span><span class="p">:</span>
+            <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">BioCypherNode</span><span class="p">(</span>
+                    <span class="n">node_id</span><span class="o">=</span><span class="n">ref</span><span class="p">,</span>
+                    <span class="n">preferred_id</span><span class="o">=</span><span class="s2">"interned constant"</span><span class="p">,</span>
+                    <span class="n">node_label</span><span class="o">=</span><span class="s2">"interned constant"</span><span class="p">,</span>
+                    <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s2">"kind"</span><span class="p">:</span> <span class="n">kind</span><span class="p">,</span> <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">payload</span><span class="p">},</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">nodes</span>
+
+    <span class="c1"># --- No serialized_data on sub-object nodes ---</span>
+    <span class="c1"># Genotype, segregant genotype, perturbation, crispr construct, environment</span>
+    <span class="c1"># perturbation and every phenotype node carry ONLY their queryable scalar</span>
+    <span class="c1"># properties. Their full typed record is a sub-object of the experiment record,</span>
+    <span class="c1"># so it is already held byte for byte in the Experiment blob (or the interned</span>
+    <span class="c1"># constant it points to); a reference-side phenotype or environment perturbation</span>
+    <span class="c1"># is likewise inside the experiment reference blob. The node id is still the</span>
+    <span class="c1"># sha256 of the sub-object's model_dump, so ids and edges are unchanged.</span>
 
     <span class="nd">@data_chunker</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_genotype_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
@@ -684,7 +991,6 @@
                 <span class="s2">"systematic_gene_names"</span><span class="p">:</span> <span class="n">genotype</span><span class="o">.</span><span class="n">systematic_gene_names</span><span class="p">,</span>
                 <span class="s2">"perturbed_gene_names"</span><span class="p">:</span> <span class="n">genotype</span><span class="o">.</span><span class="n">perturbed_gene_names</span><span class="p">,</span>
                 <span class="s2">"perturbation_types"</span><span class="p">:</span> <span class="n">genotype</span><span class="o">.</span><span class="n">perturbation_types</span><span class="p">,</span>
-                <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">genotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
             <span class="p">},</span>
         <span class="p">)</span>
 
@@ -692,7 +998,7 @@
     <span class="c1"># A SegregantGenotype has no gene-keyed perturbations, so it gets its own node</span>
     <span class="c1"># method (never a branch inside _genotype_node, which every served dataset</span>
     <span class="c1"># fingerprints). The node id is the sha256 of the whole model_dump, hashed once;</span>
-    <span class="c1"># the blocks travel in serialized_data.</span>
+    <span class="c1"># the blocks travel in the Experiment blob's interned-constant genotype.</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_segregant_genotype_node_from</span><span class="p">(</span><span class="n">genotype</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
@@ -709,7 +1015,6 @@
                 <span class="s2">"parent_1"</span><span class="p">:</span> <span class="n">genotype</span><span class="o">.</span><span class="n">parent_1</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                 <span class="s2">"parent_2"</span><span class="p">:</span> <span class="n">genotype</span><span class="o">.</span><span class="n">parent_2</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                 <span class="s2">"n_blocks"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">genotype</span><span class="o">.</span><span class="n">blocks</span><span class="p">),</span>
-                <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">genotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
             <span class="p">},</span>
         <span class="p">)</span>
 
@@ -743,7 +1048,6 @@
                     <span class="c1"># KanMxDeletion/GeneAddition types the metabolite/morphology</span>
                     <span class="c1"># datasets use, so read it defensively.</span>
                     <span class="s2">"strain_id"</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="s2">"strain_id"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-                    <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">perturbation</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
                 <span class="p">},</span>
             <span class="p">)</span>
             <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
@@ -780,7 +1084,6 @@
                 <span class="s2">"library_pool"</span><span class="p">:</span> <span class="n">construct</span><span class="o">.</span><span class="n">library_pool</span><span class="p">,</span>
                 <span class="s2">"effector_plasmid_uri"</span><span class="p">:</span> <span class="n">construct</span><span class="o">.</span><span class="n">effector_plasmid_uri</span><span class="p">,</span>
                 <span class="s2">"effector_plasmid_sha256"</span><span class="p">:</span> <span class="n">construct</span><span class="o">.</span><span class="n">effector_plasmid_sha256</span><span class="p">,</span>
-                <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">construct</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
             <span class="p">},</span>
         <span class="p">)</span>
 
@@ -902,7 +1205,6 @@
                     <span class="k">if</span> <span class="n">dose</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">dose</span><span class="o">.</span><span class="n">unit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
                     <span class="k">else</span> <span class="kc">None</span>
                 <span class="p">),</span>
-                <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">perturbation</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
             <span class="p">},</span>
         <span class="p">)</span>
 
@@ -1051,7 +1353,6 @@
             <span class="s2">"label_statistic_name"</span><span class="p">:</span> <span class="n">label_statistic_name</span><span class="p">,</span>
             <span class="s2">"fitness"</span><span class="p">:</span> <span class="n">fitness</span><span class="p">,</span>
             <span class="s2">"fitness_std"</span><span class="p">:</span> <span class="n">fitness_std</span><span class="p">,</span>
-            <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
         <span class="p">}</span>
 
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -1082,7 +1383,6 @@
             <span class="s2">"label_statistic_name"</span><span class="p">:</span> <span class="n">label_statistic_name</span><span class="p">,</span>
             <span class="s2">"gene_interaction"</span><span class="p">:</span> <span class="n">gene_interaction</span><span class="p">,</span>
             <span class="s2">"gene_interaction_p_value"</span><span class="p">:</span> <span class="n">gene_interaction_p_value</span><span class="p">,</span>
-            <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
         <span class="p">}</span>
 
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -1109,7 +1409,6 @@
             <span class="s2">"graph_level"</span><span class="p">:</span> <span class="n">graph_level</span><span class="p">,</span>
             <span class="s2">"label_name"</span><span class="p">:</span> <span class="n">label_name</span><span class="p">,</span>
             <span class="s2">"is_essential"</span><span class="p">:</span> <span class="n">is_essential</span><span class="p">,</span>
-            <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
         <span class="p">}</span>
 
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -1142,7 +1441,6 @@
             <span class="s2">"label_statistic_name"</span><span class="p">:</span> <span class="n">label_statistic_name</span><span class="p">,</span>
             <span class="s2">"is_synthetic_lethal"</span><span class="p">:</span> <span class="n">is_synthetic_lethal</span><span class="p">,</span>
             <span class="s2">"synthetic_lethality_statistic_score"</span><span class="p">:</span> <span class="n">synthetic_lethality_statistic_score</span><span class="p">,</span>
-            <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
         <span class="p">}</span>
 
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -1173,7 +1471,6 @@
             <span class="s2">"label_statistic_name"</span><span class="p">:</span> <span class="n">label_statistic_name</span><span class="p">,</span>
             <span class="s2">"is_synthetic_rescue"</span><span class="p">:</span> <span class="n">is_synthetic_rescue</span><span class="p">,</span>
             <span class="s2">"synthetic_rescue_statistic_score"</span><span class="p">:</span> <span class="n">synthetic_rescue_statistic_score</span><span class="p">,</span>
-            <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
         <span class="p">}</span>
 
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -1184,7 +1481,7 @@
         <span class="p">)</span>
 
     <span class="c1"># --- Environment response phenotype (chemogenomic / segregant growth) ---</span>
-    <span class="c1"># The typed record is serialized_data; the scalar response, its SE and the two</span>
+    <span class="c1"># The typed record is in the Experiment blob; the scalar response, its SE and two</span>
     <span class="c1"># typed axes (measurement_type = WHAT the number is, assay_type = HOW it was</span>
     <span class="c1"># measured) are projected so a condition-response query never has to parse JSON.</span>
     <span class="c1"># A categorical or ordinal screen carries no number, so its call is projected too:</span>
@@ -1208,7 +1505,6 @@
             <span class="s2">"category"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">category</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">category</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
             <span class="s2">"category_label"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">category_label</span><span class="p">,</span>
             <span class="s2">"screen_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">screen_id</span><span class="p">,</span>
-            <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
         <span class="p">}</span>
 
     <span class="nd">@data_chunker</span>
@@ -1269,7 +1565,6 @@
                 <span class="s2">"label_statistic_name"</span><span class="p">:</span> <span class="n">label_statistic_name</span><span class="p">,</span>
                 <span class="s2">"fitness"</span><span class="p">:</span> <span class="n">fitness</span><span class="p">,</span>
                 <span class="s2">"fitness_std"</span><span class="p">:</span> <span class="n">fitness_std</span><span class="p">,</span>
-                <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
             <span class="p">}</span>
 
             <span class="n">node</span> <span class="o">=</span> <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -1302,7 +1597,6 @@
                 <span class="s2">"label_statistic_name"</span><span class="p">:</span> <span class="n">label_statistic_name</span><span class="p">,</span>
                 <span class="s2">"gene_interaction"</span><span class="p">:</span> <span class="n">gene_interaction</span><span class="p">,</span>
                 <span class="s2">"gene_interaction_p_value"</span><span class="p">:</span> <span class="n">gene_interaction_p_value</span><span class="p">,</span>
-                <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
             <span class="p">}</span>
 
             <span class="n">node</span> <span class="o">=</span> <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -1331,7 +1625,6 @@
                 <span class="s2">"graph_level"</span><span class="p">:</span> <span class="n">graph_level</span><span class="p">,</span>
                 <span class="s2">"label_name"</span><span class="p">:</span> <span class="n">label_name</span><span class="p">,</span>
                 <span class="s2">"is_essential"</span><span class="p">:</span> <span class="n">is_essential</span><span class="p">,</span>
-                <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
             <span class="p">}</span>
 
             <span class="n">node</span> <span class="o">=</span> <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -1364,7 +1657,6 @@
                 <span class="s2">"label_statistic_name"</span><span class="p">:</span> <span class="n">label_statistic_name</span><span class="p">,</span>
                 <span class="s2">"is_synthetic_lethal"</span><span class="p">:</span> <span class="n">is_synthetic_lethal</span><span class="p">,</span>
                 <span class="s2">"synthetic_lethality_statistic_score"</span><span class="p">:</span> <span class="n">statistic_score</span><span class="p">,</span>
-                <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
             <span class="p">}</span>
 
             <span class="n">node</span> <span class="o">=</span> <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -1399,7 +1691,6 @@
                 <span class="s2">"label_statistic_name"</span><span class="p">:</span> <span class="n">label_statistic_name</span><span class="p">,</span>
                 <span class="s2">"is_synthetic_rescue"</span><span class="p">:</span> <span class="n">is_synthetic_rescue</span><span class="p">,</span>
                 <span class="s2">"synthetic_rescue_statistic_score"</span><span class="p">:</span> <span class="n">synthetic_rescue_statistic_score</span><span class="p">,</span>
-                <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
             <span class="p">}</span>
 
             <span class="n">node</span> <span class="o">=</span> <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -1436,7 +1727,6 @@
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">calmorph_coefficient_of_variation</span>
             <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
         <span class="p">}</span>
 
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -1473,7 +1763,6 @@
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">calmorph_coefficient_of_variation</span>
                 <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-                <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
             <span class="p">}</span>
 
             <span class="n">node</span> <span class="o">=</span> <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -1507,7 +1796,6 @@
                 <span class="k">if</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">expression_log2_ratio_se</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
                 <span class="k">else</span> <span class="kc">None</span>
             <span class="p">),</span>
-            <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
         <span class="p">}</span>
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
             <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
@@ -1535,7 +1823,6 @@
                     <span class="k">if</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">expression_log2_ratio_se</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
                     <span class="k">else</span> <span class="kc">None</span>
                 <span class="p">),</span>
-                <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
             <span class="p">}</span>
             <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -1562,7 +1849,6 @@
             <span class="s2">"expression_tpm"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">expression_tpm</span><span class="p">),</span>
             <span class="s2">"measurement_type"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
             <span class="s2">"n_mapped_reads"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">n_mapped_reads</span><span class="p">,</span>
-            <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
         <span class="p">}</span>
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
             <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
@@ -1585,7 +1871,6 @@
                 <span class="s2">"expression_tpm"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">expression_tpm</span><span class="p">),</span>
                 <span class="s2">"measurement_type"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
                 <span class="s2">"n_mapped_reads"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">n_mapped_reads</span><span class="p">,</span>
-                <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
             <span class="p">}</span>
             <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -1613,7 +1898,6 @@
             <span class="s2">"dispersion"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">dispersion</span><span class="p">,</span>
             <span class="s2">"n_cells"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">n_cells</span><span class="p">,</span>
             <span class="s2">"measurement_type"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
-            <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
         <span class="p">}</span>
 
     <span class="nd">@data_chunker</span>
@@ -1666,7 +1950,6 @@
             <span class="s2">"n_replicates"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">n_replicates</span><span class="p">,</span>
             <span class="s2">"target_product"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">target_product</span><span class="p">,</span>
             <span class="s2">"target_metabolite_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">target_metabolite_id</span><span class="p">,</span>
-            <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
         <span class="p">}</span>
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
             <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
@@ -1690,7 +1973,6 @@
                 <span class="s2">"n_replicates"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">n_replicates</span><span class="p">,</span>
                 <span class="s2">"target_product"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">target_product</span><span class="p">,</span>
                 <span class="s2">"target_metabolite_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">target_metabolite_id</span><span class="p">,</span>
-                <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
             <span class="p">}</span>
             <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -1721,7 +2003,6 @@
                 <span class="k">else</span> <span class="kc">None</span>
             <span class="p">),</span>
             <span class="s2">"measurement_type"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
-            <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
         <span class="p">}</span>
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
             <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
@@ -1748,7 +2029,6 @@
                     <span class="k">else</span> <span class="kc">None</span>
                 <span class="p">),</span>
                 <span class="s2">"measurement_type"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
-                <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
             <span class="p">}</span>
             <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -1779,7 +2059,6 @@
                 <span class="k">else</span> <span class="kc">None</span>
             <span class="p">),</span>
             <span class="s2">"measurement_type"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
-            <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
         <span class="p">}</span>
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
             <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
@@ -1806,7 +2085,6 @@
                     <span class="k">else</span> <span class="kc">None</span>
                 <span class="p">),</span>
                 <span class="s2">"measurement_type"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
-                <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
             <span class="p">}</span>
             <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">BioCypherNode</span><span class="p">(</span>

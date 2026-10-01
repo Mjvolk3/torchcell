@@ -117,6 +117,7 @@
 <span></span><span class="sd">"""LMDB-backed aggregation of experiment/reference pairs into grouped entries."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
@@ -132,6 +133,8 @@
     <span class="n">ModelStrict</span><span class="p">,</span>
     <span class="n">Phenotype</span><span class="p">,</span>
 <span class="p">)</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">ExperimentInfo</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
@@ -248,7 +251,12 @@
 
 <div class="viewcode-block" id="Aggregator.process">
 <a class="viewcode-back" href="../../../generated/torchcell.data.Aggregator.html#torchcell.data.Aggregator.process">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">output_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">key_groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Read pairs from input LMDB, group by aggregate key, and write groups out.</span>
 
 <span class="sd">        Two streaming passes, never the whole dataset in memory. The previous</span>
@@ -261,19 +269,32 @@
 <span class="sd">        STORED record bytes -- they were written by upstream ``model_dump`` calls,</span>
 <span class="sd">        so a reconstruct-and-redump would be an identity round trip. Group order</span>
 <span class="sd">        is first-occurrence (dict insertion order), matching the old output.</span>
+
+<span class="sd">        ``key_groups``, when given, IS pass 1's result and pass 1 is not run: the</span>
+<span class="sd">        grouping key to the input keys, groups in the order a cursor walk first meets</span>
+<span class="sd">        them and keys in cursor order within each group (cursor order is</span>
+<span class="sd">        lexicographic in the key bytes). ``Neo4jCellDataset.process`` builds it from</span>
+<span class="sd">        ``aggregate_key_raw`` while the raw stage writes the input</span>
+<span class="sd">        (``RawStageGrouping``). Both reads open with readahead: pass 1 is a cursor</span>
+<span class="sd">        walk, and pass 2's gets run in cursor order too, which on a cold store read</span>
+<span class="sd">        2,630 MB/s with readahead against 213 MB/s without</span>
+<span class="sd">        (experiments/tcdb-002-build-speed/results/query_build_cost_probe.csv).</span>
 <span class="sd">        """</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">output_path</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_init_lmdb</span><span class="p">(</span><span class="n">readonly</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># Initialize LMDB for writing</span>
 
-        <span class="n">env_input</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">readahead</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">env_input</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">readahead</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="c1"># Pass 1: group input keys by the raw-record aggregation hash.</span>
-        <span class="n">key_groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">with</span> <span class="n">env_input</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn_input</span><span class="p">:</span>
-            <span class="n">cursor</span> <span class="o">=</span> <span class="n">txn_input</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"Aggregation pass 1: grouping"</span><span class="p">):</span>
-                <span class="n">agg_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregate_key_raw</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)))</span>
-                <span class="n">key_groups</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">agg_key</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">key_groups</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Pass 1: group input keys by the raw-record aggregation hash.</span>
+            <span class="n">key_groups</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">with</span> <span class="n">env_input</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn_input</span><span class="p">:</span>
+                <span class="n">cursor</span> <span class="o">=</span> <span class="n">txn_input</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"Aggregation pass 1: grouping"</span><span class="p">):</span>
+                    <span class="n">agg_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregate_key_raw</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)))</span>
+                    <span class="n">key_groups</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">agg_key</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Aggregation pass 1 skipped: grouping computed by the raw stage"</span><span class="p">)</span>
 
         <span class="c1"># Pass 2: write each group as a JSON array of the stored records.</span>
         <span class="n">total_groups</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">key_groups</span><span class="p">)</span>

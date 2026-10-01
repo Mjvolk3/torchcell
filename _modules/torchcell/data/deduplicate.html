@@ -210,7 +210,12 @@
 
 <div class="viewcode-block" id="Deduplicator.process">
 <a class="viewcode-back" href="../../../generated/torchcell.data.Deduplicator.html#torchcell.data.Deduplicator.process">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">output_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">key_groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Read records from ``input_path``, deduplicate, and write to the output LMDB.</span>
 
 <span class="sd">        Two streaming passes, never the whole dataset in memory. The previous</span>
@@ -224,19 +229,28 @@
 <span class="sd">        through untouched -- they were written by the converter's ``model_dump``,</span>
 <span class="sd">        so a reconstruct-and-redump would be an identity round trip -- and only</span>
 <span class="sd">        genuine duplicate groups are reconstructed for ``create_deduplicate_entry``.</span>
+
+<span class="sd">        ``key_groups``, when given, IS pass 1's result and pass 1 is not run (same</span>
+<span class="sd">        contract as ``Aggregator.process``: groups in the order a cursor walk first</span>
+<span class="sd">        meets them, keys in cursor order within each group), computed from</span>
+<span class="sd">        ``duplicate_key`` while the raw stage writes the input.</span>
 <span class="sd">        """</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">output_path</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_init_lmdb</span><span class="p">(</span><span class="n">readonly</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># Initialize LMDB for writing</span>
 
-        <span class="n">env_input</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">readahead</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="c1"># Readahead: both passes read in cursor order (see Aggregator.process).</span>
+        <span class="n">env_input</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">readahead</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="c1"># Pass 1: group input keys by the raw-record duplicate hash.</span>
-        <span class="n">key_groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">with</span> <span class="n">env_input</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn_input</span><span class="p">:</span>
-            <span class="n">cursor</span> <span class="o">=</span> <span class="n">txn_input</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"Deduplication pass 1: grouping"</span><span class="p">):</span>
-                <span class="n">hash_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_key</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)))</span>
-                <span class="n">key_groups</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">hash_key</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">key_groups</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Pass 1: group input keys by the raw-record duplicate hash.</span>
+            <span class="n">key_groups</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">with</span> <span class="n">env_input</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn_input</span><span class="p">:</span>
+                <span class="n">cursor</span> <span class="o">=</span> <span class="n">txn_input</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"Deduplication pass 1: grouping"</span><span class="p">):</span>
+                    <span class="n">hash_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_key</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)))</span>
+                    <span class="n">key_groups</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">hash_key</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Deduplication pass 1 skipped: grouping computed by the raw stage"</span><span class="p">)</span>
 
         <span class="c1"># Pass 2: write one output record per group.</span>
         <span class="n">deduplicated_count</span> <span class="o">=</span> <span class="mi">0</span>

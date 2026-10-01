@@ -334,6 +334,31 @@
     <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">InternedDict</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>  <span class="c1"># type: ignore[type-arg]  # a plain dict that remembers its ref</span>
+<span class="w">    </span><span class="sd">"""An interned constant sub-object, spliced back into records by reference.</span>
+
+<span class="sd">    Behaves exactly as the dict it wraps (every raw reader sees a dict), and carries</span>
+<span class="sd">    the content hash it was interned under so ``transform_item`` can recognize the</span>
+<span class="sd">    same constant across records and reuse one validated pydantic instance for it</span>
+<span class="sd">    instead of re-validating the same 9.5 KB Environment 20 million times.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Wrap ``data`` (shared, never mutated) under content hash ``ref``."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ref</span> <span class="o">=</span> <span class="n">ref</span>
+
+
+<span class="n">_INTERNED_BY_DIR</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="sd">"""Per-process cache of each ``interned`` env: (raw table, validated instances).</span>
+
+<span class="sd">Keyed by the env's directory, filled by ``ExperimentDataset._load_interned``. Datasets</span>
+<span class="sd">drop their references when pickled or copied (``__getstate__``) and re-attach from</span>
+<span class="sd">here, so pool workers forked after the first load share the parent's table</span>
+<span class="sd">copy-on-write instead of each unpickling its own.</span>
+<span class="sd">"""</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">resolve_interned</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">interned</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Recursively splice interned sub-objects back into a record dict.</span>
 
@@ -471,6 +496,12 @@
         <span class="c1"># env. Kept on its OWN attribute (NOT cleared by close_lmdb, which</span>
         <span class="c1"># nulls self.env and re-runs _init_db many times) so it loads exactly once.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_interned</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># Validated pydantic instances of interned constants, keyed by ref. Filled</span>
+        <span class="c1"># lazily by transform_item: the first record carrying a constant validates it</span>
+        <span class="c1"># from the dict as before and harvests the instance; every later record gets</span>
+        <span class="c1"># the instance spliced in, which pydantic accepts without re-validation</span>
+        <span class="c1"># (revalidate_instances is 'never'; the models are frozen so sharing is safe).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validated_interned</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="c1"># Automatically set the name based on the class name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
@@ -603,17 +634,52 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interned</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span>
-        <span class="n">interned</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">interned_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interned_dir</span><span class="p">()</span>
+        <span class="n">shared</span> <span class="o">=</span> <span class="n">_INTERNED_BY_DIR</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">interned_dir</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">shared</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_interned</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validated_interned</span> <span class="o">=</span> <span class="n">shared</span>
+            <span class="k">return</span>
+        <span class="n">interned</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">interned_dir</span><span class="p">):</span>
             <span class="n">ienv</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span>
                 <span class="n">interned_dir</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">lock</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">readahead</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">meminit</span><span class="o">=</span><span class="kc">False</span>
             <span class="p">)</span>
             <span class="k">with</span> <span class="n">ienv</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
                 <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">txn</span><span class="o">.</span><span class="n">cursor</span><span class="p">():</span>
-                    <span class="n">interned</span><span class="p">[</span><span class="n">key</span><span class="o">.</span><span class="n">decode</span><span class="p">()]</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                    <span class="n">ref</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+                    <span class="n">loaded</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                    <span class="n">interned</span><span class="p">[</span><span class="n">ref</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">InternedDict</span><span class="p">(</span><span class="n">loaded</span><span class="p">,</span> <span class="n">ref</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loaded</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+                        <span class="k">else</span> <span class="n">loaded</span>
+                    <span class="p">)</span>
             <span class="n">ienv</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_interned</span> <span class="o">=</span> <span class="n">interned</span>
+        <span class="n">_INTERNED_BY_DIR</span><span class="p">[</span><span class="n">interned_dir</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_interned</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validated_interned</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Pickle and copy WITHOUT the interned table and its validated instances.</span>
+
+<span class="sd">        Both are per-directory constants held in ``_INTERNED_BY_DIR`` and re-attached</span>
+<span class="sd">        by ``_load_interned`` on first use. Carrying them in the object meant every</span>
+<span class="sd">        chunk view (PyG slices are ``copy.copy``) and every pool submission pickled the</span>
+<span class="sd">        whole table: 152 MB per Bloom2019 chunk (13,992 entries, about 1 GB loaded),</span>
+<span class="sd">        unpickled again by every worker and loader child. Full builds 2889 and 2905</span>
+<span class="sd">        were OOM-killed at Bloom's node pass; Bloom alone peaked at 70.5 GB (job 2934).</span>
+<span class="sd">        A forked worker finds the table in the module cache it inherited; a spawned</span>
+<span class="sd">        process loads it from disk once.</span>
+
+<span class="sd">        The cached ``_experiment_reference_index`` is dropped for the same reason: one</span>
+<span class="sd">        member index per record, 20.7M integers for Costanzo, which every chunk view</span>
+<span class="sd">        (a ``copy.copy``) and so every pool task carried, 103.5 MB per task pickled by</span>
+<span class="sd">        the parent's feeder thread and unpickled by the worker. The property recomputes</span>
+<span class="sd">        or reloads it from JSON when a copy ever needs it.</span>
+<span class="sd">        """</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">state</span><span class="p">[</span><span class="s2">"_interned"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">state</span><span class="p">[</span><span class="s2">"_validated_interned"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">state</span><span class="p">[</span><span class="s2">"_experiment_reference_index"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">state</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_open_write_lmdb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Open the records WRITE env and a SEPARATE `interned` WRITE env (sibling).</span>
@@ -908,20 +974,73 @@
             <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">value</span><span class="p">)),</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_gene_set</span> <span class="o">=</span> <span class="n">value</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_splice_validated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Replace cached interned constants by their validated instances.</span>
+
+<span class="sd">        Copy-on-write: a container is copied only when one of its values changed, so</span>
+<span class="sd">        the shared interned dicts are never mutated. The flag reports whether any</span>
+<span class="sd">        interned constant was met that has NO cached instance yet.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">InternedDict</span><span class="p">):</span>
+            <span class="n">cached</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validated_interned</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">ref</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span> <span class="k">if</span> <span class="n">cached</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">cached</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">pending</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">new_value</span><span class="p">,</span> <span class="n">value_pending</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_splice_validated</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="n">pending</span> <span class="o">=</span> <span class="n">pending</span> <span class="ow">or</span> <span class="n">value_pending</span>
+                <span class="k">if</span> <span class="n">new_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">out</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">out</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+                    <span class="n">out</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_value</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">obj</span> <span class="k">if</span> <span class="n">out</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">out</span><span class="p">),</span> <span class="n">pending</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">new_list</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_splice_validated</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">]</span>
+            <span class="n">pending</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">p</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">new_list</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">nv</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">v</span> <span class="k">for</span> <span class="p">(</span><span class="n">nv</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">new_list</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)):</span>
+                <span class="k">return</span> <span class="p">[</span><span class="n">nv</span> <span class="k">for</span> <span class="n">nv</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">new_list</span><span class="p">],</span> <span class="n">pending</span>
+            <span class="k">return</span> <span class="n">obj</span><span class="p">,</span> <span class="n">pending</span>
+        <span class="k">return</span> <span class="n">obj</span><span class="p">,</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_harvest_validated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">raw</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Cache the validated instance behind every InternedDict still in ``raw``."""</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">InternedDict</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">raw</span><span class="o">.</span><span class="n">ref</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validated_interned</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_validated_interned</span><span class="p">[</span><span class="n">raw</span><span class="o">.</span><span class="n">ref</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">raw</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="n">child</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">model</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_harvest_validated</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">child</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">raw</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_harvest_validated</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_class</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Validate ``data`` into ``model_class``, reusing cached constant instances."""</span>
+        <span class="n">spliced</span><span class="p">,</span> <span class="n">pending</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_splice_validated</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spliced</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">):</span>
+            <span class="c1"># The whole object is an interned constant already validated once</span>
+            <span class="c1"># (the reference is, for every dataset with one reference).</span>
+            <span class="k">return</span> <span class="n">spliced</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">model_class</span><span class="p">(</span><span class="o">**</span><span class="n">spliced</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pending</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_harvest_validated</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">spliced</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">model</span>
+
 <div class="viewcode-block" id="ExperimentDataset.transform_item">
 <a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentDataset.html#torchcell.data.ExperimentDataset.transform_item">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">transform_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Rebuild typed experiment/reference/publication objects from a raw item."""</span>
-        <span class="n">experiment_data</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span>
-        <span class="n">reference_data</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">]</span>
-        <span class="n">publication_data</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s2">"publication"</span><span class="p">]</span>
-        <span class="n">experiment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment_class</span><span class="p">(</span><span class="o">**</span><span class="n">experiment_data</span><span class="p">)</span>
-        <span class="n">reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference_class</span><span class="p">(</span><span class="o">**</span><span class="n">reference_data</span><span class="p">)</span>
-        <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span><span class="o">**</span><span class="n">publication_data</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="p">,</span>
-            <span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="p">,</span>
-            <span class="s2">"publication"</span><span class="p">:</span> <span class="n">publication</span><span class="p">,</span>
+            <span class="s2">"experiment"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiment_class</span><span class="p">,</span> <span class="n">item</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]),</span>
+            <span class="s2">"reference"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reference_class</span><span class="p">,</span> <span class="n">item</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">]),</span>
+            <span class="s2">"publication"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build</span><span class="p">(</span><span class="n">Publication</span><span class="p">,</span> <span class="n">item</span><span class="p">[</span><span class="s2">"publication"</span><span class="p">]),</span>
         <span class="p">}</span></div>
 
 

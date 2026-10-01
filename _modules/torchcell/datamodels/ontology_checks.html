@@ -228,7 +228,7 @@
 <span class="c1"># Properties every phenotype node class carries regardless of family, so they carry</span>
 <span class="c1"># no information about WHICH phenotype the class models.</span>
 <span class="n">PHENOTYPE_ENVELOPE_PROPERTIES</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
-    <span class="p">{</span><span class="s2">"graph_level"</span><span class="p">,</span> <span class="s2">"label_name"</span><span class="p">,</span> <span class="s2">"label_statistic_name"</span><span class="p">,</span> <span class="s2">"serialized_data"</span><span class="p">}</span>
+    <span class="p">{</span><span class="s2">"graph_level"</span><span class="p">,</span> <span class="s2">"label_name"</span><span class="p">,</span> <span class="s2">"label_statistic_name"</span><span class="p">}</span>
 <span class="p">)</span>
 
 <span class="c1"># Attribute chains the adapter walks, and the model each is rooted in. These are the</span>
@@ -637,10 +637,24 @@
 
 
 
+<span class="n">CONTENT_ADDRESSED_NODE_CLASSES</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"interned constant"</span><span class="p">})</span>
+<span class="sd">"""Node classes reached by id lookup, not traversal, by design.</span>
+
+<span class="sd">An ``interned constant`` holds a sub-object of an Experiment record once; the</span>
+<span class="sd">Experiment blob points at it by its content id and the query loader fetches it by that</span>
+<span class="sd">id (torchcell/datamodels/interned_constant.py). An edge per Experiment would add one</span>
+<span class="sd">row per record (52.7M) for a link the blob already carries, so none is declared.</span>
+<span class="sd">"""</span>
+
+
 <div class="viewcode-block" id="isolated_graph_node_classes">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.ontology_checks.isolated_graph_node_classes.html#torchcell.datamodels.ontology_checks.isolated_graph_node_classes">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">isolated_graph_node_classes</span><span class="p">(</span><span class="n">schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">GraphSchemaEntry</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Node classes no edge class connects (invisible to any traversal query)."""</span>
+<span class="w">    </span><span class="sd">"""Node classes no edge class connects (invisible to any traversal query).</span>
+
+<span class="sd">    Content-addressed storage classes (``CONTENT_ADDRESSED_NODE_CLASSES``) are</span>
+<span class="sd">    excluded: they are reached by id, which is their documented access path.</span>
+<span class="sd">    """</span>
     <span class="n">connected</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"edge"</span><span class="p">:</span>
@@ -648,7 +662,9 @@
     <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span>
         <span class="n">name</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"node"</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">connected</span>
+        <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"node"</span>
+        <span class="ow">and</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">connected</span>
+        <span class="ow">and</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">CONTENT_ADDRESSED_NODE_CLASSES</span>
     <span class="p">)</span></div>
 
 

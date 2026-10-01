@@ -125,7 +125,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">auto</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
 
@@ -135,6 +135,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">field_validator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sortedcontainers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SortedDict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">HeteroData</span>
@@ -145,7 +146,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.deduplicate</span><span class="w"> </span><span class="kn">import</span> <span class="n">Deduplicator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.embedding</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseEmbeddingDataset</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.graph_processor</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphProcessor</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.neo4j_query_raw</span><span class="w"> </span><span class="kn">import</span> <span class="n">Neo4jQueryRaw</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.neo4j_query_raw</span><span class="w"> </span><span class="kn">import</span> <span class="n">Neo4jQueryRaw</span><span class="p">,</span> <span class="n">RecordObserver</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.database.connection</span><span class="w"> </span><span class="kn">import</span> <span class="n">neo4j_connection_settings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">EXPERIMENT_REFERENCE_TYPE_MAP</span><span class="p">,</span>
@@ -279,6 +280,107 @@
         <span class="k">return</span> <span class="n">ParsedGenome</span><span class="p">(</span><span class="o">**</span><span class="n">data</span><span class="p">)</span>
 
 
+<span class="n">LABEL_NAME_CANDIDATES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+    <span class="nb">sorted</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="n">experiment_class</span><span class="o">.</span><span class="vm">__annotations__</span><span class="p">[</span><span class="s2">"phenotype"</span><span class="p">]</span>
+            <span class="o">.</span><span class="n">model_fields</span><span class="p">[</span><span class="s2">"label_name"</span><span class="p">]</span>
+            <span class="o">.</span><span class="n">default</span>
+            <span class="k">for</span> <span class="n">experiment_class</span> <span class="ow">in</span> <span class="n">EXPERIMENT_TYPE_MAP</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+<span class="sd">"""Every label name ``label_df`` can have a column for: ``phenotype_info`` is the</span>
+<span class="sd">phenotype classes of the build's experiment types, read through the same</span>
+<span class="sd">``__annotations__["phenotype"]`` expression, so its label names are a subset of these."""</span>
+
+
+<span class="nd">@define</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RawStageGrouping</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raw-stage record observer: the first grouping stage's pass 1, done while writing.</span>
+
+<span class="sd">    ``Neo4jQueryRaw.process`` calls it with ``(index, record)`` for every record it</span>
+<span class="sd">    writes, ``record`` equal to ``json.loads`` of the stored value, which is exactly</span>
+<span class="sd">    what the grouping stage's pass 1 reads off the raw LMDB. It keeps the grouping</span>
+<span class="sd">    (``key_fn`` is ``Aggregator.aggregate_key_raw`` or ``Deduplicator.duplicate_key``)</span>
+<span class="sd">    and, when ``summarize`` is set, the fields the processed-store passes read per</span>
+<span class="sd">    record: experiment type, phenotype label name, dataset name, perturbation count,</span>
+<span class="sd">    and the phenotype's scalar values under each name in ``LABEL_NAME_CANDIDATES``.</span>
+<span class="sd">    """</span>
+
+    <span class="n">key_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="nb">str</span><span class="p">]</span>
+    <span class="n">summarize</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">summaries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">...</span><span class="p">]]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">factory</span><span class="o">=</span><span class="nb">list</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">...</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""One record's grouping key and (with ``summarize``) summary.</span>
+
+<span class="sd">        Pure in the record, so the partitioned raw stage runs it in its fetch workers</span>
+<span class="sd">        (``SplitRecordObserver``).</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">summarize</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_fn</span><span class="p">(</span><span class="n">record</span><span class="p">),</span> <span class="kc">None</span>
+        <span class="n">experiment</span> <span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">experiment</span><span class="p">[</span><span class="s2">"phenotype"</span><span class="p">]</span>
+        <span class="c1"># label_df's per-value rule, minus the NaN test (applied per column at</span>
+        <span class="c1"># write time, as label_df applies it only to the build's label names).</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">phenotype</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">LABEL_NAME_CANDIDATES</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">phenotype</span>
+            <span class="ow">and</span> <span class="n">phenotype</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">phenotype</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_fn</span><span class="p">(</span><span class="n">record</span><span class="p">),</span> <span class="p">(</span>
+            <span class="n">experiment</span><span class="p">[</span><span class="s2">"experiment_type"</span><span class="p">],</span>
+            <span class="n">phenotype</span><span class="p">[</span><span class="s2">"label_name"</span><span class="p">],</span>
+            <span class="n">experiment</span><span class="p">[</span><span class="s2">"dataset_name"</span><span class="p">],</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">experiment</span><span class="p">[</span><span class="s2">"genotype"</span><span class="p">][</span><span class="s2">"perturbations"</span><span class="p">]),</span>
+            <span class="n">values</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">accept</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">prepared</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span>
+            <span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">...</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span>
+        <span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Fold one record's key (and summary) in; records arrive in index order."""</span>
+        <span class="n">key</span><span class="p">,</span> <span class="n">summary</span> <span class="o">=</span> <span class="n">prepared</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">summary</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">index</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">summaries</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"records must be observed in order; got </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2"> after "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">summaries</span><span class="p">)</span><span class="si">}</span><span class="s2"> records"</span>
+                <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">summaries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">summary</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Record one written record's grouping key (and summary)."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">accept</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">record</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">key_groups</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""The grouping as pass 1 builds it from a cursor walk of the raw LMDB.</span>
+
+<span class="sd">        Raw keys are ``data_&lt;i&gt;`` and a cursor walks them lexicographically, so each</span>
+<span class="sd">        group's keys are ordered by ``str(i)`` and groups by their first key.</span>
+<span class="sd">        """</span>
+        <span class="n">ordered</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="p">((</span><span class="nb">sorted</span><span class="p">(</span><span class="n">members</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="nb">str</span><span class="p">),</span> <span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">members</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+            <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">key</span><span class="p">:</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"data_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">members</span><span class="p">]</span> <span class="k">for</span> <span class="n">members</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">ordered</span>
+        <span class="p">}</span>
+
+
 <span class="k">class</span><span class="w"> </span><span class="nc">ProcessingStep</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Enumeration of dataset processing pipeline stages."""</span>
 
@@ -339,6 +441,8 @@
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_filter</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">phenotype_labels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">fetch_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">partition_prefix_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Configure data sources, processing pipeline, and load or build the dataset.</span>
 
@@ -358,12 +462,20 @@
 
 <span class="sd">        ``None`` keeps the unordered full set, which is the pre-existing behavior and is</span>
 <span class="sd">        unambiguous whenever the build has one phenotype.</span>
+
+<span class="sd">        ``fetch_workers`` &gt; 0 runs the raw stage partitioned over that many processes</span>
+<span class="sd">        (``Neo4jQueryRaw.fetch_workers``); the query must then carry</span>
+<span class="sd">        ``PARTITION_MARKER`` once per ``UNION ALL`` block, split into</span>
+<span class="sd">        ``16 ** partition_prefix_length`` partitions each</span>
+<span class="sd">        (``Neo4jQueryRaw.partition_prefix_length``; 2 for a multi-million-record block).</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="n">root</span>
         <span class="c1"># get item processor</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">process_graph</span> <span class="o">=</span> <span class="n">graph_processor</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">phenotype_labels</span> <span class="o">=</span> <span class="n">phenotype_labels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fetch_workers</span> <span class="o">=</span> <span class="n">fetch_workers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">partition_prefix_length</span> <span class="o">=</span> <span class="n">partition_prefix_length</span>
 
         <span class="c1"># self loops, transform base graph</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">add_remaining_gene_self_loops</span> <span class="o">=</span> <span class="n">add_remaining_gene_self_loops</span>
@@ -482,8 +594,16 @@
         <span class="n">root_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">gene_set</span><span class="p">:</span> <span class="n">GeneSet</span><span class="p">,</span>
+        <span class="n">record_observers</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">RecordObserver</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
+        <span class="n">fetch_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">partition_prefix_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Neo4jQueryRaw</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Query Neo4j and load the raw experiment records for the gene set."""</span>
+<span class="w">        </span><span class="sd">"""Query Neo4j and load the raw experiment records for the gene set.</span>
+
+<span class="sd">        ``record_observers`` see every record the raw stage writes (see</span>
+<span class="sd">        ``RecordObserver``); they see nothing when the raw LMDB already exists.</span>
+<span class="sd">        ``fetch_workers`` and ``partition_prefix_length`` are ``Neo4jQueryRaw``'s.</span>
+<span class="sd">        """</span>
         <span class="n">cypher_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"gene_set"</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">gene_set</span><span class="p">)</span>
         <span class="p">}</span>
@@ -500,6 +620,9 @@
             <span class="n">io_workers</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>  <span class="c1"># IDEA simple for new, might need to parameterize</span>
             <span class="n">num_workers</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
             <span class="n">cypher_kwargs</span><span class="o">=</span><span class="n">cypher_kwargs</span><span class="p">,</span>
+            <span class="n">record_observers</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">record_observers</span><span class="p">),</span>
+            <span class="n">fetch_workers</span><span class="o">=</span><span class="n">fetch_workers</span><span class="p">,</span>
+            <span class="n">partition_prefix_length</span><span class="o">=</span><span class="n">partition_prefix_length</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">raw_db</span>  <span class="c1"># break point here</span></div>
 
@@ -550,7 +673,7 @@
 <a class="viewcode-back" href="../../../generated/torchcell.data.Neo4jCellDataset.html#torchcell.data.Neo4jCellDataset.compute_phenotype_info">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_phenotype_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Compute and cache the phenotype type information from the raw data."""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_init_lmdb_read</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_lmdb_read</span><span class="p">(</span><span class="n">readahead</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">experiment_types</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
 
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
@@ -575,21 +698,10 @@
 <span class="w">        </span><span class="sd">"""Run the conversion, deduplication, and processing pipeline into LMDB."""</span>
         <span class="c1"># IDEA consider dependency injection for processing steps</span>
         <span class="c1"># We don't inject becaue of unique query process.</span>
-        <span class="n">raw_db</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_raw</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">uri</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span>
-            <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">),</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">gene_set</span><span class="p">,</span>
-        <span class="p">)</span>
 
         <span class="c1"># Before this point each holds a class; here it is replaced by an instance.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">converter</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">cast</span><span class="p">(</span><span class="s2">"type[Converter]"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">converter</span><span class="p">)(</span><span class="n">root</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">raw_db</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">converter</span>
-            <span class="k">else</span> <span class="kc">None</span>
-        <span class="p">)</span>
+        <span class="c1"># The deduplicator and aggregator are built BEFORE the raw stage so the first</span>
+        <span class="c1"># of them that reads the raw records can group them as they are written.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">deduplicator</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">cast</span><span class="p">(</span><span class="s2">"type[Deduplicator]"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">deduplicator</span><span class="p">)(</span><span class="n">root</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">deduplicator</span>
@@ -600,6 +712,50 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregator</span>
             <span class="k">else</span> <span class="kc">None</span>
         <span class="p">)</span>
+        <span class="c1"># A converter rewrites the records, so nothing downstream of it can be</span>
+        <span class="c1"># grouped off the raw ones. Otherwise the first grouping stage's pass 1 runs</span>
+        <span class="c1"># during the raw stage; when that stage is the aggregation, the processed</span>
+        <span class="c1"># store's per-record passes are folded in too (_write_folded_indices).</span>
+        <span class="n">grouping</span><span class="p">:</span> <span class="n">RawStageGrouping</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">grouped_step</span><span class="p">:</span> <span class="n">ProcessingStep</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">converter</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">deduplicator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">grouping</span> <span class="o">=</span> <span class="n">RawStageGrouping</span><span class="p">(</span>
+                <span class="n">key_fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">deduplicator</span><span class="o">.</span><span class="n">duplicate_key</span><span class="p">,</span> <span class="n">summarize</span><span class="o">=</span><span class="kc">False</span>
+            <span class="p">)</span>
+            <span class="n">grouped_step</span> <span class="o">=</span> <span class="n">ProcessingStep</span><span class="o">.</span><span class="n">DEDUPLICATION</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">converter</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">grouping</span> <span class="o">=</span> <span class="n">RawStageGrouping</span><span class="p">(</span>
+                <span class="n">key_fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">aggregator</span><span class="o">.</span><span class="n">aggregate_key_raw</span><span class="p">,</span> <span class="n">summarize</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+            <span class="n">grouped_step</span> <span class="o">=</span> <span class="n">ProcessingStep</span><span class="o">.</span><span class="n">AGGREGATION</span>
+
+        <span class="n">raw_db</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_raw</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">uri</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span>
+            <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gene_set</span><span class="p">,</span>
+            <span class="n">record_observers</span><span class="o">=</span><span class="p">[</span><span class="n">grouping</span><span class="p">]</span> <span class="k">if</span> <span class="n">grouping</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[],</span>
+            <span class="n">fetch_workers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fetch_workers</span><span class="p">,</span>
+            <span class="n">partition_prefix_length</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_prefix_length</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">converter</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">cast</span><span class="p">(</span><span class="s2">"type[Converter]"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">converter</span><span class="p">)(</span><span class="n">root</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">raw_db</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">converter</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="c1"># The grouping is complete only if the raw stage wrote the LMDB in this run;</span>
+        <span class="c1"># a raw LMDB left by an earlier run was never observed, and its grouping</span>
+        <span class="c1"># stage then runs its own pass 1.</span>
+        <span class="n">key_groups</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">grouping</span><span class="o">.</span><span class="n">key_groups</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">grouping</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">raw_db</span><span class="o">.</span><span class="n">raw_stage_ran</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">grouping</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">key_groups</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Raw LMDB predates this run: grouping stage runs its own pass 1"</span><span class="p">)</span>
+        <span class="n">folded</span> <span class="o">=</span> <span class="kc">False</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">processing_steps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_determine_processing_steps</span><span class="p">()</span>
 
@@ -620,12 +776,18 @@
                 <span class="n">current_step</span> <span class="o">=</span> <span class="n">next_step</span>
                 <span class="k">continue</span>
 
+            <span class="n">step_groups</span> <span class="o">=</span> <span class="n">key_groups</span> <span class="k">if</span> <span class="n">next_step</span> <span class="o">==</span> <span class="n">grouped_step</span> <span class="k">else</span> <span class="kc">None</span>
             <span class="k">if</span> <span class="n">next_step</span> <span class="o">==</span> <span class="n">ProcessingStep</span><span class="o">.</span><span class="n">CONVERSION</span><span class="p">:</span>
                 <span class="n">cast</span><span class="p">(</span><span class="n">Converter</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">converter</span><span class="p">)</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">output_path</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">next_step</span> <span class="o">==</span> <span class="n">ProcessingStep</span><span class="o">.</span><span class="n">DEDUPLICATION</span><span class="p">:</span>
-                <span class="n">cast</span><span class="p">(</span><span class="n">Deduplicator</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">deduplicator</span><span class="p">)</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">output_path</span><span class="p">)</span>
+                <span class="n">cast</span><span class="p">(</span><span class="n">Deduplicator</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">deduplicator</span><span class="p">)</span><span class="o">.</span><span class="n">process</span><span class="p">(</span>
+                    <span class="n">input_path</span><span class="p">,</span> <span class="n">output_path</span><span class="p">,</span> <span class="n">step_groups</span>
+                <span class="p">)</span>
             <span class="k">elif</span> <span class="n">next_step</span> <span class="o">==</span> <span class="n">ProcessingStep</span><span class="o">.</span><span class="n">AGGREGATION</span><span class="p">:</span>
-                <span class="n">cast</span><span class="p">(</span><span class="n">Aggregator</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregator</span><span class="p">)</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">output_path</span><span class="p">)</span>
+                <span class="n">cast</span><span class="p">(</span><span class="n">Aggregator</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregator</span><span class="p">)</span><span class="o">.</span><span class="n">process</span><span class="p">(</span>
+                    <span class="n">input_path</span><span class="p">,</span> <span class="n">output_path</span><span class="p">,</span> <span class="n">step_groups</span>
+                <span class="p">)</span>
+                <span class="n">folded</span> <span class="o">=</span> <span class="n">step_groups</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="k">elif</span> <span class="n">next_step</span> <span class="o">==</span> <span class="n">ProcessingStep</span><span class="o">.</span><span class="n">PROCESSED</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_copy_lmdb</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">output_path</span><span class="p">)</span>
 
@@ -637,18 +799,95 @@
 
             <span class="n">current_step</span> <span class="o">=</span> <span class="n">next_step</span>
 
-        <span class="c1"># Compute phenotype info - used in get item</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">compute_phenotype_info</span><span class="p">()</span>
-        <span class="c1"># Compute and cache label DataFrame explicitly</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_label_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_df</span>
+        <span class="k">if</span> <span class="n">folded</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">grouping</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">key_groups</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_write_folded_indices</span><span class="p">(</span><span class="n">grouping</span><span class="p">,</span> <span class="n">key_groups</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Compute phenotype info - used in get item</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">compute_phenotype_info</span><span class="p">()</span>
+            <span class="c1"># Compute and cache label DataFrame explicitly</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_label_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_df</span>
         <span class="c1"># clean up raw db</span>
         <span class="n">raw_db</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_write_folded_indices</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">grouping</span><span class="p">:</span> <span class="n">RawStageGrouping</span><span class="p">,</span> <span class="n">key_groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Write what the processed-store passes would, from the raw-stage summaries.</span>
+
+<span class="sd">        Writes ``experiment_types.json`` (``compute_phenotype_info``),</span>
+<span class="sd">        ``label_df.parquet`` (``label_df``), and the phenotype-label, dataset-name and</span>
+<span class="sd">        perturbation-count index files, so none of those passes reads the store; the</span>
+<span class="sd">        properties load the files. Valid only when the processed store is the</span>
+<span class="sd">        aggregation of the raw records (no converter, no deduplicator): processed</span>
+<span class="sd">        entry ``g`` is ``key_groups``' ``g``-th group with its records in that order.</span>
+<span class="sd">        Every pass walked the processed store with a cursor, i.e. entries in the</span>
+<span class="sd">        lexicographic order of ``str(g)``, and that order is reproduced here: it</span>
+<span class="sd">        fixes the first-seen key order of each index, the insertion order of the</span>
+<span class="sd">        experiment-type set, the label table's row order, and which value</span>
+<span class="sd">        label_df's last-non-NaN-wins rule keeps. ``label_df`` read each value off a</span>
+<span class="sd">        re-validated experiment; the summaries read it off the stored dict, which</span>
+<span class="sd">        tests/torchcell/data/test_neo4j_cell_single_pass.py proves equal.</span>
+<span class="sd">        """</span>
+        <span class="n">members</span> <span class="o">=</span> <span class="p">[[</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="mi">5</span><span class="p">:])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">]</span> <span class="k">for</span> <span class="n">keys</span> <span class="ow">in</span> <span class="n">key_groups</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+        <span class="n">cursor_order</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">members</span><span class="p">)),</span> <span class="n">key</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+        <span class="n">summaries</span> <span class="o">=</span> <span class="n">grouping</span><span class="o">.</span><span class="n">summaries</span>
+        <span class="n">experiment_types</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">phenotype_label_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">dataset_name_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">perturbation_count_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">cursor_order</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">members</span><span class="p">[</span><span class="n">g</span><span class="p">]:</span>
+                <span class="n">experiment_type</span><span class="p">,</span> <span class="n">label_name</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">,</span> <span class="n">n_perts</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">summaries</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">experiment_types</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">experiment_type</span><span class="p">)</span>
+                <span class="n">phenotype_label_index</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">label_name</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+                <span class="n">dataset_name_index</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+                <span class="n">perturbation_count_index</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">n_perts</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write_json_with_lock</span><span class="p">(</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"experiment_types.json"</span><span class="p">),</span>
+            <span class="nb">list</span><span class="p">(</span><span class="n">experiment_types</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="n">label_names</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">phenotype</span><span class="o">.</span><span class="n">model_fields</span><span class="p">[</span><span class="s2">"label_name"</span><span class="p">]</span><span class="o">.</span><span class="n">default</span>
+            <span class="k">for</span> <span class="n">phenotype</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">phenotype_info</span>
+        <span class="p">]</span>
+        <span class="n">data_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"index"</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="o">**</span><span class="p">{</span><span class="n">label_name</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">label_name</span> <span class="ow">in</span> <span class="n">label_names</span><span class="p">},</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">cursor_order</span><span class="p">:</span>
+            <span class="n">row</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"index"</span><span class="p">:</span> <span class="n">g</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">label_name</span> <span class="ow">in</span> <span class="n">label_names</span><span class="p">:</span>
+                <span class="n">row</span><span class="p">[</span><span class="n">label_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">members</span><span class="p">[</span><span class="n">g</span><span class="p">]:</span>
+                <span class="k">for</span> <span class="n">label_name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">summaries</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">4</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">label_name</span> <span class="ow">in</span> <span class="n">row</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+                        <span class="n">row</span><span class="p">[</span><span class="n">label_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">for</span> <span class="n">column</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">row</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">data_dict</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_label_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data_dict</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_label_df</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"label_df.parquet"</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write_json_with_lock</span><span class="p">(</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"phenotype_label_index.json"</span><span class="p">),</span>
+            <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">phenotype_label_index</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write_json_with_lock</span><span class="p">(</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"dataset_name_index.json"</span><span class="p">),</span>
+            <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dataset_name_index</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write_json_with_lock</span><span class="p">(</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"perturbation_count_index.json"</span><span class="p">),</span>
+            <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">perturbation_count_index</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+        <span class="p">)</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_copy_lmdb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dst_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Copy an LMDB database from the source path to the destination path."""</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">dst_path</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">env_src</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">src_path</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># A cursor walk: readahead (see Neo4jQueryRaw._init_lmdb).</span>
+        <span class="n">env_src</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">src_path</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">readahead</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">env_dst</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">dst_path</span><span class="p">,</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e12</span><span class="p">))</span>
 
         <span class="k">with</span> <span class="n">env_src</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn_src</span><span class="p">,</span> <span class="n">env_dst</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn_dst</span><span class="p">:</span>
@@ -758,14 +997,17 @@
         <span class="k">return</span> <span class="n">processed_graph</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_init_lmdb_read</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Open the LMDB environment for read access."""</span>
-<span class="w">        </span><span class="sd">"""Initialize the LMDB environment."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_init_lmdb_read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">readahead</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Open the LMDB environment for read access.</span>
+
+<span class="sd">        ``readahead=True`` for the whole-store cursor walks (index and label passes),</span>
+<span class="sd">        off for ``get``'s random access (see ``Neo4jQueryRaw._init_lmdb``).</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span>
             <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span>
             <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">lock</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">readahead</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">readahead</span><span class="o">=</span><span class="n">readahead</span><span class="p">,</span>
             <span class="n">meminit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">max_readers</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
             <span class="n">max_spare_txns</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
@@ -823,7 +1065,7 @@
         <span class="p">}</span>
 
         <span class="c1"># Open LMDB for reading</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_init_lmdb_read</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_lmdb_read</span><span class="p">(</span><span class="n">readahead</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="c1"># Iterate through all entries in the database</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
@@ -882,7 +1124,7 @@
         <span class="c1"># value type is dynamic: set[int] during build, converted to list[int] below</span>
         <span class="n">phenotype_label_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_init_lmdb_read</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_lmdb_read</span><span class="p">(</span><span class="n">readahead</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
             <span class="n">cursor</span> <span class="o">=</span> <span class="n">txn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
@@ -941,7 +1183,7 @@
         <span class="c1"># value type is dynamic: set[int] during build, converted to list[int] below</span>
         <span class="n">dataset_name_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_init_lmdb_read</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_lmdb_read</span><span class="p">(</span><span class="n">readahead</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
             <span class="n">cursor</span> <span class="o">=</span> <span class="n">txn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
@@ -998,7 +1240,7 @@
         <span class="c1"># value type is dynamic: set[int] during build, converted to list[int] below</span>
         <span class="n">perturbation_count_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_init_lmdb_read</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_lmdb_read</span><span class="p">(</span><span class="n">readahead</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
             <span class="n">cursor</span> <span class="o">=</span> <span class="n">txn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
@@ -1066,7 +1308,7 @@
         <span class="nb">print</span><span class="p">(</span><span class="s2">"Computing is any perturbed gene index..."</span><span class="p">)</span>
         <span class="n">is_any_perturbed_gene_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_init_lmdb_read</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_lmdb_read</span><span class="p">(</span><span class="n">readahead</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="c1"># Stream the cursor: materializing the entries first held the entire</span>
@@ -1146,7 +1388,7 @@
         <span class="nb">print</span><span class="p">(</span><span class="s2">"Computing is any deletion gene index..."</span><span class="p">)</span>
         <span class="n">index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_init_lmdb_read</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_lmdb_read</span><span class="p">(</span><span class="n">readahead</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="c1"># Stream the cursor: materializing the entries first held the entire</span>
             <span class="c1"># store's values in RAM (517 GB on the 025 build, over any cap).</span>

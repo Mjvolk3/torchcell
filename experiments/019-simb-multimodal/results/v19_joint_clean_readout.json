@@ -1,0 +1,275 @@
+{
+ "generated_by": "experiments/019-simb-multimodal/scripts/v13_split_readout.py",
+ "project": "zhao-group/torchcell_019_prot_v19",
+ "statistic": "max of a centered 5-epoch rolling mean of val/proteome/pearson_per_feature",
+ "registered_statistic": "mean of val/proteome/pearson_per_feature over epochs 999 to 1199 (the round template's fixed-window score; the roll_max beside it is an upward-biased order statistic)",
+ "window": [
+  999,
+  1199
+ ],
+ "matched_epoch": 1199,
+ "min_epoch": 1000,
+ "n_runs": 2,
+ "runs": [
+  {
+   "id": "qotaa6tf",
+   "segments": [
+    "qotaa6tf"
+   ],
+   "arm": "K_joint_s6",
+   "readout": "joint",
+   "split": "s6",
+   "seed": 0,
+   "state": "finished",
+   "epoch": 1199,
+   "last": 0.03201497718691826,
+   "roll_max": 0.04547889679670334,
+   "roll_max_epoch": 244,
+   "nmse_at_peak": 1.027601957321167,
+   "nmse_min": 1.007397174835205,
+   "nmse_min_epoch": 0,
+   "nmse_last": 1.1517107486724854,
+   "test_at_best_val": 0.034152500331401825,
+   "roll_max_matched": 0.04547889679670334,
+   "window_mean": 0.02317468772887887,
+   "window_n_epochs": 201
+  },
+  {
+   "id": "0vweto6p",
+   "segments": [
+    "0vweto6p"
+   ],
+   "arm": "K_prot_s6",
+   "readout": "prot",
+   "split": "s6",
+   "seed": 0,
+   "state": "finished",
+   "epoch": 1199,
+   "last": 0.07184974104166031,
+   "roll_max": 0.07957749962806701,
+   "roll_max_epoch": 927,
+   "nmse_at_peak": 1.1882050037384033,
+   "nmse_min": 1.0083547830581665,
+   "nmse_min_epoch": 3,
+   "nmse_last": 1.2153687477111816,
+   "test_at_best_val": 0.05562018603086472,
+   "roll_max_matched": 0.07957749962806701,
+   "window_mean": 0.07363607836377561,
+   "window_n_epochs": 201
+  }
+ ],
+ "partition": {
+  "per_split": {
+   "s0": {
+    "mean": NaN,
+    "sd_within": NaN,
+    "n": 0,
+    "nmse_at_peak_mean": NaN,
+    "nmse_min_mean": NaN,
+    "nmse_last_mean": NaN
+   },
+   "s1": {
+    "mean": NaN,
+    "sd_within": NaN,
+    "n": 0,
+    "nmse_at_peak_mean": NaN,
+    "nmse_min_mean": NaN,
+    "nmse_last_mean": NaN
+   },
+   "s2": {
+    "mean": NaN,
+    "sd_within": NaN,
+    "n": 0,
+    "nmse_at_peak_mean": NaN,
+    "nmse_min_mean": NaN,
+    "nmse_last_mean": NaN
+   },
+   "s3": {
+    "mean": NaN,
+    "sd_within": NaN,
+    "n": 0,
+    "nmse_at_peak_mean": NaN,
+    "nmse_min_mean": NaN,
+    "nmse_last_mean": NaN
+   },
+   "s4": {
+    "mean": NaN,
+    "sd_within": NaN,
+    "n": 0,
+    "nmse_at_peak_mean": NaN,
+    "nmse_min_mean": NaN,
+    "nmse_last_mean": NaN
+   },
+   "s5": {
+    "mean": NaN,
+    "sd_within": NaN,
+    "n": 0,
+    "nmse_at_peak_mean": NaN,
+    "nmse_min_mean": NaN,
+    "nmse_last_mean": NaN
+   },
+   "s6": {
+    "mean": 0.07957749962806701,
+    "sd_within": NaN,
+    "n": 1,
+    "nmse_at_peak_mean": 1.1882050037384033,
+    "nmse_min_mean": 1.0083547830581665,
+    "nmse_last_mean": 1.2153687477111816
+   },
+   "s7": {
+    "mean": NaN,
+    "sd_within": NaN,
+    "n": 0,
+    "nmse_at_peak_mean": NaN,
+    "nmse_min_mean": NaN,
+    "nmse_last_mean": NaN
+   },
+   "s8": {
+    "mean": NaN,
+    "sd_within": NaN,
+    "n": 0,
+    "nmse_at_peak_mean": NaN,
+    "nmse_min_mean": NaN,
+    "nmse_last_mean": NaN
+   },
+   "s9": {
+    "mean": NaN,
+    "sd_within": NaN,
+    "n": 0,
+    "nmse_at_peak_mean": NaN,
+    "nmse_min_mean": NaN,
+    "nmse_last_mean": NaN
+   },
+   "s10": {
+    "mean": NaN,
+    "sd_within": NaN,
+    "n": 0,
+    "nmse_at_peak_mean": NaN,
+    "nmse_min_mean": NaN,
+    "nmse_last_mean": NaN
+   },
+   "s11": {
+    "mean": NaN,
+    "sd_within": NaN,
+    "n": 0,
+    "nmse_at_peak_mean": NaN,
+    "nmse_min_mean": NaN,
+    "nmse_last_mean": NaN
+   }
+  },
+  "sd_between_partitions": NaN,
+  "range_between_partitions": NaN,
+  "sd_within_partition_pooled": NaN
+ },
+ "concat_minus_ref": {
+  "mean": -0.03409860283136367,
+  "sd": null,
+  "t": null,
+  "n_positive": 0,
+  "n": 1,
+  "pairs": [
+   {
+    "split": "s6",
+    "seed": 0,
+    "ref": 0.07957749962806701,
+    "concat": 0.04547889679670334,
+    "diff": -0.03409860283136367,
+    "ref_window": 0.07363607836377561,
+    "alt_window": 0.02317468772887887,
+    "diff_window": -0.05046139063489674
+   }
+  ],
+  "window": {
+   "mean": -0.05046139063489674,
+   "sd": null,
+   "t": null,
+   "n_positive": 0,
+   "n": 1
+  }
+ },
+ "concat_minus_ref_excluding_plateau": {
+  "mean": null,
+  "sd": null,
+  "t": null,
+  "n_positive": 0,
+  "n": 0,
+  "pairs": [],
+  "window": {
+   "mean": null,
+   "sd": null,
+   "t": null,
+   "n_positive": 0,
+   "n": 0
+  }
+ },
+ "plateau_runs": [
+  {
+   "arm": "K_joint_s6",
+   "seed": 0,
+   "id": "qotaa6tf",
+   "roll_max_matched": 0.04547889679670334
+  }
+ ],
+ "perm_minus_ref": {
+  "mean": null,
+  "sd": null,
+  "t": null,
+  "n_positive": 0,
+  "n": 0,
+  "pairs": [],
+  "window": {
+   "mean": null,
+   "sd": null,
+   "t": null,
+   "n_positive": 0,
+   "n": 0
+  }
+ },
+ "perm_minus_ref_excluding_plateau": {
+  "mean": null,
+  "sd": null,
+  "t": null,
+  "n_positive": 0,
+  "n": 0,
+  "pairs": [],
+  "window": {
+   "mean": null,
+   "sd": null,
+   "t": null,
+   "n_positive": 0,
+   "n": 0
+  }
+ },
+ "fold90_minus_80": {
+  "pairs": [],
+  "mean": null,
+  "sd": null,
+  "n": 0
+ },
+ "baselines": {
+  "s0": {
+   "B2_prot_T5_val": 0.064086094309117,
+   "B2_prot_T5_test": 0.05857692166708676,
+   "B3_prot_T5_val": 0.07138193244880174,
+   "B3_prot_T5_test": 0.09205118676180657
+  },
+  "s1": {
+   "B2_prot_T5_val": 0.07405001309437263,
+   "B2_prot_T5_test": 0.04933149687255106,
+   "B3_prot_T5_val": 0.08239635199174286,
+   "B3_prot_T5_test": 0.07492676503081296
+  },
+  "s2": {
+   "B2_prot_T5_val": 0.06348994846207989,
+   "B2_prot_T5_test": 0.06390950584124423,
+   "B3_prot_T5_val": 0.08275871132944221,
+   "B3_prot_T5_test": 0.0832121270709796
+  },
+  "s3": {
+   "B2_prot_T5_val": 0.0580761186988567,
+   "B2_prot_T5_test": 0.07448506916471953,
+   "B3_prot_T5_val": 0.05695834770835123,
+   "B3_prot_T5_test": 0.06153568654180224
+  }
+ }
+}

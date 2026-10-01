@@ -46,7 +46,7 @@ import openpyxl
 import pandas as pd
 import pytest
 
-from torchcell.data import RawSha256MismatchError
+from torchcell.data import ManifestPinMismatchError, RawSha256MismatchError
 from torchcell.datamodels.media import SGA_DM_SELECTION
 from torchcell.datamodels.schema import (
     Environment,
@@ -495,14 +495,16 @@ def _mirror_manifest(xls: Path, sha256: str) -> Manifest:
     )
 
 
-def test_download_links_the_mirror_file_after_verifying_its_manifest_sha256(
+def test_download_links_the_mirror_file_after_verifying_it_against_the_module_pin(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """With no raw file, ``download()`` reads ``$DATA_ROOT/torchcell-raw/<key>/
     manifest.json``: a missing manifest raises ``FileNotFoundError`` naming it, a listed
-    file absent from the mirror raises ``required raw artifact missing``, a manifest
-    digest that disagrees with the bytes raises with both digests, and a matching digest
-    symlinks the file into ``raw/`` and the build proceeds to its six records.
+    file absent from the mirror raises ``required raw artifact missing``. ``XLS_SHA256``
+    is the one pin (issue #561): a manifest recording another digest raises
+    ``ManifestPinMismatchError`` naming both, mirror bytes off the pin raise
+    ``RawSha256MismatchError`` naming both, and a manifest and bytes matching the pin
+    symlink the file into ``raw/`` and the build proceeds to its six records.
     """
     _patch_release(monkeypatch)
     data_root = tmp_path / "data_root"
@@ -523,12 +525,23 @@ def test_download_links_the_mirror_file_after_verifying_its_manifest_sha256(
     xls.parent.mkdir()
     xls.write_bytes(staged.read_bytes())
     digest = hashlib.sha256(xls.read_bytes()).hexdigest()
-    with pytest.raises(RawSha256MismatchError) as err:
+    monkeypatch.setattr(m, "XLS_SHA256", digest)
+    with pytest.raises(ManifestPinMismatchError) as off_manifest:
         m.SmfBaryshnikova2010Dataset(root=str(tmp_path / "c"), genome=_genome())
-    assert str(err.value) == (
-        f"sha256 mismatch for {xls}: expected {'0' * 64}, observed {digest}"
+    assert str(off_manifest.value) == (
+        f"raw-mirror manifest records sha256 {'0' * 64} for "
+        f"data/SupplementaryData1_SMF.xls, but the loader pins {digest}"
     )
     assert list((tmp_path / "c" / "raw").iterdir()) == []
+    monkeypatch.setattr(m, "XLS_SHA256", "f" * 64)
+    manifest_path.write_text(_mirror_manifest(xls, "f" * 64).model_dump_json())
+    with pytest.raises(RawSha256MismatchError) as off_bytes:
+        m.SmfBaryshnikova2010Dataset(root=str(tmp_path / "c2"), genome=_genome())
+    assert str(off_bytes.value) == (
+        f"sha256 mismatch for {xls}: expected {'f' * 64}, observed {digest}"
+    )
+    assert list((tmp_path / "c2" / "raw").iterdir()) == []
+    monkeypatch.setattr(m, "XLS_SHA256", digest)
     manifest_path.write_text(_mirror_manifest(xls, digest).model_dump_json())
     dataset = m.SmfBaryshnikova2010Dataset(root=str(tmp_path / "d"), genome=_genome())
     # a raw file already in place is left alone: download() only links what is absent

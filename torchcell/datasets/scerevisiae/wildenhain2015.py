@@ -75,6 +75,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    check_manifest_pin,
     link_verified,
     post_process,
     verify_raw_files,
@@ -550,22 +551,24 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
         return [DATA_FILENAME, AID_FILENAME]
 
     def download(self) -> None:
-        """Link the manifest-listed mirror files into ``raw/`` and verify each sha256.
+        """Link the mirror files into ``raw/`` after verifying each against its pin.
 
-        The mirror is canonical. The FTP container is 151 MB and its sha256 is recorded
+        ``DATA_SHA256`` and ``AID_SHA256`` are the pins; the manifest is the retrieval
+        record and must carry the same digests, else ``ManifestPinMismatchError`` names
+        both. The mirror is canonical. The FTP container is 151 MB and its sha256 is recorded
         with the member's, so ``deposit_raw_mirror``'s retrieval re-runs the download and
         detects a re-packed archive; a build never depends on that URL being alive.
         """
         data_root = _data_root()
         manifest = load_manifest(data_root)
         os.makedirs(self.raw_dir, exist_ok=True)
+        pins = {DATA_FILENAME: DATA_SHA256, AID_FILENAME: AID_SHA256}
         for name, relpath in raw_relpaths().items():
             src = raw_mirror_dir(data_root) / relpath
             if not src.exists():
                 raise RuntimeError(f"required raw artifact missing from mirror: {src}")
-            link_verified(
-                src, osp.join(self.raw_dir, name), manifest_sha256(manifest, relpath)
-            )
+            check_manifest_pin(relpath, manifest_sha256(manifest, relpath), pins[name])
+            link_verified(src, osp.join(self.raw_dir, name), pins[name])
         log.info(
             "Wildenhain 2015 raw files linked into %s (sha256 verified)", self.raw_dir
         )

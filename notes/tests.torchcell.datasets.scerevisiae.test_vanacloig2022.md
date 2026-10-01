@@ -15,3 +15,7 @@ Findings, citing issue #501: the stored value is CPM against every released row,
 ## 2026.09.30 - Raw sha256 pin enforced at build time
 
 Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.
+
+## 2026.09.30 - Download verifies against DATA_SHA256 (issue #561)
+
+Retired: `test_download_refuses_a_digest_off_the_manifest`, which asserted that the download pin was the manifest's digest and not `DATA_SHA256`. It is replaced by `test_download_refuses_a_manifest_digest_off_the_module_pin`, which checks for a `ManifestPinMismatchError` with the exact message and that `raw/` is never created, and by `test_download_refuses_mirror_bytes_off_the_module_pin`, which checks for a `RawSha256MismatchError` naming the real pin. The link test patches `DATA_SHA256` to the fixture digest, and the missing-file test records the pin in its manifest.

@@ -68,7 +68,7 @@ from typing import Any
 import pandas as pd
 import pytest
 
-from torchcell.data import RawSha256MismatchError
+from torchcell.data import ManifestPinMismatchError, RawSha256MismatchError
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import MEDIA_LIBRARY, SYNBASE
 from torchcell.datamodels.schema import (
@@ -804,7 +804,8 @@ def test_download_links_the_verified_mirror_file(
 ) -> None:
     data_root = tmp_path / "dr"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
-    src = _mirror(data_root, b"counts", hashlib.sha256(b"counts").hexdigest())
+    monkeypatch.setattr(v, "DATA_SHA256", hashlib.sha256(b"counts").hexdigest())
+    src = _mirror(data_root, b"counts", v.DATA_SHA256)
     dataset = _bare_dataset(tmp_path / "build")
     dataset.download()
     dest = tmp_path / "build" / "raw" / v.DATA_FILENAME
@@ -813,21 +814,43 @@ def test_download_links_the_verified_mirror_file(
     assert os.readlink(dest) == str(src)
 
 
-def test_download_refuses_a_digest_off_the_manifest(
+def test_download_refuses_a_manifest_digest_off_the_module_pin(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The expected digest is the MANIFEST's, not ``DATA_SHA256``; the refusal is a
-    ``RawSha256MismatchError`` naming the mirror file, and nothing is linked.
+    """Contract (issue #561): ``DATA_SHA256`` is the one pin and the manifest is its
+    retrieval record. A manifest recording any other digest is refused by name with
+    both digests before the mirror bytes are read, and nothing is linked.
     """
     data_root = tmp_path / "dr"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
-    _mirror(data_root, b"tampered", "ab" * 32)
+    _mirror(data_root, b"counts", "ab" * 32)
+    dataset = _bare_dataset(tmp_path / "build")
+    with pytest.raises(ManifestPinMismatchError) as err:
+        dataset.download()
+    assert str(err.value) == (
+        f"raw-mirror manifest records sha256 {'ab' * 32} for {v.DATA_REL}, but the "
+        "loader pins e29eb02769ce2180d632020dc612a7f3e14a124fc7f1e0e33f9d41b6f4e4a85a"
+    )
+    assert not (tmp_path / "build" / "raw").exists()
+
+
+def test_download_refuses_mirror_bytes_off_the_module_pin(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With the manifest agreeing with ``DATA_SHA256``, mirror bytes hashing to anything
+    else raise ``RawSha256MismatchError`` naming the mirror file, the pin and the
+    observed digest, and nothing is linked.
+    """
+    data_root = tmp_path / "dr"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    _mirror(data_root, b"tampered", v.DATA_SHA256)
     dataset = _bare_dataset(tmp_path / "build")
     with pytest.raises(RawSha256MismatchError) as err:
         dataset.download()
     assert str(err.value) == (
         f"sha256 mismatch for {v.raw_mirror_dir(str(data_root)) / v.DATA_REL}: "
-        f"expected {'ab' * 32}, observed {hashlib.sha256(b'tampered').hexdigest()}"
+        "expected e29eb02769ce2180d632020dc612a7f3e14a124fc7f1e0e33f9d41b6f4e4a85a, "
+        f"observed {hashlib.sha256(b'tampered').hexdigest()}"
     )
     assert list((tmp_path / "build" / "raw").iterdir()) == []
 
@@ -873,7 +896,12 @@ def test_download_refuses_a_mirror_missing_the_file_or_its_record(
             {
                 "citation_key": v.CITATION_KEY,
                 "files": [
-                    {"path": v.DATA_REL, "role": "raw_data", "bytes": 1, "sha256": "x"}
+                    {
+                        "path": v.DATA_REL,
+                        "role": "raw_data",
+                        "bytes": 1,
+                        "sha256": v.DATA_SHA256,
+                    }
                 ],
             }
         )

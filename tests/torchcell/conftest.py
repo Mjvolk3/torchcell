@@ -13,8 +13,9 @@ Everything here is tiny and built in memory, so no fixture needs ``DATA_ROOT``:
   keeps its own copy for its module-level helpers);
 * ``dcell_graph`` / ``dcell_batch``, a three-term GO hierarchy over four genes in the
   layout ``torchcell.models.dcell.DCell`` reads;
-* ``raw_pin_calls`` and ``off_pin_raw``, the build-time sha256 pins of the dataset
-  loaders (below).
+* ``raw_pin_calls``, ``off_pin_raw``, ``pin_restorer`` and ``real_verify_raw_files``,
+  the build-time sha256 pins of the dataset loaders, and the ``pinned_loader``
+  parametrization over every pinned loader module (below).
 
 Build-time sha256 pins (issues #518, #524, #528, #537). Every pinned loader verifies the
 bytes in ``raw/`` against its real sha256 pin at the start of ``process()``
@@ -29,16 +30,20 @@ verify_raw_files)``) and checks the exact ``RawSha256MismatchError`` message and
 on-disk state after the refusal. ``off_pin_raw`` stages that case: it puts the real
 check back on one loader module and fills a fresh dataset root's ``raw/`` with bytes
 that are not any release, so PyG skips ``download()`` and the build reaches
-``process()`` with an unverified file.
+``process()`` with an unverified file. A test marked ``slow`` or ``data`` (a real build
+from the ``$DATA_ROOT`` mirrors, run only under ``--slow``/``--data``) gets the real
+check back in every loader for its duration, so it meets the real pin (issue #561);
+the synthetic tests keep the recorder whatever flags the run carries.
 """
 
+import ast
 import hashlib
 import importlib
 import os.path as osp
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from pathlib import Path
 from types import ModuleType
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, Protocol
 
 import pytest
 import torch
@@ -363,42 +368,46 @@ def embedding_genome() -> EmbeddingStubGenome:
 #: The real build-time check, for refusal tests to put back.
 REAL_VERIFY_RAW_FILES = verify_raw_files
 
-#: Every loader module that verifies its raw pins at build time.
-PINNED_LOADERS = (
-    "auesukaree2009",
-    "baryshnikova2010",
-    "bloom2019",
-    "cachera2023",
-    "caudal2024",
-    "cooper2010",
-    "costanzo2021",
-    "dasilveira2014",
-    "hillenmeyer2008",
-    "hoepfner2014",
-    "lian2019",
-    "lopez2024",
-    "messner2023",
-    "mormino2022",
-    "mota2024",
-    "mulleder2016",
-    "nadal_ribelles2025",
-    "oduibhir2014",
-    "ohnuki2018",
-    "ohnuki2022",
-    "ohya2005",
-    "ozaydin2013",
-    "smith2006",
-    "smith2016",
-    "vanacloig2022",
-    "wildenhain2015",
-    "xue2025",
-    "yeastphenome",
-    "yoshida2012",
-    "zelezniak2018",
+#: The package whose loaders pin their raw files.
+LOADER_PACKAGE = "torchcell.datasets.scerevisiae"
+
+
+def _calls_verify_raw_files(path: Path) -> bool:
+    """Whether the module source at ``path`` calls ``verify_raw_files(...)``."""
+    return any(
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "verify_raw_files"
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8")))
+    )
+
+
+#: Every loader module that verifies its raw pins at build time, found by reading the
+#: package sources, so a new pinned loader is patched and covered with no list to edit.
+PINNED_LOADERS = tuple(
+    sorted(
+        path.stem
+        for path in Path(importlib.import_module(LOADER_PACKAGE).__path__[0]).glob(
+            "*.py"
+        )
+        if _calls_verify_raw_files(path)
+    )
 )
 
 #: ``(loader module name, raw dir, {file name: pinned sha256})`` per recorded check.
 PinCall = tuple[str, str, dict[str, str]]
+
+
+class _HasMarkers(Protocol):
+    def get_closest_marker(self, name: str) -> Any: ...
+
+
+#: Markers of the tests that build from the real ``$DATA_ROOT`` mirrors.
+REAL_DATA_MARKERS = ("slow", "data")
+
+
+def _loader_module(name: str) -> ModuleType:
+    return importlib.import_module(f"{LOADER_PACKAGE}.{name}")
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -407,7 +416,6 @@ def raw_pin_calls() -> Iterator[list[PinCall]]:
     calls: list[PinCall] = []
     with pytest.MonkeyPatch.context() as mp:
         for name in PINNED_LOADERS:
-            module = importlib.import_module(f"torchcell.datasets.scerevisiae.{name}")
 
             def record(
                 raw_dir: str, pins: Mapping[str, str], _name: str = name
@@ -417,8 +425,48 @@ def raw_pin_calls() -> Iterator[list[PinCall]]:
                     raise FileNotFoundError(f"pinned raw files absent: {missing}")
                 calls.append((_name, raw_dir, dict(pins)))
 
-            mp.setattr(module, "verify_raw_files", record)
+            mp.setattr(_loader_module(name), "verify_raw_files", record)
         yield calls
+
+
+def restore_real_pins(node: _HasMarkers, mp: pytest.MonkeyPatch) -> list[str]:
+    """Put the real check back in every pinned loader for a ``slow``/``data`` test.
+
+    Those tests (run only under ``--slow``/``--data``) build from the real mirrors, so
+    they must meet the real pin; every other test keeps the recorder. Returns the
+    modules restored, in ``PINNED_LOADERS`` order.
+    """
+    if not any(node.get_closest_marker(m) for m in REAL_DATA_MARKERS):
+        return []
+    for name in PINNED_LOADERS:
+        mp.setattr(_loader_module(name), "verify_raw_files", REAL_VERIFY_RAW_FILES)
+    return list(PINNED_LOADERS)
+
+
+@pytest.fixture(autouse=True)
+def _real_pins_for_real_data(
+    request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``restore_real_pins`` for the running test (a no-op for unmarked tests)."""
+    restore_real_pins(request.node, monkeypatch)
+
+
+@pytest.fixture
+def pin_restorer() -> Callable[[_HasMarkers, pytest.MonkeyPatch], list[str]]:
+    """``restore_real_pins`` itself, for the test that drives it with each marker."""
+    return restore_real_pins
+
+
+@pytest.fixture
+def real_verify_raw_files() -> Callable[[str, Mapping[str, str]], None]:
+    """The real build-time check the recorder replaces."""
+    return REAL_VERIFY_RAW_FILES
+
+
+def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
+    """Parametrize ``pinned_loader`` over ``PINNED_LOADERS``."""
+    if "pinned_loader" in metafunc.fixturenames:
+        metafunc.parametrize("pinned_loader", PINNED_LOADERS)
 
 
 #: The bytes ``off_pin_raw`` writes; no pinned release hashes to this.

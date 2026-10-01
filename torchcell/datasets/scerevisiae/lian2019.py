@@ -133,6 +133,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    check_manifest_pin,
     link_verified,
     post_process,
     verify_raw_files,
@@ -583,15 +584,20 @@ class CrisprMagicLian2019Dataset(ExperimentDataset):
         return [TSV_FILENAME, DESIGN_D_FILENAME]
 
     def download(self) -> None:
-        """Link the manifest-listed mirror files into ``raw/`` and verify their sha256."""
+        """Link the mirror files into ``raw/`` after verifying each against its pin.
+
+        ``TSV_SHA256`` and ``DESIGN_D_SHA256`` are the pins; the manifest is the
+        retrieval record and must carry the same digests, else
+        ``ManifestPinMismatchError`` names both.
+        """
         data_root = _data_root()
         manifest = load_manifest(data_root)
         os.makedirs(self.raw_dir, exist_ok=True)
-        for relpath, filename in (
-            (TSV_REL, TSV_FILENAME),
-            (DESIGN_D_REL, DESIGN_D_FILENAME),
+        for relpath, filename, expected in (
+            (TSV_REL, TSV_FILENAME, TSV_SHA256),
+            (DESIGN_D_REL, DESIGN_D_FILENAME, DESIGN_D_SHA256),
         ):
-            expected = manifest_sha256(manifest, relpath)
+            check_manifest_pin(relpath, manifest_sha256(manifest, relpath), expected)
             src = raw_mirror_dir(data_root) / relpath
             if not src.exists():
                 raise RuntimeError(f"required raw artifact missing from mirror: {src}")
